@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KitaBelajar World 🌍</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d0d1a; font-family: 'Nunito', sans-serif; overflow: hidden; width: 100vw; height: 100vh; }
+
+  /* ── HUD ── */
+  #hud {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 20px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, transparent 100%);
+    pointer-events: none;
+  }
+  #hud-left { display: flex; align-items: center; gap: 12px; pointer-events: all; }
+  #hud-logo { font-family: 'Press Start 2P', monospace; font-size: 11px; color: #FFD93D; text-shadow: 2px 2px 0 #FF6B35; }
+  #hud-player { background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); border-radius: 50px; padding: 6px 16px; font-size: 13px; font-weight: 800; color: white; display: flex; align-items: center; gap: 8px; }
+  #hud-skor { background: linear-gradient(135deg, #FFD93D, #FF6B35); border-radius: 50px; padding: 6px 16px; font-weight: 900; font-size: 14px; color: #1a1a2e; pointer-events: all; }
+  #hud-right { display: flex; gap: 8px; pointer-events: all; }
+  .hud-btn { background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2); border-radius: 50px; padding: 7px 16px; color: white; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+  .hud-btn:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+
+  /* ── Pemain Online ── */
+  #pemain-list {
+    position: fixed; top: 60px; right: 16px; z-index: 100;
+    background: rgba(0,0,0,0.75); backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;
+    padding: 12px 14px; min-width: 160px;
+    display: none;
+  }
+  #pemain-list.show { display: block; }
+  #pemain-list h4 { font-size: 11px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .pemain-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
+  .pemain-dot { width: 8px; height: 8px; border-radius: 50%; background: #6BCB77; flex-shrink: 0; }
+  .pemain-row span { font-size: 13px; font-weight: 700; color: white; }
+
+  /* ── SOAL POPUP ── */
+  #soal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+  }
+  #soal-overlay.show { opacity: 1; pointer-events: all; }
+  #soal-card {
+    background: white; border-radius: 24px; padding: 36px 32px;
+    max-width: 540px; width: 92%; box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+    transform: scale(0.85) translateY(20px); transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
+  }
+  #soal-overlay.show #soal-card { transform: scale(1) translateY(0); }
+  #soal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  #soal-badge { background: #EEF5FF; color: #4D96FF; font-size: 12px; font-weight: 800; padding: 5px 14px; border-radius: 50px; }
+  #soal-timer-wrap { display: flex; align-items: center; gap: 8px; }
+  #soal-timer-bar-wrap { width: 100px; height: 8px; background: #eee; border-radius: 50px; overflow: hidden; }
+  #soal-timer-bar { height: 100%; background: linear-gradient(90deg, #6BCB77, #4CAF50); border-radius: 50px; transition: width 1s linear; }
+  #soal-timer-text { font-family: 'Press Start 2P', monospace; font-size: 12px; color: #FF4757; width: 28px; text-align: right; }
+  #soal-emoji { font-size: 52px; text-align: center; margin-bottom: 14px; }
+  #soal-text { font-size: 18px; font-weight: 800; color: #1a1a2e; text-align: center; line-height: 1.5; margin-bottom: 24px; }
+  #soal-opsi { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .soal-opsi-btn {
+    padding: 16px 12px; border-radius: 14px; border: 2.5px solid #E8E8E8;
+    background: #F8F9FA; font-family: 'Nunito', sans-serif; font-weight: 800;
+    font-size: 14px; cursor: pointer; transition: all 0.18s; color: #1a1a2e;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .soal-opsi-btn:hover:not(:disabled) { transform: scale(1.03); border-color: #4D96FF; background: #EEF5FF; }
+  .soal-opsi-btn .opsi-key { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; flex-shrink: 0; }
+  .opsi-key-A { background: #FFEAEA; color: #FF4757; }
+  .opsi-key-B { background: #EEF5FF; color: #4D96FF; }
+  .opsi-key-C { background: #EFFFEF; color: #2ed573; color: #27ae60; }
+  .opsi-key-D { background: #FFFBE6; color: #f39c12; }
+  .soal-opsi-btn.benar { background: #EFFFEF; border-color: #6BCB77; animation: pop 0.4s ease; }
+  .soal-opsi-btn.salah { background: #FFF0F0; border-color: #FF4757; animation: shake 0.4s ease; opacity: 0.6; }
+  .soal-opsi-btn.reveal { background: #EFFFEF; border-color: #6BCB77; }
+  @keyframes pop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+  #soal-feedback { text-align: center; margin-top: 16px; font-size: 16px; font-weight: 800; min-height: 28px; }
+
+  /* ── Notif ── */
+  #notif {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: rgba(0,0,0,0.85); color: white; padding: 12px 24px; border-radius: 50px;
+    font-weight: 700; font-size: 14px; z-index: 300; opacity: 0;
+    transition: all 0.3s ease; pointer-events: none; white-space: nowrap;
+  }
+  #notif.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #notif.success { background: #27ae60; }
+  #notif.error { background: #e74c3c; }
+  #notif.info { background: #4D96FF; }
+
+  /* ── Kontrol hint ── */
+  #controls-hint {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 8px; z-index: 100; pointer-events: none;
+  }
+  .ctrl-key { background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 5px 10px; color: rgba(255,255,255,0.6); font-size: 11px; font-weight: 700; }
+
+  /* ── Mobile joystick ── */
+  #joystick-wrap {
+    position: fixed; bottom: 24px; left: 24px; z-index: 100;
+    display: none;
+  }
+  @media (max-width: 768px) { #joystick-wrap { display: block; } #controls-hint { display: none; } }
+  .joystick-row { display: flex; justify-content: center; margin: 2px 0; }
+  .joy-btn { width: 48px; height: 48px; background: rgba(255,255,255,0.15); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.1s; }
+  .joy-btn:active { background: rgba(255,255,255,0.35); }
+
+  /* ── LOGIN ── */
+  #login-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    background: linear-gradient(135deg, #0d0d1a, #1a1a3e);
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ── VOTING LOBBY ── */
+  #voting-overlay {
+    position: fixed; inset: 0; z-index: 490;
+    background: linear-gradient(135deg, #0d0d1a, #1a1a3e);
+    display: none; flex-direction: column; align-items: center;
+    padding: 20px; overflow-y: auto;
+  }
+  #voting-overlay.show { display: flex; }
+  #voting-title { font-family: 'Press Start 2P', monospace; font-size: 13px; color: #FFD93D; text-align: center; margin-bottom: 6px; text-shadow: 2px 2px 0 #FF6B35; }
+  #voting-sub { color: rgba(255,255,255,0.5); font-size: 13px; margin-bottom: 20px; text-align: center; }
+  #voting-timer-wrap { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+  #voting-timer-circle {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: conic-gradient(#FFD93D 0deg, rgba(255,255,255,0.1) 0deg);
+    display: flex; align-items: center; justify-content: center;
+    position: relative; flex-shrink: 0;
+  }
+  #voting-timer-circle::before { content:''; position:absolute; inset:6px; background:#0d0d1a; border-radius:50%; }
+  #voting-timer-num { font-family: 'Press Start 2P', monospace; font-size: 16px; color: #FFD93D; position: relative; z-index: 1; }
+  #voting-timer-label { font-size: 14px; color: rgba(255,255,255,0.6); font-weight: 700; }
+  #voting-maps { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; width: 100%; max-width: 900px; margin-bottom: 20px; }
+  .vote-map-card {
+    background: rgba(255,255,255,0.06); border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 20px; padding: 20px 16px; cursor: pointer; transition: all 0.2s;
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .vote-map-card:hover { transform: translateY(-4px); border-color: rgba(255,255,255,0.3); }
+  .vote-map-card.voted { border-color: #FFD93D; background: rgba(255,217,61,0.1); }
+  .vote-map-card.winner { border-color: #6BCB77; background: rgba(107,203,119,0.15); animation: winPulse 0.6s ease; }
+  @keyframes winPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+  .vote-map-preview { font-size: 52px; margin-bottom: 10px; }
+  .vote-map-name { font-family: 'Press Start 2P', monospace; font-size: 9px; color: white; margin-bottom: 10px; line-height: 1.6; }
+  .vote-bar-wrap { background: rgba(255,255,255,0.1); border-radius: 50px; height: 8px; margin-bottom: 6px; overflow: hidden; }
+  .vote-bar { height: 100%; border-radius: 50px; background: linear-gradient(90deg, #FFD93D, #FF6B35); transition: width 0.4s ease; }
+  .vote-count { font-size: 12px; color: rgba(255,255,255,0.6); font-weight: 800; }
+  .vote-badge { position: absolute; top: 10px; right: 10px; background: #FFD93D; color: #1a1a2e; font-size: 10px; font-weight: 900; padding: 3px 8px; border-radius: 50px; display: none; }
+  .vote-map-card.voted .vote-badge { display: block; }
+  #voting-pemain { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 16px; max-width: 900px; width: 100%; }
+  .voting-pemain-chip { background: rgba(255,255,255,0.08); border-radius: 50px; padding: 6px 14px; font-size: 13px; font-weight: 700; color: white; display: flex; align-items: center; gap: 6px; }
+  #voting-result-banner {
+    background: linear-gradient(135deg, #6BCB77, #27ae60);
+    border-radius: 20px; padding: 20px 32px; text-align: center;
+    display: none; margin-bottom: 20px; max-width: 400px; width: 100%;
+    animation: fadeInUp 0.5s ease;
+  }
+  @keyframes fadeInUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  #voting-result-banner h3 { font-family: 'Press Start 2P', monospace; font-size: 11px; color: white; margin-bottom: 8px; }
+  #voting-result-banner .result-map { font-size: 40px; margin-bottom: 6px; }
+  #voting-result-banner p { color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 700; }
+
+  /* ── LOGIN ── */
+  #login-box {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 28px; padding: 44px 36px; max-width: 420px; width: 92%;
+    text-align: center;
+  }
+  #login-box h1 { font-family: 'Press Start 2P', monospace; font-size: 14px; color: #FFD93D; margin-bottom: 6px; text-shadow: 2px 2px 0 #FF6B35; }
+  #login-box p { color: rgba(255,255,255,0.5); font-size: 13px; margin-bottom: 28px; }
+  .login-input { width: 100%; padding: 13px 16px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color: white; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700; outline: none; margin-bottom: 12px; transition: border-color 0.2s; }
+  .login-input:focus { border-color: #FFD93D; }
+  .login-input::placeholder { color: rgba(255,255,255,0.3); font-weight: 400; }
+  #btn-masuk { width: 100%; padding: 14px; border-radius: 14px; border: none; background: linear-gradient(135deg, #FFD93D, #FF6B35); color: #1a1a2e; font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 16px; cursor: pointer; transition: all 0.2s; margin-top: 4px; }
+  #btn-masuk:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(255,107,53,0.4); }
+  #btn-kembali { background: none; border: 1.5px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); border-radius: 50px; padding: 9px 22px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; margin-top: 12px; transition: all 0.2s; }
+  #btn-kembali:hover { border-color: rgba(255,255,255,0.5); color: white; }
+
+  /* ── Skor popup ── */
+  .skor-popup {
+    position: fixed; z-index: 400; pointer-events: none;
+    font-family: 'Press Start 2P', monospace; font-size: 13px;
+    animation: floatUp 1.2s ease forwards;
+  }
+  @keyframes floatUp { 0%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-60px)} }
+
+  /* ── Canvas container ── */
+  #game-container canvas { display: block; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-overlay">
+  <div id="login-box">
+    <div style="font-size:48px;margin-bottom:12px">🌍</div>
+    <h1>KitaBelajar World</h1>
+    <p>Masukkan nama & kode kelas untuk masuk ke dunia belajar!</p>
+    <input class="login-input" id="inp-nama" placeholder="Nama kamu..." maxlength="20">
+    <input class="login-input" id="inp-avatar" placeholder="Avatar (emoji, contoh: 🦁)" maxlength="2" style="text-align:center;font-size:24px">
+    <input class="login-input" id="inp-kode-kelas" placeholder="Kode kelas (opsional)" maxlength="10" style="text-align:center;text-transform:uppercase">
+    <button id="btn-masuk" onclick="masukDunia()">🚀 Masuk ke Dunia!</button>
+    <br>
+    <button id="btn-kembali" onclick="window.history.back()">← Kembali ke Dashboard</button>
+    <p style="margin-top:16px;font-size:11px;color:rgba(255,255,255,0.3)">Gerakan: WASD / Arrow Keys<br>Soal muncul otomatis saat kamu masuki area</p>
+  </div>
+</div>
+
+<!-- VOTING LOBBY -->
+<div id="voting-overlay">
+  <div id="voting-title">PILIH MAP!</div>
+  <div id="voting-sub">Vote map favoritmu — map terbanyak yang menang 🗳️</div>
+
+  <div id="voting-timer-wrap">
+    <div id="voting-timer-circle">
+      <div id="voting-timer-num">30</div>
+    </div>
+    <div id="voting-timer-label">detik lagi<br><span style="font-size:11px;color:rgba(255,255,255,0.4)">masuk otomatis</span></div>
+  </div>
+
+  <div id="voting-result-banner">
+    <div class="result-map" id="result-map-emoji">🏫</div>
+    <h3>MAP TERPILIH!</h3>
+    <p id="result-map-nama">Sekolah</p>
+    <p style="margin-top:6px;font-size:12px;opacity:.7">Memasuki dunia...</p>
+  </div>
+
+  <div id="voting-maps"></div>
+
+  <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:12px">👥 Pemain di lobby:</div>
+  <div id="voting-pemain"></div>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="hud-left">
+    <div id="hud-logo">KITA BELAJAR</div>
+    <div id="hud-player">
+      <span id="hud-avatar">🦁</span>
+      <span id="hud-nama">–</span>
+    </div>
+  </div>
+  <div id="hud-skor">⭐ <span id="hud-skor-val">0</span> XP</div>
+  <div id="hud-right">
+    <button class="hud-btn" onclick="togglePemainList()">👥 <span id="hud-online">0</span></button>
+    <button class="hud-btn" onclick="window.location.href='belajar-seru.html'">🏠 Dashboard</button>
+  </div>
+</div>
+
+<!-- Pemain online list -->
+<div id="pemain-list">
+  <h4>Online Sekarang</h4>
+  <div id="pemain-list-body"></div>
+</div>
+
+<!-- Soal Popup -->
+<div id="soal-overlay">
+  <div id="soal-card">
+    <div id="soal-header">
+      <div id="soal-badge">❓ Soal</div>
+      <div id="soal-timer-wrap">
+        <div id="soal-timer-bar-wrap"><div id="soal-timer-bar" style="width:100%"></div></div>
+        <div id="soal-timer-text">15</div>
+      </div>
+    </div>
+    <div id="soal-emoji">❓</div>
+    <div id="soal-text">Memuat soal...</div>
+    <div id="soal-opsi"></div>
+    <div id="soal-feedback"></div>
+  </div>
+</div>
+
+<!-- Game Container -->
+<div id="game-container"></div>
+
+<!-- Notifikasi -->
+<div id="notif"></div>
+
+<!-- Kontrol hint -->
+<div id="controls-hint">
+  <div class="ctrl-key">W/↑ Atas</div>
+  <div class="ctrl-key">S/↓ Bawah</div>
+  <div class="ctrl-key">A/← Kiri</div>
+  <div class="ctrl-key">D/→ Kanan</div>
+</div>
+
+<!-- Mobile joystick -->
+<div id="joystick-wrap">
+  <div class="joystick-row"><button class="joy-btn" id="joy-up" onpointerdown="joyDown('up')" onpointerup="joyUp('up')">▲</button></div>
+  <div class="joystick-row">
+    <button class="joy-btn" id="joy-left" onpointerdown="joyDown('left')" onpointerup="joyUp('left')">◀</button>
+    <div style="width:48px"></div>
+    <button class="joy-btn" id="joy-right" onpointerdown="joyDown('right')" onpointerup="joyUp('right')">▶</button>
+  </div>
+  <div class="joystick-row"><button class="joy-btn" id="joy-down" onpointerdown="joyDown('down')" onpointerup="joyUp('down')">▼</button></div>
+</div>
+
+<script>
+// ============================================================
+//  CONFIG
+// ============================================================
+const API_BASE   = 'http://localhost:3000/api';
+const WS_SERVER  = 'http://localhost:3000';
+const TILE       = 48;       // ukuran tile pixel
+const MAP_W      = 32;       // jumlah tile lebar
+const MAP_H      = 24;       // jumlah tile tinggi
+const SPEED      = 180;      // pixel per detik
+const SOAL_RADIUS = TILE * 2; // radius zona soal
+
+// ── Pemain saya ──
+let myPlayer = { id: '', nama: '', avatar: '🦁', x: 400, y: 300, skor: 0 };
+let otherPlayers = {};
+let socket = null;
+let soalAktif = null;
+let soalTimer = null;
+let sudahJawab = false;
+let mobileKeys = { up: false, down: false, left: false, right: false };
+let phaserGame = null;
+let gameScene  = null;
+
+// ── Soal list (dari API atau dummy) ──
+let soalList = [];
+let zonaList = []; // { x, y, soalIdx, sudahDijawab }
+
+// ============================================================
+//  MAP DEFINITIONS — 6 map dengan tilemap unik
+// ============================================================
+const MAPS = {
+  sekolah: {
+    id: 'sekolah', nama: 'Sekolah', emoji: '🏫',
+    bgColor: '#1a3a1a',
+    tiles: { 0: 0x4a7c3f, 1: 0x1a6b8a, 2: 0x8b7355, 3: 0x2d5a1b, 4: 0x5c4a3a },
+    generateFn: generateMapSekolah
+  },
+  pantai: {
+    id: 'pantai', nama: 'Pantai / Pulau', emoji: '🏖️',
+    bgColor: '#0a2a4a',
+    tiles: { 0: 0xf4d03f, 1: 0x1a9bd1, 2: 0xe8c99a, 3: 0x27ae60, 4: 0xe67e22 },
+    generateFn: generateMapPantai
+  },
+  gunung: {
+    id: 'gunung', nama: 'Gunung / Hutan', emoji: '🌋',
+    bgColor: '#0d1f0d',
+    tiles: { 0: 0x2d5a1b, 1: 0x4a7c9a, 2: 0x6b5a3a, 3: 0x1a3a0d, 4: 0x4a3a2a },
+    generateFn: generateMapGunung
+  },
+  kota: {
+    id: 'kota', nama: 'Kota Modern', emoji: '🏙️',
+    bgColor: '#0a0a1a',
+    tiles: { 0: 0x2a2a3a, 1: 0x1a3a5a, 2: 0x4a4a5a, 3: 0x1a4a1a, 4: 0x3a3a4a },
+    generateFn: generateMapKota
+  },
+  angkasa: {
+    id: 'angkasa', nama: 'Luar Angkasa', emoji: '🚀',
+    bgColor: '#000010',
+    tiles: { 0: 0x0a0a2a, 1: 0x000000, 2: 0x1a1a3a, 3: 0x2a0a4a, 4: 0x1a0a2a },
+    generateFn: generateMapAngkasa
+  },
+  kastil: {
+    id: 'kastil', nama: 'Kastil / Kerajaan', emoji: '🏰',
+    bgColor: '#1a0a0a',
+    tiles: { 0: 0x3a2a1a, 1: 0x2a3a4a, 2: 0x4a3a2a, 3: 0x1a2a0a, 4: 0x2a1a0a },
+    generateFn: generateMapKastil
+  }
+};
+
+const MAP_ORDER = ['sekolah', 'pantai', 'gunung', 'kota', 'angkasa', 'kastil'];
+let currentMapId = 'sekolah';
+let votes = {}; // { mapId: count }
+let myVote = null;
+let votingTimer = null;
+let votingInterval = null;
+
+// ============================================================
+//  LOGIN
+// ============================================================
+function masukDunia() {
+  const nama = document.getElementById('inp-nama').value.trim();
+  const avatar = document.getElementById('inp-avatar').value.trim() || '🦁';
+  if (!nama) { tampilNotif('Masukkan namamu dulu!', 'error'); return; }
+
+  myPlayer.id   = 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2,4);
+  myPlayer.nama = nama;
+  myPlayer.avatar = avatar;
+
+  document.getElementById('hud-avatar').textContent = avatar;
+  document.getElementById('hud-nama').textContent = nama;
+  document.getElementById('login-overlay').style.display = 'none';
+
+  // Masuk ke voting lobby dulu
+  connectSocket();
+  masukVotingLobby();
+}
+
+// ============================================================
+//  LOAD SOAL dari API
+// ============================================================
+async function loadSoal() {
+  try {
+    const token = localStorage.getItem('kb_token');
+    const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+    const res = await fetch(API_BASE + '/soal/quiz', { headers });
+    const data = await res.json();
+    if (data.soal && data.soal.length) {
+      soalList = data.soal;
+    } else {
+      soalList = getDummySoal();
+    }
+  } catch(e) {
+    soalList = getDummySoal();
+  }
+  // Tempatkan zona soal di map setelah soal loaded
+  if (gameScene) gameScene.buatZonaSoal();
+}
+
+function getDummySoal() {
+  return [
+    { id:'1', pertanyaan:'Berapa hasil 7 × 8?', emoji:'🔢', opsi:['54','56','64','48'], jawaban:'56', poin:100 },
+    { id:'2', pertanyaan:'Apa ibu kota Indonesia?', emoji:'🗺️', opsi:['Bandung','Surabaya','Jakarta','Medan'], jawaban:'Jakarta', poin:100 },
+    { id:'3', pertanyaan:'Planet terbesar di tata surya?', emoji:'🪐', opsi:['Bumi','Mars','Jupiter','Saturnus'], jawaban:'Jupiter', poin:100 },
+    { id:'4', pertanyaan:'Berapa hasil 144 ÷ 12?', emoji:'➗', opsi:['11','13','12','14'], jawaban:'12', poin:100 },
+    { id:'5', pertanyaan:'Hewan apa yang bernapas dengan insang?', emoji:'🐟', opsi:['Katak','Ikan','Buaya','Paus'], jawaban:'Ikan', poin:100 },
+    { id:'6', pertanyaan:'Proses tumbuhan membuat makanan?', emoji:'🌿', opsi:['Respirasi','Transpirasi','Fotosintesis','Evaporasi'], jawaban:'Fotosintesis', poin:100 },
+    { id:'7', pertanyaan:'Berapa hasil 15 × 15?', emoji:'🧮', opsi:['215','225','235','245'], jawaban:'225', poin:100 },
+    { id:'8', pertanyaan:'Gas yang dibutuhkan manusia untuk bernapas?', emoji:'💨', opsi:['CO2','Nitrogen','Oksigen','Hidrogen'], jawaban:'Oksigen', poin:100 },
+  ];
+}
+
+// ============================================================
+//  VOTING LOBBY
+// ============================================================
+function masukVotingLobby() {
+  votes = {};
+  myVote = null;
+  MAP_ORDER.forEach(id => votes[id] = 0);
+  renderVotingCards();
+  document.getElementById('voting-overlay').classList.add('show');
+  socket.emit('world:voting_join', { id: myPlayer.id, nama: myPlayer.nama, avatar: myPlayer.avatar });
+  mulaiVotingTimer(30);
+}
+
+function renderVotingCards() {
+  const total = Object.values(votes).reduce((a,b) => a+b, 0);
+  document.getElementById('voting-maps').innerHTML = MAP_ORDER.map(id => {
+    const m = MAPS[id];
+    const count = votes[id] || 0;
+    const pct = total > 0 ? Math.round(count / total * 100) : 0;
+    return `<div class="vote-map-card ${myVote === id ? 'voted' : ''}" onclick="castVote('${id}')" id="vcard-${id}">
+      <div class="vote-badge">✓ Votemu</div>
+      <div class="vote-map-preview">${m.emoji}</div>
+      <div class="vote-map-name">${m.nama.toUpperCase()}</div>
+      <div class="vote-bar-wrap"><div class="vote-bar" id="vbar-${id}" style="width:${pct}%"></div></div>
+      <div class="vote-count" id="vcount-${id}">${count} vote (${pct}%)</div>
+    </div>`;
+  }).join('');
+}
+
+function updateVotingCards() {
+  const total = Object.values(votes).reduce((a,b) => a+b, 0);
+  const maxVote = Math.max(...Object.values(votes));
+  MAP_ORDER.forEach(id => {
+    const count = votes[id] || 0;
+    const pct = total > 0 ? Math.round(count / total * 100) : 0;
+    const bar = document.getElementById('vbar-' + id);
+    const cnt = document.getElementById('vcount-' + id);
+    const card = document.getElementById('vcard-' + id);
+    if (bar) bar.style.width = pct + '%';
+    if (cnt) cnt.textContent = `${count} vote (${pct}%)`;
+    if (card) card.className = 'vote-map-card' + (myVote === id ? ' voted' : '') + (count === maxVote && count > 0 ? ' winner' : '');
+  });
+}
+
+function castVote(mapId) {
+  if (myVote === mapId) return;
+  const prev = myVote;
+  myVote = mapId;
+  socket.emit('world:vote', { id: myPlayer.id, mapId, prev });
+  if (prev) votes[prev] = Math.max(0, (votes[prev] || 1) - 1);
+  votes[mapId] = (votes[mapId] || 0) + 1;
+  updateVotingCards();
+}
+
+function mulaiVotingTimer(detik) {
+  clearInterval(votingInterval);
+  let sisa = detik;
+  const circle = document.getElementById('voting-timer-circle');
+  function tick() {
+    document.getElementById('voting-timer-num').textContent = sisa;
+    const deg = (sisa / detik) * 360;
+    const col = sisa <= 10 ? '#FF4757' : '#FFD93D';
+    circle.style.background = `conic-gradient(${col} ${deg}deg, rgba(255,255,255,0.1) ${deg}deg)`;
+    document.getElementById('voting-timer-num').style.color = col;
+  }
+  tick();
+  votingInterval = setInterval(() => { sisa--; tick(); if (sisa <= 0) { clearInterval(votingInterval); selesaiVoting(); } }, 1000);
+}
+
+function selesaiVoting() {
+  let winMap = 'sekolah', winCount = 0;
+  MAP_ORDER.forEach(id => { if ((votes[id] || 0) > winCount) { winCount = votes[id]; winMap = id; } });
+  if (winCount === 0) winMap = MAP_ORDER[Math.floor(Math.random() * MAP_ORDER.length)];
+  currentMapId = winMap;
+  const m = MAPS[winMap];
+  document.getElementById('result-map-emoji').textContent = m.emoji;
+  document.getElementById('result-map-nama').textContent = m.nama;
+  document.getElementById('voting-result-banner').style.display = 'block';
+  setTimeout(() => {
+    document.getElementById('voting-overlay').classList.remove('show');
+    initGame(winMap);
+    loadSoal();
+  }, 2500);
+}
+
+function updateVotingPemain(list) {
+  document.getElementById('voting-pemain').innerHTML = list.map(p =>
+    `<div class="voting-pemain-chip">${p.avatar || '🦁'} ${p.nama}</div>`).join('');
+}
+
+// ============================================================
+//  MAP GENERATORS
+// ============================================================
+const MAP_ORDER = ['sekolah', 'pantai', 'gunung', 'kota', 'angkasa', 'kastil'];
+let currentMapId = 'sekolah';
+let votes = {}, myVote = null, votingInterval = null;
+
+const MAPS = {
+  sekolah: { id:'sekolah', nama:'Sekolah', emoji:'🏫', bgColor:'#1a3a1a',
+    tiles:{ 0:0x4a7c3f, 1:0x1a6b8a, 2:0x8b7355, 3:0x2d5a1b, 4:0x5c4a3a }, generateFn: genSekolah },
+  pantai: { id:'pantai', nama:'Pantai / Pulau', emoji:'🏖️', bgColor:'#0a2a4a',
+    tiles:{ 0:0xf4d03f, 1:0x1a9bd1, 2:0xe8c99a, 3:0x27ae60, 4:0xe67e22 }, generateFn: genPantai },
+  gunung: { id:'gunung', nama:'Gunung / Hutan', emoji:'🌋', bgColor:'#0d1f0d',
+    tiles:{ 0:0x2d5a1b, 1:0x4a7c9a, 2:0x6b5a3a, 3:0x1a3a0d, 4:0x4a3a2a }, generateFn: genGunung },
+  kota: { id:'kota', nama:'Kota Modern', emoji:'🏙️', bgColor:'#0a0a1a',
+    tiles:{ 0:0x2a2a3a, 1:0x1a3a5a, 2:0x4a4a5a, 3:0x1a4a1a, 4:0x3a3a4a }, generateFn: genKota },
+  angkasa: { id:'angkasa', nama:'Luar Angkasa', emoji:'🚀', bgColor:'#000010',
+    tiles:{ 0:0x0a0a2a, 1:0x000000, 2:0x1a1a3a, 3:0x2a0a4a, 4:0x1a0a2a }, generateFn: genAngkasa },
+  kastil: { id:'kastil', nama:'Kastil / Kerajaan', emoji:'🏰', bgColor:'#1a0a0a',
+    tiles:{ 0:0x3a2a1a, 1:0x2a3a4a, 2:0x4a3a2a, 3:0x1a2a0a, 4:0x2a1a0a }, generateFn: genKastil }
+};
+
+function genSekolah() {
+  const map = [];
+  for (let r=0;r<MAP_H;r++) { map[r]=[];
+    for (let c=0;c<MAP_W;c++) {
+      if (r===0||r===MAP_H-1||c===0||c===MAP_W-1){map[r][c]=1;continue;}
+      if (r>=MAP_H/2-1&&r<=MAP_H/2){map[r][c]=2;continue;}
+      if (c>=MAP_W/2-1&&c<=MAP_W/2){map[r][c]=2;continue;}
+      if ((r<5&&c<5)||(r<5&&c>MAP_W-6)||(r>MAP_H-6&&c<5)||(r>MAP_H-6&&c>MAP_W-6)){map[r][c]=Math.random()<0.4?3:0;continue;}
+      if (r>=3&&r<=8&&c>=6&&c<=12){map[r][c]=4;continue;}
+      if (r>=3&&r<=8&&c>=MAP_W-13&&c<=MAP_W-7){map[r][c]=4;continue;}
+      map[r][c]=Math.random()<0.05?3:0;
+    }
+  }
+  return map;
+}
+function genPantai() {
+  const map = [];
+  for (let r=0;r<MAP_H;r++) { map[r]=[];
+    for (let c=0;c<MAP_W;c++) {
+      if (c>=MAP_W-8){map[r][c]=1;continue;}
+      if (c>=MAP_W-12){map[r][c]=2;continue;}
+      if (c>=MAP_W-14&&Math.random()<0.2){map[r][c]=3;continue;}
+      if (r>=8&&r<=12&&c>=8&&c<=13){map[r][c]=1;continue;}
+      if (r>=3&&r<=7&&c>=4&&c<=10){map[r][c]=4;continue;}
+      if (c===MAP_W-13){map[r][c]=2;continue;}
+      map[r][c]=Math.random()<0.04?3:0;
+    }
+  }
+  return map;
+}
+function genGunung() {
+  const map = [];
+  for (let r=0;r<MAP_H;r++) { map[r]=[];
+    for (let c=0;c<MAP_W;c++) {
+      if (Math.abs(c-r)<=1){map[r][c]=1;continue;}
+      if (r>=2&&r<=10&&c>=MAP_W/2-3&&c<=MAP_W/2+3){map[r][c]=4;continue;}
+      if (Math.random()<0.2){map[r][c]=3;continue;}
+      if (r===Math.floor(MAP_H*0.7)){map[r][c]=2;continue;}
+      map[r][c]=0;
+    }
+  }
+  return map;
+}
+function genKota() {
+  const map = [];
+  for (let r=0;r<MAP_H;r++) { map[r]=[];
+    for (let c=0;c<MAP_W;c++) {
+      if (r%5===0||c%6===0){map[r][c]=2;continue;}
+      if (Math.random()<0.35){map[r][c]=4;continue;}
+      if (Math.random()<0.05){map[r][c]=3;continue;}
+      map[r][c]=0;
+    }
+  }
+  return map;
+}
+function genAngkasa() {
+  const map = [];
+  for (let r=0;r<MAP_H;r++) { map[r]=[];
+    for (let c=0;c<MAP_W;c++) {
+      if ((r===5&&c>=5&&c<=12)||(r===10&&c>=15&&c<=22)||(r===15&&c>=8&&c<=18)||(r===19&&c>=20&&c<=28)){map[r][c]=2;continue;}
+      if (r>=3&&r<=8&&c>=14&&c<=20){map[r][c]=4;continue;}
+      if (r>=12&&r<=16&&c>=2&&c<=6){map[r][c]=3;continue;}
+      if (Math.random()<0.02){map[r][c]=1;continue;}
+      map[r][c]=0;
+    }
+  }
+  return map;
+}
+function genKastil() {
+  const map = [];
+  for (let r=0;r<MAP_H;r++) { map[r]=[];
+    for (let c=0;c<MAP_W;c++) {
+      if (r===1||r===MAP_H-2||c===1||c===MAP_W-2){map[r][c]=1;continue;}
+      if (r===2||r===MAP_H-3||c===2||c===MAP_W-3){map[r][c]=4;continue;}
+      if ((r<=5&&c<=5)||(r<=5&&c>=MAP_W-6)||(r>=MAP_H-6&&c<=5)||(r>=MAP_H-6&&c>=MAP_W-6)){map[r][c]=4;continue;}
+      if (r>=6&&r<=12&&c>=8&&c<=MAP_W-9){map[r][c]=4;continue;}
+      if (r>=10&&r<=12&&c>=MAP_W/2-2&&c<=MAP_W/2+1){map[r][c]=2;continue;}
+      if (r===Math.floor(MAP_H*0.65)||c===Math.floor(MAP_W/2)){map[r][c]=2;continue;}
+      if (Math.random()<0.06){map[r][c]=3;continue;}
+      map[r][c]=0;
+    }
+  }
+  return map;
+}
+
+// ============================================================
+//  PHASER GAME
+// ============================================================
+function initGame(mapId) {
+  mapId = mapId || currentMapId || 'sekolah';
+  currentMapId = mapId;
+  const mapDef = MAPS[mapId];
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+
+  if (phaserGame) { phaserGame.destroy(true); phaserGame = null; gameScene = null; }
+
+  // Ubah background body
+  document.body.style.background = mapDef.bgColor;
+
+  phaserGame = new Phaser.Game({
+    type: Phaser.AUTO,
+    width: W, height: H,
+    backgroundColor: mapDef.bgColor,
+    parent: 'game-container',
+    physics: { default: 'arcade', arcade: { debug: false } },
+    scene: { preload, create, update }
+  });
+  // Simpan mapDef untuk dipakai scene
+  window._activeMapDef = mapDef;
+  window._activeMapData = mapDef.generateFn();
+}
+
+// ── Tilemap data ──
+function buatMapData() {
+  if (window._activeMapData) return window._activeMapData;
+  return genSekolah();
+}
+
+function preload() {
+  // Grafis programatik, tidak perlu asset
+}
+
+const TILE_COLORS = {
+  0: 0x4a7c3f, 1: 0x1a6b8a, 2: 0x8b7355, 3: 0x2d5a1b, 4: 0x5c4a3a,
+};
+
+function create() {
+  gameScene = this;
+  this.zonaSprites = [];
+  this.otherSprites = {};
+
+  const mapDef  = window._activeMapDef || MAPS.sekolah;
+  const mapData = window._activeMapData || genSekolah();
+  const tileColors = mapDef.tiles || TILE_COLORS;
+  const totalW = MAP_W * TILE;
+  const totalH = MAP_H * TILE;
+
+  // ── Gambar tilemap ──
+  this.mapGraphics = this.add.graphics();
+  for (let r = 0; r < MAP_H; r++) {
+    for (let c = 0; c < MAP_W; c++) {
+      const t = mapData[r][c];
+      const x = c * TILE, y = r * TILE;
+      const col = tileColors[t] ?? tileColors[0];
+      this.mapGraphics.fillStyle(col, 1);
+      this.mapGraphics.fillRect(x, y, TILE-1, TILE-1);
+      // Dekorasi
+      if (t === 3) {
+        this.mapGraphics.fillStyle(tileColors[3] + 0x001500, 1);
+        this.mapGraphics.fillCircle(x+TILE/2, y+TILE/2, TILE/2.5);
+      }
+      if (t === 1) {
+        this.mapGraphics.fillStyle(tileColors[1] + 0x001020, 0.5);
+        this.mapGraphics.fillRect(x+2, y+TILE/2-2, TILE-4, 4);
+      }
+      if (t === 4) {
+        this.mapGraphics.fillStyle(tileColors[4] + 0x101010, 1);
+        this.mapGraphics.fillRect(x+4, y+4, TILE-8, TILE-8);
+        this.mapGraphics.fillStyle(0x000000, 0.3);
+        this.mapGraphics.fillRect(x+TILE/2-5, y+TILE-14, 10, 10);
+      }
+      if (t === 2) {
+        this.mapGraphics.fillStyle(0xffffff, 0.08);
+        this.mapGraphics.fillRect(x+TILE/2-1, y, 2, TILE);
+      }
+      // Bintang di angkasa
+      if (mapDef.id === 'angkasa' && t === 0 && Math.random() < 0.15) {
+        this.mapGraphics.fillStyle(0xffffff, Math.random() * 0.8 + 0.2);
+        this.mapGraphics.fillCircle(x + Math.random()*TILE, y + Math.random()*TILE, 1.5);
+      }
+    }
+  }
+
+  // ── Label map ──
+  const mapLabel = mapDef.emoji + ' ' + mapDef.nama;
+  this.add.text(totalW/2, 28, mapLabel, {
+    fontFamily: 'Nunito', fontSize: '16px', fontStyle: 'bold', color: '#FFD93D',
+    stroke: '#000', strokeThickness: 4
+  }).setOrigin(0.5, 0.5);
+
+  // ── Physics world ──
+  this.physics.world.setBounds(TILE, TILE, totalW - TILE*2, totalH - TILE*2);
+
+  // ── Collider tiles ──
+  this.collideGroup = this.physics.add.staticGroup();
+  for (let r = 0; r < MAP_H; r++) {
+    for (let c = 0; c < MAP_W; c++) {
+      if (mapData[r][c] === 3 || mapData[r][c] === 4 || mapData[r][c] === 1) {
+        const block = this.add.rectangle(c*TILE+TILE/2, r*TILE+TILE/2, TILE, TILE, 0x000000, 0);
+        this.physics.add.existing(block, true);
+        this.collideGroup.add(block);
+      }
+    }
+  }
+
+  // ── Player ──
+  const startX = Math.floor(MAP_W/2) * TILE + TILE/2;
+  const startY = Math.floor(MAP_H/2) * TILE + TILE*3;
+  myPlayer.x = startX; myPlayer.y = startY;
+
+  const playerColor = mapDef.id === 'angkasa' ? 0x4D96FF : 0xFF6B35;
+  this.playerBody = this.add.circle(startX, startY, 18, playerColor);
+  this.physics.add.existing(this.playerBody);
+  this.playerBody.body.setCollideWorldBounds(true);
+  this.playerBody.body.setCircle(18);
+  this.physics.add.collider(this.playerBody, this.collideGroup);
+
+  this.playerAvatar = this.add.text(startX, startY-2, myPlayer.avatar, { fontSize:'22px' }).setOrigin(0.5,0.5);
+  this.playerLabel  = this.add.text(startX, startY+24, myPlayer.nama, {
+    fontFamily:'Nunito', fontSize:'12px', fontStyle:'bold', color:'#fff', stroke:'#000', strokeThickness:3
+  }).setOrigin(0.5,0);
+  this.playerShadow = this.add.ellipse(startX, startY+16, 32, 10, 0x000000, 0.3);
+
+  // ── Kamera ──
+  this.cameras.main.setBounds(0, 0, totalW, totalH);
+  this.cameras.main.startFollow(this.playerBody, true, 0.1, 0.1);
+
+  // ── Input ──
+  this.cursors = this.input.keyboard.createCursorKeys();
+  this.wasd = this.input.keyboard.addKeys({ up:'W', down:'S', left:'A', right:'D' });
+
+  // ── Zona soal ──
+  this.zonaGroup = this.physics.add.staticGroup();
+  this.buatZonaSoal = buatZonaSoal.bind(this);
+  if (soalList.length) this.buatZonaSoal();
+
+  window.addEventListener('resize', () => { phaserGame.scale.resize(window.innerWidth, window.innerHeight); });
+}
+
+function buatZonaSoal() {
+  // Posisi zona soal tersebar di map (hindari tepi dan bangunan)
+  const posisiZona = [
+    { c: 8,  r: 11 }, { c: 14, r: 5  }, { c: 22, r: 5  },
+    { c: 26, r: 11 }, { c: 26, r: 18 }, { c: 22, r: 19 },
+    { c: 8,  r: 18 }, { c: 14, r: 19 },
+  ];
+
+  zonaList = [];
+  this.zonaSprites.forEach(s => s.destroy());
+  this.zonaSprites = [];
+
+  posisiZona.forEach((pos, i) => {
+    if (i >= soalList.length) return;
+    const x = pos.c * TILE + TILE/2;
+    const y = pos.r * TILE + TILE/2;
+
+    // Lingkaran zona berkedip
+    const zona = this.add.circle(x, y, TILE * 1.2, 0xFFD93D, 0.25);
+    const zonaRing = this.add.circle(x, y, TILE * 1.2, 0xFFD93D, 0);
+    zonaRing.setStrokeStyle(3, 0xFFD93D, 0.8);
+
+    // Animasi pulse
+    this.tweens.add({
+      targets: [zona],
+      alpha: { from: 0.1, to: 0.35 },
+      scaleX: { from: 0.9, to: 1.05 },
+      scaleY: { from: 0.9, to: 1.05 },
+      duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      delay: i * 120
+    });
+
+    // Icon soal
+    const icon = this.add.text(x, y - 6, soalList[i].emoji || '❓', {
+      fontSize: '22px'
+    }).setOrigin(0.5, 0.5);
+    const numLabel = this.add.text(x, y + 18, `Soal ${i+1}`, {
+      fontFamily: 'Nunito', fontSize: '10px', fontStyle: 'bold',
+      color: '#FFD93D', stroke: '#000', strokeThickness: 2
+    }).setOrigin(0.5, 0);
+
+    this.zonaSprites.push(zona, zonaRing, icon, numLabel);
+    zonaList.push({ x, y, soalIdx: i, sudahDijawab: false, sprite: zona });
+  });
+}
+
+function update() {
+  if (!this.playerBody) return;
+  const body = this.playerBody.body;
+  const up    = this.cursors.up.isDown    || this.wasd.up.isDown    || mobileKeys.up;
+  const down  = this.cursors.down.isDown  || this.wasd.down.isDown  || mobileKeys.down;
+  const left  = this.cursors.left.isDown  || this.wasd.left.isDown  || mobileKeys.left;
+  const right = this.cursors.right.isDown || this.wasd.right.isDown || mobileKeys.right;
+  let vx = 0, vy = 0;
+  if (up) vy=-SPEED; if (down) vy=SPEED; if (left) vx=-SPEED; if (right) vx=SPEED;
+  if (vx!==0&&vy!==0){vx*=0.707;vy*=0.707;}
+  if (soalAktif){vx=0;vy=0;}
+  body.setVelocity(vx,vy);
+  const px=this.playerBody.x, py=this.playerBody.y;
+  this.playerAvatar.setPosition(px,py-2);
+  this.playerLabel.setPosition(px,py+22);
+  this.playerShadow.setPosition(px,py+14);
+  if (Math.abs(px-myPlayer.x)>2||Math.abs(py-myPlayer.y)>2) {
+    myPlayer.x=px; myPlayer.y=py;
+    if (socket) socket.emit('world:move',{id:myPlayer.id,x:px,y:py});
+  }
+  if (!soalAktif) {
+    for (const z of zonaList) {
+      if (z.sudahDijawab) continue;
+      const dx=px-z.x, dy=py-z.y;
+      if (Math.sqrt(dx*dx+dy*dy)<SOAL_RADIUS) { tampilSoal(z); break; }
+    }
+  }
+  for (const [id,data] of Object.entries(otherPlayers)) {
+    if (this.otherSprites[id]) {
+      const sp=this.otherSprites[id];
+      sp.circle.x=data.x; sp.circle.y=data.y;
+      sp.avatar.setPosition(data.x,data.y-2);
+      sp.label.setPosition(data.x,data.y+22);
+    }
+  }
+}
+
+// ============================================================
+//  SOAL SISTEM
+// ============================================================
+function tampilSoal(zona) {
+  soalAktif = zona;
+  sudahJawab = false;
+  const s = soalList[zona.soalIdx];
+  if (!s) return;
+
+  document.getElementById('soal-emoji').textContent = s.emoji || '❓';
+  document.getElementById('soal-text').textContent = s.pertanyaan;
+  document.getElementById('soal-badge').textContent = `❓ Soal ${zona.soalIdx + 1}`;
+  document.getElementById('soal-feedback').textContent = '';
+
+  const opsiKode = ['A','B','C','D'];
+  const opsiEl = document.getElementById('soal-opsi');
+  opsiEl.innerHTML = (s.opsi || []).map((o, i) => `
+    <button class="soal-opsi-btn" onclick="jawabSoal('${String(o).replace(/'/g,"\\'")}', this, '${String(s.jawaban).replace(/'/g,"\\'")}', ${s.poin || 100})">
+      <span class="opsi-key opsi-key-${opsiKode[i]}">${opsiKode[i]}</span>
+      ${o}
+    </button>`).join('');
+
+  document.getElementById('soal-overlay').classList.add('show');
+  mulaiTimerSoal(15, s.jawaban, s.poin || 100);
+}
+
+function mulaiTimerSoal(detik, jawabanBenar, poin) {
+  clearInterval(soalTimer);
+  let sisa = detik;
+  document.getElementById('soal-timer-text').textContent = sisa;
+  document.getElementById('soal-timer-bar').style.width = '100%';
+  document.getElementById('soal-timer-bar').style.background = 'linear-gradient(90deg,#6BCB77,#4CAF50)';
+
+  soalTimer = setInterval(() => {
+    sisa--;
+    document.getElementById('soal-timer-text').textContent = sisa;
+    document.getElementById('soal-timer-bar').style.width = (sisa/detik*100) + '%';
+    if (sisa <= 5) document.getElementById('soal-timer-bar').style.background = 'linear-gradient(90deg,#FF4757,#e84393)';
+    if (sisa <= 0) {
+      clearInterval(soalTimer);
+      if (!sudahJawab) {
+        // Waktu habis
+        document.querySelectorAll('.soal-opsi-btn').forEach(b => b.disabled = true);
+        // Highlight jawaban benar
+        document.querySelectorAll('.soal-opsi-btn').forEach(b => {
+          if (b.textContent.trim().includes(jawabanBenar)) b.classList.add('reveal');
+        });
+        document.getElementById('soal-feedback').innerHTML = `⏰ <span style="color:#FF4757">Waktu habis! Jawaban: ${jawabanBenar}</span>`;
+        setTimeout(tutupSoal, 2500);
+      }
+    }
+  }, 1000);
+}
+
+function jawabSoal(jawaban, btnEl, jawabanBenar, poin) {
+  if (sudahJawab) return;
+  sudahJawab = true;
+  clearInterval(soalTimer);
+  document.querySelectorAll('.soal-opsi-btn').forEach(b => b.disabled = true);
+
+  const benar = String(jawaban).trim().toLowerCase() === String(jawabanBenar).trim().toLowerCase();
+
+  // Highlight
+  document.querySelectorAll('.soal-opsi-btn').forEach(b => {
+    const teks = b.textContent.trim();
+    if (teks.includes(jawabanBenar)) b.classList.add('benar');
+  });
+  if (!benar) btnEl.classList.remove('benar');
+  if (!benar) btnEl.classList.add('salah');
+
+  if (benar) {
+    myPlayer.skor += poin;
+    document.getElementById('hud-skor-val').textContent = myPlayer.skor;
+    document.getElementById('soal-feedback').innerHTML = `🎉 <span style="color:#27ae60">Benar! +${poin} XP</span>`;
+    tampilSkorPopup('+' + poin + ' XP', true);
+    if (soalAktif) soalAktif.sudahDijawab = true;
+    // Ubah zona jadi abu (sudah dijawab)
+    if (soalAktif && soalAktif.sprite) {
+      soalAktif.sprite.setFillStyle(0x888888, 0.15);
+    }
+  } else {
+    document.getElementById('soal-feedback').innerHTML = `❌ <span style="color:#e74c3c">Salah! Jawaban: ${jawabanBenar}</span>`;
+    tampilSkorPopup('Salah!', false);
+  }
+
+  if (socket) socket.emit('world:jawab', { id: myPlayer.id, soalIdx: soalAktif?.soalIdx, benar, poin: benar ? poin : 0 });
+  setTimeout(tutupSoal, 2200);
+}
+
+function tutupSoal() {
+  document.getElementById('soal-overlay').classList.remove('show');
+  soalAktif = null;
+  clearInterval(soalTimer);
+}
+
+// ============================================================
+//  SOCKET.IO MULTIPLAYER
+// ============================================================
+function connectSocket() {
+  socket = io(WS_SERVER, { transports: ['websocket', 'polling'] });
+
+  socket.on('connect', () => console.log('🌍 Connected'));
+
+  // ── Voting events ──
+  socket.on('world:voting_state', ({ votes: v, pemain, timerSisa }) => {
+    votes = v || {};
+    updateVotingCards();
+    updateVotingPemain(pemain || []);
+    // Sync timer jika ada
+    if (timerSisa !== undefined && timerSisa > 0) {
+      clearInterval(votingInterval);
+      mulaiVotingTimer(timerSisa);
+    }
+  });
+  socket.on('world:vote_update', ({ votes: v }) => {
+    votes = v; updateVotingCards();
+  });
+  socket.on('world:voting_pemain', ({ pemain }) => {
+    updateVotingPemain(pemain);
+  });
+  socket.on('world:voting_end', ({ winner }) => {
+    clearInterval(votingInterval);
+    currentMapId = winner;
+    // Update semua vote bar sebagai selesai
+    MAP_ORDER.forEach(id => {
+      const card = document.getElementById('vcard-' + id);
+      if (card && id === winner) card.classList.add('winner');
+    });
+    selesaiVotingDenganPemenang(winner);
+  });
+
+  // ── World events ──
+  socket.on('world:players', (players) => {
+    players.forEach(p => { if (p.id !== myPlayer.id) tambahOtherPlayer(p); });
+    updateOnlineCount();
+  });
+  socket.on('world:player_join', (p) => {
+    if (p.id !== myPlayer.id) {
+      tambahOtherPlayer(p);
+      tampilNotif(`${p.avatar} ${p.nama} masuk ke dunia!`, 'info');
+      updateOnlineCount();
+    }
+  });
+  socket.on('world:player_move', ({ id, x, y }) => {
+    if (id !== myPlayer.id && otherPlayers[id]) { otherPlayers[id].x=x; otherPlayers[id].y=y; }
+  });
+  socket.on('world:player_leave', ({ id }) => {
+    if (gameScene?.otherSprites[id]) {
+      const sp = gameScene.otherSprites[id];
+      sp.circle.destroy(); sp.avatar.destroy(); sp.label.destroy();
+      delete gameScene.otherSprites[id];
+    }
+    delete otherPlayers[id];
+    updateOnlineCount();
+  });
+}
+
+function selesaiVotingDenganPemenang(winner) {
+  const m = MAPS[winner] || MAPS.sekolah;
+  document.getElementById('result-map-emoji').textContent = m.emoji;
+  document.getElementById('result-map-nama').textContent = m.nama;
+  document.getElementById('voting-result-banner').style.display = 'block';
+  clearInterval(votingInterval);
+  document.getElementById('voting-timer-num').textContent = '0';
+  setTimeout(() => {
+    document.getElementById('voting-overlay').classList.remove('show');
+    socket.emit('world:join', { id: myPlayer.id, nama: myPlayer.nama, avatar: myPlayer.avatar, x: myPlayer.x, y: myPlayer.y });
+    initGame(winner);
+    loadSoal();
+  }, 2500);
+}
+
+function tambahOtherPlayer(p) {
+  otherPlayers[p.id] = p;
+  if (!gameScene) return;
+  const circle = gameScene.add.circle(p.x, p.y, 16, 0x4D96FF);
+  const avatar = gameScene.add.text(p.x, p.y - 2, p.avatar, { fontSize: '20px' }).setOrigin(0.5, 0.5);
+  const label  = gameScene.add.text(p.x, p.y + 20, p.nama, {
+    fontFamily: 'Nunito', fontSize: '11px', fontStyle: 'bold',
+    color: '#fff', stroke: '#000', strokeThickness: 2
+  }).setOrigin(0.5, 0);
+  gameScene.otherSprites[p.id] = { circle, avatar, label };
+  updatePemainList();
+}
+
+function updateOnlineCount() {
+  const count = Object.keys(otherPlayers).length + 1;
+  document.getElementById('hud-online').textContent = count;
+  updatePemainList();
+}
+
+function updatePemainList() {
+  const body = document.getElementById('pemain-list-body');
+  const semua = [myPlayer, ...Object.values(otherPlayers)];
+  body.innerHTML = semua.map(p => `
+    <div class="pemain-row">
+      <div class="pemain-dot"></div>
+      <span>${p.avatar} ${p.nama}${p.id === myPlayer.id ? ' (Kamu)' : ''}</span>
+    </div>`).join('');
+}
+
+function togglePemainList() {
+  document.getElementById('pemain-list').classList.toggle('show');
+}
+
+// ============================================================
+//  UI HELPERS
+// ============================================================
+function tampilNotif(msg, type='') {
+  const el = document.getElementById('notif');
+  el.textContent = msg;
+  el.className = type ? `show ${type}` : 'show';
+  setTimeout(() => el.className = '', 3000);
+}
+
+function tampilSkorPopup(teks, benar) {
+  const el = document.createElement('div');
+  el.className = 'skor-popup';
+  el.style.color = benar ? '#6BCB77' : '#FF4757';
+  el.style.left = (window.innerWidth/2 - 40) + 'px';
+  el.style.top  = (window.innerHeight/2 - 80) + 'px';
+  el.textContent = teks;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1300);
+}
+
+// ── Mobile joystick ──
+function joyDown(dir) { mobileKeys[dir] = true; }
+function joyUp(dir)   { mobileKeys[dir] = false; }
+
+// ── Coba ambil token dari localStorage (kalau sudah login via belajar-seru.html) ──
+window.addEventListener('load', () => {
+  const savedNama   = localStorage.getItem('kb_nama');
+  const savedAvatar = localStorage.getItem('kb_avatar');
+  if (savedNama)   document.getElementById('inp-nama').value = savedNama;
+  if (savedAvatar) document.getElementById('inp-avatar').value = savedAvatar;
+});
+</script>
+
+<!-- ── Socket.io world handler (tambahkan ke src/socket/world.js) ──
+Tambahkan di server.js:
+  require('./socket/world')(io);
+-->
+</body>
+</html>
