@@ -1530,7 +1530,7 @@
 // ============================================================
 //  CONFIG
 // ============================================================
-const API = 'http://localhost:3000/api';
+const API = io('https://kitabelajar-production.up.railway.app');
 let token = localStorage.getItem('kb_token') || null;
 let currentUser = JSON.parse(localStorage.getItem('kb_user') || 'null');
 let currentRole = 'murid'; // for login page
