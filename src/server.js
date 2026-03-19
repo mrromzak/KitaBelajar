@@ -25,6 +25,11 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
 
+// ── Halaman Utama ──
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public', 'belajar-seru.html'));
+});
+
 // Routes
 app.use('/api/auth',      require('./routes/auth'));
 app.use('/api/kelas',     require('./routes/kelas'));
@@ -140,4 +145,3 @@ httpServer.listen(PORT, () => {
 });
 
 module.exports = app;
-
