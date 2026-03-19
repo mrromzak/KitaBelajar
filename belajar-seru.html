@@ -241,7 +241,130 @@
   .btn-play { background: var(--orange); color: white; border: none; padding: 14px 36px; border-radius: 50px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 16px; cursor: pointer; transition: all 0.2s; }
   .btn-play:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(255,107,53,0.4); }
 
-  /* ===== MODAL ===== */
+  /* ===== ZEP QUIZ ===== */
+  .zep-page { min-height: 100vh; background: #1a1a2e; color: white; font-family: 'Nunito', sans-serif; }
+  .zep-navbar { background: rgba(255,255,255,0.06); backdrop-filter: blur(10px); padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); position: sticky; top:0; z-index:10; }
+  .zep-logo { font-family: 'Fredoka One', cursive; font-size: 24px; color: #FFD93D; }
+  .zep-btn { padding: 9px 22px; border-radius: 50px; border: none; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+  .zep-btn:hover { transform: translateY(-2px); }
+  .zep-btn-primary { background: linear-gradient(135deg, #FF6B35, #FF8C42); color: white; }
+  .zep-btn-secondary { background: rgba(255,255,255,0.12); color: white; border: 1.5px solid rgba(255,255,255,0.2); }
+  .zep-btn-green { background: linear-gradient(135deg, #6BCB77, #4CAF50); color: white; }
+  .zep-btn-blue { background: linear-gradient(135deg, #4D96FF, #2979FF); color: white; }
+  .zep-btn-lg { padding: 16px 40px; font-size: 17px; }
+  .zep-lobby { max-width: 820px; margin: 0 auto; padding: 36px 24px; }
+  .zep-room-code { background: linear-gradient(135deg, #16213e, #0f3460); border-radius: 24px; padding: 32px; text-align: center; margin-bottom: 28px; border: 1px solid rgba(255,255,255,0.1); }
+  .zep-room-code .label { font-size: 13px; opacity: 0.6; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
+  .zep-code-big { font-family: 'Fredoka One', cursive; font-size: 60px; letter-spacing: 8px; color: #FFD93D; text-shadow: 0 4px 20px rgba(255,217,61,0.4); }
+  .zep-code-hint { font-size: 13px; opacity: 0.5; margin-top: 8px; }
+  .zep-pemain-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .zep-pemain-card { background: rgba(255,255,255,0.08); border-radius: 16px; padding: 16px 12px; text-align: center; border: 1px solid rgba(255,255,255,0.1); animation: fadeInUp 0.4s ease; }
+  @keyframes fadeInUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  .zep-pemain-avatar { font-size: 34px; margin-bottom: 6px; }
+  .zep-pemain-nama { font-size: 12px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .zep-waiting { text-align: center; padding: 32px; opacity: 0.5; font-size: 15px; }
+  .zep-soal-wrap { max-width: 760px; margin: 0 auto; padding: 24px; }
+  .zep-soal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .zep-soal-num { background: rgba(255,255,255,0.12); padding: 8px 20px; border-radius: 50px; font-size: 14px; font-weight: 800; }
+  .zep-skor-live { background: linear-gradient(135deg, #FFD93D, #FF6B35); color: #1a1a2e; padding: 8px 20px; border-radius: 50px; font-weight: 900; font-size: 15px; }
+  .zep-timer-ring { position: relative; width: 68px; height: 68px; flex-shrink:0; }
+  .zep-timer-ring svg { transform: rotate(-90deg); }
+  .zep-timer-ring circle { fill: none; stroke-width: 6; }
+  .zep-timer-bg { stroke: rgba(255,255,255,0.15); }
+  .zep-timer-fg { stroke: #FFD93D; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+  .zep-timer-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Fredoka One', cursive; font-size: 20px; color: #FFD93D; }
+  .zep-progress { height: 6px; background: rgba(255,255,255,0.1); border-radius: 50px; margin-bottom: 24px; overflow: hidden; }
+  .zep-progress-fill { height: 100%; background: linear-gradient(90deg, #4D96FF, #C77DFF); border-radius: 50px; transition: width 0.4s ease; }
+  .zep-soal-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 28px; padding: 36px 28px; text-align: center; margin-bottom: 24px; }
+  .zep-soal-emoji { font-size: 52px; margin-bottom: 14px; }
+  .zep-soal-text { font-family: 'Fredoka One', cursive; font-size: clamp(18px, 3vw, 26px); line-height: 1.4; color: white; }
+  .zep-opsi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .zep-opsi { border-radius: 18px; padding: 20px 14px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 15px; cursor: pointer; transition: all 0.2s; color: white; border: none; text-align: center; }
+  .zep-opsi:hover:not(.disabled) { transform: scale(1.04); filter: brightness(1.1); }
+  .zep-opsi-A { background: linear-gradient(135deg, #e63946, #c1121f); }
+  .zep-opsi-B { background: linear-gradient(135deg, #4D96FF, #2979FF); }
+  .zep-opsi-C { background: linear-gradient(135deg, #6BCB77, #388e3c); }
+  .zep-opsi-D { background: linear-gradient(135deg, #FFD93D, #f9a825); color: #1a1a2e; }
+  .zep-opsi.disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+  .zep-opsi.benar { animation: pop 0.4s ease; box-shadow: 0 0 0 4px #6BCB77, 0 8px 24px rgba(107,203,119,0.5); }
+  .zep-opsi.salah { animation: shake 0.4s ease; opacity: 0.4; }
+  .zep-opsi.reveal-benar { box-shadow: 0 0 0 4px #6BCB77; opacity: 1 !important; }
+  .zep-sudah-jawab { text-align: center; padding: 16px; font-size: 20px; font-weight: 800; animation: fadeInUp 0.3s ease; }
+  .zep-hasil-soal { background: rgba(255,255,255,0.06); border-radius: 20px; padding: 20px; margin-top: 20px; animation: fadeInUp 0.4s ease; }
+  .zep-lb-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .zep-lb-rank { font-family: 'Fredoka One', cursive; font-size: 18px; width: 28px; text-align: center; flex-shrink:0; }
+  .zep-lb-avatar { font-size: 22px; flex-shrink:0; }
+  .zep-lb-nama { flex: 1; font-weight: 700; font-size: 14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .zep-lb-skor { font-family: 'Fredoka One', cursive; font-size: 18px; color: #FFD93D; }
+  .zep-lb-benar { font-size: 16px; margin-left: 6px; flex-shrink:0; }
+  .zep-final { max-width: 640px; margin: 0 auto; padding: 36px 24px; text-align: center; }
+  .zep-podium { display: flex; align-items: flex-end; justify-content: center; gap: 12px; margin: 28px 0; }
+  .zep-podium-item { text-align: center; }
+  .zep-podium-avatar { font-size: 36px; margin-bottom: 6px; }
+  .zep-podium-nama { font-size: 12px; font-weight: 800; margin-bottom: 6px; max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .zep-podium-skor { font-family: 'Fredoka One', cursive; font-size: 14px; color: #FFD93D; }
+  .zep-podium-bar { border-radius: 12px 12px 0 0; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .zep-podium-1 .zep-podium-bar { width: 88px; height: 120px; background: linear-gradient(135deg, #FFD93D, #FF6B35); }
+  .zep-podium-2 .zep-podium-bar { width: 76px; height: 90px; background: linear-gradient(135deg, #adb5bd, #6c757d); }
+  .zep-podium-3 .zep-podium-bar { width: 76px; height: 68px; background: linear-gradient(135deg, #cd7f32, #a0522d); }
+  .zep-join-wrap { max-width: 440px; margin: 60px auto; padding: 0 24px; text-align: center; }
+  .zep-join-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 28px; padding: 40px 32px; }
+  .zep-join-card h2 { font-family: 'Fredoka One', cursive; font-size: 28px; margin-bottom: 8px; }
+  .zep-input { width: 100%; padding: 14px 16px; border-radius: 14px; border: 2px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color: white; font-family: 'Nunito', sans-serif; font-size: 20px; font-weight: 800; outline: none; transition: border-color 0.2s; text-align: center; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 14px; }
+  .zep-input:focus { border-color: #FFD93D; }
+  .zep-input::placeholder { letter-spacing: 1px; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.3); }
+  .zep-wait-screen { text-align: center; padding: 60px 24px; }
+  .zep-pulse { animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+  .zep-guru-panel { max-width: 880px; margin: 0 auto; padding: 28px 24px; }
+  .zep-quiz-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .zep-quiz-item { background: rgba(255,255,255,0.07); border: 2px solid rgba(255,255,255,0.1); border-radius: 18px; padding: 18px; cursor: pointer; transition: all 0.2s; }
+  .zep-quiz-item:hover { background: rgba(255,255,255,0.12); transform: translateY(-3px); }
+  .zep-quiz-item.selected { border-color: #FFD93D; background: rgba(255,217,61,0.08); }
+  .zep-quiz-item h4 { font-size: 15px; font-weight: 800; margin-bottom: 4px; }
+  .zep-quiz-item p { font-size: 12px; opacity: 0.6; }
+  .zep-quiz-badge { display: inline-block; background: rgba(255,255,255,0.15); padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 700; margin-top: 8px; }
+  .zep-next-btn { position: fixed; bottom: 28px; right: 28px; padding: 14px 32px; border-radius: 50px; background: linear-gradient(135deg, #6BCB77, #4CAF50); color: white; border: none; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 16px; cursor: pointer; box-shadow: 0 8px 24px rgba(107,203,119,0.4); transition: all 0.2s; z-index: 50; }
+  .zep-next-btn:hover { transform: translateY(-3px); }
+
+  .kuis-filter-btn {
+    padding: 7px 16px; border-radius: 50px; border: 2px solid #E8E8E8;
+    background: white; font-family: 'Nunito', sans-serif; font-weight: 700;
+    font-size: 13px; cursor: pointer; transition: all 0.2s; color: var(--muted);
+  }
+  .kuis-filter-btn:hover { border-color: var(--orange); color: var(--orange); }
+  .kuis-filter-btn.active { background: var(--orange); border-color: var(--orange); color: white; }
+  .kuis-filter-btn#filter-deadline.active { background: var(--red); border-color: var(--red); }
+
+  /* Deadline urgent card di dashboard murid */
+  .deadline-alert-card {
+    background: linear-gradient(135deg, #fff5f5, #fff0f0);
+    border: 2px solid #FFB3B3; border-radius: 18px;
+    padding: 16px 20px; margin-bottom: 28px;
+  }
+  .deadline-alert-title { font-weight: 800; font-size: 15px; color: var(--red); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .deadline-item {
+    display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+    background: white; border-radius: 12px; margin-bottom: 8px;
+    cursor: pointer; transition: all 0.2s; border: 1.5px solid transparent;
+  }
+  .deadline-item:hover { border-color: var(--red); transform: translateX(3px); }
+  .deadline-item:last-child { margin-bottom: 0; }
+  .deadline-item-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .deadline-item-info { flex: 1; }
+  .deadline-item-info h4 { font-size: 14px; font-weight: 800; margin-bottom: 2px; }
+  .deadline-item-info p { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .deadline-badge { padding: 4px 10px; border-radius: 50px; font-size: 11px; font-weight: 800; white-space: nowrap; flex-shrink: 0; }
+  .deadline-badge.urgent { background: #FFF0F0; color: var(--red); }
+  .deadline-badge.soon { background: #FFF8E1; color: #E6A817; }
+  /* ── AI Materi Source Cards ── */
+  .ai-src-card {
+    border: 2.5px solid #E8E8E8; border-radius: 16px; padding: 16px 10px;
+    text-align: center; cursor: pointer; transition: all 0.2s; background: white;
+  }
+  .ai-src-card:hover { border-color: #7b2ff7; background: #F9F5FF; transform: translateY(-2px); }
+  .ai-src-card.active { border-color: #7b2ff7; background: #F3EEFF; }
+
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
   .modal-overlay.open { display: flex; }
   .modal { background: white; border-radius: 24px; padding: 32px; max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
@@ -510,11 +633,17 @@
       <div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏫</div><p>Kamu belum bergabung ke kelas manapun.<br>Minta kode ke gurumu!</p></div>
     </div>
 
+    <!-- Deadline Alert — muncul otomatis kalau ada tugas deadline dekat -->
+    <div class="deadline-alert-card" id="deadline-alert" style="display:none">
+      <div class="deadline-alert-title">⏰ Tugas Segera Deadline!</div>
+      <div id="deadline-alert-list"></div>
+    </div>
+
     <div class="section-title">🎮 Games Belajar</div>
     <div class="games-grid">
       <div class="game-card gc1" onclick="startQuiz()"><div class="game-icon">⚡</div><h4>Quiz Kilat</h4><p>Jawab secepat mungkin!</p></div>
-      <div class="game-card gc2"><div class="game-icon">🧩</div><h4>Word Puzzle</h4><p>Segera hadir!</p></div>
-      <div class="game-card gc3"><div class="game-icon">🃏</div><h4>Flashcard</h4><p>Segera hadir!</p></div>
+      <div class="game-card gc2" onclick="bukaZepQuizMurid()" style="background:linear-gradient(135deg,#7b2ff7,#a64cff)"><div class="game-icon">🎯</div><h4>Zep Quiz</h4><p>Main bareng teman!</p></div>
+      <div class="game-card gc3" onclick="window.open('zep-world.html','_blank')" style="background:linear-gradient(135deg,#1a6b3a,#2ecc71)"><div class="game-icon">🌍</div><h4>Belajar World</h4><p>Jelajahi dunia belajar!</p></div>
       <div class="game-card gc4" onclick="loadLeaderboardPage()"><div class="game-icon">🏆</div><h4>Leaderboard</h4><p>Peringkat kelasmu</p></div>
     </div>
   </div>
@@ -548,9 +677,14 @@
     <!-- Kelas Grid -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <div class="section-title" style="margin-bottom:0">🏫 Kelas Saya</div>
-      <button onclick="openModal('modal-buat-kelas')" style="background:var(--blue);color:white;border:none;padding:10px 22px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
-        ＋ Buat Kelas
-      </button>
+      <div style="display:flex;gap:8px">
+        <button onclick="bukaZepQuizGuru()" style="background:linear-gradient(135deg,#7b2ff7,#a64cff);color:white;border:none;padding:10px 22px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          🎯 Host Zep Quiz
+        </button>
+        <button onclick="openModal('modal-buat-kelas')" style="background:var(--blue);color:white;border:none;padding:10px 22px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          ＋ Buat Kelas
+        </button>
+      </div>
     </div>
     <div class="kelas-grid" id="guru-kelas-grid">
       <div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏫</div><p>Belum ada kelas. Buat kelas pertamamu!</p></div>
@@ -564,6 +698,164 @@
       </div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:14px;font-weight:600">Daftar mata pelajaran yang bisa dipilih saat tambah materi:</div>
       <div id="guru-mapel-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ZEP QUIZ: MURID JOIN ========== -->
+<div class="page zep-page" id="page-zep-join">
+  <nav class="zep-navbar">
+    <div class="zep-logo">🎯 Zep Quiz</div>
+    <button class="zep-btn zep-btn-secondary" onclick="showPage('page-murid')">← Kembali</button>
+  </nav>
+  <div class="zep-join-wrap">
+    <div class="zep-join-card">
+      <div style="font-size:56px;margin-bottom:12px">🎯</div>
+      <h2>Join Quiz Live!</h2>
+      <p style="opacity:.6;font-size:14px;margin-bottom:28px">Masukkan kode dari gurumu</p>
+      <input class="zep-input" id="zep-join-kode" type="text" maxlength="6" placeholder="Contoh: ABC123" oninput="this.value=this.value.toUpperCase()">
+      <button class="zep-btn zep-btn-primary zep-btn-lg" style="width:100%" onclick="zepMuridJoin()">🚀 Masuk Room!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ZEP QUIZ: MURID TUNGGU ========== -->
+<div class="page zep-page" id="page-zep-wait">
+  <nav class="zep-navbar">
+    <div class="zep-logo">🎯 Zep Quiz</div>
+    <button class="zep-btn zep-btn-secondary" onclick="zepMuridKeluar()">Keluar</button>
+  </nav>
+  <div class="zep-wait-screen">
+    <div style="font-size:64px;margin-bottom:16px">⏳</div>
+    <h2 style="font-family:'Fredoka One',cursive;font-size:28px;margin-bottom:8px">Menunggu guru memulai...</h2>
+    <p style="opacity:.6;margin-bottom:28px" id="zep-wait-judul">Quiz akan segera dimulai</p>
+    <div class="zep-code-big zep-pulse" id="zep-wait-kode">------</div>
+    <p style="opacity:.4;font-size:13px;margin-top:8px">Kode Room</p>
+    <div id="zep-wait-pemain" style="margin-top:32px">
+      <p style="opacity:.5;font-size:14px;margin-bottom:12px">Pemain yang sudah masuk:</p>
+      <div class="zep-pemain-grid" id="zep-wait-pemain-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ZEP QUIZ: SOAL (MURID) ========== -->
+<div class="page zep-page" id="page-zep-soal">
+  <nav class="zep-navbar">
+    <div class="zep-soal-num" id="zep-soal-num-nav">Soal 1/5</div>
+    <div class="zep-skor-live">⭐ <span id="zep-my-skor">0</span></div>
+    <div class="zep-timer-ring" id="zep-timer-ring">
+      <svg width="68" height="68" viewBox="0 0 68 68">
+        <circle class="zep-timer-bg" cx="34" cy="34" r="28"/>
+        <circle class="zep-timer-fg" id="zep-timer-circle" cx="34" cy="34" r="28" stroke-dasharray="175.9" stroke-dashoffset="0"/>
+      </svg>
+      <div class="zep-timer-text" id="zep-timer-num">15</div>
+    </div>
+  </nav>
+  <div class="zep-soal-wrap">
+    <div class="zep-progress"><div class="zep-progress-fill" id="zep-soal-progress" style="width:0%"></div></div>
+    <div class="zep-soal-card">
+      <div class="zep-soal-emoji" id="zep-soal-emoji">❓</div>
+      <div class="zep-soal-text" id="zep-soal-text">Memuat soal...</div>
+    </div>
+    <div id="zep-opsi-container"></div>
+    <div id="zep-hasil-feedback" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ========== ZEP QUIZ: HASIL SOAL (MURID) ========== -->
+<div class="page zep-page" id="page-zep-hasil-soal">
+  <nav class="zep-navbar">
+    <div class="zep-logo">🎯 Zep Quiz</div>
+    <div class="zep-skor-live">⭐ <span id="zep-hasil-skor-nav">0</span></div>
+  </nav>
+  <div class="zep-soal-wrap">
+    <div id="zep-hasil-soal-content" style="text-align:center;padding:20px 0"></div>
+    <div class="zep-hasil-soal">
+      <div style="font-weight:800;font-size:15px;margin-bottom:14px;opacity:.7">🏆 Leaderboard Sementara</div>
+      <div id="zep-lb-sementara"></div>
+    </div>
+    <p style="text-align:center;opacity:.4;font-size:13px;margin-top:16px" class="zep-pulse">Soal berikutnya sebentar lagi...</p>
+  </div>
+</div>
+
+<!-- ========== ZEP QUIZ: FINAL MURID ========== -->
+<div class="page zep-page" id="page-zep-final">
+  <nav class="zep-navbar">
+    <div class="zep-logo">🎯 Zep Quiz</div>
+    <button class="zep-btn zep-btn-secondary" onclick="showPage('page-murid')">🏠 Kembali</button>
+  </nav>
+  <div class="zep-final">
+    <div style="font-size:64px;margin-bottom:12px">🎉</div>
+    <h2 style="font-family:'Fredoka One',cursive;font-size:32px;margin-bottom:6px" id="zep-final-judul">Quiz Selesai!</h2>
+    <p style="opacity:.6;margin-bottom:8px" id="zep-final-posisi">Kamu di posisi #1</p>
+    <div style="font-family:'Fredoka One',cursive;font-size:56px;color:#FFD93D;margin:16px 0" id="zep-final-skor">0</div>
+    <p style="opacity:.5;font-size:14px;margin-bottom:32px">Total Poin</p>
+    <div class="zep-podium" id="zep-podium"></div>
+    <div class="zep-hasil-soal" id="zep-final-lb" style="text-align:left"></div>
+    <div style="margin-top:28px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button class="zep-btn zep-btn-primary zep-btn-lg" onclick="bukaZepQuizMurid()">🔄 Main Lagi</button>
+      <button class="zep-btn zep-btn-secondary zep-btn-lg" onclick="showPage('page-murid')">🏠 Dashboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ZEP QUIZ: GURU HOST ========== -->
+<div class="page zep-page" id="page-zep-guru">
+  <nav class="zep-navbar">
+    <div class="zep-logo">🎯 Zep Quiz — Host</div>
+    <div style="display:flex;gap:10px">
+      <button class="zep-btn zep-btn-secondary" id="zep-guru-back-btn" onclick="zepGuruTutupRoom()">← Keluar</button>
+      <button class="zep-btn zep-btn-green" id="zep-guru-start-btn" onclick="zepGuruMulai()" style="display:none">▶ Mulai Game!</button>
+    </div>
+  </nav>
+
+  <!-- Step 1: Pilih Quiz -->
+  <div class="zep-guru-panel" id="zep-guru-step1">
+    <h2 style="font-family:'Fredoka One',cursive;font-size:26px;margin-bottom:6px">Pilih Quiz untuk Dimainkan</h2>
+    <p style="opacity:.6;font-size:14px;margin-bottom:24px">Pilih salah satu quiz kamu, lalu buat room.</p>
+    <div class="zep-quiz-grid" id="zep-quiz-list"></div>
+    <button class="zep-btn zep-btn-primary zep-btn-lg" onclick="zepGuruBuatRoom()" id="zep-buat-room-btn" style="display:none">🚀 Buat Room</button>
+  </div>
+
+  <!-- Step 2: Lobby Room -->
+  <div class="zep-lobby" id="zep-guru-lobby" style="display:none">
+    <div class="zep-room-code">
+      <div class="label">Kode Room — Bagikan ke Murid!</div>
+      <div class="zep-code-big" id="zep-guru-kode">------</div>
+      <div class="zep-code-hint">Murid buka menu Zep Quiz → masukkan kode ini</div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-weight:800;font-size:15px"><span id="zep-guru-jumlah-pemain">0</span> Pemain</div>
+      <div style="opacity:.5;font-size:13px" id="zep-guru-quiz-label"></div>
+    </div>
+    <div class="zep-pemain-grid" id="zep-guru-pemain-grid">
+      <div class="zep-waiting">⏳ Menunggu murid bergabung...</div>
+    </div>
+  </div>
+
+  <!-- Step 3: Live (Guru lihat leaderboard) -->
+  <div class="zep-lobby" id="zep-guru-live" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-family:'Fredoka One',cursive;font-size:22px" id="zep-guru-live-soal">Soal 1/5</div>
+      <div style="opacity:.6;font-size:14px" id="zep-guru-live-timer">⏱ 15</div>
+    </div>
+    <div style="background:rgba(255,255,255,.06);border-radius:18px;padding:20px;margin-bottom:20px">
+      <div style="font-size:13px;opacity:.5;margin-bottom:8px">Soal Sekarang:</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:18px" id="zep-guru-live-pertanyaan">–</div>
+    </div>
+    <div style="font-weight:800;font-size:15px;margin-bottom:12px;opacity:.7">Live Leaderboard</div>
+    <div id="zep-guru-lb"></div>
+  </div>
+
+  <!-- Step 4: Final Guru -->
+  <div class="zep-final" id="zep-guru-final" style="display:none">
+    <div style="font-size:56px;margin-bottom:12px">🏆</div>
+    <h2 style="font-family:'Fredoka One',cursive;font-size:32px;margin-bottom:24px" id="zep-guru-final-judul">Game Selesai!</h2>
+    <div class="zep-podium" id="zep-guru-podium"></div>
+    <div class="zep-hasil-soal" id="zep-guru-final-lb" style="text-align:left"></div>
+    <div style="margin-top:28px;display:flex;gap:12px;justify-content:center">
+      <button class="zep-btn zep-btn-primary zep-btn-lg" onclick="zepGuruReset()">🔄 Main Lagi</button>
+      <button class="zep-btn zep-btn-secondary zep-btn-lg" onclick="showPage('page-guru')">🏠 Dashboard</button>
     </div>
   </div>
 </div>
@@ -633,10 +925,19 @@
     <div>
       <div class="tabs">
         <button class="tab-btn active" id="tab-materi-btn" onclick="switchKelasTab('materi')">📚 Materi</button>
-        <button class="tab-btn" id="tab-kuis-btn" onclick="switchKelasTab('kuis')">📋 Kuis</button>
+        <button class="tab-btn" id="tab-kuis-btn" onclick="switchKelasTab('kuis')">📋 Tugas & Kuis</button>
       </div>
       <div id="kelas-stream"></div>
-      <div id="kelas-kuis-stream" style="display:none"></div>
+      <div id="kelas-kuis-stream" style="display:none">
+        <!-- Filter bar -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap" id="kuis-filter-bar">
+          <button class="kuis-filter-btn active" onclick="filterKuis('semua')" id="filter-semua">📋 Semua</button>
+          <button class="kuis-filter-btn" onclick="filterKuis('fun')" id="filter-fun">⚡ Fun Quiz</button>
+          <button class="kuis-filter-btn" onclick="filterKuis('pr')" id="filter-pr">📝 Tugas/PR</button>
+          <button class="kuis-filter-btn" onclick="filterKuis('deadline')" id="filter-deadline">⏰ Deadline Dekat</button>
+        </div>
+        <div id="kuis-list-container"></div>
+      </div>
     </div>
     <!-- sidebar -->
     <div class="kelas-sidebar">
@@ -691,6 +992,8 @@
 <div class="modal-overlay" id="modal-buat-kuis">
   <div class="modal" style="max-width:520px;max-height:92vh;overflow-y:auto">
     <h3>📋 Buat Kuis</h3>
+
+    <!-- Tipe Kuis -->
     <div class="form-group">
       <label>Tipe Kuis</label>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
@@ -706,6 +1009,7 @@
         </div>
       </div>
     </div>
+
     <div class="form-group">
       <label>Judul Kuis</label>
       <input type="text" id="kuis-judul" placeholder="contoh: Quiz Bab 3 Pecahan">
@@ -723,8 +1027,24 @@
       <label>Durasi per Soal (detik)</label>
       <input type="number" id="kuis-durasi" value="15" min="5" max="120">
     </div>
+
+    <!-- Tab Sumber Soal -->
     <div class="form-group">
-      <label>Pilih Soal</label>
+      <label>Sumber Soal</label>
+      <div style="display:flex;gap:0;border:2px solid #E8E8E8;border-radius:12px;overflow:hidden;margin-top:6px">
+        <button id="kuis-tab-bank" onclick="switchKuisSoalTab('bank')"
+          style="flex:1;padding:10px;border:none;background:var(--orange);color:white;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;transition:all .2s">
+          📋 Bank Soal Saya
+        </button>
+        <button id="kuis-tab-ai" onclick="switchKuisSoalTab('ai')"
+          style="flex:1;padding:10px;border:none;background:white;color:var(--muted);font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;transition:all .2s">
+          🤖 Generate dengan AI
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB: Bank Soal -->
+    <div id="kuis-panel-bank">
       <div style="background:#F8F9FA;border-radius:12px;padding:10px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
         <select id="kuis-soal-mapel-filter" onchange="filterSoalKuis()" style="flex:1;padding:8px 10px;border:2px solid #eee;border-radius:8px;font-family:Nunito,sans-serif;font-size:13px;outline:none">
           <option value="">Semua Mapel</option>
@@ -736,8 +1056,68 @@
       <div id="kuis-soal-list" style="max-height:200px;overflow-y:auto;border:2px solid #eee;border-radius:12px;padding:8px">
         <div style="text-align:center;padding:20px;color:var(--muted)">Memuat soal...</div>
       </div>
-      <div style="font-size:12px;color:var(--muted);margin-top:6px"><span id="kuis-soal-count">0</span> soal dipilih</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px"><span id="kuis-soal-count">0</span> soal dipilih dari bank soal</div>
     </div>
+
+    <!-- TAB: Generate AI -->
+    <div id="kuis-panel-ai" style="display:none">
+      <div style="background:linear-gradient(135deg,#F3EEFF,#EEF5FF);border-radius:14px;padding:14px;margin-bottom:12px">
+        <div style="font-weight:800;font-size:13px;color:#7b2ff7;margin-bottom:10px">🤖 Generate Soal dengan AI</div>
+        <div class="form-group" style="margin-bottom:8px">
+          <label style="font-size:12px">Topik / Materi</label>
+          <input type="text" id="kuis-ai-topik" placeholder="contoh: Pecahan Sederhana, Fotosintesis..."
+            style="width:100%;padding:10px 12px;border:2px solid rgba(123,47,247,.3);border-radius:10px;font-family:Nunito,sans-serif;font-size:13px;outline:none;box-sizing:border-box">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Jumlah</label>
+            <select id="kuis-ai-jumlah" style="width:100%;padding:8px;border:2px solid #eee;border-radius:8px;font-family:Nunito,sans-serif;font-size:12px;outline:none">
+              <option value="3">3 soal</option>
+              <option value="5" selected>5 soal</option>
+              <option value="10">10 soal</option>
+              <option value="20">20 soal</option>
+              <option value="30">30 soal</option>
+              <option value="50">50 soal</option>
+              <option value="75">75 soal</option>
+              <option value="100">100 soal</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Tingkat</label>
+            <select id="kuis-ai-tingkat" style="width:100%;padding:8px;border:2px solid #eee;border-radius:8px;font-family:Nunito,sans-serif;font-size:12px;outline:none">
+              <option value="mudah">😊 Mudah</option>
+              <option value="sedang" selected>🤔 Sedang</option>
+              <option value="sulit">😤 Sulit</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Mapel</label>
+            <select id="kuis-ai-mapel" style="width:100%;padding:8px;border:2px solid #eee;border-radius:8px;font-family:Nunito,sans-serif;font-size:12px;outline:none"></select>
+          </div>
+        </div>
+        <button id="kuis-ai-gen-btn" onclick="generateSoalUntukKuis()"
+          style="width:100%;padding:10px;border:none;border-radius:10px;background:linear-gradient(135deg,#7b2ff7,#a64cff);color:white;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;transition:all .2s">
+          ✨ Generate Soal!
+        </button>
+      </div>
+
+      <!-- Preview soal yang digenerate -->
+      <div id="kuis-ai-result" style="display:none">
+        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between">
+          <span id="kuis-ai-count-label">0 soal digenerate</span>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:700">
+            <input type="checkbox" id="kuis-ai-pilih-semua" onchange="pilihSemuaAI(this.checked)" checked> Pilih Semua
+          </label>
+        </div>
+        <div id="kuis-ai-soal-list" style="max-height:200px;overflow-y:auto;border:2px solid #D8BBFF;border-radius:12px;padding:8px;background:#FAFAFE"></div>
+        <div style="font-size:12px;color:#7b2ff7;margin-top:6px;font-weight:700"><span id="kuis-ai-soal-count">0</span> soal AI dipilih</div>
+        <div style="background:#FFF8E1;border-radius:10px;padding:8px 12px;font-size:12px;color:#E6A817;font-weight:600;margin-top:8px">
+          💡 Soal AI akan otomatis disimpan ke bank soal saat kuis dibuat
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--orange);margin-top:8px" id="kuis-total-label"></div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModal('modal-buat-kuis')">Batal</button>
       <button class="btn-submit" onclick="submitBuatKuis()">✅ Buat Kuis</button>
@@ -818,7 +1198,13 @@
 <!-- Modal Tambah Materi -->
 <div class="modal-overlay" id="modal-materi">
   <div class="modal" style="max-width:480px;max-height:90vh;overflow-y:auto">
-    <h3>📚 Tambah Materi Baru</h3>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <h3 style="margin:0">📚 Tambah Materi Baru</h3>
+      <button onclick="closeModal('modal-materi');openModal('modal-ai-materi')"
+        style="background:linear-gradient(135deg,#7b2ff7,#a64cff);color:white;border:none;padding:8px 16px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap">
+        🤖 Buat dengan AI
+      </button>
+    </div>
     <div class="form-group"><label>Judul Materi</label><input type="text" id="m-judul" placeholder="contoh: Pecahan Sederhana"></div>
     <div class="form-group"><label>Mata Pelajaran</label>
       <select id="m-mapel"></select>
@@ -865,6 +1251,151 @@
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModal('modal-materi')">Batal</button>
       <button class="btn-submit" id="btn-simpan-materi" onclick="submitMateri()">✅ Simpan Materi</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODAL AI MATERI ========== -->
+<div class="modal-overlay" id="modal-ai-materi">
+  <div class="modal" style="max-width:560px;max-height:92vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#7b2ff7,#a64cff);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🤖</div>
+      <div>
+        <h3 style="margin:0;font-size:18px">Buat Materi dengan AI</h3>
+        <p style="font-size:12px;color:var(--muted);margin:0">Upload PDF, link artikel, atau video YouTube</p>
+      </div>
+    </div>
+
+    <!-- Step 1: Pilih sumber -->
+    <div id="ai-materi-step1">
+      <div style="font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 10px">Pilih Sumber Materi</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+        <div class="ai-src-card" id="ai-src-pdf" onclick="pilihSumberAI('pdf')">
+          <div style="font-size:28px;margin-bottom:6px">📄</div>
+          <div style="font-size:12px;font-weight:800">Upload PDF</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">File lokal</div>
+        </div>
+        <div class="ai-src-card" id="ai-src-artikel" onclick="pilihSumberAI('artikel')">
+          <div style="font-size:28px;margin-bottom:6px">🔗</div>
+          <div style="font-size:12px;font-weight:800">Link Artikel</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">URL website</div>
+        </div>
+        <div class="ai-src-card" id="ai-src-youtube" onclick="pilihSumberAI('youtube')">
+          <div style="font-size:28px;margin-bottom:6px">🎬</div>
+          <div style="font-size:12px;font-weight:800">YouTube</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">Link video</div>
+        </div>
+      </div>
+
+      <!-- Input PDF -->
+      <div id="ai-input-pdf" style="display:none">
+        <div style="border:2.5px dashed #D8BBFF;border-radius:14px;padding:20px;text-align:center;cursor:pointer;background:#F9F5FF;transition:all .2s" onclick="document.getElementById('ai-pdf-file').click()" id="ai-pdf-dropzone">
+          <div style="font-size:36px;margin-bottom:8px">📄</div>
+          <div style="font-weight:800;font-size:14px;color:#7b2ff7" id="ai-pdf-label">Klik untuk pilih file PDF</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">Maksimal 10MB · AI akan membaca isinya</div>
+        </div>
+        <input type="file" id="ai-pdf-file" accept=".pdf" style="display:none" onchange="handleAIPdfSelect(this)">
+      </div>
+
+      <!-- Input Artikel -->
+      <div id="ai-input-artikel" style="display:none">
+        <div class="form-group" style="margin-bottom:8px">
+          <label>URL Artikel</label>
+          <input type="url" id="ai-artikel-url" placeholder="https://contoh.com/artikel-pelajaran..." style="width:100%;padding:12px 14px;border:2px solid #E8E8E8;border-radius:12px;font-family:Nunito,sans-serif;font-size:14px;outline:none">
+        </div>
+        <div style="background:#FFF8E1;border-radius:10px;padding:10px 12px;font-size:12px;color:#E6A817;font-weight:600">
+          💡 Gunakan artikel dari Wikipedia, Kemdikbud, atau situs berita edukatif
+        </div>
+      </div>
+
+      <!-- Input YouTube -->
+      <div id="ai-input-youtube" style="display:none">
+        <div class="form-group">
+          <label>URL Video YouTube</label>
+          <input type="url" id="ai-youtube-url" placeholder="https://youtube.com/watch?v=..." style="width:100%;padding:12px 14px;border:2px solid #E8E8E8;border-radius:12px;font-family:Nunito,sans-serif;font-size:14px;outline:none">
+        </div>
+        <div id="ai-yt-preview" style="display:none;background:#F8F9FA;border-radius:12px;padding:12px;display:none;align-items:center;gap:10px;margin-top:8px">
+          <div style="font-size:24px">🎬</div>
+          <div>
+            <div id="ai-yt-title" style="font-weight:800;font-size:13px"></div>
+            <div id="ai-yt-channel" style="font-size:11px;color:var(--muted)"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Config -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+        <div class="form-group" style="margin:0">
+          <label>Mata Pelajaran</label>
+          <select id="ai-m-mapel" style="width:100%;padding:10px 12px;border:2px solid #E8E8E8;border-radius:10px;font-family:Nunito,sans-serif;font-size:13px;outline:none"></select>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Target Siswa</label>
+          <select id="ai-m-target" style="width:100%;padding:10px 12px;border:2px solid #E8E8E8;border-radius:10px;font-family:Nunito,sans-serif;font-size:13px;outline:none">
+            <option value="SD">SD (Kelas 1-6)</option>
+            <option value="SMP" selected>SMP (Kelas 7-9)</option>
+            <option value="SMA">SMA (Kelas 10-12)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;cursor:pointer">
+          <input type="checkbox" id="ai-gen-kuis-check" checked style="width:16px;height:16px;accent-color:#7b2ff7"> Generate soal otomatis
+        </label>
+        <select id="ai-jumlah-soal" style="padding:6px 10px;border:2px solid #E8E8E8;border-radius:8px;font-family:Nunito,sans-serif;font-size:12px;outline:none">
+          <option value="3">3 soal</option>
+          <option value="5" selected>5 soal</option>
+          <option value="10">10 soal</option>
+          <option value="20">20 soal</option>
+          <option value="30">30 soal</option>
+          <option value="50">50 soal</option>
+          <option value="100">100 soal</option>
+        </select>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn-cancel" style="flex:1" onclick="closeModal('modal-ai-materi');openModal('modal-materi')">← Kembali</button>
+        <button id="ai-materi-proses-btn" style="flex:2;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#7b2ff7,#a64cff);color:white;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer" onclick="prosesAIMateri()">
+          🤖 Buat Materi!
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 2: Hasil AI -->
+    <div id="ai-materi-step2" style="display:none">
+      <div style="background:linear-gradient(135deg,#F3EEFF,#EEF5FF);border-radius:16px;padding:16px;margin-bottom:16px">
+        <div style="font-weight:800;font-size:14px;color:#7b2ff7;margin-bottom:4px">🤖 AI sedang bekerja...</div>
+        <div id="ai-proses-status" style="font-size:13px;color:var(--muted)">Membaca sumber...</div>
+        <div style="background:rgba(255,255,255,.5);border-radius:50px;height:8px;margin-top:10px;overflow:hidden">
+          <div id="ai-proses-bar" style="height:100%;background:linear-gradient(90deg,#7b2ff7,#a64cff);border-radius:50px;width:10%;transition:width .5s ease"></div>
+        </div>
+      </div>
+
+      <!-- Preview hasil -->
+      <div id="ai-hasil-preview" style="display:none">
+        <div class="form-group">
+          <label>Judul Materi <span style="color:#7b2ff7;font-size:11px">(bisa diedit)</span></label>
+          <input type="text" id="ai-hasil-judul" style="width:100%;padding:12px 14px;border:2px solid #D8BBFF;border-radius:12px;font-family:Nunito,sans-serif;font-size:14px;outline:none;box-sizing:border-box">
+        </div>
+        <div class="form-group">
+          <label>Materi yang Dibuat AI <span style="color:#7b2ff7;font-size:11px">(bisa diedit)</span></label>
+          <textarea id="ai-hasil-konten" rows="8" style="width:100%;padding:12px 14px;border:2px solid #D8BBFF;border-radius:12px;font-family:Nunito,sans-serif;font-size:13px;outline:none;line-height:1.7;resize:vertical;box-sizing:border-box"></textarea>
+        </div>
+
+        <!-- Soal yang digenerate -->
+        <div id="ai-soal-hasil-wrap" style="display:none">
+          <div style="font-weight:800;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📝 Soal yang Digenerate</div>
+          <div id="ai-soal-hasil-list" style="background:#F8F9FA;border-radius:12px;padding:12px;font-size:12px;line-height:1.8;max-height:180px;overflow-y:auto;white-space:pre-wrap"></div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+          <button class="btn-cancel" onclick="aiMateriReset()">🔄 Ulang</button>
+          <button style="flex:1;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#6BCB77,#4CAF50);color:white;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer;min-width:160px" onclick="simpanAIMateri()">
+            💾 Simpan Materi!
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1148,7 +1679,10 @@ async function api(method, path, body) {
   return res.json();
 }
 
-function openModal(id) { document.getElementById(id).classList.add('open'); }
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'modal-ai-materi') populateAIMapel();
+}
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
@@ -1278,7 +1812,35 @@ async function loadMuridDashboard() {
 
   showLoading(true);
   await loadMuridKelas();
+  await loadDeadlineAlertDashboard();
   showLoading(false);
+}
+
+async function loadDeadlineAlertDashboard() {
+  // Ambil semua kelas murid, lalu cek tugas deadline dekat
+  try {
+    const kelasData = await api('GET', '/kelas');
+    const kelasList = kelasData.kelas || kelasData.data || [];
+    let semuaKuis = [];
+
+    for (const k of kelasList.slice(0, 5)) { // max 5 kelas
+      try {
+        const d = await api('GET', `/quiz?kelas_id=${k.id}`);
+        const list = (d.quiz || d.data || []).map(q => ({ ...q, kelas_id: k.id, kelas_nama: k.nama }));
+        // Cek sudah dikerjakan
+        for (const q of list) {
+          if (q.tipe === 'pr' && q.deadline) {
+            try {
+              const cek = await api('GET', `/quiz/hasil/cek?quiz_id=${q.id}`);
+              q.sudah_dikerjakan = cek.sudah || false;
+            } catch(e) { q.sudah_dikerjakan = false; }
+          }
+        }
+        semuaKuis = semuaKuis.concat(list);
+      } catch(e) {}
+    }
+    tampilDeadlineAlert(semuaKuis);
+  } catch(e) {}
 }
 
 async function loadMuridKelas() {
@@ -1318,6 +1880,52 @@ async function loadMuridKelas() {
       <p>Kamu belum bergabung ke kelas manapun.<br>Minta kode ke gurumu dan klik <strong>Gabung Kelas</strong>!</p>
     </div>`;
   }
+}
+
+function tampilDeadlineAlert(kuisList) {
+  const alertBox = document.getElementById('deadline-alert');
+  const alertList = document.getElementById('deadline-alert-list');
+  if (!alertBox || !alertList) return;
+
+  const now = new Date();
+  const urgent = kuisList.filter(q => {
+    if (!q.deadline || q.tipe === 'fun' || q.sudah_dikerjakan) return false;
+    const diff = new Date(q.deadline) - now;
+    return diff > 0 && diff < 86400000 * 2; // 2 hari ke depan
+  }).sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+
+  if (urgent.length === 0) { alertBox.style.display = 'none'; return; }
+
+  alertBox.style.display = 'block';
+  alertList.innerHTML = urgent.map(q => {
+    const diff = new Date(q.deadline) - now;
+    const isUrgent = diff < 3600000 * 6; // kurang dari 6 jam
+    const label = diff < 3600000
+      ? `⏰ ${Math.floor(diff/60000)} menit lagi!`
+      : diff < 86400000
+      ? `⚠️ ${Math.floor(diff/3600000)} jam lagi`
+      : `📅 ${Math.floor(diff/86400000)} hari lagi`;
+
+    // Cari kelas_id untuk navigasi
+    const kelasId = q.kelas_id || '';
+    return `<div class="deadline-item" onclick="bukaKelasUntukKuis('${kelasId}','${q.id}')">
+      <div class="deadline-item-icon" style="background:${isUrgent ? '#FFF0F0' : '#FFF8E1'}">📝</div>
+      <div class="deadline-item-info">
+        <h4>${q.judul}</h4>
+        <p>${q.mapel || 'Tugas'} · ${q.total_soal || '?'} soal</p>
+      </div>
+      <div class="deadline-badge ${isUrgent ? 'urgent' : 'soon'}">${label}</div>
+    </div>`;
+  }).join('');
+}
+
+async function bukaKelasUntukKuis(kelasId, quizId) {
+  if (!kelasId) { mulaiKuisKelas(quizId); return; }
+  await openKelas(kelasId, 0);
+  setTimeout(() => {
+    switchKelasTab('kuis');
+    setTimeout(() => mulaiKuisKelas(quizId), 300);
+  }, 600);
 }
 
 function loadLeaderboardPage() { toast('Leaderboard segera hadir! 🏆'); }
@@ -1723,6 +2331,374 @@ function populateBuatKelasMapel() {
 // ============================================================
 let selectedPdfFile = null;
 
+// ============================================================
+//  AI MATERI — PDF, Artikel, YouTube
+// ============================================================
+const GROQ_API_KEY_MATERI = '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';
+let aiSumberAktif = null;
+let aiPdfFile = null;
+let aiHasilMateri = null;
+let aiHasilSoal = [];
+
+function pilihSumberAI(tipe) {
+  aiSumberAktif = tipe;
+  ['pdf','artikel','youtube'].forEach(t => {
+    document.getElementById('ai-src-' + t)?.classList.toggle('active', t === tipe);
+    document.getElementById('ai-input-' + t).style.display = t === tipe ? 'block' : 'none';
+  });
+}
+
+function handleAIPdfSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { toast('File terlalu besar! Maks 10MB', 'error'); return; }
+  aiPdfFile = file;
+  document.getElementById('ai-pdf-label').textContent = '✅ ' + file.name;
+  document.getElementById('ai-pdf-dropzone').style.borderColor = '#7b2ff7';
+}
+
+// Populate mapel select di modal AI
+function populateAIMapel() {
+  const list = getMapelList();
+  const el = document.getElementById('ai-m-mapel');
+  if (!el) return;
+  el.innerHTML = list.length
+    ? list.map(m => `<option value="${m.nama}">${m.emoji} ${m.nama}</option>`).join('')
+    : '<option value="Umum">📚 Umum</option>';
+}
+
+function setAIStatus(msg, pct) {
+  document.getElementById('ai-proses-status').textContent = msg;
+  document.getElementById('ai-proses-bar').style.width = pct + '%';
+}
+
+async function prosesAIMateri() {
+  if (!aiSumberAktif) { toast('Pilih sumber materi dulu!', 'error'); return; }
+
+  const mapel = document.getElementById('ai-m-mapel').value || 'Umum';
+  const target = document.getElementById('ai-m-target').value;
+  const genSoal = document.getElementById('ai-gen-kuis-check').checked;
+  const jumlahSoal = document.getElementById('ai-jumlah-soal').value;
+
+  document.getElementById('ai-materi-step1').style.display = 'none';
+  document.getElementById('ai-materi-step2').style.display = 'block';
+  document.getElementById('ai-hasil-preview').style.display = 'none';
+
+  let kontenSumber = '';
+  let judulSumber = '';
+
+  try {
+    // ── 1. Ambil konten sumber ──────────────────────────────
+    if (aiSumberAktif === 'pdf') {
+      if (!aiPdfFile) { toast('Pilih file PDF dulu!', 'error'); aiMateriReset(); return; }
+      setAIStatus('Membaca file PDF...', 20);
+      kontenSumber = await bacaPDF(aiPdfFile);
+      judulSumber = aiPdfFile.name.replace('.pdf','');
+
+    } else if (aiSumberAktif === 'artikel') {
+      const url = document.getElementById('ai-artikel-url').value.trim();
+      if (!url) { toast('Masukkan URL artikel!', 'error'); aiMateriReset(); return; }
+      setAIStatus('Mengambil konten artikel...', 20);
+      kontenSumber = await fetchArtikel(url);
+      judulSumber = url;
+
+    } else if (aiSumberAktif === 'youtube') {
+      const url = document.getElementById('ai-youtube-url').value.trim();
+      if (!url) { toast('Masukkan URL YouTube!', 'error'); aiMateriReset(); return; }
+      setAIStatus('Mengambil info video YouTube...', 20);
+      const ytData = await fetchYouTubeInfo(url);
+      kontenSumber = ytData.konten;
+      judulSumber = ytData.judul;
+    }
+
+    if (!kontenSumber || kontenSumber.length < 50) {
+      toast('Konten sumber terlalu pendek atau gagal diambil', 'error');
+      aiMateriReset(); return;
+    }
+
+    // Potong konten jika terlalu panjang (Groq limit)
+    if (kontenSumber.length > 8000) kontenSumber = kontenSumber.substring(0, 8000) + '...';
+
+    // ── 2. Generate materi dengan AI ───────────────────────
+    setAIStatus('AI sedang membuat materi...', 50);
+
+    const resMateri = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY_MATERI}` },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        max_tokens: 1500,
+        messages: [{
+          role: 'system',
+          content: `Kamu adalah guru ${mapel} yang membuat materi pelajaran untuk siswa ${target} Indonesia.
+Buat materi yang terstruktur, mudah dipahami, dan menarik. Gunakan bahasa Indonesia yang baik.`
+        }, {
+          role: 'user',
+          content: `Buat materi pelajaran ${mapel} untuk siswa ${target} berdasarkan sumber berikut:
+
+SUMBER:
+${kontenSumber}
+
+Format materi:
+## [Judul Materi yang Menarik]
+
+**Tujuan Pembelajaran:**
+- Poin 1
+- Poin 2
+
+**Materi Utama:**
+[Penjelasan terstruktur dalam 3-5 paragraf dengan sub-judul jika perlu]
+
+**Ringkasan:**
+[Poin-poin penting dalam bentuk bullet]
+
+**Fakta Menarik:**
+[1-2 fakta yang membuat siswa penasaran]
+
+Buat dalam Bahasa Indonesia, mudah dipahami siswa ${target}.`
+        }]
+      })
+    });
+    const dataMateri = await resMateri.json();
+    if (dataMateri.error) throw new Error(dataMateri.error.message);
+    const materiTeks = dataMateri.choices?.[0]?.message?.content || '';
+
+    // Ekstrak judul dari hasil AI
+    const judulMatch = materiTeks.match(/##\s+(.+)/);
+    const judulFinal = judulMatch ? judulMatch[1].trim() : judulSumber;
+    const kontenFinal = materiTeks.replace(/##\s+.+\n/, '').trim();
+
+    aiHasilMateri = { judul: judulFinal, konten: kontenFinal, mapel };
+
+    // ── 3. Generate soal (opsional) ────────────────────────
+    if (genSoal) {
+      setAIStatus('Membuat soal latihan...', 75);
+      try {
+        const resSoal = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY_MATERI}` },
+          body: JSON.stringify({
+            model: 'llama-3.1-8b-instant',
+            max_tokens: 1200,
+            messages: [{
+              role: 'system',
+              content: 'Buat soal pilihan ganda. Jawab HANYA dalam format JSON array, tanpa teks lain.'
+            }, {
+              role: 'user',
+              content: `Buat ${jumlahSoal} soal pilihan ganda untuk materi berikut:
+
+${kontenFinal.substring(0, 3000)}
+
+Format JSON:
+[{"pertanyaan":"...","emoji":"emoji relevan","opsi":["A","B","C","D"],"jawaban":"teks jawaban benar","poin":100}]
+
+Bahasa Indonesia, tingkat ${target}.`
+            }]
+          })
+        });
+        const dataSoal = await resSoal.json();
+        let teks = dataSoal.choices?.[0]?.message?.content || '[]';
+        teks = teks.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+        aiHasilSoal = JSON.parse(teks);
+      } catch(e) {
+        aiHasilSoal = [];
+        console.warn('Gagal generate soal:', e);
+      }
+    } else {
+      aiHasilSoal = [];
+    }
+
+    // ── 4. Tampilkan hasil ─────────────────────────────────
+    setAIStatus('Selesai! ✅', 100);
+    document.getElementById('ai-hasil-judul').value = judulFinal;
+    document.getElementById('ai-hasil-konten').value = kontenFinal;
+
+    if (aiHasilSoal.length > 0) {
+      const preview = aiHasilSoal.map((s,i) =>
+        `${i+1}. ${s.emoji} ${s.pertanyaan}\n   A.${s.opsi[0]}  B.${s.opsi[1]}  C.${s.opsi[2]}  D.${s.opsi[3]}\n   ✅ ${s.jawaban}`
+      ).join('\n\n');
+      document.getElementById('ai-soal-hasil-list').textContent = preview;
+      document.getElementById('ai-soal-hasil-wrap').style.display = 'block';
+    }
+
+    setTimeout(() => {
+      document.getElementById('ai-hasil-preview').style.display = 'block';
+    }, 500);
+
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+    console.error(e);
+    aiMateriReset();
+  }
+}
+
+// ── Baca PDF di browser dengan pdf.js ──────────────────────
+async function bacaPDF(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        // Load pdf.js dari CDN kalau belum ada
+        if (!window.pdfjsLib) {
+          await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+        const pdf = await window.pdfjsLib.getDocument({ data: e.target.result }).promise;
+        let teks = '';
+        const maxHalaman = Math.min(pdf.numPages, 15); // max 15 halaman
+        for (let i = 1; i <= maxHalaman; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          teks += content.items.map(item => item.str).join(' ') + '\n';
+        }
+        resolve(teks.trim());
+      } catch(err) { reject(err); }
+    };
+    reader.onerror = () => reject(new Error('Gagal membaca file'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// ── Fetch artikel via proxy backend ────────────────────────
+async function fetchArtikel(url) {
+  try {
+    const token = localStorage.getItem('kb_token');
+    const res = await fetch(`${API}/proxy/fetch?url=${encodeURIComponent(url)}`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    });
+    const data = await res.json();
+    if (data.success) return data.teks;
+    throw new Error(data.pesan || 'Gagal fetch artikel');
+  } catch(e) {
+    // Fallback: minta user paste manual
+    const manual = prompt(`Tidak bisa fetch artikel otomatis.\n\nCopy-paste isi artikel dari:\n${url}\n\nPaste di sini:`);
+    return manual || '';
+  }
+}
+
+// ── Ambil info YouTube via oEmbed ───────────────────────────
+async function fetchYouTubeInfo(url) {
+  // Ekstrak video ID
+  const match = url.match(/(?:v=|youtu\.be\/)([^&\s]+)/);
+  if (!match) throw new Error('URL YouTube tidak valid');
+  const videoId = match[1];
+
+  // Cek preview dulu
+  try {
+    const oembedRes = await fetch(`https://www.youtube.com/oembed?url=https://youtube.com/watch?v=${videoId}&format=json`);
+    const oembed = await oembedRes.json();
+    document.getElementById('ai-yt-title').textContent = oembed.title || '';
+    document.getElementById('ai-yt-channel').textContent = oembed.author_name || '';
+    document.getElementById('ai-yt-preview').style.display = 'flex';
+
+    // Buat konten dari judul + deskripsi (transcript tidak bisa diambil tanpa API key)
+    const konten = `Video YouTube: "${oembed.title}"
+Channel: ${oembed.author_name}
+URL: ${url}
+
+[Materi ini dibuat berdasarkan video YouTube. AI akan membuat materi berdasarkan judul dan topik video.]
+
+Topik video: ${oembed.title}
+Buat materi pelajaran lengkap berdasarkan topik ini.`;
+
+    return { judul: oembed.title, konten };
+  } catch(e) {
+    // Fallback tanpa oEmbed
+    return {
+      judul: 'Materi dari YouTube',
+      konten: `Video YouTube URL: ${url}\nBuat materi pelajaran berdasarkan topik dari video ini.`
+    };
+  }
+}
+
+// ── Simpan hasil AI ke database ─────────────────────────────
+async function simpanAIMateri() {
+  const judul = document.getElementById('ai-hasil-judul').value.trim();
+  const konten = document.getElementById('ai-hasil-konten').value.trim();
+  const mapel = aiHasilMateri?.mapel || document.getElementById('ai-m-mapel').value;
+  const kelasId = document.getElementById('m-kelas-id').value;
+
+  if (!judul || !konten) { toast('Judul dan konten tidak boleh kosong!', 'error'); return; }
+
+  showLoading(true);
+  try {
+    // Simpan materi
+    const dataMateri = await api('POST', '/materi', {
+      judul, mapel, jenis: 'teks', konten,
+      deskripsi: konten.substring(0, 200),
+      status: 'aktif',
+      kelas_id: kelasId || undefined
+    });
+
+    if (!dataMateri.success) throw new Error(dataMateri.pesan || 'Gagal simpan materi');
+
+    // Simpan soal kalau ada
+    let soalBerhasil = 0;
+    for (const s of aiHasilSoal) {
+      try {
+        const r = await api('POST', '/soal', {
+          pertanyaan: s.pertanyaan, emoji: s.emoji || '❓',
+          mapel, jenis: 'pilihan_ganda',
+          opsi: JSON.stringify(s.opsi), jawaban: s.jawaban,
+          poin: s.poin || 100, tingkat: 'sedang'
+        });
+        if (r.success) soalBerhasil++;
+      } catch(e) {}
+    }
+
+    toast(`✅ Materi berhasil disimpan!${soalBerhasil > 0 ? ` + ${soalBerhasil} soal ke bank soal` : ''}`, 'success');
+    closeModal('modal-ai-materi');
+    aiMateriReset();
+    if (currentKelas) await loadKelasStream(currentKelas.id);
+    else loadGuruDashboard();
+  } catch(e) {
+    toast('Gagal menyimpan: ' + e.message, 'error');
+  }
+  showLoading(false);
+}
+
+function aiMateriReset() {
+  aiSumberAktif = null;
+  aiPdfFile = null;
+  aiHasilMateri = null;
+  aiHasilSoal = [];
+  document.getElementById('ai-materi-step1').style.display = 'block';
+  document.getElementById('ai-materi-step2').style.display = 'none';
+  document.getElementById('ai-hasil-preview').style.display = 'none';
+  ['pdf','artikel','youtube'].forEach(t => {
+    document.getElementById('ai-src-' + t)?.classList.remove('active');
+    document.getElementById('ai-input-' + t).style.display = 'none';
+  });
+  document.getElementById('ai-pdf-label').textContent = 'Klik untuk pilih file PDF';
+  document.getElementById('ai-pdf-dropzone').style.borderColor = '#D8BBFF';
+  document.getElementById('ai-artikel-url').value = '';
+  document.getElementById('ai-youtube-url').value = '';
+  document.getElementById('ai-yt-preview').style.display = 'none';
+  document.getElementById('ai-soal-hasil-wrap').style.display = 'none';
+  setAIStatus('Membaca sumber...', 10);
+}
+
+// Helper: load script dinamis
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+// Patch openTambahMateriKelas untuk populate AI mapel juga
+const _origOpenTambahMateriKelas = window.openTambahMateriKelas;
+
+// Buka modal AI materi langsung
+function openAIMateriModal() {
+  populateAIMapel();
+  aiMateriReset();
+  openModal('modal-ai-materi');
+}
+
 function toggleMateriInput() {
   const jenis = document.getElementById('m-jenis').value;
   document.getElementById('input-teks').style.display   = jenis === 'teks'   ? 'block' : 'none';
@@ -1785,6 +2761,8 @@ async function submitMateri() {
       formData.append('jenis', jenis);
       formData.append('deskripsi', deskripsi);
       formData.append('status', 'aktif');
+      const kelasIdVal = document.getElementById('m-kelas-id').value;
+      if (kelasIdVal) formData.append('kelas_id', kelasIdVal);
 
       const res = await fetch('http://localhost:3000/api/materi/upload', {
         method: 'POST',
@@ -2160,35 +3138,108 @@ function switchKelasTab(tab) {
 // ============================================================
 let semua_soal_cache = [];
 
+let allKuisData = []; // cache untuk filter
+let activeKuisFilter = 'semua';
+
+function filterKuis(tipe) {
+  activeKuisFilter = tipe;
+  // Update tombol aktif
+  ['semua','fun','pr','deadline'].forEach(t => {
+    document.getElementById('filter-' + t)?.classList.toggle('active', t === tipe);
+  });
+  renderKuisFiltered();
+}
+
+function renderKuisFiltered() {
+  const isGuru = currentUser?.role === 'guru';
+  const now = new Date();
+  let filtered = [...allKuisData];
+
+  if (activeKuisFilter === 'fun') {
+    filtered = filtered.filter(q => q.tipe === 'fun' || !q.tipe);
+  } else if (activeKuisFilter === 'pr') {
+    filtered = filtered.filter(q => q.tipe === 'pr');
+  } else if (activeKuisFilter === 'deadline') {
+    filtered = filtered.filter(q => {
+      if (!q.deadline) return false;
+      const diff = new Date(q.deadline) - now;
+      return diff > 0 && diff < 86400000 * 3; // 3 hari ke depan
+    });
+  }
+
+  // Sort: deadline terdekat di atas, lalu fun quiz
+  filtered.sort((a, b) => {
+    // PR dengan deadline < 24 jam paling atas
+    const dA = a.deadline ? new Date(a.deadline) - now : Infinity;
+    const dB = b.deadline ? new Date(b.deadline) - now : Infinity;
+    if (dA < 86400000 && dB >= 86400000) return -1;
+    if (dB < 86400000 && dA >= 86400000) return 1;
+    if (a.deadline && b.deadline) return dA - dB;
+    if (a.deadline) return -1;
+    if (b.deadline) return 1;
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+
+  const container = document.getElementById('kuis-list-container');
+  if (!container) return;
+
+  if (filtered.length === 0) {
+    const labels = { semua: 'belum ada kuis atau tugas', fun: 'belum ada Fun Quiz', pr: 'belum ada Tugas/PR', deadline: 'tidak ada tugas dengan deadline dekat' };
+    container.innerHTML = `<div style="text-align:center;padding:40px 24px">
+      <div style="font-size:48px;margin-bottom:12px">📋</div>
+      <p style="font-weight:700;color:var(--text);margin-bottom:6px">Kosong!</p>
+      <p style="font-size:14px;color:var(--muted)">${isGuru ? `Belum ada ${labels[activeKuisFilter]}` : `${labels[activeKuisFilter].charAt(0).toUpperCase() + labels[activeKuisFilter].slice(1)}`}</p>
+    </div>`;
+    return;
+  }
+  container.innerHTML = filtered.map(q => renderKuisCard(q, isGuru)).join('');
+}
+
 async function loadKelasKuis(kelasId) {
   const el = document.getElementById('kelas-kuis-stream');
-  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat kuis...</div>';
+  const container = document.getElementById('kuis-list-container');
+  if (container) container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat...</div>';
+
   const isGuru = currentUser?.role === 'guru';
   try {
     const data = await api('GET', `/quiz?kelas_id=${kelasId}`);
-    const list = data.quiz || data.data || [];
+    allKuisData = data.quiz || data.data || [];
 
-    if (!data.success || list.length === 0) {
-      el.innerHTML = `<div style="text-align:center;padding:48px 24px">
-        <div style="font-size:56px;margin-bottom:16px">📋</div>
-        <p style="font-weight:700;font-size:16px;color:var(--text);margin-bottom:8px">Belum ada kuis</p>
-        <p style="font-size:14px;color:var(--muted)">${isGuru ? 'Klik "+ Kuis" untuk membuat kuis pertama!' : 'Gurumu belum membuat kuis. Tunggu ya!'}</p>
-      </div>`;
-      return;
-    }
     // Cek status pengerjaan murid
     if (!isGuru) {
-      for (const q of list) {
+      for (const q of allKuisData) {
         try {
           const cek = await api('GET', `/quiz/hasil/cek?quiz_id=${q.id}`);
           q.sudah_dikerjakan = cek.sudah || false;
           q.skor_terakhir = cek.hasil?.skor || 0;
         } catch(e) { q.sudah_dikerjakan = false; }
       }
+      // Tampilkan deadline alert di dashboard
+      tampilDeadlineAlert(allKuisData);
     }
-    el.innerHTML = list.map(q => renderKuisCard(q, isGuru)).join('');
+
+    // Reset filter ke semua
+    activeKuisFilter = 'semua';
+    ['semua','fun','pr','deadline'].forEach(t => {
+      document.getElementById('filter-' + t)?.classList.toggle('active', t === 'semua');
+    });
+
+    // Update badge count filter deadline
+    const now = new Date();
+    const jumlahDeadline = allKuisData.filter(q => {
+      if (!q.deadline || q.sudah_dikerjakan) return false;
+      const diff = new Date(q.deadline) - now;
+      return diff > 0 && diff < 86400000 * 3;
+    }).length;
+    const filterDeadlineBtn = document.getElementById('filter-deadline');
+    if (filterDeadlineBtn) {
+      filterDeadlineBtn.textContent = `⏰ Deadline Dekat${jumlahDeadline > 0 ? ` (${jumlahDeadline})` : ''}`;
+      if (jumlahDeadline > 0) filterDeadlineBtn.style.borderColor = 'var(--red)';
+    }
+
+    renderKuisFiltered();
   } catch(e) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat kuis. Pastikan backend sudah menambah route /api/quiz</p></div>';
+    if (container) container.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat. Pastikan backend sudah ada route /api/quiz</p></div>';
   }
 }
 
@@ -2275,18 +3326,163 @@ function switchTipeKuis(tipe) {
   document.getElementById('kuis-durasi-wrap').style.display = tipe === 'fun' ? 'block' : 'none';
 }
 
+let kuisSoalTabAktif = 'bank';
+let aiSoalUntukKuis = []; // soal yang digenerate AI untuk kuis ini
+
+function switchKuisSoalTab(tab) {
+  kuisSoalTabAktif = tab;
+  document.getElementById('kuis-panel-bank').style.display = tab === 'bank' ? 'block' : 'none';
+  document.getElementById('kuis-panel-ai').style.display   = tab === 'ai'   ? 'block' : 'none';
+  document.getElementById('kuis-tab-bank').style.background = tab === 'bank' ? 'var(--orange)' : 'white';
+  document.getElementById('kuis-tab-bank').style.color      = tab === 'bank' ? 'white' : 'var(--muted)';
+  document.getElementById('kuis-tab-ai').style.background   = tab === 'ai' ? 'linear-gradient(135deg,#7b2ff7,#a64cff)' : 'white';
+  document.getElementById('kuis-tab-ai').style.color        = tab === 'ai' ? 'white' : 'var(--muted)';
+  updateKuisTotalLabel();
+}
+
+function updateKuisTotalLabel() {
+  const bankCount = document.querySelectorAll('.soal-check:checked').length;
+  const aiCount   = document.querySelectorAll('.ai-soal-check:checked').length;
+  const total = bankCount + aiCount;
+  const label = document.getElementById('kuis-total-label');
+  if (label) label.textContent = total > 0 ? `✅ Total ${total} soal dipilih (${bankCount} bank + ${aiCount} AI)` : '';
+}
+
+async function generateSoalUntukKuis() {
+  const topik   = document.getElementById('kuis-ai-topik').value.trim();
+  const jumlah  = parseInt(document.getElementById('kuis-ai-jumlah').value);
+  const tingkat = document.getElementById('kuis-ai-tingkat').value;
+  const mapel   = document.getElementById('kuis-ai-mapel').value || 'Umum';
+  if (!topik) { toast('Masukkan topik soal dulu!', 'error'); return; }
+
+  const btn = document.getElementById('kuis-ai-gen-btn');
+  btn.disabled = true;
+
+  // Sistem batch: maks 10 soal per request
+  const BATCH_SIZE = 10;
+  const totalBatch = Math.ceil(jumlah / BATCH_SIZE);
+  let semuaSoal = [];
+
+  try {
+    for (let b = 0; b < totalBatch; b++) {
+      const soalBatch = Math.min(BATCH_SIZE, jumlah - semuaSoal.length);
+      const sudahAda  = semuaSoal.length;
+      btn.textContent = `⏳ Batch ${b+1}/${totalBatch} (${sudahAda}/${jumlah} soal)...`;
+
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer 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` },
+        body: JSON.stringify({
+          model: 'llama-3.1-8b-instant',
+          max_tokens: 3000,
+          temperature: 0.5,
+          messages: [{
+            role: 'system',
+            content: 'Kamu pembuat soal ujian. Balas HANYA dengan JSON array yang valid dan lengkap. Jangan tambah teks apapun di luar JSON.'
+          }, {
+            role: 'user',
+            content: `Buat tepat ${soalBatch} soal pilihan ganda BARU (berbeda dari soal sebelumnya).
+Topik: ${topik}
+Mata pelajaran: ${mapel}
+Tingkat: ${tingkat}
+Batch ke-${b+1}, variasi soal nomor ${sudahAda+1} sampai ${sudahAda+soalBatch}.
+
+Balas HANYA JSON array lengkap:
+[{"pertanyaan":"...","emoji":"emoji","opsi":["A","B","C","D"],"jawaban":"teks jawaban benar","poin":100}]`
+          }]
+        })
+      });
+
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+      let teks = data.choices?.[0]?.message?.content || '[]';
+      teks = teks.replace(/```json\n?/gi,'').replace(/```\n?/g,'').trim();
+      const lastBracket = teks.lastIndexOf('}]');
+      if (lastBracket !== -1 && !teks.endsWith(']')) teks = teks.substring(0, lastBracket + 2);
+      const firstBracket = teks.indexOf('[');
+      if (firstBracket > 0) teks = teks.substring(firstBracket);
+
+      const batchSoal = JSON.parse(teks);
+      semuaSoal = semuaSoal.concat(batchSoal);
+
+      // Delay kecil antar batch untuk hindari rate limit
+      if (b < totalBatch - 1) await new Promise(r => setTimeout(r, 500));
+    }
+
+    aiSoalUntukKuis = semuaSoal.slice(0, jumlah);
+
+    // Render checklist
+    const listEl = document.getElementById('kuis-ai-soal-list');
+    listEl.innerHTML = aiSoalUntukKuis.map((s, i) => `
+      <label style="display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:10px;cursor:pointer;border-bottom:1px solid #F0EEFF;transition:background .15s" onmouseover="this.style.background='#F3EEFF'" onmouseout="this.style.background=''">
+        <input type="checkbox" class="ai-soal-check" value="${i}" onchange="updateKuisTotalLabel()" checked style="margin-top:3px;width:16px;height:16px;cursor:pointer;accent-color:#7b2ff7">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:13px;line-height:1.5">${s.emoji||'❓'} ${s.pertanyaan}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">${s.opsi.map((o,j)=>`${String.fromCharCode(65+j)}. ${o}`).join(' · ')}</div>
+          <div style="font-size:11px;color:#7b2ff7;font-weight:700;margin-top:2px">✅ ${s.jawaban}</div>
+        </div>
+      </label>`).join('');
+
+    document.getElementById('kuis-ai-count-label').textContent = `${aiSoalUntukKuis.length} soal digenerate`;
+    document.getElementById('kuis-ai-soal-count').textContent = aiSoalUntukKuis.length;
+    document.getElementById('kuis-ai-result').style.display = 'block';
+    document.getElementById('kuis-ai-pilih-semua').checked = true;
+    updateKuisTotalLabel();
+    toast(`✨ ${aiSoalUntukKuis.length} soal berhasil digenerate!`, 'success');
+  } catch(e) {
+    toast('Gagal generate: ' + e.message, 'error');
+    console.error(e);
+  }
+  btn.disabled = false;
+  btn.textContent = '✨ Generate Soal!';
+}
+
+function pilihSemuaAI(checked) {
+  document.querySelectorAll('.ai-soal-check').forEach(cb => cb.checked = checked);
+  const count = checked ? aiSoalUntukKuis.length : 0;
+  document.getElementById('kuis-ai-soal-count').textContent = count;
+  updateKuisTotalLabel();
+}
+
+function updateSoalCount() {
+  const count = document.querySelectorAll('.soal-check:checked').length;
+  document.getElementById('kuis-soal-count').textContent = count;
+  updateKuisTotalLabel();
+}
+
 async function openBuatKuis() {
   if (!currentKelas) return;
   // Reset form
   currentTipeKuis = 'fun';
+  kuisSoalTabAktif = 'bank';
+  aiSoalUntukKuis = [];
   switchTipeKuis('fun');
+  switchKuisSoalTab('bank');
   document.getElementById('kuis-judul').value = '';
   document.getElementById('kuis-deskripsi').value = '';
   document.getElementById('kuis-deadline').value = '';
   document.getElementById('kuis-durasi').value = '15';
   document.getElementById('kuis-pilih-semua').checked = false;
+  document.getElementById('kuis-ai-topik').value = '';
+  document.getElementById('kuis-ai-result').style.display = 'none';
+  document.getElementById('kuis-total-label').textContent = '';
 
-  // Load soal
+  // Populate mapel untuk AI
+  const mapelList = getMapelList();
+  const aiMapelEl = document.getElementById('kuis-ai-mapel');
+  if (aiMapelEl) {
+    aiMapelEl.innerHTML = mapelList.length
+      ? mapelList.map(m => `<option value="${m.nama}">${m.emoji} ${m.nama}</option>`).join('')
+      : '<option value="Umum">📚 Umum</option>';
+    // Set default ke mapel kelas
+    if (currentKelas?.mapel) {
+      for (let opt of aiMapelEl.options) {
+        if (opt.value === currentKelas.mapel) { opt.selected = true; break; }
+      }
+    }
+  }
+
+  // Load soal bank
   openModal('modal-buat-kuis');
   const listEl = document.getElementById('kuis-soal-list');
   listEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)">Memuat soal...</div>';
@@ -2294,13 +3490,14 @@ async function openBuatKuis() {
   try {
     const data = await api('GET', '/soal');
     allSoalData = data.soal || data.data || [];
-
-    // Populate filter mapel
     const mapels = [...new Set(allSoalData.map(s => s.mapel).filter(Boolean))];
     const filterEl = document.getElementById('kuis-soal-mapel-filter');
     filterEl.innerHTML = '<option value="">Semua Mapel</option>' + mapels.map(m => `<option value="${m}">${m}</option>`).join('');
-
-    renderSoalChecklistKuis(allSoalData);
+    // Filter otomatis ke mapel kelas
+    if (currentKelas?.mapel && mapels.includes(currentKelas.mapel)) {
+      filterEl.value = currentKelas.mapel;
+    }
+    renderSoalChecklistKuis(allSoalData.filter(s => !filterEl.value || s.mapel === filterEl.value));
   } catch(e) {
     listEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)">Gagal memuat soal</div>';
   }
@@ -2342,34 +3539,72 @@ function pilihSemuaSoal(checked) {
 }
 
 async function submitBuatKuis() {
-  const judul = document.getElementById('kuis-judul').value.trim();
+  const judul    = document.getElementById('kuis-judul').value.trim();
   const deskripsi = document.getElementById('kuis-deskripsi').value.trim();
   const deadline = document.getElementById('kuis-deadline').value;
-  const durasi = parseInt(document.getElementById('kuis-durasi').value) || 15;
-  const soal_ids = Array.from(document.querySelectorAll('.soal-check:checked')).map(cb => cb.value);
+  const durasi   = parseInt(document.getElementById('kuis-durasi').value) || 15;
+
+  // Soal dari bank
+  const soalBankIds = Array.from(document.querySelectorAll('.soal-check:checked')).map(cb => cb.value);
+
+  // Soal dari AI yang dipilih
+  const aiChecked = Array.from(document.querySelectorAll('.ai-soal-check:checked')).map(cb => parseInt(cb.value));
+  const soalAITerpilih = aiSoalUntukKuis.filter((_, i) => aiChecked.includes(i));
+
+  const totalSoal = soalBankIds.length + soalAITerpilih.length;
 
   if (!judul) { toast('Judul kuis harus diisi!', 'error'); return; }
-  if (soal_ids.length === 0) { toast('Pilih minimal 1 soal!', 'error'); return; }
+  if (totalSoal === 0) { toast('Pilih minimal 1 soal dari bank atau generate dengan AI!', 'error'); return; }
   if (currentTipeKuis === 'pr' && !deadline) { toast('Tenggat waktu harus diisi untuk Tugas/PR!', 'error'); return; }
 
   showLoading(true);
   try {
+    const mapel = currentKelas?.mapel || document.getElementById('kuis-ai-mapel')?.value || 'Umum';
+    let semuaSoalIds = [...soalBankIds];
+
+    // Simpan soal AI ke bank soal dulu, lalu ambil ID-nya
+    if (soalAITerpilih.length > 0) {
+      toast(`💾 Menyimpan ${soalAITerpilih.length} soal AI ke bank soal...`);
+      for (const s of soalAITerpilih) {
+        try {
+          const r = await api('POST', '/soal', {
+            pertanyaan: s.pertanyaan,
+            emoji: s.emoji || '❓',
+            mapel,
+            jenis: 'pilihan_ganda',
+            opsi: JSON.stringify(s.opsi),
+            jawaban: s.jawaban,
+            poin: s.poin || 100,
+            tingkat: document.getElementById('kuis-ai-tingkat')?.value || 'sedang'
+          });
+          if (r.success && r.data?.id) semuaSoalIds.push(r.data.id);
+        } catch(e) {}
+      }
+    }
+
+    if (semuaSoalIds.length === 0) {
+      toast('Gagal mendapatkan ID soal. Coba lagi!', 'error');
+      showLoading(false); return;
+    }
+
     const data = await api('POST', '/quiz', {
       judul,
       deskripsi: deskripsi || null,
-      mapel: currentKelas?.mapel || 'Umum',
+      mapel,
       kelas_id: currentKelas?.id,
       durasi,
       tipe: currentTipeKuis,
       deadline: deadline || null,
       status: 'aktif',
-      soal_ids
+      soal_ids: semuaSoalIds
     });
 
     if (!data.success) { toast(data.pesan || 'Gagal membuat kuis', 'error'); showLoading(false); return; }
 
-    toast(`Kuis "${judul}" berhasil dibuat! 🎉`, 'success');
+    const aiInfo = soalAITerpilih.length > 0 ? ` (${soalBankIds.length} bank + ${soalAITerpilih.length} AI)` : '';
+    toast(`🎉 Kuis "${judul}" berhasil dibuat! ${semuaSoalIds.length} soal${aiInfo}`, 'success');
     closeModal('modal-buat-kuis');
+    aiSoalUntukKuis = [];
     switchKelasTab('kuis');
     await loadKelasKuis(currentKelas.id);
   } catch(e) {
@@ -2676,6 +3911,450 @@ async function konfirmasiHapus() {
     toast('Tidak bisa terhubung ke server', 'error');
   }
   showLoading(false);
+}
+</script>
+
+<!-- ========== ZEP QUIZ SCRIPT ========== -->
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+// ============================================================
+//  ZEP QUIZ — Live Multiplayer
+// ============================================================
+const ZEP_SERVER = 'http://localhost:3000';
+let zepSocket = null;
+let zepRoom = null;       // { kode_room, quiz, soal[], durasi_per_soal }
+let zepIsGuru = false;
+let zepSkorSaya = 0;
+let zepSoalIdx = -1;
+let zepDurasi = 15;
+let zepTimerInterval = null;
+let zepTimerSisa = 0;
+let zepSudahJawab = false;
+let zepSelectedQuizId = null;
+let zepWaktuMulaiSoal = 0;
+
+const CIRCUMFERENCE = 2 * Math.PI * 28; // r=28
+
+function zepConnect() {
+  if (zepSocket && zepSocket.connected) return;
+  zepSocket = io(ZEP_SERVER, { transports: ['websocket', 'polling'] });
+
+  zepSocket.on('connect', () => console.log('🎯 ZepQuiz connected:', zepSocket.id));
+  zepSocket.on('disconnect', () => console.log('🎯 ZepQuiz disconnected'));
+  zepSocket.on('zep:error', ({ pesan }) => { toast(pesan, 'error'); showLoading(false); });
+
+  // ── MURID events ──
+  zepSocket.on('zep:joined', (state) => {
+    showLoading(false);
+    zepRoom = state;
+    document.getElementById('zep-wait-judul').textContent = state.judul || 'Quiz';
+    document.getElementById('zep-wait-kode').textContent = state.kode;
+    renderZepPemainWait(state.pemain);
+    showPage('page-zep-wait');
+  });
+  zepSocket.on('zep:pemain_masuk', ({ pemain }) => renderZepPemainWait(pemain));
+  zepSocket.on('zep:game_start', () => { /* handled in zep:soal */ });
+  zepSocket.on('zep:soal', (data) => zepMuridTampilSoal(data));
+  zepSocket.on('zep:hasil_jawab', (data) => zepMuridHasilJawab(data));
+  zepSocket.on('zep:hasil_soal', (data) => zepMuridTampilHasil(data));
+  zepSocket.on('zep:update_skor', ({ pemain }) => {
+    document.getElementById('zep-my-skor').textContent = zepSkorSaya;
+    if (document.getElementById('page-zep-hasil-soal').classList.contains('active')) {
+      renderZepLB('zep-lb-sementara', pemain);
+    }
+  });
+  zepSocket.on('zep:game_selesai', (data) => zepMuridFinal(data));
+  zepSocket.on('zep:room_closed', ({ pesan }) => {
+    toast(pesan || 'Room ditutup oleh guru.', 'error');
+    showPage('page-murid');
+    zepReset();
+  });
+
+  // ── GURU events ──
+  zepSocket.on('zep:room_created', (state) => {
+    showLoading(false);
+    zepRoom = state;
+    document.getElementById('zep-guru-kode').textContent = state.kode;
+    document.getElementById('zep-guru-quiz-label').textContent = state.judul || '';
+    document.getElementById('zep-guru-jumlah-pemain').textContent = '0';
+    document.getElementById('zep-guru-step1').style.display = 'none';
+    document.getElementById('zep-guru-lobby').style.display = 'block';
+    document.getElementById('zep-guru-start-btn').style.display = 'inline-block';
+    renderZepGuruPemain([]);
+  });
+  zepSocket.on('zep:pemain_masuk', ({ pemain }) => {
+    document.getElementById('zep-guru-jumlah-pemain').textContent = pemain.length;
+    renderZepGuruPemain(pemain);
+  });
+  zepSocket.on('zep:pemain_keluar', ({ userId }) => {
+    // update list kalau ada
+  });
+  zepSocket.on('zep:soal', (data) => {
+    if (zepIsGuru) zepGuruUpdateLive(data);
+  });
+  zepSocket.on('zep:update_skor', ({ pemain }) => {
+    if (zepIsGuru) renderZepGuruLB(pemain);
+  });
+  zepSocket.on('zep:hasil_soal', (data) => {
+    if (zepIsGuru) renderZepGuruLB(data.leaderboard);
+  });
+  zepSocket.on('zep:game_selesai', (data) => {
+    if (zepIsGuru) zepGuruFinal(data);
+  });
+}
+
+// ── MURID: Buka halaman join ────────────────────────────────
+function bukaZepQuizMurid() {
+  zepConnect();
+  zepIsGuru = false;
+  showPage('page-zep-join');
+  document.getElementById('zep-join-kode').value = '';
+}
+
+async function zepMuridJoin() {
+  const kode = document.getElementById('zep-join-kode').value.trim().toUpperCase();
+  if (kode.length < 4) { toast('Masukkan kode room dengan benar!', 'error'); return; }
+  showLoading(true);
+  zepSkorSaya = 0;
+  zepSocket.emit('zep:join_room', {
+    kode_room: kode,
+    user: { id: currentUser.id, nama: currentUser.nama, avatar: currentUser.avatar || '🦁' }
+  });
+}
+
+function zepMuridKeluar() {
+  if (zepRoom) zepSocket.emit('zep:close_room', { kode_room: zepRoom.kode });
+  zepReset();
+  showPage('page-murid');
+}
+
+function renderZepPemainWait(pemain) {
+  const g = document.getElementById('zep-wait-pemain-grid');
+  if (!pemain || !pemain.length) {
+    g.innerHTML = '<div class="zep-waiting">⏳ Belum ada pemain lain...</div>';
+    return;
+  }
+  g.innerHTML = pemain.map(p => `
+    <div class="zep-pemain-card">
+      <div class="zep-pemain-avatar">${p.avatar || '🦁'}</div>
+      <div class="zep-pemain-nama">${p.nama}</div>
+    </div>`).join('');
+}
+
+// ── MURID: Tampilkan soal ───────────────────────────────────
+function zepMuridTampilSoal({ idx, totalSoal, soal, durasi }) {
+  zepSoalIdx = idx;
+  zepDurasi = durasi || 15;
+  zepSudahJawab = false;
+  zepWaktuMulaiSoal = Date.now();
+
+  // Update header
+  document.getElementById('zep-soal-num-nav').textContent = `Soal ${idx + 1}/${totalSoal}`;
+  document.getElementById('zep-my-skor').textContent = zepSkorSaya;
+  const pct = ((idx) / totalSoal) * 100;
+  document.getElementById('zep-soal-progress').style.width = pct + '%';
+
+  // Soal card
+  document.getElementById('zep-soal-emoji').textContent = soal.emoji || '❓';
+  document.getElementById('zep-soal-text').textContent = soal.pertanyaan;
+
+  // Opsi
+  const opsiKode = ['A', 'B', 'C', 'D'];
+  const opsiContainer = document.getElementById('zep-opsi-container');
+  opsiContainer.innerHTML = `<div class="zep-opsi-grid">
+    ${(soal.opsi || []).map((o, i) => `
+      <button class="zep-opsi zep-opsi-${opsiKode[i]}"
+        onclick="zepMuridJawab('${String(o).replace(/'/g,"\\'")}', this)"
+        data-jawaban="${String(o).replace(/"/g,'&quot;')}">
+        <span style="font-size:12px;opacity:.6;margin-bottom:4px;display:block">${opsiKode[i]}</span>
+        ${o}
+      </button>`).join('')}
+  </div>`;
+
+  document.getElementById('zep-hasil-feedback').style.display = 'none';
+  showPage('page-zep-soal');
+
+  // Timer
+  zepStartTimer(durasi);
+}
+
+function zepStartTimer(detik) {
+  clearInterval(zepTimerInterval);
+  zepTimerSisa = detik;
+  const circle = document.getElementById('zep-timer-circle');
+  const numEl = document.getElementById('zep-timer-num');
+
+  function update() {
+    const ratio = zepTimerSisa / detik;
+    circle.style.strokeDashoffset = CIRCUMFERENCE * (1 - ratio);
+    numEl.textContent = zepTimerSisa;
+    if (zepTimerSisa <= 5) {
+      circle.style.stroke = '#FF4757';
+      numEl.style.color = '#FF4757';
+    } else {
+      circle.style.stroke = '#FFD93D';
+      numEl.style.color = '#FFD93D';
+    }
+  }
+  update();
+  zepTimerInterval = setInterval(() => {
+    zepTimerSisa--;
+    update();
+    if (zepTimerSisa <= 0) {
+      clearInterval(zepTimerInterval);
+      if (!zepSudahJawab) {
+        // Waktu habis, disable semua opsi
+        document.querySelectorAll('.zep-opsi').forEach(b => b.classList.add('disabled'));
+      }
+    }
+  }, 1000);
+}
+
+function zepMuridJawab(jawaban, btnEl) {
+  if (zepSudahJawab) return;
+  zepSudahJawab = true;
+  clearInterval(zepTimerInterval);
+
+  const waktuSisa = zepTimerSisa;
+  document.querySelectorAll('.zep-opsi').forEach(b => b.classList.add('disabled'));
+
+  zepSocket.emit('zep:jawab', {
+    kode_room: zepRoom.kode,
+    soalIdx: zepSoalIdx,
+    jawaban,
+    waktuSisa
+  });
+
+  // Tampilkan animasi menunggu
+  const feedback = document.getElementById('zep-hasil-feedback');
+  feedback.style.display = 'block';
+  feedback.innerHTML = '<div class="zep-sudah-jawab">✅ Jawaban terkirim! Tunggu ya...</div>';
+}
+
+function zepMuridHasilJawab({ benar, poinDapat, jawabanBenar, totalSkor }) {
+  zepSkorSaya = totalSkor;
+  document.getElementById('zep-my-skor').textContent = totalSkor;
+
+  // Highlight opsi benar/salah
+  document.querySelectorAll('.zep-opsi').forEach(btn => {
+    const jawBtn = btn.getAttribute('data-jawaban');
+    if (String(jawBtn).trim().toLowerCase() === String(jawabanBenar).trim().toLowerCase()) {
+      btn.classList.add('reveal-benar');
+    }
+  });
+
+  const feedback = document.getElementById('zep-hasil-feedback');
+  feedback.style.display = 'block';
+  if (benar) {
+    feedback.innerHTML = `<div class="zep-sudah-jawab">🎉 Benar! +${poinDapat} poin</div>`;
+  } else {
+    feedback.innerHTML = `<div class="zep-sudah-jawab" style="color:#FF6B9D">❌ Salah. Jawaban: ${jawabanBenar}</div>`;
+  }
+}
+
+function zepMuridTampilHasil({ idx, jawabanBenar, leaderboard }) {
+  clearInterval(zepTimerInterval);
+  document.getElementById('zep-hasil-skor-nav').textContent = zepSkorSaya;
+
+  // Cari posisi saya
+  const posSaya = leaderboard.findIndex(p => p.id === currentUser.id);
+  const dataBenar = leaderboard.find(p => p.id === currentUser.id);
+
+  const content = document.getElementById('zep-hasil-soal-content');
+  if (dataBenar?.benar) {
+    content.innerHTML = `<div style="font-size:56px;margin-bottom:8px">🎉</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:28px;color:#6BCB77">+${dataBenar.poin} Poin!</div>
+      <div style="opacity:.6;margin-top:6px">Jawaban Benar ✅</div>`;
+  } else {
+    content.innerHTML = `<div style="font-size:56px;margin-bottom:8px">😅</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:24px;color:#FF6B9D">Jawaban: ${jawabanBenar}</div>
+      <div style="opacity:.6;margin-top:6px">Semangat soal berikutnya!</div>`;
+  }
+
+  renderZepLB('zep-lb-sementara', leaderboard);
+  showPage('page-zep-hasil-soal');
+}
+
+function zepMuridFinal({ leaderboard, judul }) {
+  clearInterval(zepTimerInterval);
+  const posSaya = leaderboard.findIndex(p => p.id === currentUser.id) + 1;
+  const medals = ['🥇', '🥈', '🥉'];
+
+  document.getElementById('zep-final-judul').textContent = judul + ' — Selesai!';
+  document.getElementById('zep-final-skor').textContent = zepSkorSaya + ' poin';
+  document.getElementById('zep-final-posisi').textContent = `Kamu di posisi #${posSaya} dari ${leaderboard.length} pemain`;
+
+  renderPodium('zep-podium', leaderboard);
+  renderZepLB('zep-final-lb', leaderboard);
+  showPage('page-zep-final');
+  zepReset();
+}
+
+// ── GURU: Buka halaman host ─────────────────────────────────
+async function bukaZepQuizGuru() {
+  zepConnect();
+  zepIsGuru = true;
+  zepSelectedQuizId = null;
+  document.getElementById('zep-guru-step1').style.display = 'block';
+  document.getElementById('zep-guru-lobby').style.display = 'none';
+  document.getElementById('zep-guru-live').style.display = 'none';
+  document.getElementById('zep-guru-final').style.display = 'none';
+  document.getElementById('zep-guru-start-btn').style.display = 'none';
+  document.getElementById('zep-buat-room-btn').style.display = 'none';
+  showPage('page-zep-guru');
+  showLoading(true);
+  try {
+    const data = await api('GET', '/zepquiz/quiz');
+    const list = data.quiz || [];
+    const grid = document.getElementById('zep-quiz-list');
+    if (!list.length) {
+      grid.innerHTML = '<div style="opacity:.5;font-size:14px;grid-column:1/-1">Belum ada quiz aktif yang punya soal. Buat quiz di menu Soal dulu ya!</div>';
+    } else {
+      grid.innerHTML = list.map(q => `
+        <div class="zep-quiz-item" onclick="zepGuruPilihQuiz('${q.id}', this)">
+          <h4>${q.judul}</h4>
+          <p>${q.mapel}</p>
+          <span class="zep-quiz-badge">📝 ${q.total_soal} soal · ⏱ ${q.durasi}s/soal</span>
+        </div>`).join('');
+    }
+  } catch(e) {
+    toast('Gagal memuat quiz', 'error');
+  }
+  showLoading(false);
+}
+
+function zepGuruPilihQuiz(quizId, el) {
+  document.querySelectorAll('.zep-quiz-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+  zepSelectedQuizId = quizId;
+  document.getElementById('zep-buat-room-btn').style.display = 'inline-block';
+}
+
+async function zepGuruBuatRoom() {
+  if (!zepSelectedQuizId) { toast('Pilih quiz dulu!', 'error'); return; }
+  showLoading(true);
+  try {
+    const data = await api('POST', '/zepquiz/room', { quiz_id: zepSelectedQuizId });
+    if (!data.success) { toast(data.pesan || 'Gagal buat room', 'error'); showLoading(false); return; }
+    zepRoom = data.room;
+    zepSocket.emit('zep:create_room', {
+      kode_room: data.room.kode_room,
+      quiz: { judul: data.room.judul, mapel: data.room.mapel, durasi_per_soal: data.room.durasi_per_soal },
+      soal: data.room.soal,
+      guru: { id: currentUser.id, nama: currentUser.nama }
+    });
+  } catch(e) {
+    toast('Tidak bisa terhubung ke server', 'error');
+    showLoading(false);
+  }
+}
+
+function zepGuruMulai() {
+  if (!zepRoom) return;
+  const pemainCount = document.getElementById('zep-guru-jumlah-pemain').textContent;
+  if (parseInt(pemainCount) === 0) {
+    if (!confirm('Belum ada murid yang join. Mulai quand sekarang?')) return;
+  }
+  document.getElementById('zep-guru-start-btn').style.display = 'none';
+  document.getElementById('zep-guru-lobby').style.display = 'none';
+  document.getElementById('zep-guru-live').style.display = 'block';
+  zepSocket.emit('zep:start_game', { kode_room: zepRoom.kode_room || zepRoom.kode });
+}
+
+function zepGuruUpdateLive({ idx, totalSoal, soal, durasi }) {
+  document.getElementById('zep-guru-live-soal').textContent = `Soal ${idx + 1}/${totalSoal}`;
+  document.getElementById('zep-guru-live-pertanyaan').textContent = soal.pertanyaan;
+  // Timer display
+  let t = durasi;
+  clearInterval(zepTimerInterval);
+  zepTimerInterval = setInterval(() => {
+    t--;
+    document.getElementById('zep-guru-live-timer').textContent = `⏱ ${t}`;
+    if (t <= 0) clearInterval(zepTimerInterval);
+  }, 1000);
+  document.getElementById('zep-guru-live-timer').textContent = `⏱ ${durasi}`;
+}
+
+function renderZepGuruPemain(pemain) {
+  const g = document.getElementById('zep-guru-pemain-grid');
+  if (!pemain || !pemain.length) {
+    g.innerHTML = '<div class="zep-waiting">⏳ Menunggu murid bergabung...</div>';
+    return;
+  }
+  g.innerHTML = pemain.map(p => `
+    <div class="zep-pemain-card">
+      <div class="zep-pemain-avatar">${p.avatar || '🦁'}</div>
+      <div class="zep-pemain-nama">${p.nama}</div>
+    </div>`).join('');
+}
+
+function renderZepGuruLB(pemain) {
+  renderZepLB('zep-guru-lb', pemain);
+}
+
+function zepGuruFinal({ leaderboard, judul }) {
+  clearInterval(zepTimerInterval);
+  document.getElementById('zep-guru-live').style.display = 'none';
+  document.getElementById('zep-guru-final').style.display = 'block';
+  document.getElementById('zep-guru-final-judul').textContent = (judul || 'Quiz') + ' — Selesai!';
+  renderPodium('zep-guru-podium', leaderboard);
+  renderZepLB('zep-guru-final-lb', leaderboard);
+}
+
+function zepGuruTutupRoom() {
+  if (zepRoom) {
+    zepSocket.emit('zep:close_room', { kode_room: zepRoom.kode_room || zepRoom.kode });
+  }
+  zepReset();
+  showPage('page-guru');
+}
+
+function zepGuruReset() {
+  zepReset();
+  bukaZepQuizGuru();
+}
+
+// ── Helpers ─────────────────────────────────────────────────
+function renderZepLB(containerId, pemain) {
+  const medals = ['🥇', '🥈', '🥉'];
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!pemain || !pemain.length) { el.innerHTML = '<div style="opacity:.4;text-align:center;padding:12px">Belum ada data</div>'; return; }
+  el.innerHTML = pemain.map((p, i) => `
+    <div class="zep-lb-row">
+      <div class="zep-lb-rank">${medals[i] || (i + 1)}</div>
+      <div class="zep-lb-avatar">${p.avatar || '🦁'}</div>
+      <div class="zep-lb-nama">${p.nama}</div>
+      ${'benar' in p ? `<div class="zep-lb-benar">${p.benar ? '✅' : '❌'}</div>` : ''}
+      <div class="zep-lb-skor">${p.skor}</div>
+    </div>`).join('');
+}
+
+function renderPodium(containerId, leaderboard) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const medals = ['🥇', '🥈', '🥉'];
+  const order = [1, 0, 2]; // posisi visual: 2nd, 1st, 3rd
+  const top3 = leaderboard.slice(0, 3);
+  el.innerHTML = order.map(i => {
+    const p = top3[i];
+    if (!p) return '';
+    return `<div class="zep-podium-item zep-podium-${i + 1}">
+      <div class="zep-podium-avatar">${p.avatar || '🦁'}</div>
+      <div class="zep-podium-nama">${p.nama}</div>
+      <div class="zep-podium-skor">${p.skor} poin</div>
+      <div class="zep-podium-bar">${medals[i]}</div>
+    </div>`;
+  }).join('');
+}
+
+function zepReset() {
+  clearInterval(zepTimerInterval);
+  zepRoom = null;
+  zepSkorSaya = 0;
+  zepSoalIdx = -1;
+  zepSudahJawab = false;
+  zepSelectedQuizId = null;
 }
 </script>
 

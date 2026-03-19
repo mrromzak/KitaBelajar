@@ -42,6 +42,62 @@ require('./socket/zepquiz')(io);
 // Socket.io World handler
 require('./socket/world')(io);
 
+// ── Proxy: fetch artikel untuk AI Materi ──
+const https = require('https');
+const http  = require('http');
+app.get('/api/proxy/fetch', async (req, res) => {
+  const { url } = req.query;
+  if (!url) return res.json({ success: false, pesan: 'URL wajib diisi' });
+
+  try {
+    // Validasi URL
+    const parsed = new URL(url);
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return res.json({ success: false, pesan: 'Protocol tidak valid' });
+    }
+
+    const client = parsed.protocol === 'https:' ? https : http;
+    const request = client.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; KitaBelajar/1.0)',
+        'Accept': 'text/html,application/xhtml+xml'
+      },
+      timeout: 10000
+    }, (response) => {
+      let html = '';
+      response.setEncoding('utf8');
+      response.on('data', chunk => { if (html.length < 500000) html += chunk; });
+      response.on('end', () => {
+        // Strip HTML tags, ambil teks bersih
+        let teks = html
+          .replace(/<script[\s\S]*?<\/script>/gi, '')
+          .replace(/<style[\s\S]*?<\/style>/gi, '')
+          .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+          .replace(/<header[\s\S]*?<\/header>/gi, '')
+          .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/\s{3,}/g, '\n\n')
+          .trim();
+
+        // Ambil max 8000 karakter
+        if (teks.length > 8000) teks = teks.substring(0, 8000);
+        res.json({ success: true, teks, panjang: teks.length });
+      });
+    });
+    request.on('error', (e) => res.json({ success: false, pesan: e.message }));
+    request.on('timeout', () => {
+      request.destroy();
+      res.json({ success: false, pesan: 'Request timeout' });
+    });
+  } catch(e) {
+    res.json({ success: false, pesan: e.message });
+  }
+});
+
 // Info endpoint
 app.get('/api', (req, res) => {
   res.json({

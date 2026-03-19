@@ -1,0 +1,812 @@
+// ============================================================
+//  ai-features.js — KitaBelajar AI Features
+//  Include di belajar-seru.html dengan:
+//  <script src="ai-features.js"></script>
+//  Letakkan SETELAH semua script lain
+// ============================================================
+
+// ── GROQ CONFIG — Ganti GROQ_API_KEY dengan key kamu ──
+// Daftar gratis di: https://console.groq.com
+const GROQ_API_KEY = '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';
+const AI_MODEL     = 'llama-3.1-8b-instant'; // gratis, cepat
+const AI_MAX_TOKENS = 1024;
+
+// ── Helper: panggil Groq API (OpenAI-compatible format) ────
+async function callAI(systemPrompt, userMessage, maxTokens = AI_MAX_TOKENS) {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${GROQ_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: AI_MODEL,
+      max_tokens: maxTokens,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+      ]
+    })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.choices?.[0]?.message?.content || '';
+}
+
+// ── Helper: panggil Groq dengan history chat ───────────────
+async function callAIWithHistory(systemPrompt, history, maxTokens = AI_MAX_TOKENS) {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${GROQ_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: AI_MODEL,
+      max_tokens: maxTokens,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...history
+      ]
+    })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.choices?.[0]?.message?.content || '';
+}
+
+// ============================================================
+//  CSS — inject styles
+// ============================================================
+const aiCSS = `
+  /* ── AI Chat Floating Button ── */
+  #ai-fab {
+    position: fixed; bottom: 28px; right: 28px; z-index: 300;
+    width: 60px; height: 60px; border-radius: 50%; border: none;
+    background: linear-gradient(135deg, #7b2ff7, #a64cff);
+    color: white; font-size: 26px; cursor: pointer;
+    box-shadow: 0 6px 24px rgba(123,47,247,0.45);
+    transition: all 0.3s cubic-bezier(.34,1.56,.64,1);
+    display: flex; align-items: center; justify-content: center;
+  }
+  #ai-fab:hover { transform: scale(1.12) rotate(8deg); }
+  #ai-fab.open { transform: scale(1.1) rotate(45deg); background: linear-gradient(135deg, #e74c3c, #ff6b6b); }
+
+  /* ── AI Panel ── */
+  #ai-panel {
+    position: fixed; bottom: 100px; right: 28px; z-index: 299;
+    width: 380px; max-height: 560px;
+    background: white; border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+    display: flex; flex-direction: column;
+    transform: scale(0.85) translateY(20px); opacity: 0;
+    pointer-events: none; transition: all 0.3s cubic-bezier(.34,1.56,.64,1);
+    overflow: hidden;
+  }
+  #ai-panel.show { transform: scale(1) translateY(0); opacity: 1; pointer-events: all; }
+  @media (max-width: 480px) { #ai-panel { width: calc(100vw - 32px); right: 16px; bottom: 90px; } }
+
+  .ai-panel-header {
+    padding: 18px 20px 14px;
+    background: linear-gradient(135deg, #7b2ff7, #a64cff);
+    color: white; flex-shrink: 0;
+  }
+  .ai-panel-header h3 { font-family: 'Fredoka One', cursive; font-size: 18px; margin-bottom: 2px; }
+  .ai-panel-header p { font-size: 12px; opacity: 0.85; }
+
+  .ai-tabs { display: flex; background: #F8F9FA; flex-shrink: 0; border-bottom: 2px solid #F0F0F0; overflow-x: auto; }
+  .ai-tab {
+    padding: 10px 14px; border: none; background: none; cursor: pointer;
+    font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 12px;
+    color: #7A7A7A; transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
+  }
+  .ai-tab.active { color: #7b2ff7; border-bottom: 3px solid #7b2ff7; background: white; }
+  .ai-tab:hover:not(.active) { background: #F0F0F0; }
+
+  .ai-panel-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+
+  /* ── Chat Messages ── */
+  .ai-msg { display: flex; gap: 8px; animation: fadeInUp 0.3s ease; }
+  .ai-msg.user { flex-direction: row-reverse; }
+  .ai-bubble {
+    max-width: 80%; padding: 10px 14px; border-radius: 18px;
+    font-size: 13px; line-height: 1.6; font-family: 'Nunito', sans-serif;
+  }
+  .ai-msg.ai .ai-bubble { background: #F3EEFF; color: #2D2D2D; border-bottom-left-radius: 4px; }
+  .ai-msg.user .ai-bubble { background: linear-gradient(135deg, #7b2ff7, #a64cff); color: white; border-bottom-right-radius: 4px; }
+  .ai-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; margin-top: 2px; }
+  .ai-avatar.ai-side { background: linear-gradient(135deg, #7b2ff7, #a64cff); }
+  .ai-typing { display: flex; gap: 4px; align-items: center; padding: 10px 14px; background: #F3EEFF; border-radius: 18px; width: fit-content; }
+  .ai-typing span { width: 7px; height: 7px; background: #7b2ff7; border-radius: 50%; animation: typing 1.2s ease-in-out infinite; }
+  .ai-typing span:nth-child(2) { animation-delay: 0.2s; }
+  .ai-typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typing { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-6px);opacity:1} }
+
+  .ai-input-wrap { padding: 12px 16px; border-top: 2px solid #F0F0F0; display: flex; gap: 8px; flex-shrink: 0; }
+  .ai-input {
+    flex: 1; padding: 10px 14px; border: 2px solid #E8E8E8; border-radius: 50px;
+    font-family: 'Nunito', sans-serif; font-size: 13px; outline: none; transition: border-color 0.2s;
+  }
+  .ai-input:focus { border-color: #7b2ff7; }
+  .ai-send-btn {
+    width: 38px; height: 38px; border-radius: 50%; border: none;
+    background: linear-gradient(135deg, #7b2ff7, #a64cff);
+    color: white; cursor: pointer; font-size: 16px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+  }
+  .ai-send-btn:hover { transform: scale(1.1); }
+  .ai-send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* ── AI Cards (Generate Soal, Analisis, dll) ── */
+  .ai-card { background: #F8F9FA; border-radius: 16px; padding: 14px; }
+  .ai-card-title { font-weight: 800; font-size: 13px; color: #2D2D2D; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .ai-gen-input {
+    width: 100%; padding: 10px 12px; border: 2px solid #E8E8E8; border-radius: 12px;
+    font-family: 'Nunito', sans-serif; font-size: 13px; outline: none; margin-bottom: 8px; transition: border-color 0.2s;
+    box-sizing: border-box;
+  }
+  .ai-gen-input:focus { border-color: #7b2ff7; }
+  .ai-gen-btn {
+    width: 100%; padding: 10px; border-radius: 12px; border: none;
+    background: linear-gradient(135deg, #7b2ff7, #a64cff); color: white;
+    font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13px; cursor: pointer; transition: all 0.2s;
+  }
+  .ai-gen-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(123,47,247,0.35); }
+  .ai-gen-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+  .ai-result {
+    background: white; border-radius: 12px; padding: 12px; font-size: 12px; line-height: 1.7;
+    color: #2D2D2D; border: 1.5px solid #E8E8E8; white-space: pre-wrap; max-height: 200px; overflow-y: auto;
+  }
+  .ai-chip { display: inline-block; background: #F3EEFF; color: #7b2ff7; padding: 4px 12px; border-radius: 50px; font-size: 11px; font-weight: 800; margin: 2px; cursor: pointer; transition: all 0.2s; }
+  .ai-chip:hover { background: #7b2ff7; color: white; }
+
+  /* ── Summarize Button in Materi ── */
+  .ai-summarize-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg, #7b2ff7, #a64cff);
+    color: white; border: none; padding: 8px 18px; border-radius: 50px;
+    font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13px;
+    cursor: pointer; transition: all 0.2s; margin-top: 10px;
+  }
+  .ai-summarize-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(123,47,247,0.35); }
+
+  /* ── AI Summary Box ── */
+  .ai-summary-box {
+    background: linear-gradient(135deg, #F3EEFF, #EEF5FF);
+    border: 2px solid #D8BBFF; border-radius: 16px; padding: 16px; margin-top: 12px;
+    font-size: 13px; line-height: 1.8; color: #2D2D2D;
+  }
+  .ai-summary-box .ai-summary-title { font-weight: 800; color: #7b2ff7; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+
+  /* ── Analisis Panel ── */
+  .ai-analisis-card {
+    background: linear-gradient(135deg, #F3EEFF, #EEF5FF);
+    border-radius: 16px; padding: 16px; font-size: 13px; line-height: 1.8;
+  }
+
+  /* ── Koreksi Essay ── */
+  .ai-koreksi-result { background: #F0FFF4; border: 2px solid #6BCB77; border-radius: 12px; padding: 12px; font-size: 13px; line-height: 1.7; margin-top: 8px; }
+  .ai-koreksi-wrong { background: #FFF0F0; border-color: #FF4757; }
+`;
+
+// Inject CSS
+const styleEl = document.createElement('style');
+styleEl.textContent = aiCSS;
+document.head.appendChild(styleEl);
+
+// ============================================================
+//  STATE
+// ============================================================
+let aiPanelOpen = false;
+let aiCurrentTab = 'chat';
+let aiChatHistory = []; // { role, content }
+let aiIsLoading = false;
+
+// ============================================================
+//  INJECT HTML ke body
+// ============================================================
+function injectAIHTML() {
+  const html = `
+  <!-- AI FAB Button -->
+  <button id="ai-fab" onclick="toggleAIPanel()" title="Asisten AI">🤖</button>
+
+  <!-- AI Panel -->
+  <div id="ai-panel">
+    <div class="ai-panel-header">
+      <h3>🤖 KitaBelajar AI</h3>
+      <p>Asisten pintar untuk belajar lebih seru!</p>
+    </div>
+    <div class="ai-tabs" id="ai-tabs">
+      <button class="ai-tab active" onclick="switchAITab('chat')">💬 Chat</button>
+      <button class="ai-tab" onclick="switchAITab('generate')">📝 Buat Soal</button>
+      <button class="ai-tab" onclick="switchAITab('analisis')">📊 Analisis</button>
+      <button class="ai-tab" onclick="switchAITab('guru')">👩‍🏫 Guru AI</button>
+    </div>
+
+    <!-- TAB: Chat Asisten -->
+    <div class="ai-panel-body" id="ai-tab-chat">
+      <div id="ai-chat-messages">
+        <div class="ai-msg ai">
+          <div class="ai-avatar ai-side">🤖</div>
+          <div class="ai-bubble">Halo! Aku asisten belajarmu 😊 Tanya apa saja tentang pelajaran, dan aku siap bantu!</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
+        <span class="ai-chip" onclick="kirimPesanCepat('Jelaskan fotosintesis dengan mudah')">🌿 Fotosintesis</span>
+        <span class="ai-chip" onclick="kirimPesanCepat('Apa itu pecahan sederhana?')">🔢 Pecahan</span>
+        <span class="ai-chip" onclick="kirimPesanCepat('Ceritakan tentang Sumpah Pemuda')">🏛️ Sejarah</span>
+        <span class="ai-chip" onclick="kirimPesanCepat('Bantu aku belajar perkalian')">✖️ Perkalian</span>
+      </div>
+    </div>
+    <div class="ai-input-wrap" id="ai-chat-input-wrap">
+      <input class="ai-input" id="ai-chat-input" placeholder="Tanya apa saja..." onkeydown="if(event.key==='Enter')kirimChatAI()">
+      <button class="ai-send-btn" id="ai-send-btn" onclick="kirimChatAI()">➤</button>
+    </div>
+
+    <!-- TAB: Generate Soal -->
+    <div class="ai-panel-body" id="ai-tab-generate" style="display:none">
+      <div class="ai-card">
+        <div class="ai-card-title">📝 Generate Soal Otomatis</div>
+        <input class="ai-gen-input" id="ai-gen-topik" placeholder="Topik soal (contoh: Pecahan, Fotosintesis...)">
+        <select class="ai-gen-input" id="ai-gen-mapel">
+          <option value="Matematika">🔢 Matematika</option>
+          <option value="IPA">🔬 IPA</option>
+          <option value="IPS">🗺️ IPS</option>
+          <option value="Bahasa Indonesia">📖 Bahasa Indonesia</option>
+          <option value="Umum">📚 Umum</option>
+        </select>
+        <select class="ai-gen-input" id="ai-gen-jumlah">
+          <option value="3">3 soal</option>
+          <option value="5" selected>5 soal</option>
+          <option value="10">10 soal</option>
+          <option value="20">20 soal</option>
+          <option value="30">30 soal</option>
+          <option value="50">50 soal</option>
+          <option value="100">100 soal</option>
+        </select>
+        <select class="ai-gen-input" id="ai-gen-tingkat">
+          <option value="mudah">😊 Mudah</option>
+          <option value="sedang" selected>🤔 Sedang</option>
+          <option value="sulit">😤 Sulit</option>
+        </select>
+        <button class="ai-gen-btn" id="ai-gen-btn" onclick="generateSoalAI()">✨ Generate Soal!</button>
+      </div>
+      <div id="ai-gen-result" style="display:none">
+        <div class="ai-card-title" style="margin-top:8px">📋 Hasil Generate:</div>
+        <div class="ai-result" id="ai-gen-output"></div>
+        <button class="ai-gen-btn" style="margin-top:8px;background:linear-gradient(135deg,#6BCB77,#4CAF50)" onclick="simpanSoalDariAI()">💾 Simpan Semua ke Bank Soal</button>
+      </div>
+    </div>
+
+    <!-- TAB: Analisis -->
+    <div class="ai-panel-body" id="ai-tab-analisis" style="display:none">
+      <div class="ai-card">
+        <div class="ai-card-title">📊 Analisis Hasil Belajar</div>
+        <p style="font-size:12px;color:#7A7A7A;margin-bottom:10px">AI akan menganalisis performa belajarmu dan memberikan saran</p>
+        <button class="ai-gen-btn" onclick="analisisBelajarAI()">🔍 Analisis Sekarang</button>
+      </div>
+      <div id="ai-analisis-result"></div>
+    </div>
+
+    <!-- TAB: Guru AI -->
+    <div class="ai-panel-body" id="ai-tab-guru" style="display:none">
+      <div class="ai-msg ai">
+        <div class="ai-avatar ai-side">👩‍🏫</div>
+        <div class="ai-bubble">Halo Bu/Pak Guru! Aku siap bantu dalam hal strategi mengajar, membuat materi, atau saran pembelajaran 😊</div>
+      </div>
+      <div id="ai-guru-messages"></div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">
+        <span class="ai-chip" onclick="kirimPesanGuru('Beri saran cara mengajar matematika yang menyenangkan')">💡 Strategi Mengajar</span>
+        <span class="ai-chip" onclick="kirimPesanGuru('Bagaimana cara membuat soal yang baik untuk SD?')">📝 Buat Soal</span>
+        <span class="ai-chip" onclick="kirimPesanGuru('Cara memotivasi murid yang malas belajar')">🎯 Motivasi Murid</span>
+      </div>
+    </div>
+    <div class="ai-input-wrap" id="ai-guru-input-wrap" style="display:none">
+      <input class="ai-input" id="ai-guru-input" placeholder="Tanya strategi mengajar..." onkeydown="if(event.key==='Enter')kirimChatGuru()">
+      <button class="ai-send-btn" onclick="kirimChatGuru()">➤</button>
+    </div>
+  </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+// ============================================================
+//  TOGGLE & TAB
+// ============================================================
+function toggleAIPanel() {
+  aiPanelOpen = !aiPanelOpen;
+  document.getElementById('ai-fab').classList.toggle('open', aiPanelOpen);
+  document.getElementById('ai-panel').classList.toggle('show', aiPanelOpen);
+
+  // Sembunyikan FAB di halaman zep quiz/game
+  const activePage = document.querySelector('.page.active')?.id || '';
+  if (activePage.includes('zep') || activePage.includes('quiz')) {
+    document.getElementById('ai-panel').classList.remove('show');
+    aiPanelOpen = false;
+    return;
+  }
+
+  // Update tab sesuai role user
+  if (aiPanelOpen) updateAITabsForRole();
+}
+
+function updateAITabsForRole() {
+  const isGuru = window.currentUser?.role === 'guru';
+  const tabGenerate = document.querySelector('.ai-tab:nth-child(2)');
+  const tabGuru = document.querySelector('.ai-tab:nth-child(4)');
+  if (isGuru) {
+    tabGenerate.style.display = 'block';
+    tabGuru.style.display = 'block';
+  } else {
+    tabGenerate.style.display = 'none';
+    tabGuru.style.display = 'none';
+  }
+}
+
+function switchAITab(tab) {
+  aiCurrentTab = tab;
+  const tabs = ['chat', 'generate', 'analisis', 'guru'];
+  tabs.forEach(t => {
+    const body = document.getElementById(`ai-tab-${t}`);
+    if (body) body.style.display = t === tab ? 'flex' : 'none';
+  });
+  // Input area
+  const chatInput = document.getElementById('ai-chat-input-wrap');
+  const guruInput = document.getElementById('ai-guru-input-wrap');
+  if (chatInput) chatInput.style.display = tab === 'chat' ? 'flex' : 'none';
+  if (guruInput) guruInput.style.display = tab === 'guru' ? 'flex' : 'none';
+
+  // Update active tab button
+  document.querySelectorAll('.ai-tab').forEach((btn, i) => {
+    btn.classList.toggle('active', tabs[i] === tab);
+  });
+}
+
+// ============================================================
+//  CHAT ASISTEN MURID
+// ============================================================
+let chatMuridHistory = [];
+
+function kirimPesanCepat(pesan) {
+  document.getElementById('ai-chat-input').value = pesan;
+  kirimChatAI();
+}
+
+async function kirimChatAI() {
+  const input = document.getElementById('ai-chat-input');
+  const pesan = input.value.trim();
+  if (!pesan || aiIsLoading) return;
+  input.value = '';
+
+  tambahPesanChat('ai-chat-messages', 'user', pesan, window.currentUser?.avatar || '🦁');
+  chatMuridHistory.push({ role: 'user', content: pesan });
+
+  const typing = tambahTyping('ai-chat-messages');
+  aiIsLoading = true;
+  document.getElementById('ai-send-btn').disabled = true;
+
+  try {
+    const jawaban = await callAIWithHistory(
+      `Kamu adalah asisten belajar yang ramah dan menyenangkan untuk siswa SD/SMP Indonesia.
+Nama kamu adalah "Kiki" 🤖. Selalu gunakan bahasa Indonesia yang sederhana dan mudah dipahami.
+Gunakan emoji secukupnya agar terasa fun. Berikan penjelasan yang singkat, jelas, dan pakai contoh nyata.
+Kalau ada soal matematika, tunjukkan langkah-langkahnya. Semangati murid jika mereka kesulitan.
+User saat ini: ${window.currentUser?.nama || 'Murid'}`,
+      chatMuridHistory.slice(-10)
+    );
+    chatMuridHistory.push({ role: 'assistant', content: jawaban });
+    typing.remove();
+    tambahPesanChat('ai-chat-messages', 'ai', jawaban, '🤖');
+  } catch(e) {
+    typing.remove();
+    tambahPesanChat('ai-chat-messages', 'ai', '😅 Koneksi bermasalah. Coba lagi ya!', '🤖');
+  }
+  aiIsLoading = false;
+  document.getElementById('ai-send-btn').disabled = false;
+}
+
+// ============================================================
+//  CHAT GURU AI
+// ============================================================
+let chatGuruHistory = [];
+
+function kirimPesanGuru(pesan) {
+  document.getElementById('ai-guru-input').value = pesan;
+  kirimChatGuru();
+}
+
+async function kirimChatGuru() {
+  const input = document.getElementById('ai-guru-input');
+  const pesan = input.value.trim();
+  if (!pesan || aiIsLoading) return;
+  input.value = '';
+
+  tambahPesanChat('ai-guru-messages', 'user', pesan, window.currentUser?.avatar || '👩‍🏫');
+  chatGuruHistory.push({ role: 'user', content: pesan });
+
+  const typing = tambahTyping('ai-guru-messages');
+  aiIsLoading = true;
+
+  try {
+    const jawaban = await callAIWithHistory(
+      `Kamu adalah konsultan pendidikan AI untuk guru SD/SMP di Indonesia.
+Nama kamu adalah "Prof. Kiki" 👩‍🏫. Berikan saran yang praktis, berbasis penelitian pendidikan,
+dan mudah diterapkan di kelas. Gunakan bahasa Indonesia yang profesional namun hangat.
+Guru saat ini: ${window.currentUser?.nama || 'Guru'}`,
+      chatGuruHistory.slice(-10)
+    );
+    chatGuruHistory.push({ role: 'assistant', content: jawaban });
+    typing.remove();
+    tambahPesanChat('ai-guru-messages', 'ai', jawaban, '👩‍🏫');
+  } catch(e) {
+    typing.remove();
+    tambahPesanChat('ai-guru-messages', 'ai', 'Koneksi bermasalah. Coba lagi!', '👩‍🏫');
+  }
+  aiIsLoading = false;
+}
+
+// ============================================================
+//  GENERATE SOAL AI
+// ============================================================
+let generatedSoalData = [];
+
+async function generateSoalAI() {
+  const topik   = document.getElementById('ai-gen-topik').value.trim();
+  const mapel   = document.getElementById('ai-gen-mapel').value;
+  const jumlah  = parseInt(document.getElementById('ai-gen-jumlah').value);
+  const tingkat = document.getElementById('ai-gen-tingkat').value;
+  if (!topik) { alert('Masukkan topik soal dulu!'); return; }
+
+  const btn = document.getElementById('ai-gen-btn');
+  btn.disabled = true;
+
+  const BATCH_SIZE = 10;
+  const totalBatch = Math.ceil(jumlah / BATCH_SIZE);
+  let semuaSoal = [];
+
+  try {
+    for (let b = 0; b < totalBatch; b++) {
+      const soalBatch = Math.min(BATCH_SIZE, jumlah - semuaSoal.length);
+      btn.textContent = `⏳ Batch ${b+1}/${totalBatch} (${semuaSoal.length}/${jumlah})...`;
+
+      const teksRaw = await callAI(
+        'Kamu pembuat soal ujian. Balas HANYA dengan JSON array yang valid dan lengkap, tanpa teks lain.',
+        `Buat tepat ${soalBatch} soal pilihan ganda BARU (berbeda dari batch sebelumnya).
+Mata pelajaran: ${mapel}
+Topik: ${topik}
+Tingkat: ${tingkat}
+Batch ke-${b+1}, soal nomor ${semuaSoal.length+1} sampai ${semuaSoal.length+soalBatch}.
+
+Balas HANYA JSON array:
+[{"pertanyaan":"...","emoji":"emoji","opsi":["A","B","C","D"],"jawaban":"teks jawaban benar","poin":100}]`,
+        3000
+      );
+
+      let teks = teksRaw.replace(/```json\n?/gi,'').replace(/```\n?/g,'').trim();
+      const lastBracket = teks.lastIndexOf('}]');
+      if (lastBracket !== -1 && !teks.endsWith(']')) teks = teks.substring(0, lastBracket + 2);
+      const firstBracket = teks.indexOf('[');
+      if (firstBracket > 0) teks = teks.substring(firstBracket);
+      semuaSoal = semuaSoal.concat(JSON.parse(teks));
+      if (b < totalBatch - 1) await new Promise(r => setTimeout(r, 500));
+    }
+
+    generatedSoalData = semuaSoal.slice(0, jumlah);
+    const preview = generatedSoalData.map((s, i) =>
+      `${i+1}. ${s.emoji} ${s.pertanyaan}\n   A. ${s.opsi[0]}  B. ${s.opsi[1]}  C. ${s.opsi[2]}  D. ${s.opsi[3]}\n   ✅ Jawaban: ${s.jawaban}`
+    ).join('\n\n');
+    document.getElementById('ai-gen-output').textContent = preview;
+    document.getElementById('ai-gen-result').style.display = 'block';
+  } catch(e) {
+    alert('Gagal generate soal: ' + e.message);
+  }
+  btn.disabled = false;
+  btn.textContent = '✨ Generate Soal!';
+}
+
+  try {
+    const teksRaw = await callAI(
+      `Kamu adalah pembuat soal ujian untuk siswa SD/SMP Indonesia.
+Buat soal pilihan ganda yang berkualitas, jelas, dan sesuai tingkat kesulitan.
+Selalu jawab HANYA dalam format JSON array yang valid dan lengkap, tanpa teks lain di luar JSON, tanpa markdown. Pastikan JSON tidak terpotong.`,
+      `Buat tepat ${jumlah} soal pilihan ganda untuk:
+- Mata pelajaran: ${mapel}
+- Topik: ${topik}
+- Tingkat kesulitan: ${tingkat}
+
+BALAS HANYA dengan JSON array (isi semua ${jumlah} soal, jangan terpotong):
+[{"pertanyaan":"teks soal","emoji":"emoji relevan","opsi":["pilihan A","pilihan B","pilihan C","pilihan D"],"jawaban":"teks jawaban benar","poin":100}]
+
+Bahasa Indonesia, sesuai kurikulum SD/SMP Indonesia.`,
+      3000
+    );
+
+    let teks = teksRaw.replace(/```json\n?/gi,'').replace(/```\n?/g,'').trim();
+    // Perbaiki JSON terpotong
+    const lastBracket = teks.lastIndexOf('}]');
+    if (lastBracket !== -1 && !teks.endsWith(']')) teks = teks.substring(0, lastBracket + 2);
+    const firstBracket = teks.indexOf('[');
+    if (firstBracket > 0) teks = teks.substring(firstBracket);
+    generatedSoalData = JSON.parse(teks);
+
+    const preview = generatedSoalData.map((s, i) =>
+      `${i+1}. ${s.emoji} ${s.pertanyaan}\n   A. ${s.opsi[0]}  B. ${s.opsi[1]}  C. ${s.opsi[2]}  D. ${s.opsi[3]}\n   ✅ Jawaban: ${s.jawaban}`
+    ).join('\n\n');
+
+    document.getElementById('ai-gen-output').textContent = preview;
+    document.getElementById('ai-gen-result').style.display = 'block';
+  } catch(e) {
+    alert('Gagal generate soal: ' + e.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = '✨ Generate Soal!';
+}
+
+async function simpanSoalDariAI() {
+  if (!generatedSoalData.length) return;
+  const mapel = document.getElementById('ai-gen-mapel').value;
+  const tingkat = document.getElementById('ai-gen-tingkat').value;
+  const token = localStorage.getItem('kb_token');
+  if (!token) { alert('Login dulu!'); return; }
+
+  let berhasil = 0;
+  for (const s of generatedSoalData) {
+    try {
+      const res = await fetch('http://localhost:3000/api/soal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          pertanyaan: s.pertanyaan,
+          emoji: s.emoji || '❓',
+          mapel,
+          jenis: 'pilihan_ganda',
+          opsi: JSON.stringify(s.opsi),
+          jawaban: s.jawaban,
+          poin: s.poin || 100,
+          tingkat
+        })
+      });
+      const d = await res.json();
+      if (d.success) berhasil++;
+    } catch(e) {}
+  }
+
+  alert(`✅ ${berhasil} dari ${generatedSoalData.length} soal berhasil disimpan ke bank soal!`);
+  generatedSoalData = [];
+  document.getElementById('ai-gen-result').style.display = 'none';
+  document.getElementById('ai-gen-topik').value = '';
+}
+
+// ============================================================
+//  ANALISIS BELAJAR AI
+// ============================================================
+async function analisisBelajarAI() {
+  const el = document.getElementById('ai-analisis-result');
+  el.innerHTML = '<div class="ai-typing" style="margin:8px auto"><span></span><span></span><span></span></div>';
+
+  try {
+    const token = localStorage.getItem('kb_token');
+    // Ambil data hasil quiz
+    let hasilData = [];
+    if (token) {
+      try {
+        const res = await fetch('http://localhost:3000/api/dashboard', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const d = await res.json();
+        hasilData = d.data?.quiz_selesai || [];
+      } catch(e) {}
+    }
+
+    const user = window.currentUser;
+    const ringkasanData = hasilData.length > 0
+      ? hasilData.map(h => `- ${h.quiz?.judul || 'Quiz'}: ${h.skor} poin`).join('\n')
+      : 'Belum ada data quiz yang diselesaikan';
+
+    const analisis = await callAI(
+      'Kamu adalah analis pendidikan yang memberikan feedback konstruktif dan memotivasi untuk siswa SD/SMP Indonesia. Gunakan bahasa yang semangat dan positif.',
+      `Analisis hasil belajar siswa ini dan berikan saran yang spesifik:
+
+Nama: ${user?.nama || 'Murid'}
+Level: ${user?.level || 1}
+Total XP: ${user?.xp || 0}
+
+Hasil Quiz Terakhir:
+${ringkasanData}
+
+Berikan analisis dalam format:
+1. 💪 Kelebihan
+2. 📈 Area yang perlu ditingkatkan
+3. 🎯 Saran belajar konkret (3 poin)
+4. 🌟 Motivasi singkat
+
+Jawaban max 200 kata, pakai emoji, bahasa Indonesia.`,
+      600
+    );
+
+    el.innerHTML = `<div class="ai-analisis-card">${analisis.replace(/\n/g, '<br>')}</div>`;
+  } catch(e) {
+    el.innerHTML = '<div style="color:#FF4757;font-size:13px">Gagal menganalisis. Coba lagi!</div>';
+  }
+}
+
+// ============================================================
+//  SUMMARIZE MATERI
+// ============================================================
+async function summarizeMateri(konten, judul) {
+  let summaryBox = document.getElementById('ai-summary-active');
+  if (!summaryBox) {
+    summaryBox = document.createElement('div');
+    summaryBox.id = 'ai-summary-active';
+    summaryBox.className = 'ai-summary-box';
+    summaryBox.innerHTML = '<div class="ai-summary-title">🤖 Ringkasan AI <span style="font-size:11px;font-weight:400;opacity:.7">sedang dibuat...</span></div><div class="ai-typing"><span></span><span></span><span></span></div>';
+  }
+
+  const btn = document.querySelector('.ai-summarize-btn.active-summarize');
+  if (btn) btn.parentElement.appendChild(summaryBox);
+
+  try {
+    const ringkasan = await callAI(
+      'Kamu adalah asisten belajar yang membuat ringkasan materi pelajaran untuk siswa SD/SMP Indonesia. Gunakan bahasa sederhana, poin-poin jelas, dan emoji yang relevan.',
+      `Buat ringkasan singkat materi "${judul}" berikut ini dalam 5-7 poin utama yang mudah diingat siswa SD/SMP:
+
+${konten}
+
+Format:
+📌 Poin-poin penting (singkat, padat)
+Diakhiri dengan: 💡 Tips mudah mengingat`,
+      500
+    );
+    summaryBox.innerHTML = `
+      <div class="ai-summary-title">🤖 Ringkasan AI</div>
+      <div>${ringkasan.replace(/\n/g, '<br>')}</div>
+    `;
+  } catch(e) {
+    summaryBox.innerHTML = '<div style="color:#FF4757">Gagal membuat ringkasan. Coba lagi!</div>';
+  }
+}
+
+// ============================================================
+//  KOREKSI ESSAY AI
+// ============================================================
+async function koreksiEssayAI(pertanyaan, jawabanSiswa, kunciJawaban) {
+  try {
+    return await callAI(
+      'Kamu adalah guru yang mengoreksi jawaban essay siswa SD/SMP Indonesia. Berikan penilaian yang adil, konstruktif, dan semangat.',
+      `Koreksi jawaban essay ini:
+
+Pertanyaan: ${pertanyaan}
+Kunci Jawaban: ${kunciJawaban}
+Jawaban Siswa: ${jawabanSiswa}
+
+Berikan:
+1. Nilai (0-100)
+2. Apakah jawaban benar/sebagian benar/salah
+3. Poin yang tepat dari jawaban siswa
+4. Yang perlu diperbaiki
+5. Skor poin (dari 100)
+
+Format singkat, bahasa Indonesia, pakai emoji.`,
+      400
+    );
+  } catch(e) {
+    return 'Gagal mengoreksi jawaban.';
+  }
+}
+
+// ============================================================
+//  PATCH: Tambah tombol summarize ke stream materi
+// ============================================================
+function patchStreamMateri() {
+  // Override fungsi loadKelasStream jika ada
+  const origLoad = window.loadKelasStream;
+  if (!origLoad) return;
+
+  window.loadKelasStream = async function(kelasId) {
+    await origLoad(kelasId);
+    // Tambah tombol summarize ke semua materi teks
+    setTimeout(() => {
+      document.querySelectorAll('.stream-post-body-text').forEach((bodyEl, i) => {
+        const konten = bodyEl.textContent.trim();
+        const judulEl = bodyEl.closest('.stream-post')?.querySelector('.stream-post-meta h4');
+        const judul = judulEl?.textContent || 'Materi';
+        if (konten.length > 100 && !bodyEl.querySelector('.ai-summarize-btn')) {
+          const btn = document.createElement('button');
+          btn.className = 'ai-summarize-btn';
+          btn.innerHTML = '🤖 Ringkas dengan AI';
+          btn.onclick = function() {
+            this.classList.add('active-summarize');
+            summarizeMateri(konten, judul);
+            this.classList.remove('active-summarize');
+          };
+          bodyEl.appendChild(btn);
+        }
+      });
+    }, 800);
+  };
+}
+
+// ============================================================
+//  PATCH: Koreksi Essay di kuis
+// ============================================================
+function patchKoreksiEssay() {
+  const origSubmit = window.submitKuisKelas;
+  if (!origSubmit) return;
+
+  window.submitKuisKelas = async function() {
+    // Koreksi essay dengan AI sebelum submit
+    if (window.kuisKelasData) {
+      const soal = window.kuisKelasData.soal;
+      for (let i = 0; i < soal.length; i++) {
+        if (soal[i].jenis === 'isian' && window.kuisJawaban[i] !== undefined) {
+          const jawabanSiswa = typeof window.kuisJawaban[i] === 'number'
+            ? soal[i].opsi?.[window.kuisJawaban[i]] || ''
+            : window.kuisJawaban[i];
+          const feedback = await koreksiEssayAI(soal[i].pertanyaan, jawabanSiswa, soal[i].jawaban);
+          console.log('AI Essay Feedback:', feedback);
+        }
+      }
+    }
+    return origSubmit();
+  };
+}
+
+// ============================================================
+//  CHAT HELPERS
+// ============================================================
+function tambahPesanChat(containerId, role, pesan, avatar) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const div = document.createElement('div');
+  div.className = `ai-msg ${role}`;
+  div.innerHTML = `
+    <div class="ai-avatar ${role === 'ai' ? 'ai-side' : ''}">${avatar}</div>
+    <div class="ai-bubble">${pesan.replace(/\n/g, '<br>')}</div>
+  `;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+  return div;
+}
+
+function tambahTyping(containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return { remove: () => {} };
+  const div = document.createElement('div');
+  div.className = 'ai-msg ai';
+  div.innerHTML = `
+    <div class="ai-avatar ai-side">🤖</div>
+    <div class="ai-typing"><span></span><span></span><span></span></div>
+  `;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+  return div;
+}
+
+// ============================================================
+//  INIT — jalankan saat DOM ready
+// ============================================================
+function initAI() {
+  injectAIHTML();
+  patchStreamMateri();
+  patchKoreksiEssay();
+
+  // Sembunyikan FAB di halaman yang tidak perlu
+  const observer = new MutationObserver(() => {
+    const activePage = document.querySelector('.page.active')?.id || '';
+    const fab = document.getElementById('ai-fab');
+    if (!fab) return;
+    const hiddenPages = ['page-zep-join','page-zep-wait','page-zep-soal','page-zep-hasil-soal','page-zep-final','page-zep-guru','page-quiz'];
+    fab.style.display = hiddenPages.includes(activePage) ? 'none' : 'flex';
+  });
+  observer.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class'] });
+
+  console.log('🤖 KitaBelajar AI features initialized!');
+}
+
+// Tunggu DOM siap
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAI);
+} else {
+  initAI();
+}

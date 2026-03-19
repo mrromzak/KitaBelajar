@@ -4,17 +4,26 @@
 // =====================================================
 
 module.exports = function(io) {
-  const players  = {};   // pemain di world
+  const players     = {};  // pemain di world
   const lobbyPlayers = {}; // pemain di voting lobby
 
-  // State voting
-  let voteState = {
-    active: false,
-    votes: { sekolah:0, pantai:0, gunung:0, kota:0, angkasa:0, kastil:0 },
-    pemainVote: {},   // playerId -> mapId
-    timer: null,
-    timerSisa: 0,
-  };
+  // State voting — reset setiap sesi baru
+  function buatVoteStateBaru() {
+    return {
+      active: false,
+      votes: { sekolah:0, pantai:0, gunung:0, kota:0, angkasa:0, kastil:0 },
+      pemainVote: {}, // playerId -> mapId
+      timer: null,
+      timerSisa: 30,
+    };
+  }
+
+  let voteState = buatVoteStateBaru();
+
+  function resetVoting() {
+    if (voteState.timer) clearInterval(voteState.timer);
+    voteState = buatVoteStateBaru();
+  }
 
   function mulaiVotingTimer() {
     if (voteState.timer) clearInterval(voteState.timer);
@@ -40,40 +49,54 @@ module.exports = function(io) {
       const maps = ['sekolah','pantai','gunung','kota','angkasa','kastil'];
       winner = maps[Math.floor(Math.random() * maps.length)];
     }
+
     io.emit('world:voting_end', { winner });
-    // Reset untuk voting berikutnya
+
+    // Reset voting state setelah semua masuk (3 detik)
     setTimeout(() => {
-      voteState.votes = { sekolah:0, pantai:0, gunung:0, kota:0, angkasa:0, kastil:0 };
-      voteState.pemainVote = {};
-    }, 5000);
+      resetVoting();
+      console.log('🗳️ Voting state di-reset untuk sesi berikutnya');
+    }, 3000);
   }
 
   io.on('connection', (socket) => {
 
     // ── Pemain masuk voting lobby ──
     socket.on('world:voting_join', (data) => {
+      // Hapus vote lama dari pemain ini jika ada (kasus refresh)
+      const idLama = data.id;
+      if (voteState.pemainVote[idLama]) {
+        const mapLama = voteState.pemainVote[idLama];
+        voteState.votes[mapLama] = Math.max(0, (voteState.votes[mapLama] || 1) - 1);
+        delete voteState.pemainVote[idLama];
+      }
+
       lobbyPlayers[data.id] = { ...data, socketId: socket.id };
       socket.data.votingId = data.id;
 
       // Mulai timer kalau belum jalan
       if (!voteState.active) mulaiVotingTimer();
 
-      // Kirim state voting saat ini
+      // Kirim state voting BERSIH ke pemain baru (votes saat ini, bukan vote dia)
       socket.emit('world:voting_state', {
-        votes: voteState.votes,
+        votes: { ...voteState.votes },
         pemain: Object.values(lobbyPlayers),
-        timerSisa: voteState.timerSisa
+        timerSisa: voteState.timerSisa,
+        myVote: null  // selalu null untuk pemain baru/refresh
       });
 
       // Broadcast pemain baru ke semua
       io.emit('world:voting_pemain', { pemain: Object.values(lobbyPlayers) });
+
+      console.log(`🗳️ ${data.nama} masuk lobby (${Object.keys(lobbyPlayers).length} di lobby)`);
     });
 
     // ── Pemain vote map ──
     socket.on('world:vote', ({ id, mapId, prev }) => {
-      // Batalkan vote lama
-      if (prev && voteState.votes[prev] !== undefined) {
-        voteState.votes[prev] = Math.max(0, voteState.votes[prev] - 1);
+      // Batalkan vote lama pemain ini
+      const voteLama = voteState.pemainVote[id];
+      if (voteLama && voteState.votes[voteLama] !== undefined) {
+        voteState.votes[voteLama] = Math.max(0, voteState.votes[voteLama] - 1);
       }
       // Catat vote baru
       voteState.pemainVote[id] = mapId;
@@ -81,14 +104,22 @@ module.exports = function(io) {
         voteState.votes[mapId]++;
       }
       // Broadcast update ke semua
-      io.emit('world:vote_update', { votes: voteState.votes });
+      io.emit('world:vote_update', { votes: { ...voteState.votes } });
     });
 
     // ── Pemain masuk ke dunia (setelah voting) ──
     socket.on('world:join', (data) => {
       players[data.id] = { ...data, socketId: socket.id };
       socket.data.worldId = data.id;
+
+      // Hapus dari lobby
       delete lobbyPlayers[data.id];
+      // Hapus vote-nya dari state (sudah masuk dunia)
+      const mapVote = voteState.pemainVote[data.id];
+      if (mapVote) {
+        voteState.votes[mapVote] = Math.max(0, (voteState.votes[mapVote] || 1) - 1);
+        delete voteState.pemainVote[data.id];
+      }
 
       socket.emit('world:players', Object.values(players).filter(p => p.id !== data.id));
       socket.broadcast.emit('world:player_join', data);
@@ -119,15 +150,29 @@ module.exports = function(io) {
     socket.on('disconnect', () => {
       const wid = socket.data.worldId;
       const vid = socket.data.votingId;
+
       if (wid && players[wid]) {
         const nama = players[wid].nama;
         delete players[wid];
         socket.broadcast.emit('world:player_leave', { id: wid });
-        console.log(`🌍 ${nama} keluar (${Object.keys(players).length} online)`);
+        console.log(`🌍 ${nama} keluar world (${Object.keys(players).length} online)`);
       }
+
       if (vid && lobbyPlayers[vid]) {
+        // Hapus vote saat disconnect dari lobby
+        const mapVote = voteState.pemainVote[vid];
+        if (mapVote) {
+          voteState.votes[mapVote] = Math.max(0, (voteState.votes[mapVote] || 1) - 1);
+          delete voteState.pemainVote[vid];
+        }
         delete lobbyPlayers[vid];
         io.emit('world:voting_pemain', { pemain: Object.values(lobbyPlayers) });
+        io.emit('world:vote_update', { votes: { ...voteState.votes } });
+      }
+
+      // Kalau lobby kosong, reset voting
+      if (Object.keys(lobbyPlayers).length === 0 && !voteState.active) {
+        resetVoting();
       }
     });
   });

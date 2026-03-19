@@ -121,13 +121,12 @@
 
   /* ── VOTING LOBBY ── */
   #voting-overlay {
-    position: fixed; inset: 0; z-index: 490;
+    position: fixed; inset: 0; z-index: 510;
     background: linear-gradient(135deg, #0d0d1a, #1a1a3e);
     display: none; flex-direction: column; align-items: center;
     padding: 20px; overflow-y: auto;
   }
-  #voting-overlay.show { display: flex; }
-  #voting-title { font-family: 'Press Start 2P', monospace; font-size: 13px; color: #FFD93D; text-align: center; margin-bottom: 6px; text-shadow: 2px 2px 0 #FF6B35; }
+  #voting-overlay.show { display: flex !important; }
   #voting-sub { color: rgba(255,255,255,0.5); font-size: 13px; margin-bottom: 20px; text-align: center; }
   #voting-timer-wrap { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
   #voting-timer-circle {
@@ -193,8 +192,70 @@
   }
   @keyframes floatUp { 0%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-60px)} }
 
-  /* ── Canvas container ── */
-  #game-container canvas { display: block; }
+  /* ── NPC Dialog ── */
+  #npc-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+    display: flex; align-items: flex-end; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+  }
+  #npc-overlay.show { opacity: 1; pointer-events: all; }
+  #npc-box {
+    width: 100%; max-width: 560px; display: flex; flex-direction: row;
+    align-items: flex-end; gap: 10px; padding: 0 12px;
+    transform: translateY(30px); transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
+  }
+  #npc-overlay.show #npc-box { transform: translateY(0); }
+  #npc-character { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 76px; }
+  #npc-char-fig { display: flex; flex-direction: column; align-items: center; }
+  #npc-char-hat { font-size: 22px; line-height: 1; }
+  #npc-char-head { width: 44px; height: 44px; background: #FFD3A3; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-top: -4px; z-index: 2; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+  #npc-char-torso { width: 60px; height: 66px; border-radius: 10px; margin-top: -5px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 7px; box-shadow: 0 4px 14px rgba(0,0,0,0.3); }
+  #npc-char-torso span { font-size: 10px; font-weight: 900; color: rgba(255,255,255,0.9); }
+  #npc-char-name { font-size: 11px; font-weight: 800; color: white; text-shadow: 0 1px 4px rgba(0,0,0,0.5); margin-top: 5px; }
+  #npc-char-badge { font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 50px; margin-top: 3px; background: #FFD93D; color: #1a1a2e; }
+  #npc-char-torso.anim-happy { animation: npcHappy 0.5s ease; }
+  #npc-char-torso.anim-think { animation: npcThink 1.4s ease infinite; }
+  @keyframes npcHappy { 0%,100%{transform:translateY(0)} 40%{transform:translateY(-10px)} }
+  @keyframes npcThink { 0%,100%{transform:rotate(0)} 50%{transform:rotate(-5deg)} }
+  #npc-chat-panel { flex: 1; background: white; border-radius: 20px 20px 0 0; overflow: hidden; box-shadow: 0 -6px 28px rgba(0,0,0,0.25); }
+  #npc-chat-header { padding: 11px 14px 9px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1.5px solid #F0F0F0; }
+  #npc-chat-header-left { display: flex; align-items: center; gap: 7px; }
+  .npc-online-dot { width: 7px; height: 7px; background: #27ae60; border-radius: 50%; flex-shrink: 0; }
+  #npc-nama { font-size: 13px; font-weight: 800; color: #1a1a2e; }
+  #npc-topik { font-size: 11px; color: #7A7A7A; font-weight: 600; }
+  #npc-close { background: #F5F5F5; border: none; color: #7A7A7A; width: 28px; height: 28px; border-radius: 50%; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+  #npc-close:hover { background: #FFE8E8; color: #FF4757; }
+  #npc-quick-btns { display: flex; gap: 6px; flex-wrap: wrap; padding: 7px 12px 3px; }
+  .npc-quick-btn { background: #F0F4FF; border: 1.5px solid #C5D5FF; color: #4D96FF; border-radius: 50px; padding: 4px 11px; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.2s; font-family: "Nunito", sans-serif; white-space: nowrap; }
+  .npc-quick-btn:hover { background: #4D96FF; color: white; border-color: #4D96FF; }
+  #npc-messages { padding: 8px 12px; max-height: 170px; overflow-y: auto; display: flex; flex-direction: column; gap: 7px; }
+  .npc-msg { display: flex; gap: 6px; animation: fadeInUp 0.3s ease; }
+  .npc-msg.user { flex-direction: row-reverse; }
+  .npc-msg-av { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; margin-top: 2px; }
+  .npc-msg-av.ai { background: #4D96FF; }
+  .npc-msg-av.user { background: #FF6B35; }
+  .npc-msg-bub { max-width: 78%; padding: 7px 11px; border-radius: 13px; font-size: 12px; font-weight: 600; line-height: 1.55; color: #2a2a2a; word-break: break-word; }
+  .npc-msg-bub.ai { background: #EEF5FF; border-bottom-left-radius: 3px; }
+  .npc-msg-bub.user { background: #FF6B35; color: white; border-bottom-right-radius: 3px; }
+  .npc-typing { display: flex; gap: 4px; background: #EEF5FF; border-radius: 13px; padding: 8px 12px; width: fit-content; }
+  .npc-typing span { width: 6px; height: 6px; background: #4D96FF; border-radius: 50%; animation: npcDot 1s ease-in-out infinite; }
+  .npc-typing span:nth-child(2) { animation-delay: 0.15s; }
+  .npc-typing span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes npcDot { 0%,100%{transform:translateY(0);opacity:0.4} 50%{transform:translateY(-4px);opacity:1} }
+  #npc-input-wrap { padding: 9px 12px 13px; border-top: 1.5px solid #F0F0F0; display: flex; gap: 8px; }
+  #npc-input { flex: 1; padding: 9px 14px; border: 2px solid #E8E8E8; border-radius: 50px; font-family: "Nunito", sans-serif; font-size: 13px; font-weight: 600; outline: none; color: #1a1a2e; transition: border-color 0.2s; }
+  #npc-input:focus { border-color: #4D96FF; }
+  #npc-send-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: #4D96FF; color: white; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+  #npc-send-btn:hover { background: #2979FF; transform: scale(1.1); }
+  #npc-send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  #student-character { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 58px; }
+  #stu-head { width: 38px; height: 38px; background: #FDDCAB; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 19px; margin-bottom: -4px; z-index: 2; position: relative; }
+  #stu-torso { width: 48px; height: 54px; background: #FF6B35; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+  #stu-torso.anim-excited { animation: stuExcited 0.4s ease; }
+  @keyframes stuExcited { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1) translateY(-5px)} }
+  #stu-name { font-size: 10px; font-weight: 800; color: white; text-shadow: 0 1px 4px rgba(0,0,0,0.5); margin-top: 4px; }
+  @keyframes fadeInUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
 </style>
 </head>
 <body>
@@ -238,6 +299,16 @@
 
   <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:12px">👥 Pemain di lobby:</div>
   <div id="voting-pemain"></div>
+  <div style="margin-top:16px">
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button onclick="selesaiVoting()" style="background:linear-gradient(135deg,#FF6B35,#FF8C42);border:none;color:white;border-radius:50px;padding:14px 32px;font-family:Nunito,sans-serif;font-weight:900;font-size:16px;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px rgba(255,107,53,0.4)" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+        🚀 Langsung Masuk!
+      </button>
+      <button onclick="pilihMapLangsung()" style="background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.8);border-radius:50px;padding:14px 24px;font-family:Nunito,sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.12)'">
+        🎲 Pilih Map Random
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- HUD -->
@@ -279,6 +350,47 @@
   </div>
 </div>
 
+<!-- NPC Dialog Animasi -->
+<div id="npc-overlay">
+  <div id="npc-box">
+    <div id="npc-character">
+      <div id="npc-char-fig">
+        <div id="npc-char-hat">🎓</div>
+        <div id="npc-char-head">👴</div>
+        <div id="npc-char-torso" style="background:#4D96FF"><span id="npc-char-label">Prof.</span></div>
+      </div>
+      <div id="npc-char-name">Prof. Arif</div>
+      <div id="npc-char-badge">Ahli Sains</div>
+    </div>
+    <div id="npc-chat-panel">
+      <div id="npc-chat-header">
+        <div id="npc-chat-header-left">
+          <div class="npc-online-dot"></div>
+          <div>
+            <div id="npc-nama">Prof. Arif</div>
+            <div id="npc-topik">Ahli matematika dan sains</div>
+          </div>
+        </div>
+        <button id="npc-close" onclick="tutupDialogNPC()">✕</button>
+      </div>
+      <div id="npc-quick-btns"></div>
+      <div id="npc-messages"></div>
+      <div id="npc-input-wrap">
+        <input id="npc-input" placeholder="Tanya sesuatu..."
+          onkeydown="event.stopPropagation(); if(event.key='Enter') kirimNPC()"
+          onkeyup="event.stopPropagation()"
+          onkeypress="event.stopPropagation()">
+        <button id="npc-send-btn" onclick="kirimNPC()">➤</button>
+      </div>
+    </div>
+    <div id="student-character">
+      <div id="stu-head">🦁</div>
+      <div id="stu-torso"></div>
+      <div id="stu-name">Kamu</div>
+    </div>
+  </div>
+</div>
+
 <!-- Game Container -->
 <div id="game-container"></div>
 
@@ -310,6 +422,9 @@
 // ============================================================
 const API_BASE   = 'http://localhost:3000/api';
 const WS_SERVER  = 'http://localhost:3000';
+
+// ── GROQ API KEY — isi dengan key kamu dari console.groq.com ──
+window.GROQ_API_KEY = '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';
 const TILE       = 48;       // ukuran tile pixel
 const MAP_W      = 32;       // jumlah tile lebar
 const MAP_H      = 24;       // jumlah tile tinggi
@@ -334,51 +449,34 @@ let zonaList = []; // { x, y, soalIdx, sudahDijawab }
 // ============================================================
 //  MAP DEFINITIONS — 6 map dengan tilemap unik
 // ============================================================
-const MAPS = {
-  sekolah: {
-    id: 'sekolah', nama: 'Sekolah', emoji: '🏫',
-    bgColor: '#1a3a1a',
-    tiles: { 0: 0x4a7c3f, 1: 0x1a6b8a, 2: 0x8b7355, 3: 0x2d5a1b, 4: 0x5c4a3a },
-    generateFn: generateMapSekolah
-  },
-  pantai: {
-    id: 'pantai', nama: 'Pantai / Pulau', emoji: '🏖️',
-    bgColor: '#0a2a4a',
-    tiles: { 0: 0xf4d03f, 1: 0x1a9bd1, 2: 0xe8c99a, 3: 0x27ae60, 4: 0xe67e22 },
-    generateFn: generateMapPantai
-  },
-  gunung: {
-    id: 'gunung', nama: 'Gunung / Hutan', emoji: '🌋',
-    bgColor: '#0d1f0d',
-    tiles: { 0: 0x2d5a1b, 1: 0x4a7c9a, 2: 0x6b5a3a, 3: 0x1a3a0d, 4: 0x4a3a2a },
-    generateFn: generateMapGunung
-  },
-  kota: {
-    id: 'kota', nama: 'Kota Modern', emoji: '🏙️',
-    bgColor: '#0a0a1a',
-    tiles: { 0: 0x2a2a3a, 1: 0x1a3a5a, 2: 0x4a4a5a, 3: 0x1a4a1a, 4: 0x3a3a4a },
-    generateFn: generateMapKota
-  },
-  angkasa: {
-    id: 'angkasa', nama: 'Luar Angkasa', emoji: '🚀',
-    bgColor: '#000010',
-    tiles: { 0: 0x0a0a2a, 1: 0x000000, 2: 0x1a1a3a, 3: 0x2a0a4a, 4: 0x1a0a2a },
-    generateFn: generateMapAngkasa
-  },
-  kastil: {
-    id: 'kastil', nama: 'Kastil / Kerajaan', emoji: '🏰',
-    bgColor: '#1a0a0a',
-    tiles: { 0: 0x3a2a1a, 1: 0x2a3a4a, 2: 0x4a3a2a, 3: 0x1a2a0a, 4: 0x2a1a0a },
-    generateFn: generateMapKastil
-  }
-};
-
 const MAP_ORDER = ['sekolah', 'pantai', 'gunung', 'kota', 'angkasa', 'kastil'];
 let currentMapId = 'sekolah';
-let votes = {}; // { mapId: count }
+let votes = {};
 let myVote = null;
 let votingTimer = null;
 let votingInterval = null;
+
+// Pakai lazy function agar generator tidak perlu dideklarasikan lebih dulu
+const MAPS = {
+  sekolah: { id:'sekolah', nama:'Sekolah', emoji:'🏫', bgColor:'#1a3a1a',
+    tiles:{ 0:0x4a7c3f, 1:0x1a6b8a, 2:0x8b7355, 3:0x2d5a1b, 4:0x5c4a3a },
+    generateFn: () => genSekolah() },
+  pantai: { id:'pantai', nama:'Pantai / Pulau', emoji:'🏖️', bgColor:'#0a2a4a',
+    tiles:{ 0:0xf4d03f, 1:0x1a9bd1, 2:0xe8c99a, 3:0x27ae60, 4:0xe67e22 },
+    generateFn: () => genPantai() },
+  gunung: { id:'gunung', nama:'Gunung / Hutan', emoji:'🌋', bgColor:'#0d1f0d',
+    tiles:{ 0:0x2d5a1b, 1:0x4a7c9a, 2:0x6b5a3a, 3:0x1a3a0d, 4:0x4a3a2a },
+    generateFn: () => genGunung() },
+  kota: { id:'kota', nama:'Kota Modern', emoji:'🏙️', bgColor:'#0a0a1a',
+    tiles:{ 0:0x2a2a3a, 1:0x1a3a5a, 2:0x4a4a5a, 3:0x1a4a1a, 4:0x3a3a4a },
+    generateFn: () => genKota() },
+  angkasa: { id:'angkasa', nama:'Luar Angkasa', emoji:'🚀', bgColor:'#000010',
+    tiles:{ 0:0x0a0a2a, 1:0x000000, 2:0x1a1a3a, 3:0x2a0a4a, 4:0x1a0a2a },
+    generateFn: () => genAngkasa() },
+  kastil: { id:'kastil', nama:'Kastil / Kerajaan', emoji:'🏰', bgColor:'#1a0a0a',
+    tiles:{ 0:0x3a2a1a, 1:0x2a3a4a, 2:0x4a3a2a, 3:0x1a2a0a, 4:0x2a1a0a },
+    generateFn: () => genKastil() }
+};
 
 // ============================================================
 //  LOGIN
@@ -394,10 +492,16 @@ function masukDunia() {
 
   document.getElementById('hud-avatar').textContent = avatar;
   document.getElementById('hud-nama').textContent = nama;
-  document.getElementById('login-overlay').style.display = 'none';
 
-  // Masuk ke voting lobby dulu
-  connectSocket();
+  // Sembunyikan login overlay sepenuhnya
+  const loginEl = document.getElementById('login-overlay');
+  loginEl.style.display = 'none';
+  loginEl.style.visibility = 'hidden';
+  loginEl.style.pointerEvents = 'none';
+
+  // Coba socket, tapi tidak wajib untuk masuk game
+  try { connectSocket(); } catch(e) { console.warn('Offline mode'); }
+  // Langsung masuk voting
   masukVotingLobby();
 }
 
@@ -439,13 +543,35 @@ function getDummySoal() {
 //  VOTING LOBBY
 // ============================================================
 function masukVotingLobby() {
+  // Reset SEMUA state lokal voting — jangan pakai sisa sesi lama
   votes = {};
   myVote = null;
   MAP_ORDER.forEach(id => votes[id] = 0);
-  renderVotingCards();
-  document.getElementById('voting-overlay').classList.add('show');
-  socket.emit('world:voting_join', { id: myPlayer.id, nama: myPlayer.nama, avatar: myPlayer.avatar });
-  mulaiVotingTimer(30);
+  clearInterval(votingInterval);
+
+  // Sembunyikan game container
+  document.getElementById('game-container').style.display = 'none';
+
+  // Tampilkan voting overlay
+  const vo = document.getElementById('voting-overlay');
+  vo.removeAttribute('style');
+  vo.classList.add('show');
+  vo.style.display = 'flex';
+  vo.style.zIndex = '510';
+
+  renderVotingCards(); // render dengan votes = 0 semua
+  document.getElementById('voting-result-banner').style.display = 'none';
+
+  // Emit ke socket — server akan kirim state terkini
+  if (socket && socket.connected) {
+    socket.emit('world:voting_join', { id: myPlayer.id, nama: myPlayer.nama, avatar: myPlayer.avatar });
+  }
+
+  // Tampilkan diri sendiri di list sementara menunggu server
+  updateVotingPemain([{ id: myPlayer.id, nama: myPlayer.nama, avatar: myPlayer.avatar }]);
+
+  // Mulai timer lokal 30 detik (akan di-sync dari server)
+  mulaiVotingTimer(15);
 }
 
 function renderVotingCards() {
@@ -505,19 +631,34 @@ function mulaiVotingTimer(detik) {
 }
 
 function selesaiVoting() {
+  clearInterval(votingInterval);
   let winMap = 'sekolah', winCount = 0;
   MAP_ORDER.forEach(id => { if ((votes[id] || 0) > winCount) { winCount = votes[id]; winMap = id; } });
+  // Kalau tidak ada yang vote, pilih random
   if (winCount === 0) winMap = MAP_ORDER[Math.floor(Math.random() * MAP_ORDER.length)];
   currentMapId = winMap;
   const m = MAPS[winMap];
   document.getElementById('result-map-emoji').textContent = m.emoji;
   document.getElementById('result-map-nama').textContent = m.nama;
   document.getElementById('voting-result-banner').style.display = 'block';
+
   setTimeout(() => {
-    document.getElementById('voting-overlay').classList.remove('show');
+    const vo = document.getElementById('voting-overlay');
+    vo.classList.remove('show');
+    vo.style.display = 'none';
+    document.getElementById('game-container').style.display = 'block';
+    // Join socket kalau tersedia
+    if (socket && socket.connected) {
+      socket.emit('world:join', { id: myPlayer.id, nama: myPlayer.nama, avatar: myPlayer.avatar, x: myPlayer.x, y: myPlayer.y });
+    }
     initGame(winMap);
     loadSoal();
-  }, 2500);
+  }, 2000);
+}
+
+function pilihMapLangsung() {
+  myVote = null; // reset vote agar random
+  selesaiVoting();
 }
 
 function updateVotingPemain(list) {
@@ -526,27 +667,54 @@ function updateVotingPemain(list) {
 }
 
 // ============================================================
-//  MAP GENERATORS
+//  PHASER GAME
 // ============================================================
-const MAP_ORDER = ['sekolah', 'pantai', 'gunung', 'kota', 'angkasa', 'kastil'];
-let currentMapId = 'sekolah';
-let votes = {}, myVote = null, votingInterval = null;
+function initGame(mapId) {
+  mapId = mapId || currentMapId || 'sekolah';
+  currentMapId = mapId;
+  const mapDef = MAPS[mapId];
 
-const MAPS = {
-  sekolah: { id:'sekolah', nama:'Sekolah', emoji:'🏫', bgColor:'#1a3a1a',
-    tiles:{ 0:0x4a7c3f, 1:0x1a6b8a, 2:0x8b7355, 3:0x2d5a1b, 4:0x5c4a3a }, generateFn: genSekolah },
-  pantai: { id:'pantai', nama:'Pantai / Pulau', emoji:'🏖️', bgColor:'#0a2a4a',
-    tiles:{ 0:0xf4d03f, 1:0x1a9bd1, 2:0xe8c99a, 3:0x27ae60, 4:0xe67e22 }, generateFn: genPantai },
-  gunung: { id:'gunung', nama:'Gunung / Hutan', emoji:'🌋', bgColor:'#0d1f0d',
-    tiles:{ 0:0x2d5a1b, 1:0x4a7c9a, 2:0x6b5a3a, 3:0x1a3a0d, 4:0x4a3a2a }, generateFn: genGunung },
-  kota: { id:'kota', nama:'Kota Modern', emoji:'🏙️', bgColor:'#0a0a1a',
-    tiles:{ 0:0x2a2a3a, 1:0x1a3a5a, 2:0x4a4a5a, 3:0x1a4a1a, 4:0x3a3a4a }, generateFn: genKota },
-  angkasa: { id:'angkasa', nama:'Luar Angkasa', emoji:'🚀', bgColor:'#000010',
-    tiles:{ 0:0x0a0a2a, 1:0x000000, 2:0x1a1a3a, 3:0x2a0a4a, 4:0x1a0a2a }, generateFn: genAngkasa },
-  kastil: { id:'kastil', nama:'Kastil / Kerajaan', emoji:'🏰', bgColor:'#1a0a0a',
-    tiles:{ 0:0x3a2a1a, 1:0x2a3a4a, 2:0x4a3a2a, 3:0x1a2a0a, 4:0x2a1a0a }, generateFn: genKastil }
-};
+  if (phaserGame) { phaserGame.destroy(true); phaserGame = null; gameScene = null; }
 
+  // Set background body
+  document.body.style.background = mapDef.bgColor;
+  document.body.style.overflow = 'hidden';
+
+  // Simpan mapDef untuk scene
+  window._activeMapDef = mapDef;
+  window._activeMapData = mapDef.generateFn();
+
+  // Pastikan game-container tampil dan punya ukuran
+  const container = document.getElementById('game-container');
+  container.style.display = 'block';
+  container.style.position = 'fixed';
+  container.style.inset = '0';
+  container.style.width = '100vw';
+  container.style.height = '100vh';
+
+  // Delay sedikit agar DOM settle sebelum Phaser init
+  setTimeout(() => {
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    phaserGame = new Phaser.Game({
+      type: Phaser.CANVAS,
+      width: W, height: H,
+      backgroundColor: mapDef.bgColor,
+      parent: 'game-container',
+      physics: { default: 'arcade', arcade: { debug: false } },
+      scene: { preload, create, update },
+      scale: {
+        mode: Phaser.Scale.RESIZE,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        width: W, height: H
+      }
+    });
+  }, 100);
+}
+
+// ============================================================
+//  MAP GENERATORS — 6 map unik
+// ============================================================
 function genSekolah() {
   const map = [];
   for (let r=0;r<MAP_H;r++) { map[r]=[];
@@ -562,6 +730,7 @@ function genSekolah() {
   }
   return map;
 }
+
 function genPantai() {
   const map = [];
   for (let r=0;r<MAP_H;r++) { map[r]=[];
@@ -577,6 +746,7 @@ function genPantai() {
   }
   return map;
 }
+
 function genGunung() {
   const map = [];
   for (let r=0;r<MAP_H;r++) { map[r]=[];
@@ -590,6 +760,7 @@ function genGunung() {
   }
   return map;
 }
+
 function genKota() {
   const map = [];
   for (let r=0;r<MAP_H;r++) { map[r]=[];
@@ -602,6 +773,7 @@ function genKota() {
   }
   return map;
 }
+
 function genAngkasa() {
   const map = [];
   for (let r=0;r<MAP_H;r++) { map[r]=[];
@@ -615,6 +787,7 @@ function genAngkasa() {
   }
   return map;
 }
+
 function genKastil() {
   const map = [];
   for (let r=0;r<MAP_H;r++) { map[r]=[];
@@ -632,34 +805,6 @@ function genKastil() {
   return map;
 }
 
-// ============================================================
-//  PHASER GAME
-// ============================================================
-function initGame(mapId) {
-  mapId = mapId || currentMapId || 'sekolah';
-  currentMapId = mapId;
-  const mapDef = MAPS[mapId];
-  const W = window.innerWidth;
-  const H = window.innerHeight;
-
-  if (phaserGame) { phaserGame.destroy(true); phaserGame = null; gameScene = null; }
-
-  // Ubah background body
-  document.body.style.background = mapDef.bgColor;
-
-  phaserGame = new Phaser.Game({
-    type: Phaser.AUTO,
-    width: W, height: H,
-    backgroundColor: mapDef.bgColor,
-    parent: 'game-container',
-    physics: { default: 'arcade', arcade: { debug: false } },
-    scene: { preload, create, update }
-  });
-  // Simpan mapDef untuk dipakai scene
-  window._activeMapDef = mapDef;
-  window._activeMapData = mapDef.generateFn();
-}
-
 // ── Tilemap data ──
 function buatMapData() {
   if (window._activeMapData) return window._activeMapData;
@@ -675,6 +820,7 @@ const TILE_COLORS = {
 };
 
 function create() {
+  try {
   gameScene = this;
   this.zonaSprites = [];
   this.otherSprites = {};
@@ -774,7 +920,11 @@ function create() {
   this.buatZonaSoal = buatZonaSoal.bind(this);
   if (soalList.length) this.buatZonaSoal();
 
-  window.addEventListener('resize', () => { phaserGame.scale.resize(window.innerWidth, window.innerHeight); });
+  // ── NPC AI ──
+  buatNPC(this);
+
+  window.addEventListener('resize', () => { if(phaserGame) phaserGame.scale.resize(window.innerWidth, window.innerHeight); });
+  } catch(err) { console.error('Game create error:', err); }
 }
 
 function buatZonaSoal() {
@@ -849,6 +999,8 @@ function update() {
       const dx=px-z.x, dy=py-z.y;
       if (Math.sqrt(dx*dx+dy*dy)<SOAL_RADIUS) { tampilSoal(z); break; }
     }
+    // Cek proximity NPC
+    cekProximityNPC(px, py);
   }
   for (const [id,data] of Object.entries(otherPlayers)) {
     if (this.otherSprites[id]) {
@@ -883,6 +1035,10 @@ function tampilSoal(zona) {
     </button>`).join('');
 
   document.getElementById('soal-overlay').classList.add('show');
+  // Matikan Phaser keyboard saat soal terbuka
+  if (phaserGame && phaserGame.input && phaserGame.input.keyboard) {
+    phaserGame.input.keyboard.enabled = false;
+  }
   mulaiTimerSoal(15, s.jawaban, s.poin || 100);
 }
 
@@ -953,29 +1109,45 @@ function tutupSoal() {
   document.getElementById('soal-overlay').classList.remove('show');
   soalAktif = null;
   clearInterval(soalTimer);
+  // Aktifkan kembali Phaser keyboard
+  if (phaserGame && phaserGame.input && phaserGame.input.keyboard) {
+    phaserGame.input.keyboard.enabled = true;
+  }
 }
 
 // ============================================================
 //  SOCKET.IO MULTIPLAYER
 // ============================================================
 function connectSocket() {
-  socket = io(WS_SERVER, { transports: ['websocket', 'polling'] });
+  try {
+    socket = io(WS_SERVER, {
+      transports: ['websocket', 'polling'],
+      timeout: 3000,
+      reconnectionAttempts: 2
+    });
+  } catch(e) {
+    console.warn('Socket.io tidak tersedia:', e);
+    return;
+  }
 
   socket.on('connect', () => console.log('🌍 Connected'));
 
   // ── Voting events ──
-  socket.on('world:voting_state', ({ votes: v, pemain, timerSisa }) => {
+  socket.on('world:voting_state', ({ votes: v, pemain, timerSisa, myVote: serverMyVote }) => {
+    // Selalu pakai state dari server — reset myVote lokal
     votes = v || {};
+    myVote = null; // reset, jangan pakai vote sesi sebelumnya
     updateVotingCards();
     updateVotingPemain(pemain || []);
-    // Sync timer jika ada
+    // Sync timer dari server
     if (timerSisa !== undefined && timerSisa > 0) {
       clearInterval(votingInterval);
       mulaiVotingTimer(timerSisa);
     }
   });
   socket.on('world:vote_update', ({ votes: v }) => {
-    votes = v; updateVotingCards();
+    votes = v;
+    updateVotingCards();
   });
   socket.on('world:voting_pemain', ({ pemain }) => {
     updateVotingPemain(pemain);
@@ -983,7 +1155,6 @@ function connectSocket() {
   socket.on('world:voting_end', ({ winner }) => {
     clearInterval(votingInterval);
     currentMapId = winner;
-    // Update semua vote bar sebagai selesai
     MAP_ORDER.forEach(id => {
       const card = document.getElementById('vcard-' + id);
       if (card && id === winner) card.classList.add('winner');
@@ -1018,21 +1189,27 @@ function connectSocket() {
 }
 
 function selesaiVotingDenganPemenang(winner) {
+  clearInterval(votingInterval);
   const m = MAPS[winner] || MAPS.sekolah;
   document.getElementById('result-map-emoji').textContent = m.emoji;
   document.getElementById('result-map-nama').textContent = m.nama;
   document.getElementById('voting-result-banner').style.display = 'block';
-  clearInterval(votingInterval);
   document.getElementById('voting-timer-num').textContent = '0';
   setTimeout(() => {
-    document.getElementById('voting-overlay').classList.remove('show');
-    socket.emit('world:join', { id: myPlayer.id, nama: myPlayer.nama, avatar: myPlayer.avatar, x: myPlayer.x, y: myPlayer.y });
+    const vo = document.getElementById('voting-overlay');
+    vo.classList.remove('show');
+    vo.style.display = 'none';
+    if (socket && socket.connected) {
+      socket.emit('world:join', { id: myPlayer.id, nama: myPlayer.nama, avatar: myPlayer.avatar, x: myPlayer.x, y: myPlayer.y });
+    }
+    document.getElementById('game-container').style.display = 'block';
     initGame(winner);
     loadSoal();
-  }, 2500);
+  }, 2000);
 }
 
 function tambahOtherPlayer(p) {
+  if (!p || !p.id) return;
   otherPlayers[p.id] = p;
   if (!gameScene) return;
   const circle = gameScene.add.circle(p.x, p.y, 16, 0x4D96FF);
@@ -1090,13 +1267,234 @@ function tampilSkorPopup(teks, benar) {
 function joyDown(dir) { mobileKeys[dir] = true; }
 function joyUp(dir)   { mobileKeys[dir] = false; }
 
-// ── Coba ambil token dari localStorage (kalau sudah login via belajar-seru.html) ──
+// ── Coba ambil token dari localStorage ──
 window.addEventListener('load', () => {
   const savedNama   = localStorage.getItem('kb_nama');
   const savedAvatar = localStorage.getItem('kb_avatar');
   if (savedNama)   document.getElementById('inp-nama').value = savedNama;
   if (savedAvatar) document.getElementById('inp-avatar').value = savedAvatar;
 });
+
+// ============================================================
+//  NPC AI — Karakter yang bisa diajak bicara
+// ============================================================
+const NPC_LIST = [
+  { id:'prof', x: 8, y: 6, emoji:'👴', nama:'Prof. Arif', warna:0x4D96FF,
+    topik:'matematika dan sains',
+    greeting:'Halo! Aku Prof. Arif, ahli matematika dan sains. Ada yang ingin kamu pelajari?' },
+  { id:'ibu', x: 22, y: 6, emoji:'👩‍🏫', nama:'Ibu Sari', warna:0xFF6B9D,
+    topik:'bahasa Indonesia dan sejarah',
+    greeting:'Selamat datang! Aku Ibu Sari. Aku bisa bantu kamu belajar bahasa dan sejarah Indonesia!' },
+  { id:'robot', x: 8, y: 18, emoji:'🤖', nama:'RoboKiki', warna:0x6BCB77,
+    topik:'semua pelajaran dan teka-teki',
+    greeting:'Beep boop! Aku RoboKiki 🤖 Aku tahu segalanya! Tanya aku apa saja!' },
+  { id:'penjelajah', x: 22, y: 18, emoji:'🧭', nama:'Pak Jelajah', warna:0xFFD93D,
+    topik:'geografi dan IPS',
+    greeting:'Hei petualang! Aku Pak Jelajah. Mau tahu tentang dunia dan geografi?' },
+];
+
+let npcSprites = [];
+let activeNPC = null;
+let npcChatHistory = {};
+
+function buatNPC(scene) {
+  NPC_LIST.forEach(npc => {
+    const px = npc.x * TILE + TILE/2;
+    const py = npc.y * TILE + TILE/2;
+
+    // Lingkaran NPC
+    const circle = scene.add.circle(px, py, 20, npc.warna);
+    // Efek glow berkedip
+    scene.tweens.add({
+      targets: circle, alpha: { from: 0.7, to: 1 },
+      duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+    });
+    // Avatar
+    const avatar = scene.add.text(px, py-2, npc.emoji, { fontSize:'20px' }).setOrigin(0.5,0.5);
+    // Nama
+    const label = scene.add.text(px, py+26, npc.nama, {
+      fontFamily:'Nunito', fontSize:'11px', fontStyle:'bold',
+      color:'#fff', stroke:'#000', strokeThickness:3
+    }).setOrigin(0.5,0);
+    // Indikator chat
+    const bubble = scene.add.text(px, py-32, '💬', { fontSize:'14px' }).setOrigin(0.5,0.5);
+    scene.tweens.add({
+      targets: bubble, y: py-38,
+      duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+    });
+
+    npcSprites.push({ npc, circle, avatar, label, bubble, x: px, y: py });
+    npc.worldX = px;
+    npc.worldY = py;
+  });
+}
+
+// Cek proximity NPC di update loop
+const NPC_RADIUS = TILE * 2;
+let lastNPCCheck = 0;
+
+function cekProximityNPC(px, py) {
+  const now = Date.now();
+  if (now - lastNPCCheck < 500) return;
+  lastNPCCheck = now;
+
+  // Jangan buka jika dialog sudah terbuka atau sedang cooldown
+  if (document.getElementById('npc-overlay')?.classList.contains('show')) return;
+  if (npcCooldown) return;
+
+  for (const npc of NPC_LIST) {
+    if (!npc.worldX) continue;
+    const dx = px - npc.worldX, dy = py - npc.worldY;
+    if (Math.sqrt(dx*dx+dy*dy) < NPC_RADIUS) {
+      bukaDialogNPC(npc);
+      break;
+    }
+  }
+}
+
+const NPC_QUICK_REPLIES = {
+  prof:       ['Apa itu fotosintesis? 🌿','Berapa planet di tata surya? 🪐','Kenapa langit biru? 🌤️','Apa itu gravitasi? 🍎'],
+  ibu:        ['Apa itu puisi? 📝','Contoh kalimat efektif?','Apa itu pantun? 🎵','Siapa pahlawan Indonesia? 🏛️'],
+  robot:      ['Apa itu AI? 🤖','Bagaimana internet bekerja? 💻','Apa itu coding? 🖥️','Beri aku teka-teki! 🧩'],
+  penjelajah: ['Negara terbesar di dunia? 🌍','Gunung tertinggi? 🏔️','Sungai terpanjang? 🌊','Ibu kota Australia? 🦘'],
+};
+
+function bukaDialogNPC(npc) {
+  activeNPC = npc;
+  if (!npcChatHistory[npc.id]) npcChatHistory[npc.id] = [];
+
+  const hatMap = { prof:'🎓', ibu:'👒', robot:'⚙️', penjelajah:'🧭' };
+  const colorMap = { prof:'#4D96FF', ibu:'#FF6B9D', robot:'#6BCB77', penjelajah:'#FFD93D' };
+  const labelMap = { prof:'Prof.', ibu:'Bu', robot:'AI', penjelajah:'Pak' };
+  document.getElementById('npc-char-hat').textContent = hatMap[npc.id] || '🎓';
+  document.getElementById('npc-char-head').textContent = npc.emoji;
+  document.getElementById('npc-char-torso').style.background = colorMap[npc.id] || '#4D96FF';
+  document.getElementById('npc-char-label').textContent = labelMap[npc.id] || 'NPC';
+  document.getElementById('npc-char-name').textContent = npc.nama;
+  document.getElementById('npc-char-badge').textContent = npc.topik.split(' ')[0];
+  document.getElementById('npc-nama').textContent = npc.emoji + ' ' + npc.nama;
+  document.getElementById('npc-topik').textContent = 'Ahli: ' + npc.topik;
+  document.getElementById('stu-head').textContent = myPlayer.avatar || '🦁';
+  document.getElementById('stu-name').textContent = myPlayer.nama || 'Kamu';
+
+  const qContainer = document.getElementById('npc-quick-btns');
+  const replies = NPC_QUICK_REPLIES[npc.id] || NPC_QUICK_REPLIES.prof;
+  qContainer.innerHTML = replies.map(r =>
+    `<button class="npc-quick-btn" onclick="kirimNPCCepat(this.dataset.msg)" data-msg="${r.replace(/"/g,'&quot;')}">${r}</button>`
+  ).join('');
+
+  const msgContainer = document.getElementById('npc-messages');
+  msgContainer.innerHTML = '';
+  if (npcChatHistory[npc.id].length === 0) {
+    tambahPesanNPC('ai', npc.greeting, npc.emoji);
+    npcChatHistory[npc.id].push({ role: 'assistant', content: npc.greeting });
+  } else {
+    npcChatHistory[npc.id].forEach(m => {
+      tambahPesanNPC(m.role === 'assistant' ? 'ai' : 'user', m.content,
+        m.role === 'assistant' ? npc.emoji : (myPlayer.avatar || '🦁'));
+    });
+  }
+
+  setNPCAnim('happy');
+  document.getElementById('npc-overlay').classList.add('show');
+  if (phaserGame && phaserGame.input && phaserGame.input.keyboard) phaserGame.input.keyboard.enabled = false;
+  if (gameScene && gameScene.playerBody && gameScene.playerBody.body) gameScene.playerBody.body.setVelocity(0, 0);
+  setTimeout(() => document.getElementById('npc-input')?.focus(), 150);
+}
+
+function setNPCAnim(state) {
+  const el = document.getElementById('npc-char-torso');
+  if (!el) return;
+  el.className = '';
+  void el.offsetWidth;
+  if (state === 'happy') { el.classList.add('anim-happy'); setTimeout(() => el.className = '', 600); }
+  else if (state === 'think') el.classList.add('anim-think');
+}
+
+function exciteStudent() {
+  const el = document.getElementById('stu-torso');
+  if (!el) return;
+  el.classList.remove('anim-excited');
+  void el.offsetWidth;
+  el.classList.add('anim-excited');
+  setTimeout(() => el.classList.remove('anim-excited'), 500);
+}
+
+function kirimNPCCepat(pesan) {
+  document.getElementById('npc-input').value = pesan;
+  kirimNPC();
+}
+let npcCooldown = false;
+
+function tutupDialogNPC() {
+  document.getElementById('npc-overlay').classList.remove('show');
+  activeNPC = null;
+  if (phaserGame && phaserGame.input && phaserGame.input.keyboard) phaserGame.input.keyboard.enabled = true;
+  npcCooldown = true;
+  setTimeout(() => { npcCooldown = false; }, 3000);
+}
+
+async function kirimNPC() {
+  const input = document.getElementById('npc-input');
+  const pesan = input.value.trim();
+  if (!pesan || !activeNPC) return;
+  input.value = '';
+
+  const npc = activeNPC;
+  npcChatHistory[npc.id].push({ role: 'user', content: pesan });
+  tambahPesanNPC('user', pesan, myPlayer.avatar || '🦁');
+  exciteStudent();
+
+  const btn = document.getElementById('npc-send-btn');
+  btn.disabled = true;
+  setNPCAnim('think');
+
+  const msgs = document.getElementById('npc-messages');
+  const typingDiv = document.createElement('div');
+  typingDiv.className = 'npc-msg';
+  typingDiv.innerHTML = `<div class="npc-msg-av ai">${npc.emoji}</div><div class="npc-typing"><span></span><span></span><span></span></div>`;
+  msgs.appendChild(typingDiv);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  const apiKey = window.GROQ_API_KEY;
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        max_tokens: 200,
+        temperature: 0.7,
+        messages: [
+          { role: 'system', content: `Kamu adalah "${npc.nama}" dalam game edukasi untuk siswa SD/SMP Indonesia. Spesialisasimu: ${npc.topik}. Jawab Bahasa Indonesia, max 3 kalimat, pakai 1 emoji. Nama siswa: ${myPlayer.nama}` },
+          ...npcChatHistory[npc.id].slice(-8)
+        ]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const balasan = data.choices?.[0]?.message?.content || 'Pertanyaan bagus! Coba lebih spesifik ya 🌟';
+    typingDiv.remove();
+    npcChatHistory[npc.id].push({ role: 'assistant', content: balasan });
+    tambahPesanNPC('ai', balasan, npc.emoji);
+    setNPCAnim('happy');
+  } catch(e) {
+    typingDiv.remove();
+    tambahPesanNPC('ai', 'Koneksi bermasalah, coba lagi ya! 😅', npc.emoji);
+    document.getElementById('npc-char-torso').className = '';
+  }
+  btn.disabled = false;
+}
+function tambahPesanNPC(role, pesan, avatar) {
+  const el = document.getElementById('npc-messages');
+  if (!el) return;
+  const div = document.createElement('div');
+  div.className = 'npc-msg' + (role === 'user' ? ' user' : '');
+  div.innerHTML = `<div class="npc-msg-av ${role === 'ai' ? 'ai' : 'user'}">${avatar}</div><div class="npc-msg-bub ${role === 'ai' ? 'ai' : 'user'}">${pesan.replace(/\n/g,'<br>')}</div>`;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
 </script>
 
 <!-- ── Socket.io world handler (tambahkan ke src/socket/world.js) ──
