@@ -691,6 +691,18 @@
       <div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏫</div><p>Belum ada kelas. Buat kelas pertamamu!</p></div>
     </div>
 
+    <!-- Bank Soal -->
+    <div class="panel" style="margin-bottom:28px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div class="panel-title" style="margin-bottom:0">✏️ Bank Soal Saya</div>
+        <button onclick="soalDariBuatKuis=false;openModal('modal-soal')" style="background:var(--orange);color:white;border:none;padding:8px 18px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">＋ Buat Soal</button>
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px;font-weight:600">Soal yang kamu buat bisa dipakai di semua kuis:</div>
+      <div id="guru-soal-preview">
+        <div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">Memuat bank soal...</div>
+      </div>
+    </div>
+
     <!-- Kelola Mapel -->
     <div class="panel" style="margin-bottom:28px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
@@ -2389,6 +2401,55 @@ async function loadGuruDashboard() {
   populateMapelSelects();
   renderGuruMapelPanel();
   populateBuatKelasMapel();
+  loadGuruSoalPreview();
+}
+
+async function loadGuruSoalPreview() {
+  const el = document.getElementById('guru-soal-preview');
+  if (!el) return;
+  try {
+    const data = await api('GET', '/soal');
+    const soalList = data.soal || data.data || [];
+    if (soalList.length === 0) {
+      el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted)">
+        <div style="font-size:36px;margin-bottom:8px">📭</div>
+        <p style="font-size:13px">Belum ada soal. Klik <strong>＋ Buat Soal</strong> untuk mulai!</p>
+      </div>`;
+      return;
+    }
+    // Tampilkan max 5 soal terbaru + tombol lihat semua
+    const tampil = soalList.slice(0, 5);
+    el.innerHTML = tampil.map(s => {
+      const jenis = s.jenis === 'pilihan_ganda' ? '🔵 PG' : s.jenis === 'isian' ? '✍️ Essay' : '✅ B/S';
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #F5F5F5">
+        <div style="font-size:20px">${s.emoji || '❓'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.pertanyaan}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${jenis} · ${s.mapel || '–'} · ${s.poin || 100} poin</div>
+        </div>
+        <button onclick="hapusSoalDashboard('${s.id}', this)" title="Hapus" style="background:none;border:none;cursor:pointer;font-size:14px;opacity:0.35;flex-shrink:0;padding:4px;transition:opacity 0.2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.35'">🗑️</button>
+      </div>`;
+    }).join('') +
+    (soalList.length > 5 ? `<div style="text-align:center;margin-top:12px;font-size:13px;color:var(--muted);font-weight:700">+${soalList.length - 5} soal lainnya · Total <strong>${soalList.length} soal</strong></div>` : `<div style="text-align:right;margin-top:8px;font-size:12px;color:var(--muted)">Total <strong>${soalList.length} soal</strong></div>`);
+  } catch(e) {
+    if (el) el.innerHTML = '<div style="text-align:center;padding:12px;color:var(--muted);font-size:13px">Gagal memuat soal</div>';
+  }
+}
+
+async function hapusSoalDashboard(id, btn) {
+  if (!confirm('Hapus soal ini?')) return;
+  btn.disabled = true; btn.textContent = '⏳';
+  try {
+    const data = await api('DELETE', `/soal/${id}`);
+    if (data.success || data.pesan?.toLowerCase().includes('berhasil')) {
+      btn.closest('div[style*="border-bottom"]').remove();
+      toast('Soal dihapus! 🗑️', 'success');
+      loadGuruSoalPreview();
+    } else {
+      toast(data.pesan || 'Gagal hapus', 'error');
+      btn.disabled = false; btn.textContent = '🗑️';
+    }
+  } catch(e) { toast('Gagal terhubung', 'error'); btn.disabled = false; btn.textContent = '🗑️'; }
 }
 
 function populateBuatKelasMapel() {
@@ -3764,7 +3825,7 @@ function filterSoalKuis() {
   const kelas = document.getElementById('kuis-soal-kelas-filter').value;
   let filtered = allSoalData;
   if (mapel) filtered = filtered.filter(s => s.mapel === mapel);
-  if (kelas) filtered = filtered.filter(s => s.kelas_id === kelas);
+  if (kelas) filtered = filtered.filter(s => !s.kelas_id || s.kelas_id === kelas);
   renderSoalChecklistKuis(filtered);
 }
 
@@ -3791,7 +3852,7 @@ async function loadBankSoal() {
     if (filterKelas) {
       filterKelas.innerHTML = '<option value="">🏫 Semua Kelas</option>' +
         kelasList.map(k => `<option value="${k.id}">${k.nama}</option>`).join('');
-      if (currentKelas?.id) filterKelas.value = currentKelas.id;
+      // Jangan auto-filter kelas agar semua soal guru tampil
     }
 
     filterSoalKuis();
