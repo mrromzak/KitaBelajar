@@ -1552,7 +1552,10 @@
 
     <div class="modal-btns">
       <button class="btn-cancel" onclick="batalBuatSoal()">Batal</button>
-      <button class="btn-submit" onclick="submitSoal()">✅ Simpan Soal</button>
+      <button class="btn-submit" onclick="submitSoal(false)" id="btn-simpan-soal">✅ Simpan Soal</button>
+    </div>
+    <button onclick="submitSoal(true)" style="width:100%;margin-top:10px;padding:12px;border:2.5px dashed var(--orange);background:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;color:var(--orange);cursor:pointer;transition:all 0.2s" onmouseover="this.style.background='#FFF3E8'" onmouseout="this.style.background='none'">
+      ＋ Simpan & Tambah Soal Lagi
     </div>
   </div>
 </div>
@@ -3160,7 +3163,7 @@ function buatSoalDariKuis() {
   openModal('modal-soal');
 }
 
-async function submitSoal() {
+async function submitSoal(tambahLagi = false) {
   const pertanyaan = document.getElementById('s-pertanyaan').value.trim();
   const emoji = document.getElementById('s-emoji').value.trim() || '❓';
   const mapel = document.getElementById('s-mapel').value;
@@ -3200,18 +3203,32 @@ async function submitSoal() {
     });
     if (data.success) {
       toast('Soal berhasil ditambahkan! ✏️', 'success');
-      closeModal('modal-soal');
-      resetSoalForm();
-      // Jika dibuka dari modal buat kuis, refresh bank soal dan kembali
-      if (soalDariBuatKuis) {
-        soalDariBuatKuis = false;
-        const btnSimpan = document.querySelector('#modal-soal .btn-submit');
-        if (btnSimpan) btnSimpan.textContent = '✅ Simpan Soal';
-        openModal('modal-buat-kuis');
-        await loadBankSoal();
-        // Switch ke tab bank soal
-        switchKuisSoalTab('bank');
-        toast('Soal ditambahkan! Ceklis soalnya di bawah ya 👇', 'success');
+      loadGuruSoalPreview();
+
+      if (tambahLagi) {
+        // Tetap di modal, reset form, pertahankan mapel
+        const mapelLama = mapel;
+        resetSoalForm();
+        const mapelSelect = document.getElementById('s-mapel');
+        if (mapelSelect && mapelLama) {
+          for (let opt of mapelSelect.options) {
+            if (opt.value === mapelLama) { opt.selected = true; break; }
+          }
+        }
+        document.getElementById('s-pertanyaan').focus();
+        toast('Soal tersimpan! Isi soal berikutnya ✏️', 'success');
+      } else {
+        closeModal('modal-soal');
+        resetSoalForm();
+        if (soalDariBuatKuis) {
+          soalDariBuatKuis = false;
+          const btnSimpan = document.querySelector('#modal-soal .btn-submit');
+          if (btnSimpan) btnSimpan.textContent = '✅ Simpan Soal';
+          openModal('modal-buat-kuis');
+          await loadBankSoal();
+          switchKuisSoalTab('bank');
+          toast('Soal ditambahkan! Ceklis soalnya di bawah ya 👇', 'success');
+        }
       }
     } else {
       toast(data.pesan || 'Gagal menyimpan soal', 'error');
