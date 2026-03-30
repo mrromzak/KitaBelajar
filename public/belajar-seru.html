@@ -695,7 +695,7 @@
     <div class="panel" style="margin-bottom:28px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
         <div class="panel-title" style="margin-bottom:0">✏️ Bank Soal Saya</div>
-        <button onclick="soalDariBuatKuis=false;openModal('modal-soal')" style="background:var(--orange);color:white;border:none;padding:8px 18px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">＋ Buat Soal</button>
+        <button onclick="bukaSoalBuilder(false)" style="background:var(--orange);color:white;border:none;padding:8px 18px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">＋ Buat Soal</button>
       </div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:14px;font-weight:600">Soal yang kamu buat bisa dipakai di semua kuis:</div>
       <div id="guru-soal-preview">
@@ -1072,7 +1072,7 @@
             <input type="checkbox" id="kuis-pilih-semua" onchange="pilihSemuaSoal(this.checked)"> Pilih Semua
           </label>
           <div style="display:flex;gap:8px;align-items:center">
-            <button onclick="buatSoalDariKuis()" style="background:var(--orange);color:white;border:none;padding:7px 14px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:12px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">＋ Buat Soal</button>
+            <button onclick="closeModal('modal-buat-kuis');bukaSoalBuilder(true)" style="background:var(--orange);color:white;border:none;padding:7px 14px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:12px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">＋ Buat Soal</button>
             <button onclick="loadBankSoal()" style="background:none;border:none;cursor:pointer;font-size:12px;font-weight:700;color:var(--blue);font-family:Nunito,sans-serif">🔄 Refresh</button>
           </div>
         </div>
@@ -1419,6 +1419,141 @@
             💾 Simpan Materi!
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PAGE: SOAL BUILDER (Zep-style) ========== -->
+<div class="page" id="page-soal-builder">
+  <div style="display:flex;height:100vh;overflow:hidden">
+
+    <!-- Sidebar kiri: daftar soal -->
+    <div id="sb-sidebar" style="width:220px;background:#1a1a2e;display:flex;flex-direction:column;flex-shrink:0">
+      <div style="padding:16px;border-bottom:1px solid rgba(255,255,255,0.1)">
+        <button onclick="tutupSoalBuilder()" style="background:none;border:none;color:rgba(255,255,255,0.6);cursor:pointer;font-family:Nunito,sans-serif;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;padding:0">
+          ← Kembali
+        </button>
+        <div style="margin-top:12px;font-family:'Fredoka One',cursive;font-size:16px;color:white" id="sb-judul-label">Bank Soal</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px" id="sb-count-label">0 soal</div>
+      </div>
+      <div id="sb-soal-list" style="flex:1;overflow-y:auto;padding:8px"></div>
+      <div style="padding:12px;border-top:1px solid rgba(255,255,255,0.1)">
+        <button onclick="sbTambahSoal('pilihan_ganda')" style="width:100%;padding:10px;background:var(--orange);color:white;border:none;border-radius:10px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer">
+          ＋ Soal Baru
+        </button>
+      </div>
+    </div>
+
+    <!-- Konten tengah -->
+    <div style="flex:1;overflow-y:auto;background:#F5F6FA">
+      <!-- Header -->
+      <div style="background:white;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #eee;position:sticky;top:0;z-index:10">
+        <div style="font-size:14px;font-weight:700;color:var(--muted)" id="sb-header-info">Buat & kelola soal</div>
+        <div style="display:flex;gap:10px">
+          <button onclick="sbSimpanSemua()" id="sb-btn-simpan" style="background:var(--orange);color:white;border:none;padding:10px 24px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">
+            💾 Simpan Semua
+          </button>
+        </div>
+      </div>
+
+      <!-- Area soal aktif -->
+      <div style="max-width:720px;margin:28px auto;padding:0 24px">
+
+        <!-- Soal card -->
+        <div id="sb-soal-card" style="background:white;border-radius:20px;box-shadow:0 4px 24px rgba(0,0,0,0.08);overflow:hidden">
+
+          <!-- Header card -->
+          <div style="background:linear-gradient(135deg,var(--orange),#FF8C42);padding:16px 24px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="background:rgba(255,255,255,0.25);border-radius:8px;padding:4px 12px;font-weight:900;font-size:14px;color:white" id="sb-soal-nomor">#1</div>
+              <select id="sb-tipe-soal" onchange="sbGantiTipe(this.value)" style="background:rgba(255,255,255,0.2);border:none;color:white;font-family:Nunito,sans-serif;font-weight:700;font-size:13px;outline:none;cursor:pointer;border-radius:8px;padding:4px 8px">
+                <option value="pilihan_ganda">✅ Pilihan Ganda</option>
+                <option value="isian">✍️ Jawaban Singkat</option>
+                <option value="benar_salah">⭕ OX / Benar Salah</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button onclick="sbDuplikasiSoal()" title="Duplikat" style="background:rgba(255,255,255,0.2);border:none;color:white;cursor:pointer;border-radius:8px;padding:6px 10px;font-size:14px">⧉</button>
+              <button onclick="sbHapusSoalAktif()" title="Hapus" style="background:rgba(255,255,255,0.2);border:none;color:white;cursor:pointer;border-radius:8px;padding:6px 10px;font-size:14px">🗑️</button>
+            </div>
+          </div>
+
+          <div style="padding:24px">
+            <!-- Pertanyaan -->
+            <textarea id="sb-pertanyaan" placeholder="Masukkan pertanyaan Anda di sini..." rows="3"
+              style="width:100%;border:none;font-family:Nunito,sans-serif;font-size:18px;font-weight:700;color:var(--text);outline:none;resize:none;line-height:1.5;box-sizing:border-box"
+              oninput="sbAutoSave()"></textarea>
+
+            <!-- Info baris -->
+            <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:12px;font-weight:700;color:var(--muted)">Mapel:</span>
+                <select id="sb-mapel" onchange="sbAutoSave()" style="border:1.5px solid #eee;border-radius:8px;padding:4px 8px;font-family:Nunito,sans-serif;font-size:12px;font-weight:700;outline:none"></select>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:12px;font-weight:700;color:var(--muted)">Poin:</span>
+                <input type="number" id="sb-poin" value="100" min="10" step="10" onchange="sbAutoSave()" style="border:1.5px solid #eee;border-radius:8px;padding:4px 8px;font-family:Nunito,sans-serif;font-size:12px;font-weight:700;outline:none;width:64px">
+              </div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:12px;font-weight:700;color:var(--muted)">Tingkat:</span>
+                <select id="sb-tingkat" onchange="sbAutoSave()" style="border:1.5px solid #eee;border-radius:8px;padding:4px 8px;font-family:Nunito,sans-serif;font-size:12px;font-weight:700;outline:none">
+                  <option value="mudah">😊 Mudah</option>
+                  <option value="sedang" selected>🤔 Sedang</option>
+                  <option value="sulit">😤 Sulit</option>
+                </select>
+              </div>
+            </div>
+
+            <hr style="border:none;border-top:2px solid #F5F5F5;margin-bottom:20px">
+
+            <!-- PILIHAN GANDA section -->
+            <div id="sb-pg-section">
+              <div id="sb-opsi-list" style="display:flex;flex-direction:column;gap:10px"></div>
+              <button onclick="sbTambahOpsi()" id="sb-btn-tambah-opsi" style="margin-top:12px;width:100%;padding:12px;border:2.5px dashed #ddd;background:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:700;font-size:13px;color:var(--muted);cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='#ddd';this.style.color='var(--muted)'">
+                ＋ Tambah Pilihan
+              </button>
+            </div>
+
+            <!-- ISIAN section -->
+            <div id="sb-isian-section" style="display:none">
+              <div style="background:#F8F9FA;border-radius:12px;padding:16px">
+                <label style="font-size:13px;font-weight:700;color:var(--muted);display:block;margin-bottom:8px">Kunci Jawaban / Kata Kunci</label>
+                <textarea id="sb-jawaban-isian" rows="2" placeholder="Tulis kunci jawaban..." oninput="sbAutoSave()"
+                  style="width:100%;border:2px solid #eee;border-radius:10px;padding:10px 12px;font-family:Nunito,sans-serif;font-size:14px;outline:none;box-sizing:border-box;resize:none"></textarea>
+              </div>
+            </div>
+
+            <!-- BENAR/SALAH section -->
+            <div id="sb-bs-section" style="display:none">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div id="sb-bs-benar" onclick="sbPilihBS('Benar')" style="border:3px solid #eee;border-radius:14px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s">
+                  <div style="font-size:36px">⭕</div>
+                  <div style="font-weight:800;font-size:15px;margin-top:6px">Benar</div>
+                </div>
+                <div id="sb-bs-salah" onclick="sbPilihBS('Salah')" style="border:3px solid #eee;border-radius:14px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s">
+                  <div style="font-size:36px">❌</div>
+                  <div style="font-weight:800;font-size:15px;margin-top:6px">Salah</div>
+                </div>
+              </div>
+              <input type="hidden" id="sb-jawaban-bs" value="">
+            </div>
+          </div>
+        </div>
+
+        <!-- Tombol tambah soal baru di bawah -->
+        <div style="display:flex;gap:12px;margin-top:20px;justify-content:center;flex-wrap:wrap">
+          <button onclick="sbTambahSoal('pilihan_ganda')" style="display:flex;align-items:center;gap:8px;padding:12px 22px;background:white;border:2.5px solid #eee;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06)" onmouseover="this.style.borderColor='var(--orange)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#eee';this.style.transform=''">
+            <span style="font-size:16px">✅</span> Pilihan Ganda
+          </button>
+          <button onclick="sbTambahSoal('isian')" style="display:flex;align-items:center;gap:8px;padding:12px 22px;background:white;border:2.5px solid #eee;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06)" onmouseover="this.style.borderColor='var(--blue)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#eee';this.style.transform=''">
+            <span style="font-size:16px">✍️</span> Jawaban Singkat
+          </button>
+          <button onclick="sbTambahSoal('benar_salah')" style="display:flex;align-items:center;gap:8px;padding:12px 22px;background:white;border:2.5px solid #eee;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06)" onmouseover="this.style.borderColor='var(--green)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#eee';this.style.transform=''">
+            <span style="font-size:16px">⭕</span> OX / Benar Salah
+          </button>
+        </div>
+
       </div>
     </div>
   </div>
@@ -3129,6 +3264,281 @@ function updateJawabanPG() {
   });
   // Restore pilihan sebelumnya jika masih valid
   if (prev !== '' && prev < inputs.length) select.value = prev;
+}
+
+// ============================================================
+//  SOAL BUILDER (Zep-style)
+// ============================================================
+let sbSoalList = [];       // [{id, tipe, pertanyaan, opsi, jawaban, mapel, poin, tingkat, dbId}]
+let sbAktifIdx = 0;        // index soal yang sedang diedit
+let sbFromKuis  = false;   // dibuka dari modal buat kuis?
+const SB_OPSI_COLORS = ['#4D96FF','#6BCB77','#FF6B35','#C77DFF','#FF6B9D','#00CEC9'];
+const SB_HURUF = ['A','B','C','D','E','F'];
+
+function bukaSoalBuilder(fromKuis = false) {
+  sbFromKuis = fromKuis;
+  sbSoalList = [];
+  sbAktifIdx = 0;
+  sbTambahSoal('pilihan_ganda', false);
+  sbPopulateMapel();
+  document.getElementById('sb-judul-label').textContent = fromKuis ? 'Tambah Soal ke Kuis' : 'Bank Soal';
+  showPage('page-soal-builder');
+}
+
+function tutupSoalBuilder() {
+  if (sbFromKuis) {
+    openModal('modal-buat-kuis');
+    loadBankSoal();
+    switchKuisSoalTab('bank');
+  } else {
+    showPage('page-guru');
+    loadGuruSoalPreview();
+  }
+}
+
+function sbPopulateMapel() {
+  const list = getMapelList();
+  const sel = document.getElementById('sb-mapel');
+  if (!sel) return;
+  sel.innerHTML = list.length
+    ? list.map(m => `<option value="${m.nama}">${m.emoji} ${m.nama}</option>`).join('')
+    : '<option value="Umum">📚 Umum</option>';
+  if (currentKelas?.mapel) {
+    for (let o of sel.options) if (o.value === currentKelas.mapel) { o.selected = true; break; }
+  }
+}
+
+function sbTambahSoal(tipe = 'pilihan_ganda', navigasi = true) {
+  // Simpan state soal aktif dulu sebelum tambah
+  if (sbSoalList.length > 0) sbSimpanStateAktif();
+
+  const soal = {
+    id: Date.now() + Math.random(),
+    tipe,
+    pertanyaan: '',
+    opsi: tipe === 'pilihan_ganda' ? ['', '', '', ''] : [],
+    jawabanIdx: null,
+    jawaban: '',
+    mapel: document.getElementById('sb-mapel')?.value || 'Umum',
+    poin: 100,
+    tingkat: 'sedang',
+    dbId: null
+  };
+  sbSoalList.push(soal);
+  sbAktifIdx = sbSoalList.length - 1;
+  sbRenderSidebar();
+  if (navigasi) sbMuatSoal(sbAktifIdx);
+  sbUpdateCount();
+}
+
+function sbSimpanStateAktif() {
+  const s = sbSoalList[sbAktifIdx];
+  if (!s) return;
+  s.pertanyaan = document.getElementById('sb-pertanyaan')?.value || '';
+  s.tipe = document.getElementById('sb-tipe-soal')?.value || 'pilihan_ganda';
+  s.mapel = document.getElementById('sb-mapel')?.value || 'Umum';
+  s.poin = parseInt(document.getElementById('sb-poin')?.value) || 100;
+  s.tingkat = document.getElementById('sb-tingkat')?.value || 'sedang';
+
+  if (s.tipe === 'pilihan_ganda') {
+    s.opsi = Array.from(document.querySelectorAll('.sb-opsi-input')).map(i => i.value.trim());
+    s.jawabanIdx = s.opsi.findIndex((_, i) => document.getElementById(`sb-radio-${i}`)?.checked);
+    s.jawaban = s.jawabanIdx >= 0 ? s.opsi[s.jawabanIdx] : '';
+  } else if (s.tipe === 'isian') {
+    s.jawaban = document.getElementById('sb-jawaban-isian')?.value || '';
+  } else if (s.tipe === 'benar_salah') {
+    s.jawaban = document.getElementById('sb-jawaban-bs')?.value || '';
+    s.opsi = ['Benar', 'Salah'];
+  }
+}
+
+function sbMuatSoal(idx) {
+  sbAktifIdx = idx;
+  const s = sbSoalList[idx];
+  if (!s) return;
+
+  document.getElementById('sb-pertanyaan').value = s.pertanyaan;
+  document.getElementById('sb-soal-nomor').textContent = `#${idx + 1}`;
+  document.getElementById('sb-tipe-soal').value = s.tipe;
+  document.getElementById('sb-poin').value = s.poin;
+  document.getElementById('sb-tingkat').value = s.tingkat;
+
+  // Set mapel
+  sbPopulateMapel();
+  const mapelSel = document.getElementById('sb-mapel');
+  if (mapelSel && s.mapel) {
+    for (let o of mapelSel.options) if (o.value === s.mapel) { o.selected = true; break; }
+  }
+
+  sbGantiTipe(s.tipe, s);
+  sbRenderSidebar();
+  document.getElementById('sb-pertanyaan').focus();
+}
+
+function sbGantiTipe(tipe, soalData = null) {
+  document.getElementById('sb-tipe-soal').value = tipe;
+  document.getElementById('sb-pg-section').style.display   = tipe === 'pilihan_ganda' ? '' : 'none';
+  document.getElementById('sb-isian-section').style.display = tipe === 'isian' ? '' : 'none';
+  document.getElementById('sb-bs-section').style.display   = tipe === 'benar_salah' ? '' : 'none';
+
+  if (tipe === 'pilihan_ganda') {
+    sbRenderOpsi(soalData?.opsi || ['','','',''], soalData?.jawabanIdx ?? null);
+    const maxOpsi = (soalData?.opsi?.length || 4);
+    document.getElementById('sb-btn-tambah-opsi').style.display = maxOpsi >= 6 ? 'none' : '';
+  } else if (tipe === 'isian') {
+    document.getElementById('sb-jawaban-isian').value = soalData?.jawaban || '';
+  } else if (tipe === 'benar_salah') {
+    sbPilihBS(soalData?.jawaban || '');
+  }
+  sbAutoSave();
+}
+
+function sbRenderOpsi(opsiArr, jawabanIdx) {
+  const el = document.getElementById('sb-opsi-list');
+  el.innerHTML = opsiArr.map((val, i) => `
+    <div class="sb-opsi-row" style="display:flex;align-items:center;gap:10px">
+      <input type="radio" name="sb-jawaban" id="sb-radio-${i}" ${jawabanIdx === i ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;flex-shrink:0">
+      <div style="width:30px;height:30px;border-radius:50%;background:${SB_OPSI_COLORS[i]};color:white;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${SB_HURUF[i]}</div>
+      <input type="text" class="sb-opsi-input" value="${val}" placeholder="Pilihan ${SB_HURUF[i]}"
+        style="flex:1;padding:11px 14px;border:2px solid #eee;border-radius:10px;font-family:Nunito,sans-serif;font-size:14px;outline:none;transition:border 0.2s"
+        onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='#eee'"
+        oninput="sbAutoSave()">
+      <button onclick="sbHapusOpsi(${i})" style="background:none;border:none;cursor:pointer;font-size:15px;opacity:${opsiArr.length > 2 ? '0.35' : '0.1'};padding:4px;transition:opacity 0.2s;pointer-events:${opsiArr.length > 2 ? 'auto' : 'none'}" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.35'">✕</button>
+    </div>
+  `).join('');
+}
+
+function sbTambahOpsi() {
+  sbSimpanStateAktif();
+  const s = sbSoalList[sbAktifIdx];
+  if (s.opsi.length >= 6) return;
+  s.opsi.push('');
+  sbRenderOpsi(s.opsi, s.jawabanIdx);
+  if (s.opsi.length >= 6) document.getElementById('sb-btn-tambah-opsi').style.display = 'none';
+  // Focus ke opsi baru
+  const inputs = document.querySelectorAll('.sb-opsi-input');
+  inputs[inputs.length - 1]?.focus();
+}
+
+function sbHapusOpsi(idx) {
+  sbSimpanStateAktif();
+  const s = sbSoalList[sbAktifIdx];
+  if (s.opsi.length <= 2) { toast('Minimal 2 pilihan!', 'error'); return; }
+  s.opsi.splice(idx, 1);
+  if (s.jawabanIdx === idx) s.jawabanIdx = null;
+  else if (s.jawabanIdx > idx) s.jawabanIdx--;
+  sbRenderOpsi(s.opsi, s.jawabanIdx);
+  document.getElementById('sb-btn-tambah-opsi').style.display = '';
+}
+
+function sbPilihBS(val) {
+  document.getElementById('sb-jawaban-bs').value = val;
+  const benarEl = document.getElementById('sb-bs-benar');
+  const salahEl = document.getElementById('sb-bs-salah');
+  if (benarEl) benarEl.style.cssText = `border:3px solid ${val==='Benar'?'var(--green)':'#eee'};border-radius:14px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;background:${val==='Benar'?'#F0FFF4':'white'}`;
+  if (salahEl) salahEl.style.cssText = `border:3px solid ${val==='Salah'?'var(--red)':'#eee'};border-radius:14px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;background:${val==='Salah'?'#FFF0F0':'white'}`;
+  sbAutoSave();
+}
+
+function sbAutoSave() {
+  sbSimpanStateAktif();
+  sbRenderSidebar();
+}
+
+function sbRenderSidebar() {
+  const el = document.getElementById('sb-soal-list');
+  el.innerHTML = sbSoalList.map((s, i) => {
+    const isAktif = i === sbAktifIdx;
+    const icon = s.tipe === 'pilihan_ganda' ? '✅' : s.tipe === 'isian' ? '✍️' : '⭕';
+    const preview = s.pertanyaan ? (s.pertanyaan.length > 30 ? s.pertanyaan.slice(0,30)+'…' : s.pertanyaan) : 'Pertanyaan kosong...';
+    return `<div onclick="sbPilihSoal(${i})" style="padding:10px 12px;border-radius:10px;cursor:pointer;margin-bottom:4px;background:${isAktif?'rgba(255,107,53,0.2)':'transparent'};border:2px solid ${isAktif?'var(--orange)':'transparent'};transition:all 0.15s">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="background:${isAktif?'var(--orange)':'rgba(255,255,255,0.15)'};color:white;font-size:11px;font-weight:800;padding:2px 7px;border-radius:6px">${i+1}</span>
+        <span style="font-size:13px">${icon}</span>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,${isAktif?'0.9':'0.45'});margin-top:6px;line-height:1.4">${preview}</div>
+    </div>`;
+  }).join('');
+}
+
+function sbPilihSoal(idx) {
+  sbSimpanStateAktif();
+  sbMuatSoal(idx);
+}
+
+function sbUpdateCount() {
+  const el = document.getElementById('sb-count-label');
+  if (el) el.textContent = `${sbSoalList.length} soal`;
+}
+
+function sbHapusSoalAktif() {
+  if (sbSoalList.length <= 1) { toast('Minimal harus ada 1 soal!', 'error'); return; }
+  if (!confirm(`Hapus soal #${sbAktifIdx + 1}?`)) return;
+  sbSoalList.splice(sbAktifIdx, 1);
+  sbAktifIdx = Math.min(sbAktifIdx, sbSoalList.length - 1);
+  sbMuatSoal(sbAktifIdx);
+  sbUpdateCount();
+  toast('Soal dihapus!', 'success');
+}
+
+function sbDuplikasiSoal() {
+  sbSimpanStateAktif();
+  const kopi = JSON.parse(JSON.stringify(sbSoalList[sbAktifIdx]));
+  kopi.id = Date.now();
+  kopi.dbId = null;
+  kopi.pertanyaan = kopi.pertanyaan ? kopi.pertanyaan + ' (copy)' : '';
+  sbSoalList.splice(sbAktifIdx + 1, 0, kopi);
+  sbAktifIdx++;
+  sbMuatSoal(sbAktifIdx);
+  sbUpdateCount();
+  toast('Soal diduplikat! ⧉', 'success');
+}
+
+async function sbSimpanSemua() {
+  sbSimpanStateAktif();
+  const btn = document.getElementById('sb-btn-simpan');
+  btn.disabled = true;
+  btn.textContent = '⏳ Menyimpan...';
+
+  let berhasil = 0, gagal = 0;
+  for (const s of sbSoalList) {
+    if (!s.pertanyaan.trim()) { gagal++; continue; }
+
+    let opsi = s.opsi, jawaban = s.jawaban, jenis = s.tipe;
+    if (jenis === 'pilihan_ganda') {
+      opsi = s.opsi.filter(Boolean);
+      if (opsi.length < 2 || !jawaban) { gagal++; continue; }
+    } else if (jenis === 'isian') {
+      if (!jawaban) { gagal++; continue; }
+      opsi = [];
+    } else if (jenis === 'benar_salah') {
+      if (!jawaban) { gagal++; continue; }
+      opsi = ['Benar', 'Salah'];
+    }
+
+    try {
+      const data = await api('POST', '/soal', {
+        pertanyaan: s.pertanyaan, emoji: '❓', mapel: s.mapel,
+        jenis, opsi: JSON.stringify(opsi), jawaban, poin: s.poin, tingkat: s.tingkat
+      });
+      if (data.success) { s.dbId = data.data?.id; berhasil++; }
+      else gagal++;
+    } catch(e) { gagal++; }
+  }
+
+  btn.disabled = false;
+  btn.textContent = '💾 Simpan Semua';
+
+  if (berhasil > 0) {
+    toast(`✅ ${berhasil} soal tersimpan!${gagal > 0 ? ` (${gagal} gagal/kosong)` : ''}`, 'success');
+    loadGuruSoalPreview();
+    // Jika dari kuis, kembali otomatis
+    if (sbFromKuis) {
+      setTimeout(() => tutupSoalBuilder(), 1200);
+    }
+  } else {
+    toast('Tidak ada soal yang valid! Lengkapi pertanyaan & jawaban dulu.', 'error');
+  }
 }
 
 function batalBuatSoal() {
