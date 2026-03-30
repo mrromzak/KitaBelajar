@@ -492,7 +492,6 @@
   .q-dot.answered { background: var(--blue); color: white; border-color: var(--blue); }
   .q-dot.current { border-color: var(--orange); box-shadow: 0 0 0 2px rgba(255,107,53,0.3); }
 </style>
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
 <body>
 
@@ -1531,8 +1530,7 @@
 // ============================================================
 //  CONFIG
 // ============================================================
-const API = 'https://kitabelajar-production.up.railway.app/api';
-const socket = io('https://kitabelajar-production.up.railway.app');
+const API = io('https://kitabelajar-production.up.railway.app');
 let token = localStorage.getItem('kb_token') || null;
 let currentUser = JSON.parse(localStorage.getItem('kb_user') || 'null');
 let currentRole = 'murid'; // for login page
@@ -1653,6 +1651,53 @@ function hapusMapel(nama, emoji) {
 // ============================================================
 //  UTILS
 // ============================================================
+// ============================================================
+//  MARKDOWN RENDERER
+// ============================================================
+function renderMarkdown(text) {
+  if (!text) return '';
+  return text
+    // Headings
+    .replace(/^### (.+)$/gm, '<h4 style="font-weight:800;font-size:15px;margin:14px 0 6px;color:var(--text)">$1</h4>')
+    .replace(/^## (.+)$/gm,  '<h3 style="font-weight:800;font-size:17px;margin:16px 0 8px;color:var(--text)">$1</h3>')
+    .replace(/^# (.+)$/gm,   '<h2 style="font-weight:900;font-size:20px;margin:18px 0 10px;color:var(--text)">$1</h2>')
+    // Bold & italic
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,     '<em>$1</em>')
+    // Bullet list
+    .replace(/^\* (.+)$/gm,   '<li style="margin-left:18px;margin-bottom:4px">$1</li>')
+    .replace(/^- (.+)$/gm,    '<li style="margin-left:18px;margin-bottom:4px">$1</li>')
+    // Wrap consecutive <li> in <ul>
+    .replace(/(<li[^>]*>.*<\/li>\n?)+/g, match => `<ul style="margin:8px 0;padding-left:4px">${match}</ul>`)
+    // Paragraphs (double newline)
+    .replace(/\n\n/g, '</p><p style="margin:8px 0;font-size:14px;line-height:1.8">')
+    // Single newline
+    .replace(/\n/g, '<br>')
+    // Wrap in paragraph
+    .replace(/^/, '<p style="margin:0;font-size:14px;line-height:1.8">')
+    .replace(/$/, '</p>');
+}
+
+function toggleMateri(postId, btn) {
+  const el = document.getElementById(postId + '-content');
+  const isCollapsed = el.style.maxHeight === '160px';
+  if (isCollapsed) {
+    el.style.maxHeight = '';
+    el.style.overflow = '';
+    el.style.position = '';
+    el.querySelector('div[style*="linear-gradient"]')?.remove();
+    btn.textContent = '🔼 Sembunyikan';
+  } else {
+    el.style.maxHeight = '160px';
+    el.style.overflow = 'hidden';
+    el.style.position = 'relative';
+    const fade = document.createElement('div');
+    fade.style.cssText = 'position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(transparent,white)';
+    el.appendChild(fade);
+    btn.textContent = '📖 Baca Selengkapnya';
+  }
+}
+
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -2085,7 +2130,14 @@ async function loadKelasStream(kelasId) {
       } else if (m.jenis === 'gambar' && m.konten) {
         bodyHtml = `<img src="${m.konten}" style="max-width:100%;border-radius:12px" onerror="this.style.display='none'">`;
       } else {
-        bodyHtml = `<div style="font-size:14px;line-height:1.8;white-space:pre-wrap">${m.konten || m.deskripsi || ''}</div>`;
+        const raw = m.konten || m.deskripsi || '';
+        const rendered = renderMarkdown(raw);
+        const postId = 'post-' + (m.id || Math.random().toString(36).slice(2));
+        const isLong = raw.length > 400;
+        bodyHtml = `
+          <div id="${postId}-content" class="stream-post-body-text markdown-body" style="${isLong ? 'max-height:160px;overflow:hidden;position:relative;' : ''}">${rendered}${isLong ? `<div style="position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(transparent,white)"></div>` : ''}</div>
+          ${isLong ? `<button class="stream-toggle" onclick="toggleMateri('${postId}', this)" style="margin-top:8px">📖 Baca Selengkapnya</button>` : ''}
+        `;
       }
 
       return `<div class="stream-post">
@@ -2101,7 +2153,7 @@ async function loadKelasStream(kelasId) {
           </div>` : ''}
         </div>
         <div class="stream-post-body">
-          <div class="stream-post-body-text">${bodyHtml}</div>
+          ${bodyHtml}
         </div>
       </div>`;
     }).join('');
@@ -3917,6 +3969,7 @@ async function konfirmasiHapus() {
 </script>
 
 <!-- ========== ZEP QUIZ SCRIPT ========== -->
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
 // ============================================================
 //  ZEP QUIZ — Live Multiplayer
