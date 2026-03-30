@@ -1059,7 +1059,10 @@
           <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;cursor:pointer">
             <input type="checkbox" id="kuis-pilih-semua" onchange="pilihSemuaSoal(this.checked)"> Pilih Semua
           </label>
-          <button onclick="loadBankSoal()" style="background:none;border:none;cursor:pointer;font-size:12px;font-weight:700;color:var(--blue);font-family:Nunito,sans-serif">🔄 Refresh</button>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button onclick="buatSoalDariKuis()" style="background:var(--orange);color:white;border:none;padding:7px 14px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:12px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">＋ Buat Soal</button>
+            <button onclick="loadBankSoal()" style="background:none;border:none;cursor:pointer;font-size:12px;font-weight:700;color:var(--blue);font-family:Nunito,sans-serif">🔄 Refresh</button>
+          </div>
         </div>
       </div>
       <div id="kuis-soal-list" style="max-height:240px;overflow-y:auto;border:2px solid #eee;border-radius:12px;padding:8px">
@@ -1529,7 +1532,7 @@
     </div>
 
     <div class="modal-btns">
-      <button class="btn-cancel" onclick="closeModal('modal-soal');resetSoalForm()">Batal</button>
+      <button class="btn-cancel" onclick="batalBuatSoal()">Batal</button>
       <button class="btn-submit" onclick="submitSoal()">✅ Simpan Soal</button>
     </div>
   </div>
@@ -2959,6 +2962,38 @@ function resetSoalForm() {
 // ============================================================
 //  SUBMIT SOAL (GURU)
 // ============================================================
+function batalBuatSoal() {
+  closeModal('modal-soal');
+  resetSoalForm();
+  const btnSimpan = document.querySelector('#modal-soal .btn-submit');
+  if (btnSimpan) btnSimpan.textContent = '✅ Simpan Soal';
+  // Jika dari modal kuis, kembalikan ke modal kuis
+  if (soalDariBuatKuis) {
+    soalDariBuatKuis = false;
+    openModal('modal-buat-kuis');
+  }
+}
+
+// Flag: apakah modal soal dibuka dari dalam modal buat kuis
+let soalDariBuatKuis = false;
+
+function buatSoalDariKuis() {
+  soalDariBuatKuis = true;
+  // Set default mapel sesuai kelas yang sedang aktif
+  setTimeout(() => {
+    const mapelSelect = document.getElementById('s-mapel');
+    if (mapelSelect && currentKelas?.mapel) {
+      for (let opt of mapelSelect.options) {
+        if (opt.value === currentKelas.mapel) { opt.selected = true; break; }
+      }
+    }
+    // Ubah tombol simpan agar kembali ke kuis setelah simpan
+    const btnSimpan = document.querySelector('#modal-soal .btn-submit');
+    if (btnSimpan) btnSimpan.textContent = '✅ Simpan & Kembali ke Kuis';
+  }, 100);
+  openModal('modal-soal');
+}
+
 async function submitSoal() {
   const pertanyaan = document.getElementById('s-pertanyaan').value.trim();
   const emoji = document.getElementById('s-emoji').value.trim() || '❓';
@@ -3001,6 +3036,17 @@ async function submitSoal() {
       toast('Soal berhasil ditambahkan! ✏️', 'success');
       closeModal('modal-soal');
       resetSoalForm();
+      // Jika dibuka dari modal buat kuis, refresh bank soal dan kembali
+      if (soalDariBuatKuis) {
+        soalDariBuatKuis = false;
+        const btnSimpan = document.querySelector('#modal-soal .btn-submit');
+        if (btnSimpan) btnSimpan.textContent = '✅ Simpan Soal';
+        openModal('modal-buat-kuis');
+        await loadBankSoal();
+        // Switch ke tab bank soal
+        switchKuisSoalTab('bank');
+        toast('Soal ditambahkan! Ceklis soalnya di bawah ya 👇', 'success');
+      }
     } else {
       toast(data.pesan || 'Gagal menyimpan soal', 'error');
     }
