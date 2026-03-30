@@ -1457,23 +1457,30 @@
       <div class="form-group">
         <label>Pilihan Jawaban</label>
         <div style="display:flex;flex-direction:column;gap:8px" id="opsi-list">
-          <div style="display:flex;align-items:center;gap:8px">
-            <div style="width:28px;height:28px;border-radius:50%;background:var(--blue);color:white;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">A</div>
-            <input type="text" class="opsi-input" placeholder="Pilihan A" style="flex:1;padding:10px 12px;border:2px solid #eee;border-radius:10px;font-family:Nunito,sans-serif;font-size:14px;outline:none">
+          <div class="opsi-row" style="display:flex;align-items:center;gap:8px">
+            <div class="opsi-label" style="width:28px;height:28px;border-radius:50%;background:var(--blue);color:white;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">A</div>
+            <input type="text" class="opsi-input" placeholder="Pilihan A" style="flex:1;padding:10px 12px;border:2px solid #eee;border-radius:10px;font-family:Nunito,sans-serif;font-size:14px;outline:none" oninput="updateJawabanPG()">
+            <button onclick="hapusOpsi(this)" style="background:none;border:none;cursor:pointer;font-size:16px;opacity:0.3;padding:4px;display:none" title="Hapus pilihan">✕</button>
           </div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <div style="width:28px;height:28px;border-radius:50%;background:var(--green);color:white;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">B</div>
-            <input type="text" class="opsi-input" placeholder="Pilihan B" style="flex:1;padding:10px 12px;border:2px solid #eee;border-radius:10px;font-family:Nunito,sans-serif;font-size:14px;outline:none">
+          <div class="opsi-row" style="display:flex;align-items:center;gap:8px">
+            <div class="opsi-label" style="width:28px;height:28px;border-radius:50%;background:var(--green);color:white;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">B</div>
+            <input type="text" class="opsi-input" placeholder="Pilihan B" style="flex:1;padding:10px 12px;border:2px solid #eee;border-radius:10px;font-family:Nunito,sans-serif;font-size:14px;outline:none" oninput="updateJawabanPG()">
+            <button onclick="hapusOpsi(this)" style="background:none;border:none;cursor:pointer;font-size:16px;opacity:0.3;padding:4px;display:none" title="Hapus pilihan">✕</button>
           </div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <div style="width:28px;height:28px;border-radius:50%;background:var(--orange);color:white;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">C</div>
-            <input type="text" class="opsi-input" placeholder="Pilihan C" style="flex:1;padding:10px 12px;border:2px solid #eee;border-radius:10px;font-family:Nunito,sans-serif;font-size:14px;outline:none">
+          <div class="opsi-row" style="display:flex;align-items:center;gap:8px">
+            <div class="opsi-label" style="width:28px;height:28px;border-radius:50%;background:var(--orange);color:white;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">C</div>
+            <input type="text" class="opsi-input" placeholder="Pilihan C" style="flex:1;padding:10px 12px;border:2px solid #eee;border-radius:10px;font-family:Nunito,sans-serif;font-size:14px;outline:none" oninput="updateJawabanPG()">
+            <button onclick="hapusOpsi(this)" style="background:none;border:none;cursor:pointer;font-size:16px;opacity:0.3;padding:4px;display:none" title="Hapus pilihan">✕</button>
           </div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <div style="width:28px;height:28px;border-radius:50%;background:var(--purple);color:white;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">D</div>
-            <input type="text" class="opsi-input" placeholder="Pilihan D" style="flex:1;padding:10px 12px;border:2px solid #eee;border-radius:10px;font-family:Nunito,sans-serif;font-size:14px;outline:none">
+          <div class="opsi-row" style="display:flex;align-items:center;gap:8px">
+            <div class="opsi-label" style="width:28px;height:28px;border-radius:50%;background:var(--purple);color:white;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">D</div>
+            <input type="text" class="opsi-input" placeholder="Pilihan D" style="flex:1;padding:10px 12px;border:2px solid #eee;border-radius:10px;font-family:Nunito,sans-serif;font-size:14px;outline:none" oninput="updateJawabanPG()">
+            <button onclick="hapusOpsi(this)" style="background:none;border:none;cursor:pointer;font-size:16px;opacity:0.3;padding:4px" title="Hapus pilihan">✕</button>
           </div>
         </div>
+        <button onclick="tambahOpsi()" id="btn-tambah-opsi" style="margin-top:10px;width:100%;padding:9px;border:2.5px dashed #ddd;background:none;border-radius:10px;font-family:Nunito,sans-serif;font-weight:700;font-size:13px;color:var(--muted);cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='#ddd';this.style.color='var(--muted)'">
+          ＋ Tambah Pilihan (maks 6)
+        </button>
       </div>
       <div class="form-group">
         <label>Jawaban Benar</label>
@@ -2950,18 +2957,116 @@ function resetSoalForm() {
   document.getElementById('s-pertanyaan').value = '';
   document.getElementById('s-emoji').value = '❓';
   document.getElementById('s-poin').value = '100';
-  document.querySelectorAll('.opsi-input').forEach(i => i.value = '');
-  document.getElementById('s-jawaban-pg').value = '';
   document.getElementById('s-jawaban-essay').value = '';
   document.getElementById('s-jawaban-bs').value = '';
   selectedBS = '';
   switchTipeSoal('pilihan_ganda');
   selectBS('');
+
+  // Reset opsi ke 4 pilihan default
+  const list = document.getElementById('opsi-list');
+  list.innerHTML = '';
+  const defaultColors = ['var(--blue)','var(--green)','var(--orange)','var(--purple)'];
+  ['A','B','C','D'].forEach((h, i) => {
+    const showHapus = i >= 2; // A dan B tidak bisa dihapus (min 2)
+    const div = document.createElement('div');
+    div.className = 'opsi-row';
+    div.style.cssText = 'display:flex;align-items:center;gap:8px';
+    div.innerHTML = `
+      <div class="opsi-label" style="width:28px;height:28px;border-radius:50%;background:${defaultColors[i]};color:white;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${h}</div>
+      <input type="text" class="opsi-input" placeholder="Pilihan ${h}" style="flex:1;padding:10px 12px;border:2px solid #eee;border-radius:10px;font-family:Nunito,sans-serif;font-size:14px;outline:none" oninput="updateJawabanPG()">
+      <button onclick="hapusOpsi(this)" style="background:none;border:none;cursor:pointer;font-size:16px;opacity:0.4;padding:4px;${showHapus ? '' : 'display:none'}" title="Hapus pilihan">✕</button>
+    `;
+    list.appendChild(div);
+  });
+  document.getElementById('btn-tambah-opsi').style.display = '';
+  updateJawabanPG();
 }
 
 // ============================================================
 //  SUBMIT SOAL (GURU)
 // ============================================================
+// ============================================================
+//  OPSI DINAMIS (tambah/hapus pilihan jawaban)
+// ============================================================
+const OPSI_COLORS = ['var(--blue)','var(--green)','var(--orange)','var(--purple)','#FF6B9D','#00CEC9'];
+const OPSI_HURUF  = ['A','B','C','D','E','F'];
+
+function tambahOpsi() {
+  const list = document.getElementById('opsi-list');
+  const rows = list.querySelectorAll('.opsi-row');
+  if (rows.length >= 6) { toast('Maksimal 6 pilihan jawaban!', 'error'); return; }
+
+  const idx = rows.length;
+  const huruf = OPSI_HURUF[idx];
+  const warna = OPSI_COLORS[idx];
+
+  const div = document.createElement('div');
+  div.className = 'opsi-row';
+  div.style.cssText = 'display:flex;align-items:center;gap:8px';
+  div.innerHTML = `
+    <div class="opsi-label" style="width:28px;height:28px;border-radius:50%;background:${warna};color:white;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${huruf}</div>
+    <input type="text" class="opsi-input" placeholder="Pilihan ${huruf}" style="flex:1;padding:10px 12px;border:2px solid #eee;border-radius:10px;font-family:Nunito,sans-serif;font-size:14px;outline:none" oninput="updateJawabanPG()">
+    <button onclick="hapusOpsi(this)" style="background:none;border:none;cursor:pointer;font-size:16px;opacity:0.4;padding:4px;transition:opacity 0.2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.4'" title="Hapus pilihan">✕</button>
+  `;
+  list.appendChild(div);
+
+  // Sembunyikan tombol tambah jika sudah 6
+  if (rows.length + 1 >= 6) document.getElementById('btn-tambah-opsi').style.display = 'none';
+
+  // Tampilkan tombol hapus di semua row (min harus selalu 2)
+  updateHapusBtnVisibility();
+  updateJawabanPG();
+}
+
+function hapusOpsi(btn) {
+  const list = document.getElementById('opsi-list');
+  const rows = list.querySelectorAll('.opsi-row');
+  if (rows.length <= 2) { toast('Minimal 2 pilihan jawaban!', 'error'); return; }
+
+  btn.closest('.opsi-row').remove();
+  updateOpsiLabels();
+  updateJawabanPG();
+  updateHapusBtnVisibility();
+  // Tampilkan kembali tombol tambah
+  document.getElementById('btn-tambah-opsi').style.display = '';
+}
+
+function updateOpsiLabels() {
+  const rows = document.querySelectorAll('#opsi-list .opsi-row');
+  rows.forEach((row, i) => {
+    const label = row.querySelector('.opsi-label');
+    const input = row.querySelector('.opsi-input');
+    if (label) { label.textContent = OPSI_HURUF[i]; label.style.background = OPSI_COLORS[i]; }
+    if (input) input.placeholder = `Pilihan ${OPSI_HURUF[i]}`;
+  });
+}
+
+function updateHapusBtnVisibility() {
+  const rows = document.querySelectorAll('#opsi-list .opsi-row');
+  rows.forEach((row, i) => {
+    const btn = row.querySelector('button');
+    if (btn) btn.style.display = rows.length > 2 ? '' : 'none';
+  });
+}
+
+function updateJawabanPG() {
+  const inputs = document.querySelectorAll('#opsi-list .opsi-input');
+  const select = document.getElementById('s-jawaban-pg');
+  if (!select) return;
+  const prev = select.value;
+  select.innerHTML = '<option value="">-- Pilih jawaban yang benar --</option>';
+  inputs.forEach((inp, i) => {
+    const teks = inp.value.trim() || OPSI_HURUF[i];
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `${OPSI_HURUF[i]}. ${teks}`;
+    select.appendChild(opt);
+  });
+  // Restore pilihan sebelumnya jika masih valid
+  if (prev !== '' && prev < inputs.length) select.value = prev;
+}
+
 function batalBuatSoal() {
   closeModal('modal-soal');
   resetSoalForm();
@@ -3468,8 +3573,8 @@ async function generateSoalUntukKuis() {
   const btn = document.getElementById('kuis-ai-gen-btn');
   btn.disabled = true;
 
-  // Sistem batch: maks 5 soal per request agar lebih beragam
-  const BATCH_SIZE = 5;
+  // Kurangi batch size ke 3 agar tidak kena rate limit Groq (6000 TPM)
+  const BATCH_SIZE = 3;
   const totalBatch = Math.ceil(jumlah / BATCH_SIZE);
   let semuaSoal = [];
   const aspekList = [
@@ -3484,26 +3589,29 @@ async function generateSoalUntukKuis() {
       const sudahAda  = semuaSoal.length;
       btn.textContent = `⏳ Batch ${b+1}/${totalBatch} (${sudahAda}/${jumlah} soal)...`;
 
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer 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` },
-        body: JSON.stringify({
-          model: 'llama-3.1-8b-instant',
-          max_tokens: 3000,
-          temperature: 0.95,
-          top_p: 0.95,
-          messages: [{
-            role: 'system',
-            content: `Kamu adalah pembuat soal ujian profesional untuk siswa Indonesia.
+      // Retry logic untuk handle rate limit Groq
+      let res, retryCount = 0;
+      while (retryCount < 3) {
+        res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer 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` },
+          body: JSON.stringify({
+            model: 'llama-3.1-8b-instant',
+            max_tokens: 1500,
+            temperature: 0.95,
+            top_p: 0.95,
+            messages: [{
+              role: 'system',
+              content: `Kamu adalah pembuat soal ujian profesional untuk siswa Indonesia.
 ATURAN WAJIB:
 1. Balas HANYA dengan JSON array yang valid, tanpa teks apapun di luar JSON.
 2. Setiap soal HARUS unik dan berbeda satu sama lain.
 3. Field "jawaban" WAJIB berisi teks yang PERSIS SAMA (huruf demi huruf) dengan salah satu item di array "opsi".
 4. Keempat pilihan "opsi" harus masuk akal dan tidak ada yang jelas-jelas salah.
 5. Variasikan jenis soal: definisi, hitung, contoh, analisis, dll.`
-          }, {
-            role: 'user',
-            content: `Buat tepat ${soalBatch} soal pilihan ganda untuk:
+            }, {
+              role: 'user',
+              content: `Buat tepat ${soalBatch} soal pilihan ganda untuk:
 - Mata pelajaran: ${mapel}
 - Topik: ${topik}
 - Aspek yang dibahas: ${aspekList[b % aspekList.length]}
@@ -3512,46 +3620,65 @@ ATURAN WAJIB:
 
 Format JSON (pastikan "jawaban" PERSIS SAMA dengan salah satu teks di "opsi"):
 [{"pertanyaan":"teks soal lengkap?","emoji":"emoji relevan","opsi":["pilihan A lengkap","pilihan B lengkap","pilihan C lengkap","pilihan D lengkap"],"jawaban":"pilihan yang benar (harus persis sama dengan salah satu opsi)","poin":100}]`
-          }]
-        })
-      });
-
-      const data = await res.json();
-      if (data.error) throw new Error(data.error.message);
-      let teks = data.choices?.[0]?.message?.content || '[]';
-      teks = teks.replace(/```json\n?/gi,'').replace(/```\n?/g,'').trim();
-      const lastBracket = teks.lastIndexOf('}]');
-      if (lastBracket !== -1 && !teks.endsWith(']')) teks = teks.substring(0, lastBracket + 2);
-      const firstBracket = teks.indexOf('[');
-      if (firstBracket > 0) teks = teks.substring(firstBracket);
-
-      let batchSoal = JSON.parse(teks);
-
-      // ✅ Validasi: pastikan jawaban ada di dalam opsi
-      batchSoal = batchSoal.map(s => {
-        if (!s.opsi || !Array.isArray(s.opsi) || s.opsi.length < 2) return null;
-        const cocok = s.opsi.find(o => o.trim().toLowerCase() === s.jawaban?.trim().toLowerCase());
-        s.jawaban = cocok ? cocok : s.opsi[0]; // fallback ke opsi pertama jika tidak cocok
-        return s;
-      }).filter(Boolean);
-
-      // ✅ Deduplikasi: buang soal yang mirip dengan yang sudah ada
-      batchSoal = batchSoal.filter(s => {
-        const pBaru = s.pertanyaan.toLowerCase().replace(/\s+/g,' ').trim();
-        return !semuaSoal.some(ex => {
-          const pLama = ex.pertanyaan.toLowerCase().replace(/\s+/g,' ').trim();
-          const wA = new Set(pBaru.split(' '));
-          const wB = new Set(pLama.split(' '));
-          const irisan = [...wA].filter(w => wB.has(w)).length;
-          const gabungan = new Set([...wA, ...wB]).size;
-          return irisan / gabungan > 0.65;
+            }]
+          })
         });
-      });
 
-      semuaSoal = semuaSoal.concat(batchSoal);
+        const resData = await res.json();
 
-      // Delay antar batch
-      if (b < totalBatch - 1) await new Promise(r => setTimeout(r, 600));
+        // Cek rate limit
+        if (resData.error?.message?.includes('rate_limit') || resData.error?.message?.includes('tokens per minute')) {
+          retryCount++;
+          const waitMsg = `⏳ Rate limit! Tunggu ${12 * retryCount} detik... (${retryCount}/3)`;
+          btn.textContent = waitMsg;
+          toast(`Rate limit Groq, retry ke-${retryCount}...`, '');
+          await new Promise(r => setTimeout(r, 12000 * retryCount));
+          continue;
+        }
+
+        if (resData.error) throw new Error(resData.error.message);
+
+        let teks = resData.choices?.[0]?.message?.content || '[]';
+        teks = teks.replace(/```json\n?/gi,'').replace(/```\n?/g,'').trim();
+        const lastBracket = teks.lastIndexOf('}]');
+        if (lastBracket !== -1 && !teks.endsWith(']')) teks = teks.substring(0, lastBracket + 2);
+        const firstBracket = teks.indexOf('[');
+        if (firstBracket > 0) teks = teks.substring(firstBracket);
+
+        let batchSoal = JSON.parse(teks);
+
+        // ✅ Validasi: pastikan jawaban ada di dalam opsi
+        batchSoal = batchSoal.map(s => {
+          if (!s.opsi || !Array.isArray(s.opsi) || s.opsi.length < 2) return null;
+          const cocok = s.opsi.find(o => o.trim().toLowerCase() === s.jawaban?.trim().toLowerCase());
+          s.jawaban = cocok ? cocok : s.opsi[0];
+          return s;
+        }).filter(Boolean);
+
+        // ✅ Deduplikasi
+        batchSoal = batchSoal.filter(s => {
+          const pBaru = s.pertanyaan.toLowerCase().replace(/\s+/g,' ').trim();
+          return !semuaSoal.some(ex => {
+            const pLama = ex.pertanyaan.toLowerCase().replace(/\s+/g,' ').trim();
+            const wA = new Set(pBaru.split(' '));
+            const wB = new Set(pLama.split(' '));
+            const irisan = [...wA].filter(w => wB.has(w)).length;
+            const gabungan = new Set([...wA, ...wB]).size;
+            return irisan / gabungan > 0.65;
+          });
+        });
+
+        semuaSoal = semuaSoal.concat(batchSoal);
+        break; // sukses, keluar dari retry loop
+      }
+
+      if (retryCount >= 3) throw new Error('Rate limit Groq terus-menerus, coba lagi nanti');
+
+      // Delay lebih lama antar batch: 3 detik untuk hindari rate limit
+      if (b < totalBatch - 1) {
+        btn.textContent = `⏳ Jeda sebentar... (${semuaSoal.length}/${jumlah} soal)`;
+        await new Promise(r => setTimeout(r, 3000));
+      }
     }
 
     aiSoalUntukKuis = semuaSoal.slice(0, jumlah);
