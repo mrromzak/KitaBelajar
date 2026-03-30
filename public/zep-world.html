@@ -377,7 +377,7 @@
       <div id="npc-messages"></div>
       <div id="npc-input-wrap">
         <input id="npc-input" placeholder="Tanya sesuatu..."
-          onkeydown="event.stopPropagation(); if(event.key='Enter') kirimNPC()"
+          onkeydown="event.stopPropagation(); if(event.key==='Enter') kirimNPC()"
           onkeyup="event.stopPropagation()"
           onkeypress="event.stopPropagation()">
         <button id="npc-send-btn" onclick="kirimNPC()">➤</button>
