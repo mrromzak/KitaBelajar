@@ -492,6 +492,7 @@
   .q-dot.answered { background: var(--blue); color: white; border-color: var(--blue); }
   .q-dot.current { border-color: var(--orange); box-shadow: 0 0 0 2px rgba(255,107,53,0.3); }
 </style>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
 <body>
 
@@ -1530,7 +1531,8 @@
 // ============================================================
 //  CONFIG
 // ============================================================
-const API = io('https://kitabelajar-production.up.railway.app');
+const API = 'https://kitabelajar-production.up.railway.app/api';
+const socket = io('https://kitabelajar-production.up.railway.app');
 let token = localStorage.getItem('kb_token') || null;
 let currentUser = JSON.parse(localStorage.getItem('kb_user') || 'null');
 let currentRole = 'murid'; // for login page
@@ -3915,7 +3917,6 @@ async function konfirmasiHapus() {
 </script>
 
 <!-- ========== ZEP QUIZ SCRIPT ========== -->
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
 // ============================================================
 //  ZEP QUIZ — Live Multiplayer
