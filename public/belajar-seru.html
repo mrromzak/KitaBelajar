@@ -1046,15 +1046,23 @@
 
     <!-- TAB: Bank Soal -->
     <div id="kuis-panel-bank">
-      <div style="background:#F8F9FA;border-radius:12px;padding:10px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
-        <select id="kuis-soal-mapel-filter" onchange="filterSoalKuis()" style="flex:1;padding:8px 10px;border:2px solid #eee;border-radius:8px;font-family:Nunito,sans-serif;font-size:13px;outline:none">
-          <option value="">Semua Mapel</option>
-        </select>
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">
-          <input type="checkbox" id="kuis-pilih-semua" onchange="pilihSemuaSoal(this.checked)"> Pilih Semua
-        </label>
+      <div style="background:#F8F9FA;border-radius:12px;padding:10px;margin-bottom:8px;display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;gap:8px">
+          <select id="kuis-soal-mapel-filter" onchange="filterSoalKuis()" style="flex:1;padding:8px 10px;border:2px solid #eee;border-radius:8px;font-family:Nunito,sans-serif;font-size:13px;outline:none">
+            <option value="">📚 Semua Mapel</option>
+          </select>
+          <select id="kuis-soal-kelas-filter" onchange="filterSoalKuis()" style="flex:1;padding:8px 10px;border:2px solid #eee;border-radius:8px;font-family:Nunito,sans-serif;font-size:13px;outline:none">
+            <option value="">🏫 Semua Kelas</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;cursor:pointer">
+            <input type="checkbox" id="kuis-pilih-semua" onchange="pilihSemuaSoal(this.checked)"> Pilih Semua
+          </label>
+          <button onclick="loadBankSoal()" style="background:none;border:none;cursor:pointer;font-size:12px;font-weight:700;color:var(--blue);font-family:Nunito,sans-serif">🔄 Refresh</button>
+        </div>
       </div>
-      <div id="kuis-soal-list" style="max-height:200px;overflow-y:auto;border:2px solid #eee;border-radius:12px;padding:8px">
+      <div id="kuis-soal-list" style="max-height:240px;overflow-y:auto;border:2px solid #eee;border-radius:12px;padding:8px">
         <div style="text-align:center;padding:20px;color:var(--muted)">Memuat soal...</div>
       </div>
       <div style="font-size:12px;color:var(--muted);margin-top:6px"><span id="kuis-soal-count">0</span> soal dipilih dari bank soal</div>
@@ -3540,48 +3548,95 @@ async function openBuatKuis() {
 
   // Load soal bank
   openModal('modal-buat-kuis');
+  await loadBankSoal();
+}
+
+function filterSoalKuis() {
+  const mapel = document.getElementById('kuis-soal-mapel-filter').value;
+  const kelas = document.getElementById('kuis-soal-kelas-filter').value;
+  let filtered = allSoalData;
+  if (mapel) filtered = filtered.filter(s => s.mapel === mapel);
+  if (kelas) filtered = filtered.filter(s => s.kelas_id === kelas);
+  renderSoalChecklistKuis(filtered);
+}
+
+async function loadBankSoal() {
   const listEl = document.getElementById('kuis-soal-list');
   listEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)">Memuat soal...</div>';
-
   try {
     const data = await api('GET', '/soal');
     allSoalData = data.soal || data.data || [];
+
+    // Populate filter mapel
     const mapels = [...new Set(allSoalData.map(s => s.mapel).filter(Boolean))];
-    const filterEl = document.getElementById('kuis-soal-mapel-filter');
-    filterEl.innerHTML = '<option value="">Semua Mapel</option>' + mapels.map(m => `<option value="${m}">${m}</option>`).join('');
-    // Filter otomatis ke mapel kelas
-    if (currentKelas?.mapel && mapels.includes(currentKelas.mapel)) {
-      filterEl.value = currentKelas.mapel;
+    const filterMapel = document.getElementById('kuis-soal-mapel-filter');
+    if (filterMapel) {
+      filterMapel.innerHTML = '<option value="">📚 Semua Mapel</option>' +
+        mapels.map(m => `<option value="${m}">${m}</option>`).join('');
+      if (currentKelas?.mapel && mapels.includes(currentKelas.mapel)) filterMapel.value = currentKelas.mapel;
     }
-    renderSoalChecklistKuis(allSoalData.filter(s => !filterEl.value || s.mapel === filterEl.value));
+
+    // Populate filter kelas dari data guru
+    const kelasData = await api('GET', '/kelas');
+    const kelasList = kelasData.data || [];
+    const filterKelas = document.getElementById('kuis-soal-kelas-filter');
+    if (filterKelas) {
+      filterKelas.innerHTML = '<option value="">🏫 Semua Kelas</option>' +
+        kelasList.map(k => `<option value="${k.id}">${k.nama}</option>`).join('');
+      if (currentKelas?.id) filterKelas.value = currentKelas.id;
+    }
+
+    filterSoalKuis();
   } catch(e) {
     listEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)">Gagal memuat soal</div>';
   }
 }
 
-function filterSoalKuis() {
-  const mapel = document.getElementById('kuis-soal-mapel-filter').value;
-  const filtered = mapel ? allSoalData.filter(s => s.mapel === mapel) : allSoalData;
-  renderSoalChecklistKuis(filtered);
-}
-
 function renderSoalChecklistKuis(list) {
   const el = document.getElementById('kuis-soal-list');
   if (!list.length) {
-    el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)">Tidak ada soal. Buat soal dulu!</div>';
+    el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)">Tidak ada soal untuk filter ini. Buat soal dulu!</div>';
     return;
   }
   el.innerHTML = list.map(s => {
     const jenis = s.jenis === 'pilihan_ganda' ? '🔵 PG' : s.jenis === 'isian' ? '✍️ Essay' : '✅ B/S';
-    return `<label style="display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:10px;cursor:pointer;transition:background 0.15s;border-bottom:1px solid #F5F5F5" onmouseover="this.style.background='#F8F9FA'" onmouseout="this.style.background=''">
-      <input type="checkbox" class="soal-check" value="${s.id}" onchange="updateSoalCount()" style="margin-top:3px;width:16px;height:16px;cursor:pointer;accent-color:var(--orange)">
-      <div style="flex:1">
-        <div style="font-weight:700;font-size:13px;line-height:1.5">${s.emoji || '❓'} ${s.pertanyaan}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:3px">${jenis} · ${s.mapel || ''} · ${s.poin || 100} poin</div>
-      </div>
-    </label>`;
+    return `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:10px;border-bottom:1px solid #F5F5F5;transition:background 0.15s" onmouseover="this.style.background='#F8F9FA'" onmouseout="this.style.background=''">
+      <label style="display:flex;align-items:flex-start;gap:10px;flex:1;cursor:pointer">
+        <input type="checkbox" class="soal-check" value="${s.id}" onchange="updateSoalCount()" style="margin-top:3px;width:16px;height:16px;cursor:pointer;accent-color:var(--orange)">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:13px;line-height:1.5">${s.emoji || '❓'} ${s.pertanyaan}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">${jenis} · ${s.mapel || '–'} · ${s.poin || 100} poin</div>
+        </div>
+      </label>
+      <button onclick="hapusSoalBank('${s.id}', this)" title="Hapus soal" style="background:none;border:none;cursor:pointer;font-size:15px;opacity:0.4;padding:2px 4px;transition:opacity 0.2s;flex-shrink:0" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.4'">🗑️</button>
+    </div>`;
   }).join('');
   updateSoalCount();
+}
+
+async function hapusSoalBank(id, btn) {
+  if (!confirm('Hapus soal ini dari bank soal? Soal yang sudah dipakai di kuis tidak akan terpengaruh.')) return;
+  btn.disabled = true;
+  btn.textContent = '⏳';
+  try {
+    const data = await api('DELETE', `/soal/${id}`);
+    if (data.success || data.pesan?.toLowerCase().includes('berhasil')) {
+      // Hapus dari data lokal
+      allSoalData = allSoalData.filter(s => s.id !== id);
+      // Hapus elemen dari DOM
+      btn.closest('div[style*="border-bottom"]').remove();
+      updateSoalCount();
+      toast('Soal berhasil dihapus! 🗑️', 'success');
+    } else {
+      toast(data.pesan || 'Gagal menghapus soal', 'error');
+      btn.disabled = false;
+      btn.textContent = '🗑️';
+    }
+  } catch(e) {
+    toast('Tidak bisa terhubung ke server', 'error');
+    btn.disabled = false;
+    btn.textContent = '🗑️';
+  }
 }
 
 function updateSoalCount() {
