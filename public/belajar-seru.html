@@ -3422,10 +3422,15 @@ async function generateSoalUntukKuis() {
   const btn = document.getElementById('kuis-ai-gen-btn');
   btn.disabled = true;
 
-  // Sistem batch: maks 10 soal per request
-  const BATCH_SIZE = 10;
+  // Sistem batch: maks 5 soal per request agar lebih beragam
+  const BATCH_SIZE = 5;
   const totalBatch = Math.ceil(jumlah / BATCH_SIZE);
   let semuaSoal = [];
+  const aspekList = [
+    'pengertian dan definisi','contoh dan penerapan nyata','proses dan cara kerja',
+    'perbandingan dan perbedaan','fungsi dan manfaat','rumus dan perhitungan',
+    'ciri-ciri dan karakteristik','dampak dan akibat','sejarah dan asal-usul','fakta unik'
+  ];
 
   try {
     for (let b = 0; b < totalBatch; b++) {
@@ -3439,20 +3444,28 @@ async function generateSoalUntukKuis() {
         body: JSON.stringify({
           model: 'llama-3.1-8b-instant',
           max_tokens: 3000,
-          temperature: 0.5,
+          temperature: 0.95,
+          top_p: 0.95,
           messages: [{
             role: 'system',
-            content: 'Kamu pembuat soal ujian. Balas HANYA dengan JSON array yang valid dan lengkap. Jangan tambah teks apapun di luar JSON.'
+            content: `Kamu adalah pembuat soal ujian profesional untuk siswa Indonesia.
+ATURAN WAJIB:
+1. Balas HANYA dengan JSON array yang valid, tanpa teks apapun di luar JSON.
+2. Setiap soal HARUS unik dan berbeda satu sama lain.
+3. Field "jawaban" WAJIB berisi teks yang PERSIS SAMA (huruf demi huruf) dengan salah satu item di array "opsi".
+4. Keempat pilihan "opsi" harus masuk akal dan tidak ada yang jelas-jelas salah.
+5. Variasikan jenis soal: definisi, hitung, contoh, analisis, dll.`
           }, {
             role: 'user',
-            content: `Buat tepat ${soalBatch} soal pilihan ganda BARU (berbeda dari soal sebelumnya).
-Topik: ${topik}
-Mata pelajaran: ${mapel}
-Tingkat: ${tingkat}
-Batch ke-${b+1}, variasi soal nomor ${sudahAda+1} sampai ${sudahAda+soalBatch}.
+            content: `Buat tepat ${soalBatch} soal pilihan ganda untuk:
+- Mata pelajaran: ${mapel}
+- Topik: ${topik}
+- Aspek yang dibahas: ${aspekList[b % aspekList.length]}
+- Tingkat kesulitan: ${tingkat}
+- Nomor soal: ${sudahAda + 1} sampai ${sudahAda + soalBatch}${semuaSoal.length > 0 ? '\n\nJANGAN buat soal yang mirip dengan soal berikut ini:\n' + semuaSoal.map((s,i) => (i+1)+'. '+s.pertanyaan).join('\n') : ''}
 
-Balas HANYA JSON array lengkap:
-[{"pertanyaan":"...","emoji":"emoji","opsi":["A","B","C","D"],"jawaban":"teks jawaban benar","poin":100}]`
+Format JSON (pastikan "jawaban" PERSIS SAMA dengan salah satu teks di "opsi"):
+[{"pertanyaan":"teks soal lengkap?","emoji":"emoji relevan","opsi":["pilihan A lengkap","pilihan B lengkap","pilihan C lengkap","pilihan D lengkap"],"jawaban":"pilihan yang benar (harus persis sama dengan salah satu opsi)","poin":100}]`
           }]
         })
       });
@@ -3466,11 +3479,33 @@ Balas HANYA JSON array lengkap:
       const firstBracket = teks.indexOf('[');
       if (firstBracket > 0) teks = teks.substring(firstBracket);
 
-      const batchSoal = JSON.parse(teks);
+      let batchSoal = JSON.parse(teks);
+
+      // ✅ Validasi: pastikan jawaban ada di dalam opsi
+      batchSoal = batchSoal.map(s => {
+        if (!s.opsi || !Array.isArray(s.opsi) || s.opsi.length < 2) return null;
+        const cocok = s.opsi.find(o => o.trim().toLowerCase() === s.jawaban?.trim().toLowerCase());
+        s.jawaban = cocok ? cocok : s.opsi[0]; // fallback ke opsi pertama jika tidak cocok
+        return s;
+      }).filter(Boolean);
+
+      // ✅ Deduplikasi: buang soal yang mirip dengan yang sudah ada
+      batchSoal = batchSoal.filter(s => {
+        const pBaru = s.pertanyaan.toLowerCase().replace(/\s+/g,' ').trim();
+        return !semuaSoal.some(ex => {
+          const pLama = ex.pertanyaan.toLowerCase().replace(/\s+/g,' ').trim();
+          const wA = new Set(pBaru.split(' '));
+          const wB = new Set(pLama.split(' '));
+          const irisan = [...wA].filter(w => wB.has(w)).length;
+          const gabungan = new Set([...wA, ...wB]).size;
+          return irisan / gabungan > 0.65;
+        });
+      });
+
       semuaSoal = semuaSoal.concat(batchSoal);
 
-      // Delay kecil antar batch untuk hindari rate limit
-      if (b < totalBatch - 1) await new Promise(r => setTimeout(r, 500));
+      // Delay antar batch
+      if (b < totalBatch - 1) await new Promise(r => setTimeout(r, 600));
     }
 
     aiSoalUntukKuis = semuaSoal.slice(0, jumlah);
