@@ -2064,10 +2064,33 @@ function bukaProfileGuru() {
   showPage('page-profile-guru');
 }
 
+const AVATAR_MURID = ['🦁','🐯','🐻','🦊','🐺','🐸','🐼','🐨','🦝','🦄','🐲','🦋','🐬','🦅','🐙','🦈','🐘','🦒','🦓','🐧','🦜','🐊'];
+const AVATAR_GURU  = ['👩‍🏫','👨‍🏫','👩‍💼','👨‍💼','🧑‍🏫','👩‍🔬','👨‍🔬','👩‍🎓','👨‍🎓','🧑‍💻','👩‍🎨','👨‍🎨','🧙‍♀️','🧙‍♂️','🦸‍♀️','🦸‍♂️'];
+
 function bukaGantiAvatar(role) {
   const pickerId = role === 'guru' ? 'pg-avatar-picker' : 'pm-avatar-picker';
-  const el = document.getElementById(pickerId);
-  el.style.display = el.style.display === 'none' ? '' : 'none';
+  const listId   = role === 'guru' ? 'pg-avatar-list'   : 'pm-avatar-list';
+  const picker = document.getElementById(pickerId);
+  const isOpen = picker.style.display !== 'none';
+  picker.style.display = isOpen ? 'none' : '';
+
+  if (!isOpen) {
+    // Render avatar grid
+    const avatars = role === 'guru' ? AVATAR_GURU : AVATAR_MURID;
+    const accent  = role === 'guru' ? 'var(--blue)' : 'var(--orange)';
+    const current = currentUser?.avatar || '';
+    document.getElementById(listId).innerHTML = avatars.map(a => {
+      const isActive = a === current;
+      return `<div onclick="pilihAvatar('${a}','${role}')"
+        style="font-size:32px;cursor:pointer;padding:8px;border-radius:10px;
+               border:2px solid ${isActive ? accent : '#eee'};
+               background:${isActive ? '#FFF3E8' : 'white'};
+               transition:all 0.2s"
+        onmouseover="this.style.borderColor='${accent}';this.style.transform='scale(1.1)'"
+        onmouseout="this.style.borderColor='${isActive ? accent : '#eee'}';this.style.transform=''"
+        title="${a}">${a}</div>`;
+    }).join('');
+  }
 }
 
 async function pilihAvatar(avatar, role) {
@@ -5539,8 +5562,7 @@ function zepReset() {
     <!-- Pilih Avatar -->
     <div id="pm-avatar-picker" style="display:none;background:white;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:20px">
       <div style="font-weight:800;font-size:15px;margin-bottom:14px">🎨 Pilih Avatar</div>
-      <div style="display:flex;flex-wrap:wrap;gap:10px">
-        ${['🦁','🐯','🐻','🦊','🐺','🐸','🐼','🐨','🦝','🦄','🐲','🦋','🐬','🦅','🦁','🐙','🦈','🐘','🦒','🦓'].map(a => `<div onclick="pilihAvatar('${a}','murid')" style="font-size:32px;cursor:pointer;padding:8px;border-radius:10px;border:2px solid #eee;transition:all 0.2s" onmouseover="this.style.borderColor='var(--orange)';this.style.transform='scale(1.1)'" onmouseout="this.style.borderColor='#eee';this.style.transform=''">${a}</div>`).join('')}
+      <div style="display:flex;flex-wrap:wrap;gap:10px" id="pm-avatar-list"></div>
       </div>
     </div>
 
@@ -5610,8 +5632,7 @@ function zepReset() {
     <!-- Pilih Avatar -->
     <div id="pg-avatar-picker" style="display:none;background:white;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:20px">
       <div style="font-weight:800;font-size:15px;margin-bottom:14px">🎨 Pilih Avatar</div>
-      <div style="display:flex;flex-wrap:wrap;gap:10px" id="pg-avatar-list">
-        ${['👩‍🏫','👨‍🏫','👩‍💼','👨‍💼','🧑‍🏫','👩‍🔬','👨‍🔬','👩‍🎓','👨‍🎓','🧑‍💻','👩‍🎨','👨‍🎨','🧙‍♀️','🧙‍♂️','🦸‍♀️','🦸‍♂️'].map(a => `<div onclick="pilihAvatar('${a}','guru')" style="font-size:32px;cursor:pointer;padding:8px;border-radius:10px;border:2px solid #eee;transition:all 0.2s" onmouseover="this.style.borderColor='var(--blue)';this.style.transform='scale(1.1)'" onmouseout="this.style.borderColor='#eee';this.style.transform=''">${a}</div>`).join('')}
+        <div style="display:flex;flex-wrap:wrap;gap:10px" id="pg-avatar-list"></div>
       </div>
     </div>
 
