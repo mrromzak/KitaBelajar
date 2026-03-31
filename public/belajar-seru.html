@@ -1072,6 +1072,7 @@
             <input type="checkbox" id="kuis-pilih-semua" onchange="pilihSemuaSoal(this.checked)"> Pilih Semua
           </label>
           <div style="display:flex;gap:8px;align-items:center">
+            <button id="btn-hapus-terpilih" onclick="hapusSoalTerpilih()" style="display:none;background:#FFF0F0;color:var(--red);border:1.5px solid #FFCDD2;padding:6px 12px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:12px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background='var(--red)';this.style.color='white'" onmouseout="this.style.background='#FFF0F0';this.style.color='var(--red)'">🗑️ Hapus Terpilih</button>
             <button onclick="closeModal('modal-buat-kuis');bukaSoalBuilder(true)" style="background:var(--orange);color:white;border:none;padding:7px 14px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:12px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">＋ Buat Soal</button>
             <button onclick="loadBankSoal()" style="background:none;border:none;cursor:pointer;font-size:12px;font-weight:700;color:var(--blue);font-family:Nunito,sans-serif">🔄 Refresh</button>
           </div>
@@ -4393,6 +4394,50 @@ async function hapusSoalBank(id, btn) {
 function updateSoalCount() {
   const count = document.querySelectorAll('.soal-check:checked').length;
   document.getElementById('kuis-soal-count').textContent = count;
+
+  // Tampilkan tombol hapus terpilih jika ada yang dicentang
+  const btnHapus = document.getElementById('btn-hapus-terpilih');
+  if (btnHapus) {
+    if (count > 0) {
+      btnHapus.style.display = '';
+      btnHapus.textContent = '🗑️ Hapus ' + count + ' Soal';
+    } else {
+      btnHapus.style.display = 'none';
+      btnHapus.textContent = '🗑️ Hapus Terpilih';
+    }
+  }
+}
+
+async function hapusSoalTerpilih() {
+  const checked = Array.from(document.querySelectorAll('.soal-check:checked'));
+  if (checked.length === 0) return;
+  if (!confirm('Hapus ' + checked.length + ' soal terpilih dari bank soal?\n\nSoal yang sudah dipakai di kuis tidak akan terpengaruh.')) return;
+
+  const ids = checked.map(cb => cb.value);
+  let berhasil = 0, gagal = 0;
+  const btnHapus = document.getElementById('btn-hapus-terpilih');
+  btnHapus.disabled = true;
+  btnHapus.textContent = '⏳ Menghapus...';
+
+  for (const id of ids) {
+    try {
+      const data = await api('DELETE', `/soal/${id}`);
+      if (data.success || data.pesan?.toLowerCase().includes('berhasil')) {
+        allSoalData = allSoalData.filter(s => s.id !== id);
+        const cb = document.querySelector('.soal-check[value="' + id + '"]');
+        cb?.closest('div[style*="border-bottom"]')?.remove();
+        berhasil++;
+      } else gagal++;
+    } catch(e) { gagal++; }
+  }
+
+  btnHapus.disabled = false;
+  updateSoalCount();
+  const pilihSemua = document.getElementById('kuis-pilih-semua');
+  if (pilihSemua) pilihSemua.checked = false;
+
+  if (berhasil > 0) toast('✅ ' + berhasil + ' soal dihapus!' + (gagal > 0 ? ' (' + gagal + ' gagal)' : ''), 'success');
+  else toast('Gagal menghapus soal', 'error');
 }
 
 function pilihSemuaSoal(checked) {
