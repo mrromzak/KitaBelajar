@@ -658,7 +658,7 @@ function masukDunia() {
   myPlayer.accessory = CC_ACCS[selAcc];
   myPlayer.avatar    = CC_ACCS[selAcc] || '😊'; // fallback emoji for socket
 
-  document.getElementById('hud-avatar').textContent = avatar;
+  document.getElementById('hud-avatar').textContent = myPlayer.avatar;
   document.getElementById('hud-nama').textContent = nama;
 
   // Sembunyikan login overlay sepenuhnya
