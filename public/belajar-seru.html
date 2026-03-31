@@ -5537,7 +5537,7 @@ async function konfirmasiHapus() {
 // ============================================================
 //  ZEP QUIZ — Live Multiplayer
 // ============================================================
-const ZEP_SERVER = 'http://localhost:3000';
+const ZEP_SERVER = window.location.origin; // auto-detect: Railway URL di production, localhost di dev
 let zepSocket = null;
 let zepRoom = null;       // { kode_room, quiz, soal[], durasi_per_soal }
 let zepIsGuru = false;
