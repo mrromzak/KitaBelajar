@@ -4,7 +4,6 @@ const cors = require('cors');
 const path = require('path');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
-const { YoutubeTranscript } = require('youtube-transcript');
 const app = express();
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 3000;
@@ -103,50 +102,120 @@ app.get('/api/proxy/fetch', async (req, res) => {
   }
 });
 
-// ── Proxy: YouTube Transcript via npm youtube-transcript ──
+// ── Proxy: YouTube Transcript via InnerTube API (tanpa package) ──
 app.get('/api/proxy/youtube-transcript', async (req, res) => {
   const { videoId } = req.query;
   if (!videoId) return res.json({ success: false, pesan: 'videoId wajib diisi' });
 
-  try {
-    // Coba bahasa Indonesia dulu, lalu Inggris, lalu auto
-    let transcriptItems = null;
-    const langs = ['id', 'en', null];
+  const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+  const ANDROID_VERSION = '20.10.38';
 
-    for (const lang of langs) {
-      try {
-        const opts = lang ? { lang } : {};
-        transcriptItems = await YoutubeTranscript.fetchTranscript(videoId, opts);
-        if (transcriptItems?.length > 0) break;
-      } catch(e) {
-        continue;
-      }
-    }
-
-    if (!transcriptItems || transcriptItems.length === 0) {
-      return res.json({ success: false, pesan: 'Video ini tidak memiliki subtitle/transcript' });
-    }
-
-    let transcript = transcriptItems
-      .map(item => item.text)
-      .join(' ')
-      .replace(/\[.*?\]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    if (transcript.length > 8000) transcript = transcript.substring(0, 8000) + '...';
-
-    res.json({ success: true, transcript, total_segmen: transcriptItems.length });
-
-  } catch(e) {
-    console.error('YouTube transcript error:', e.message);
-    res.json({
-      success: false,
-      pesan: e.message.includes('disabled') || e.message.includes('No transcript')
-        ? 'Video ini tidak mengaktifkan subtitle/transcript'
-        : 'Gagal mengambil transcript: ' + e.message
-    });
+  // Helper: decode HTML entities
+  function decodeEntities(str) {
+    return str
+      .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&apos;/g, "'")
+      .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+      .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)));
   }
+
+  // Helper: ambil transcript dari URL caption XML
+  async function fetchCaptionXml(captionUrl, langCode) {
+    const r = await fetch(captionUrl, { headers: { 'User-Agent': USER_AGENT } });
+    if (!r.ok) return null;
+    const xml = await r.text();
+
+    // Format baru (timedtext v3)
+    const segs = [];
+    const pRegex = /<p[^>]*>([\s\S]*?)<\/p>/g;
+    let m;
+    while ((m = pRegex.exec(xml)) !== null) {
+      const inner = m[1];
+      const sRegex = /<s[^>]*>([^<]*)<\/s>/g;
+      let sm, text = '';
+      while ((sm = sRegex.exec(inner)) !== null) text += sm[1];
+      if (!text) text = inner.replace(/<[^>]+>/g, '');
+      text = decodeEntities(text).trim();
+      if (text) segs.push(text);
+    }
+    if (segs.length > 0) return segs.join(' ');
+
+    // Format lama (text tags)
+    const oldSegs = [...xml.matchAll(/<text[^>]*>([^<]*)<\/text>/g)]
+      .map(m => decodeEntities(m[1]).trim()).filter(Boolean);
+    if (oldSegs.length > 0) return oldSegs.join(' ');
+
+    return null;
+  }
+
+  // Strategi 1: InnerTube API (Android client — lebih reliable)
+  async function viaInnerTube() {
+    const r = await fetch('https://www.youtube.com/youtubei/v1/player?prettyPrint=false', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': `com.google.android.youtube/${ANDROID_VERSION} (Linux; U; Android 14)`
+      },
+      body: JSON.stringify({
+        context: { client: { clientName: 'ANDROID', clientVersion: ANDROID_VERSION } },
+        videoId
+      })
+    });
+    if (!r.ok) throw new Error('InnerTube HTTP ' + r.status);
+    const data = await r.json();
+    const tracks = data?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+    if (!Array.isArray(tracks) || tracks.length === 0) throw new Error('No tracks');
+
+    const track = tracks.find(t => t.languageCode === 'id') ||
+                  tracks.find(t => t.languageCode === 'en') ||
+                  tracks[0];
+    if (!track?.baseUrl) throw new Error('No baseUrl');
+    return await fetchCaptionXml(track.baseUrl, track.languageCode);
+  }
+
+  // Strategi 2: Parse halaman YouTube langsung
+  async function viaWebPage() {
+    const r = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+      headers: { 'User-Agent': USER_AGENT, 'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8' }
+    });
+    const html = await r.text();
+    if (html.includes('class="g-recaptcha"')) throw new Error('Captcha required');
+
+    // Ambil captionTracks dari JSON di halaman
+    const jsonStr = html.match(/ytInitialPlayerResponse\s*=\s*(\{.+?\})\s*;/)?.[1];
+    if (!jsonStr) throw new Error('No player response');
+    const player = JSON.parse(jsonStr);
+    const tracks = player?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+    if (!Array.isArray(tracks) || tracks.length === 0) throw new Error('No tracks');
+
+    const track = tracks.find(t => t.languageCode === 'id') ||
+                  tracks.find(t => t.languageCode === 'en') ||
+                  tracks[0];
+    if (!track?.baseUrl) throw new Error('No baseUrl');
+    return await fetchCaptionXml(track.baseUrl, track.languageCode);
+  }
+
+  // Coba kedua strategi
+  const strategies = [
+    { name: 'InnerTube', fn: viaInnerTube },
+    { name: 'WebPage',   fn: viaWebPage   }
+  ];
+
+  for (const { name, fn } of strategies) {
+    try {
+      const transcript = await fn();
+      if (transcript && transcript.length > 50) {
+        const cleaned = transcript.replace(/\s+/g, ' ').trim();
+        const truncated = cleaned.length > 8000 ? cleaned.substring(0, 8000) + '...' : cleaned;
+        console.log(`✅ YouTube transcript via ${name}: ${truncated.length} chars`);
+        return res.json({ success: true, transcript: truncated });
+      }
+    } catch(e) {
+      console.log(`⚠️  YouTube transcript ${name} gagal:`, e.message);
+    }
+  }
+
+  res.json({ success: false, pesan: 'Transcript tidak tersedia — video mungkin tidak memiliki subtitle/CC' });
 });
 
 // Info endpoint
@@ -170,8 +239,6 @@ app.get('/api', (req, res) => {
       'GET  /api/dashboard/leaderboard',
       'GET  /api/zepquiz/quiz',
       'POST /api/zepquiz/room',
-      'GET  /api/proxy/fetch',
-      'GET  /api/proxy/youtube-transcript',
       'WS   Socket.io /  (zep:create_room, zep:join_room, zep:start_game, zep:jawab)'
     ]
   });
@@ -182,6 +249,7 @@ app.use((err, req, res, next) => {
   console.error('❌', err.message);
   res.status(500).json({ success: false, pesan: err.message });
 });
+
 
 httpServer.listen(PORT, () => {
   console.log('\n🌈 =====================================');
