@@ -3530,6 +3530,8 @@ async function sbSimpanSemua() {
   btn.textContent = '⏳ Menyimpan...';
 
   let berhasil = 0, gagal = 0;
+  const idsBaru = [];
+
   for (const s of sbSoalList) {
     if (!s.pertanyaan.trim()) { gagal++; continue; }
 
@@ -3550,8 +3552,11 @@ async function sbSimpanSemua() {
         pertanyaan: s.pertanyaan, emoji: '❓', mapel: s.mapel,
         jenis, opsi: JSON.stringify(opsi), jawaban, poin: s.poin, tingkat: s.tingkat
       });
-      if (data.success) { s.dbId = data.data?.id; berhasil++; }
-      else gagal++;
+      if (data.success && data.data?.id) {
+        s.dbId = data.data.id;
+        idsBaru.push(data.data.id);
+        berhasil++;
+      } else gagal++;
     } catch(e) { gagal++; }
   }
 
@@ -3559,9 +3564,34 @@ async function sbSimpanSemua() {
   btn.textContent = '💾 Simpan Semua';
 
   if (berhasil > 0) {
-    toast(`✅ ${berhasil} soal tersimpan!${gagal > 0 ? ` (${gagal} soal dilewati karena kosong/tidak valid)` : ''}`, 'success');
-    setTimeout(() => tutupSoalBuilder(), 1000);
-  } else if (gagal > 0) {
+    toast(`✅ ${berhasil} soal tersimpan!${gagal > 0 ? ' (' + gagal + ' soal dilewati)' : ''}`, 'success');
+
+    if (sbFromKuis) {
+      sbFromKuis = false;
+      sbSoalList = [];
+      showPage('page-kelas');
+      setTimeout(async () => {
+        openModal('modal-buat-kuis');
+        await loadBankSoal();
+        switchKuisSoalTab('bank');
+        // Auto-centang soal yang baru disimpan
+        setTimeout(() => {
+          idsBaru.forEach(id => {
+            const cb = document.querySelector('.soal-check[value="' + id + '"]');
+            if (cb) cb.checked = true;
+          });
+          updateSoalCount();
+          if (idsBaru.length > 0) {
+            toast(idsBaru.length + ' soal baru sudah dicentang otomatis! ✅', 'success');
+          }
+        }, 500);
+      }, 300);
+    } else {
+      sbSoalList = [];
+      showPage('page-guru');
+      loadGuruSoalPreview();
+    }
+  } else {
     toast('Soal tidak valid! Pastikan pertanyaan & jawaban benar terisi.', 'error');
   }
 }
