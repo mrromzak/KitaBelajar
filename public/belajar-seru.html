@@ -880,38 +880,123 @@
   </div>
 </div>
 
-<!-- ========== QUIZ GAME ========== -->
-<div class="page" id="page-quiz">
-  <nav class="navbar">
-    <div class="logo"><span>⚡</span> Quiz Kilat</div>
+<!-- ========== QUIZ KILAT — DUOLINGO STYLE ========== -->
+
+<!-- Halaman: Pilih Kategori (dari kelas murid) -->
+<div class="page" id="page-quiz-map">
+  <nav class="navbar" style="background:linear-gradient(135deg,#FF6B35,#FF8C42);border-bottom:none">
+    <div class="logo" style="color:white"><span>⚡</span> Quiz Kilat</div>
     <div class="nav-links">
-      <button class="nav-btn back" onclick="showPage('page-murid');resetQuiz()">← Kembali</button>
+      <button class="nav-btn back" onclick="showPage('page-murid')" style="color:white;border-color:rgba(255,255,255,0.4)">← Kembali</button>
     </div>
   </nav>
-  <div class="quiz-wrap">
-    <div id="quiz-playing">
-      <div class="quiz-header">
-        <div class="quiz-score-badge">⭐ <span id="quiz-score">0</span> poin</div>
-        <div style="font-weight:700;font-size:14px;color:var(--muted)" id="quiz-qnum">Soal 1 / 5</div>
-        <div class="quiz-timer" id="quiz-timer">15</div>
+
+  <!-- Streak & XP bar -->
+  <div style="background:linear-gradient(135deg,#FF6B35,#FF8C42);padding:0 24px 24px;text-align:center">
+    <div style="display:flex;justify-content:center;gap:24px;padding:12px 0">
+      <div style="background:rgba(255,255,255,0.2);border-radius:50px;padding:6px 18px;display:flex;align-items:center;gap:6px">
+        <span>🔥</span><span id="qk-streak" style="font-weight:900;color:white;font-size:15px">0</span><span style="font-size:12px;color:rgba(255,255,255,0.8)">hari</span>
       </div>
-      <div class="progress-track"><div class="progress-thumb" id="quiz-progress" style="width:0%"></div></div>
-      <div class="quiz-card">
-        <div class="quiz-q-num" id="q-label">Memuat soal...</div>
-        <div class="quiz-emoji" id="q-emoji">⏳</div>
-        <div class="quiz-question" id="q-text">Sabar ya, soal sedang dimuat dari database!</div>
+      <div style="background:rgba(255,255,255,0.2);border-radius:50px;padding:6px 18px;display:flex;align-items:center;gap:6px">
+        <span>⭐</span><span id="qk-xp-total" style="font-weight:900;color:white;font-size:15px">0</span><span style="font-size:12px;color:rgba(255,255,255,0.8)">XP</span>
       </div>
-      <div class="quiz-options" id="quiz-opts"></div>
     </div>
-    <div class="quiz-result" id="quiz-result">
-      <div class="result-emoji" id="result-emoji">🎉</div>
-      <div class="stars" id="result-stars">⭐⭐⭐</div>
-      <div class="result-title" id="result-title">Luar Biasa!</div>
-      <div class="result-score-big" id="result-score">0 poin</div>
-      <div class="result-sub" id="result-sub">Kamu menyelesaikan semua soal!</div>
-      <button class="btn-play" onclick="startQuiz()">🔄 Main Lagi</button>
-      &nbsp;&nbsp;
-      <button class="btn-play" style="background:var(--blue)" onclick="showPage('page-murid');resetQuiz()">🏠 Kembali</button>
+    <div style="font-family:'Fredoka One',cursive;font-size:22px;color:white;margin-bottom:4px">Pilih Kategori!</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.8)">Soal diambil dari materi kelasmu</div>
+  </div>
+
+  <!-- Kategori dari kelas murid -->
+  <div style="max-width:600px;margin:0 auto;padding:24px 20px" id="qk-kategori-wrap">
+    <div style="text-align:center;padding:40px;color:var(--muted)">
+      <div style="font-size:48px;margin-bottom:12px">📚</div>
+      <p style="font-weight:700">Memuat kategori dari kelasmu...</p>
+    </div>
+  </div>
+</div>
+
+<!-- Halaman: Stage Map per Kategori -->
+<div class="page" id="page-quiz-stages">
+  <nav class="navbar" style="background:linear-gradient(135deg,#4D96FF,#6AADFF);border-bottom:none">
+    <div class="logo" style="color:white" id="qk-stage-title">📚 Kategori</div>
+    <div class="nav-links">
+      <button class="nav-btn back" onclick="showPage('page-quiz-map');loadQuizKilatMap()" style="color:white;border-color:rgba(255,255,255,0.4)">← Kategori</button>
+    </div>
+  </nav>
+
+  <!-- Progress kategori -->
+  <div style="background:linear-gradient(135deg,#4D96FF,#6AADFF);padding:0 24px 20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;color:white;margin-bottom:8px">
+      <span style="font-size:13px;font-weight:700" id="qk-stage-progress-label">0 / 5 stage selesai</span>
+      <span style="font-size:13px;font-weight:700" id="qk-stage-xp-label">0 XP</span>
+    </div>
+    <div style="background:rgba(255,255,255,0.25);border-radius:50px;height:10px">
+      <div id="qk-stage-progress-bar" style="height:100%;border-radius:50px;background:white;transition:width 0.5s;width:0%"></div>
+    </div>
+  </div>
+
+  <!-- Stage path (Duolingo-style zigzag) -->
+  <div style="max-width:380px;margin:0 auto;padding:24px 20px 80px" id="qk-stage-path"></div>
+</div>
+
+<!-- Halaman: Main Quiz -->
+<div class="page" id="page-quiz">
+  <!-- Header -->
+  <div id="qk-header" style="background:linear-gradient(135deg,#FF6B35,#FF8C42);padding:16px 20px 12px;position:sticky;top:0;z-index:10">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <button onclick="batalQuizKilat()" style="background:rgba(255,255,255,0.25);border:none;color:white;border-radius:50px;padding:6px 14px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer">✕</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:18px">❤️</span>
+        <div id="qk-lives" style="font-weight:900;color:white;font-size:16px">3</div>
+        <span style="font-size:18px">⭐</span>
+        <div id="quiz-score" style="font-weight:900;color:white;font-size:16px">0</div>
+      </div>
+      <div id="quiz-timer" style="background:rgba(255,255,255,0.25);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-weight:900;color:white;font-size:18px">15</div>
+    </div>
+    <!-- Progress bar -->
+    <div style="background:rgba(255,255,255,0.25);border-radius:50px;height:8px">
+      <div id="quiz-progress" style="height:100%;border-radius:50px;background:white;transition:width 0.3s;width:0%"></div>
+    </div>
+  </div>
+
+  <!-- Soal area -->
+  <div id="quiz-playing" style="max-width:600px;margin:0 auto;padding:24px 20px">
+    <div style="text-align:center;margin-bottom:20px">
+      <div id="qk-mapel-badge" style="display:inline-block;background:#FFF3E8;color:var(--orange);font-size:11px;font-weight:800;padding:4px 14px;border-radius:50px;margin-bottom:12px">📚 Mapel</div>
+      <div id="q-emoji" style="font-size:52px;margin-bottom:12px">❓</div>
+      <div id="q-text" style="font-family:'Fredoka One',cursive;font-size:20px;line-height:1.4;color:var(--text)">Memuat soal...</div>
+    </div>
+
+    <!-- Opsi jawaban dengan style cards -->
+    <div id="quiz-opts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+    <!-- Feedback bar (muncul setelah jawab) -->
+    <div id="qk-feedback" style="display:none;position:fixed;bottom:0;left:0;right:0;padding:20px 24px;z-index:50">
+      <div style="max-width:600px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px">
+        <div>
+          <div id="qk-feedback-title" style="font-family:'Fredoka One',cursive;font-size:20px;margin-bottom:4px">Benar! 🎉</div>
+          <div id="qk-feedback-sub" style="font-size:13px;opacity:0.8"></div>
+        </div>
+        <button id="qk-next-btn" onclick="nextQuestion()" style="background:white;border:none;padding:12px 28px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:900;font-size:15px;cursor:pointer;flex-shrink:0">
+          Lanjut →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result screen -->
+  <div id="quiz-result" style="display:none;max-width:480px;margin:40px auto;padding:0 24px;text-align:center">
+    <div id="result-emoji" style="font-size:80px;margin-bottom:12px">🎉</div>
+    <div id="result-stars" style="font-size:40px;letter-spacing:8px;margin-bottom:8px">⭐⭐⭐</div>
+    <div id="result-title" style="font-family:'Fredoka One',cursive;font-size:32px;margin-bottom:8px">Luar Biasa!</div>
+    <!-- Stats cards -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:20px 0" id="qk-result-stats"></div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:8px">
+      <button onclick="lanjutSetelahQuiz()" style="background:var(--orange);color:white;border:none;padding:14px 28px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">
+        ➡️ Lanjut
+      </button>
+      <button onclick="showPage('page-murid');resetQuiz()" style="background:white;color:var(--orange);border:2.5px solid var(--orange);padding:14px 28px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">
+        🏠 Dashboard
+      </button>
     </div>
   </div>
 </div>
@@ -3844,49 +3929,526 @@ let qIdx = 0, score = 0, correctCount = 0, timer, timeLeft = 15, answered = fals
 let quizStartTime = null;
 let currentQuizId = null;
 
+// ============================================================
+//  QUIZ KILAT — DUOLINGO STYLE
+// ============================================================
+let qkKategori      = [];   // list kategori (per kelas/mapel)
+let qkActiveKategori = null; // kategori yang sedang dimainkan
+let qkStages        = [];   // stages per kategori
+let qkActiveStage   = 0;    // stage index yang sedang dimainkan
+let qkLives         = 3;    // nyawa tersisa
+let qkStageProgress = {};   // { kategoriId_stageIdx: 'done'|'locked' }
+
+const QK_STAGES_PER_KATEGORI = 5;
+const QK_SOAL_PER_STAGE = 6;
+const QK_STAGE_ICONS = ['🌱','⭐','🔥','💎','👑'];
+const QK_STAGE_NAMES = ['Pemula','Dasar','Menengah','Mahir','Master'];
+const QK_STAGE_XP    = [30, 50, 80, 120, 200];
+const QK_STAGE_COLORS= ['#6BCB77','#4D96FF','#FF6B35','#C77DFF','#FFD93D'];
+
+// ── Load halaman kategori ──────────────────────────────────
 async function startQuiz() {
+  showPage('page-quiz-map');
+  await loadQuizKilatMap();
+}
+
+async function loadQuizKilatMap() {
+  // Update streak & XP
+  document.getElementById('qk-streak').textContent   = currentUser?.level || 1;
+  document.getElementById('qk-xp-total').textContent = currentUser?.xp || 0;
+
+  const wrap = document.getElementById('qk-kategori-wrap');
+  wrap.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)"><div style="font-size:40px">⏳</div><p style="font-weight:700;margin-top:8px">Memuat kategori...</p></div>';
+
+  try {
+    // Ambil semua kelas murid
+    const kelasData = await api('GET', '/kelas');
+    const kelasList = kelasData.kelas || kelasData.data || [];
+
+    if (kelasList.length === 0) {
+      wrap.innerHTML = `<div style="text-align:center;padding:40px">
+        <div style="font-size:56px;margin-bottom:12px">🏫</div>
+        <p style="font-weight:800;font-size:16px;margin-bottom:8px">Belum ada kelas!</p>
+        <p style="color:var(--muted);font-size:14px">Gabung ke kelas dulu untuk mulai Quiz Kilat.</p>
+        <button onclick="openModal('modal-join-kelas');showPage('page-murid')" style="margin-top:16px;background:var(--orange);color:white;border:none;padding:12px 24px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer">+ Gabung Kelas</button>
+      </div>`;
+      return;
+    }
+
+    // Ambil materi per kelas → buat kategori
+    qkKategori = [];
+    for (const kelas of kelasList) {
+      const mapel = kelas.mapel || kelas.nama;
+      const id    = `${kelas.id}_${mapel}`;
+      // Cek apakah sudah ada kategori untuk mapel ini
+      const exists = qkKategori.find(k => k.mapel === mapel);
+      if (!exists) {
+        qkKategori.push({
+          id, mapel, kelasNama: kelas.nama, kelasId: kelas.id,
+          emoji: getMapelEmoji(mapel),
+          color: getMapelColor(mapel),
+        });
+      }
+    }
+
+    // Render kategori cards
+    wrap.innerHTML = `
+      <div style="margin-bottom:20px">
+        <div style="font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">
+          📖 Kelasmu (${qkKategori.length} Kategori)
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          ${qkKategori.map((k, i) => {
+            const stagesDone = getStagesDone(k.id);
+            const pct = Math.round(stagesDone / QK_STAGES_PER_KATEGORI * 100);
+            return `
+            <div onclick="bukaStageMap('${k.id}')"
+              style="background:white;border-radius:20px;box-shadow:0 4px 20px rgba(0,0,0,0.08);padding:18px 20px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:16px;border:2.5px solid transparent"
+              onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='${k.color}'"
+              onmouseout="this.style.transform='';this.style.borderColor='transparent'">
+              <div style="width:56px;height:56px;border-radius:16px;background:${k.color}20;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0">
+                ${k.emoji}
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:900;font-size:15px;margin-bottom:2px">${k.mapel}</div>
+                <div style="font-size:12px;color:var(--muted);margin-bottom:6px">📍 ${k.kelasNama}</div>
+                <div style="background:#eee;border-radius:50px;height:7px">
+                  <div style="background:${k.color};height:100%;border-radius:50px;width:${pct}%;transition:width 0.5s"></div>
+                </div>
+                <div style="font-size:11px;color:var(--muted);margin-top:4px;font-weight:700">${stagesDone}/${QK_STAGES_PER_KATEGORI} stage · ${QK_STAGE_XP.slice(0,stagesDone).reduce((a,b)=>a+b,0)} XP</div>
+              </div>
+              <div style="font-size:22px;color:${k.color}">›</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  } catch(e) {
+    wrap.innerHTML = `<div style="text-align:center;padding:32px;color:var(--muted)"><p>Gagal memuat kategori 😢</p></div>`;
+  }
+}
+
+function getMapelEmoji(mapel) {
+  const m = (mapel || '').toLowerCase();
+  if (m.includes('math') || m.includes('matematika')) return '🔢';
+  if (m.includes('bahasa') && m.includes('indo')) return '📖';
+  if (m.includes('bahasa') && m.includes('ing')) return '🌏';
+  if (m.includes('ipa') || m.includes('sains')) return '🔬';
+  if (m.includes('ips')) return '🗺️';
+  if (m.includes('musik') || m.includes('sbd') || m.includes('seni')) return '🎵';
+  if (m.includes('olahraga') || m.includes('pjok')) return '⚽';
+  if (m.includes('pkn') || m.includes('ppkn')) return '🏛️';
+  if (m.includes('agama')) return '🕌';
+  if (m.includes('tik') || m.includes('komputer')) return '💻';
+  if (m.includes('sejarah')) return '📜';
+  if (m.includes('geografi')) return '🌍';
+  if (m.includes('biologi')) return '🌿';
+  if (m.includes('fisika')) return '⚡';
+  if (m.includes('kimia')) return '🧪';
+  return '📚';
+}
+
+function getMapelColor(mapel) {
+  const m = (mapel || '').toLowerCase();
+  if (m.includes('math') || m.includes('matematika')) return '#4D96FF';
+  if (m.includes('bahasa') && m.includes('indo')) return '#FF6B35';
+  if (m.includes('ipa') || m.includes('sains')) return '#6BCB77';
+  if (m.includes('musik') || m.includes('sbd') || m.includes('seni')) return '#FF6B9D';
+  if (m.includes('olahraga')) return '#FF6B35';
+  if (m.includes('ips')) return '#FFD93D';
+  if (m.includes('tik')) return '#4D96FF';
+  return '#C77DFF';
+}
+
+function getStagesDone(kategoriId) {
+  let done = 0;
+  for (let i = 0; i < QK_STAGES_PER_KATEGORI; i++) {
+    if (qkStageProgress[`${kategoriId}_${i}`] === 'done') done++;
+  }
+  return done;
+}
+
+// ── Buka stage map per kategori ────────────────────────────
+function bukaStageMap(kategoriId) {
+  qkActiveKategori = qkKategori.find(k => k.id === kategoriId);
+  if (!qkActiveKategori) return;
+
+  document.getElementById('qk-stage-title').textContent = `${qkActiveKategori.emoji} ${qkActiveKategori.mapel}`;
+  const stagesDone = getStagesDone(kategoriId);
+  const totalXP = QK_STAGE_XP.slice(0, stagesDone).reduce((a,b)=>a+b, 0);
+  document.getElementById('qk-stage-progress-label').textContent = `${stagesDone} / ${QK_STAGES_PER_KATEGORI} stage selesai`;
+  document.getElementById('qk-stage-xp-label').textContent = `${totalXP} XP`;
+  document.getElementById('qk-stage-progress-bar').style.width = (stagesDone / QK_STAGES_PER_KATEGORI * 100) + '%';
+
+  renderStagePath();
+  showPage('page-quiz-stages');
+}
+
+function renderStagePath() {
+  const path = document.getElementById('qk-stage-path');
+  const kat  = qkActiveKategori;
+  const stagesDone = getStagesDone(kat.id);
+
+  // Zigzag positions: kiri-tengah-kanan
+  const positions = ['left','center','right','center','left'];
+
+  path.innerHTML = QK_STAGES_PER_KATEGORI > 0 ? Array.from({length: QK_STAGES_PER_KATEGORI}).map((_, i) => {
+    const done   = i < stagesDone;
+    const active = i === stagesDone;
+    const locked = i > stagesDone;
+    const pos    = positions[i % positions.length];
+    const color  = QK_STAGE_COLORS[i];
+    const xp     = QK_STAGE_XP[i];
+
+    const marginMap = { left:'margin-right:auto;margin-left:20px', center:'margin:auto', right:'margin-left:auto;margin-right:20px' };
+    const margin = marginMap[pos] || 'margin:auto';
+
+    return `
+      <div style="display:flex;flex-direction:column;align-items:center;${margin};margin-bottom:${i<QK_STAGES_PER_KATEGORI-1?'8px':'0'};width:110px">
+        <!-- Stage button -->
+        <button onclick="${locked ? 'toast(\'Selesaikan stage sebelumnya dulu! 🔒\',\'error\')' : `mulaiStage(${i})`}"
+          style="width:90px;height:90px;border-radius:24px;border:none;cursor:${locked?'not-allowed':'pointer'};
+                 background:${done?color:active?color:'#E0E0E0'};
+                 box-shadow:${active?`0 8px 24px ${color}60`:'0 4px 12px rgba(0,0,0,0.1)'};
+                 transition:all 0.25s;position:relative;
+                 ${active?'transform:scale(1.08)':''}"
+          onmouseover="${locked?'':''}" >
+          <div style="font-size:36px;line-height:1;display:flex;align-items:center;justify-content:center;height:100%">
+            ${done ? '✅' : locked ? '🔒' : QK_STAGE_ICONS[i]}
+          </div>
+          ${active ? `<div style="position:absolute;top:-8px;right:-8px;background:#FF6B35;color:white;font-size:10px;font-weight:900;padding:3px 7px;border-radius:50px;font-family:Nunito">START</div>` : ''}
+          ${done ? `<div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);background:${color};color:white;font-size:10px;font-weight:900;padding:3px 9px;border-radius:50px;font-family:Nunito;white-space:nowrap">+${xp}XP</div>` : ''}
+        </button>
+
+        <!-- Stage info -->
+        <div style="margin-top:16px;text-align:center">
+          <div style="font-weight:900;font-size:13px;color:${locked?'#BDBDBD':done?color:'var(--text)'}">
+            ${QK_STAGE_NAMES[i]}
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">
+            ${done?'Selesai ✓':active?`${QK_SOAL_PER_STAGE} soal`:locked?'🔒':''}
+          </div>
+        </div>
+
+        <!-- Connector line (tidak di stage terakhir) -->
+        ${i < QK_STAGES_PER_KATEGORI-1 ? `
+        <div style="width:4px;height:40px;background:${i<stagesDone?color:'#E0E0E0'};border-radius:2px;margin-top:10px;
+                    ${i<stagesDone?`box-shadow:0 0 8px ${color}80`:''}"></div>
+        ` : ''}
+      </div>`;
+  }).join('') : '';
+}
+
+// ── Mulai stage tertentu ────────────────────────────────────
+async function mulaiStage(stageIdx) {
+  qkActiveStage = stageIdx;
+  qkLives = 3;
+  questions = [];
+
   showLoading(true);
   try {
-    const data = await api('GET', '/soal/quiz');
-    if (data.success && data.soal?.length > 0) {
-      // Map API data ke format lokal
-      questions = data.soal.map(s => ({
-        id: s.id,
-        q: s.pertanyaan,
-        emoji: s.emoji || '❓',
-        opts: Array.isArray(s.opsi) ? s.opsi : JSON.parse(s.opsi || '[]'),
-        ans: null, // akan dihitung dari jawaban
-        jawaban: s.jawaban,
-        label: s.mapel,
-        poin: s.poin || 100
-      }));
-      // Set ans index
-      questions.forEach(q => {
-        q.ans = q.opts.findIndex(o => o === q.jawaban);
-        if (q.ans < 0) q.ans = 0;
-      });
-      currentQuizId = data.quiz_id || null;
-      resetQuiz();
-      showPage('page-quiz');
+    // Ambil materi dari kelas untuk generate soal
+    const materiData = await api('GET', `/materi?kelas_id=${qkActiveKategori.kelasId}`);
+    const materiList = materiData.materi || materiData.data || [];
+
+    if (materiList.length === 0) {
+      // Coba ambil dari bank soal guru
+      const soalData = await api('GET', `/soal?mapel=${encodeURIComponent(qkActiveKategori.mapel)}`);
+      const bankSoal = soalData.soal || soalData.data || [];
+
+      if (bankSoal.length > 0) {
+        // Pakai soal dari bank
+        const shuffled = bankSoal.sort(() => Math.random()-0.5);
+        questions = shuffled.slice(0, QK_SOAL_PER_STAGE).map(s => ({
+          q: s.pertanyaan, emoji: s.emoji || getMapelEmoji(s.mapel),
+          opts: Array.isArray(s.opsi) ? s.opsi : JSON.parse(s.opsi || '[]'),
+          jawaban: s.jawaban, ans: -1, label: s.mapel, poin: s.poin || 100,
+          fromAI: false
+        }));
+        questions.forEach(q => {
+          q.ans = q.opts.findIndex(o => o === q.jawaban);
+          if (q.ans < 0) q.ans = 0;
+        });
+      } else {
+        toast('Guru belum menambahkan materi atau soal untuk kelas ini. Minta gurumu tambahkan dulu! 📚', 'error');
+        showLoading(false); return;
+      }
     } else {
-      toast('Belum ada soal di database. Minta gurumu buat soal dulu! 📝', 'error');
+      // Generate soal dari materi pakai AI (Groq)
+      toast('🤖 AI sedang buat soal dari materi...', '');
+      const kontenMateri = materiList.slice(0, 3).map(m => `
+        Judul: ${m.judul}
+        Mapel: ${m.mapel || qkActiveKategori.mapel}
+        ${m.konten ? 'Isi: ' + m.konten.substring(0, 800) : ''}
+      `).join('\n---\n');
+
+      const tingkatNames = ['sangat mudah','mudah','sedang','susah','sangat susah'];
+      const tingkat = tingkatNames[stageIdx] || 'sedang';
+
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer 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` },
+        body: JSON.stringify({
+          model: 'llama-3.1-8b-instant',
+          max_tokens: 1800,
+          temperature: 0.85,
+          messages: [{
+            role: 'system',
+            content: 'Kamu pembuat soal ujian. Jawab HANYA dengan JSON array valid, tanpa teks lain. "jawaban" harus PERSIS SAMA dengan salah satu item di "opsi".'
+          },{
+            role: 'user',
+            content: `Buat tepat ${QK_SOAL_PER_STAGE} soal pilihan ganda tingkat ${tingkat} berdasarkan materi berikut:
+
+${kontenMateri}
+
+Format:
+[{"pertanyaan":"...?","emoji":"emoji relevan","opsi":["A lengkap","B lengkap","C lengkap","D lengkap"],"jawaban":"teks persis sama dengan opsi yang benar","poin":${50*(stageIdx+1)}}]
+
+Bahasa Indonesia, soal bervariasi (jangan semua definisi).`
+          }]
+        })
+      });
+
+      const aiData = await res.json();
+      if (aiData.error) throw new Error(aiData.error.message);
+      let teks = aiData.choices?.[0]?.message?.content || '[]';
+      teks = teks.replace(/```json\n?/gi,'').replace(/```\n?/g,'').trim();
+      const fi = teks.indexOf('['), la = teks.lastIndexOf(']');
+      if (fi>=0&&la>=0) teks = teks.slice(fi, la+1);
+      let soalAI = JSON.parse(teks);
+
+      questions = soalAI.map(s => {
+        const cocok = (s.opsi||[]).find(o => o.trim().toLowerCase()===s.jawaban?.trim().toLowerCase());
+        const jawaban = cocok || s.opsi?.[0] || '';
+        return {
+          q: s.pertanyaan, emoji: s.emoji || getMapelEmoji(qkActiveKategori.mapel),
+          opts: s.opsi || [], jawaban, ans: (s.opsi||[]).indexOf(jawaban),
+          label: qkActiveKategori.mapel, poin: s.poin || 100, fromAI: true
+        };
+      }).filter(s => s.opts.length >= 2);
     }
-  } catch (e) {
-    toast('Gagal memuat soal dari server', 'error');
+
+    if (questions.length === 0) {
+      toast('Tidak bisa membuat soal. Coba lagi!', 'error');
+      showLoading(false); return;
+    }
+
+    resetQuiz();
+    showPage('page-quiz');
+  } catch(e) {
+    toast('Gagal memuat soal: ' + e.message, 'error');
+    console.error(e);
   }
   showLoading(false);
+}
+
+function batalQuizKilat() {
+  if (!confirm('Keluar dari quiz? Progress stage ini tidak tersimpan.')) return;
+  clearInterval(timer);
+  if (qkActiveKategori) bukaStageMap(qkActiveKategori.id);
+  else showPage('page-quiz-map');
+}
+
+function lanjutSetelahQuiz() {
+  if (qkActiveKategori) bukaStageMap(qkActiveKategori.id);
+  else showPage('page-quiz-map');
+}
+
+async function startQuiz() {
+  showPage('page-quiz-map');
+  await loadQuizKilatMap();
 }
 
 function resetQuiz() {
   qIdx = 0; score = 0; correctCount = 0; answered = false;
   clearInterval(timer);
   quizStartTime = Date.now();
-  document.getElementById('quiz-score').textContent = '0';
+
+  document.getElementById('quiz-score').textContent  = '0';
+  document.getElementById('qk-lives').textContent    = qkLives;
   document.getElementById('quiz-playing').style.display = 'block';
-  document.getElementById('quiz-result').style.display = 'none';
-  document.getElementById('quiz-timer').style.borderColor = 'var(--red)';
+  document.getElementById('quiz-result').style.display  = 'none';
+  document.getElementById('qk-feedback').style.display  = 'none';
+  document.getElementById('quiz-progress').style.width  = '0%';
+
   if (questions.length > 0) renderQuestion();
 }
+
+function renderQuestion() {
+  answered = false;
+  const q   = questions[qIdx];
+  const pct = (qIdx / questions.length * 100);
+
+  document.getElementById('quiz-progress').style.width = pct + '%';
+  document.getElementById('q-emoji').textContent = q.emoji;
+  document.getElementById('q-text').textContent  = q.q;
+  document.getElementById('qk-mapel-badge').textContent = `${getMapelEmoji(q.label)} ${q.label || 'Soal'}`;
+  document.getElementById('qk-feedback').style.display = 'none';
+
+  const opts = document.getElementById('quiz-opts');
+  const optColors = ['#4D96FF','#FF6B35','#6BCB77','#C77DFF'];
+  const optLetters = ['A','B','C','D'];
+  opts.innerHTML = (q.opts || []).map((o, i) => `
+    <button onclick="selectAnswer(${i}, this)"
+      style="width:100%;padding:14px 18px;border-radius:16px;border:2.5px solid ${optColors[i%4]}30;
+             background:white;font-family:Nunito,sans-serif;font-weight:700;font-size:15px;
+             cursor:pointer;transition:all 0.2s;text-align:left;display:flex;align-items:center;gap:12px"
+      onmouseover="if(!this.dataset.answered)this.style.background='${optColors[i%4]}15'"
+      onmouseout="if(!this.dataset.answered)this.style.background='white'">
+      <span style="width:32px;height:32px;border-radius:50%;background:${optColors[i%4]}20;color:${optColors[i%4]};
+                   font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        ${optLetters[i]}
+      </span>
+      <span>${o}</span>
+    </button>`).join('');
+
+  startTimer();
+}
+
+function startTimer() {
+  clearInterval(timer);
+  timeLeft = 15;
+  document.getElementById('quiz-timer').textContent = timeLeft;
+  document.getElementById('quiz-timer').style.background = 'rgba(255,255,255,0.25)';
+  timer = setInterval(() => {
+    timeLeft--;
+    document.getElementById('quiz-timer').textContent = timeLeft;
+    if (timeLeft <= 5) document.getElementById('quiz-timer').style.background = 'rgba(255,0,0,0.35)';
+    if (timeLeft <= 0) { clearInterval(timer); timeExpired(); }
+  }, 1000);
+}
+
+function timeExpired() {
+  if (answered) return;
+  answered = true;
+  qkLives = Math.max(0, qkLives - 1);
+  document.getElementById('qk-lives').textContent = qkLives;
+
+  // Show correct answer
+  const btns = document.querySelectorAll('#quiz-opts button');
+  if (btns[questions[qIdx].ans]) {
+    btns[questions[qIdx].ans].style.background = '#E8F8EE';
+    btns[questions[qIdx].ans].style.borderColor = '#6BCB77';
+  }
+  showFeedback(false, questions[qIdx].jawaban, 0);
+  if (qkLives <= 0) { setTimeout(() => stageFailed(), 1600); return; }
+}
+
+function selectAnswer(i, btn) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timer);
+  btn.dataset.answered = '1';
+
+  const correct = questions[qIdx].ans;
+  const btns    = document.querySelectorAll('#quiz-opts button');
+  btns.forEach(b => b.style.pointerEvents = 'none');
+
+  if (i === correct) {
+    btn.style.background = '#E8F8EE';
+    btn.style.borderColor = '#6BCB77';
+    const bonus = Math.max(50, timeLeft * 10) + questions[qIdx].poin;
+    score += bonus;
+    correctCount++;
+    document.getElementById('quiz-score').textContent = score;
+    showFeedback(true, questions[qIdx].jawaban, bonus);
+  } else {
+    btn.style.background = '#FFF0F0';
+    btn.style.borderColor = '#FF4757';
+    if (btns[correct]) { btns[correct].style.background = '#E8F8EE'; btns[correct].style.borderColor = '#6BCB77'; }
+    qkLives = Math.max(0, qkLives - 1);
+    document.getElementById('qk-lives').textContent = qkLives;
+    showFeedback(false, questions[qIdx].jawaban, 0);
+    if (qkLives <= 0) { setTimeout(() => stageFailed(), 1600); return; }
+  }
+}
+
+function showFeedback(benar, jawabanBenar, poin) {
+  const fb = document.getElementById('qk-feedback');
+  fb.style.display = 'block';
+  fb.style.background = benar ? '#E8F8EE' : '#FFF0F0';
+  document.getElementById('qk-feedback-title').textContent = benar ? `Benar! 🎉 +${poin} poin` : 'Kurang tepat 😅';
+  document.getElementById('qk-feedback-title').style.color = benar ? '#27AE60' : '#E74C3C';
+  document.getElementById('qk-feedback-sub').textContent = benar ? 'Pertahankan semangatmu!' : `Jawaban: ${jawabanBenar}`;
+  document.getElementById('qk-feedback-sub').style.color = benar ? '#27AE60' : '#E74C3C';
+  const nextBtn = document.getElementById('qk-next-btn');
+  nextBtn.style.background = benar ? '#27AE60' : '#E74C3C';
+  nextBtn.style.color = 'white';
+}
+
+function nextQuestion() {
+  qIdx++;
+  if (qIdx >= questions.length) {
+    showResult();
+  } else {
+    renderQuestion();
+  }
+}
+
+function stageFailed() {
+  clearInterval(timer);
+  document.getElementById('quiz-playing').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'block';
+  document.getElementById('qk-feedback').style.display = 'none';
+
+  const pct = Math.round(correctCount / questions.length * 100);
+  document.getElementById('result-emoji').textContent = '💔';
+  document.getElementById('result-stars').textContent = '';
+  document.getElementById('result-title').textContent = 'Nyawa Habis!';
+  document.getElementById('qk-result-stats').innerHTML = `
+    <div style="background:#FFF0F0;border-radius:16px;padding:16px">
+      <div style="font-family:'Fredoka One',cursive;font-size:28px;color:#E74C3C">${correctCount}</div>
+      <div style="font-size:12px;color:var(--muted);font-weight:700">Benar</div>
+    </div>
+    <div style="background:#F0F8FF;border-radius:16px;padding:16px">
+      <div style="font-family:'Fredoka One',cursive;font-size:28px;color:#4D96FF">${pct}%</div>
+      <div style="font-size:12px;color:var(--muted);font-weight:700">Akurasi</div>
+    </div>
+    <div style="background:#FFF3E8;border-radius:16px;padding:16px">
+      <div style="font-family:'Fredoka One',cursive;font-size:28px;color:var(--orange)">${score}</div>
+      <div style="font-size:12px;color:var(--muted);font-weight:700">Poin</div>
+    </div>`;
+}
+
+function showResult() {
+  clearInterval(timer);
+  document.getElementById('quiz-playing').style.display = 'none';
+  document.getElementById('quiz-result').style.display  = 'block';
+  document.getElementById('qk-feedback').style.display  = 'none';
+
+  const pct   = Math.round(correctCount / questions.length * 100);
+  const stars = pct >= 90 ? '⭐⭐⭐' : pct >= 60 ? '⭐⭐' : '⭐';
+  const xpBonus = QK_STAGE_XP[qkActiveStage] || 50;
+
+  document.getElementById('result-emoji').textContent = pct >= 60 ? '🎉' : '😊';
+  document.getElementById('result-stars').textContent = stars;
+  document.getElementById('result-title').textContent = pct >= 90 ? 'Sempurna!' : pct >= 60 ? 'Bagus!' : 'Ayo coba lagi!';
+  document.getElementById('qk-result-stats').innerHTML = `
+    <div style="background:#E8F8EE;border-radius:16px;padding:16px">
+      <div style="font-family:'Fredoka One',cursive;font-size:28px;color:#27AE60">${correctCount}/${questions.length}</div>
+      <div style="font-size:12px;color:var(--muted);font-weight:700">Benar</div>
+    </div>
+    <div style="background:#FFF3E8;border-radius:16px;padding:16px">
+      <div style="font-family:'Fredoka One',cursive;font-size:28px;color:var(--orange)">${score}</div>
+      <div style="font-size:12px;color:var(--muted);font-weight:700">Total Poin</div>
+    </div>
+    <div style="background:#EEF5FF;border-radius:16px;padding:16px">
+      <div style="font-family:'Fredoka One',cursive;font-size:28px;color:#4D96FF">+${pct>=60?xpBonus:Math.round(xpBonus*0.3)}</div>
+      <div style="font-size:12px;color:var(--muted);font-weight:700">XP</div>
+    </div>`;
+
+  // Tandai stage selesai jika lulus (>= 60%)
+  if (pct >= 60 && qkActiveKategori) {
+    qkStageProgress[`${qkActiveKategori.id}_${qkActiveStage}`] = 'done';
+    // Update XP user
+    if (currentUser) {
+      currentUser.xp = (currentUser.xp || 0) + xpBonus;
+      localStorage.setItem('kb_user', JSON.stringify(currentUser));
+      api('PUT', '/auth/profile', { nama: currentUser.nama }).catch(() => {});
+    }
+  }
+}
+
+
 
 function renderQuestion() {
   answered = false;
