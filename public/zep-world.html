@@ -483,10 +483,7 @@ const WS_SERVER  = 'http://localhost:3000';
 
 // ── GROQ API KEY — isi dengan key kamu dari console.groq.com ──
 window.GROQ_API_KEY = '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';
-const TILE       = 32;       // ukuran tile pixel (disesuaikan dengan Kenney 16px x2)
-const KENNEY_TILE = 16;      // ukuran tile asli Kenney
-const KENNEY_SCALE = 2;      // scale factor
-const TILEMAP_URL  = '/assets/tilemap_packed.png';  // Kenney Tiny Dungeon tileset
+const TILE       = 48;       // ukuran tile pixel
 const MAP_W      = 32;       // jumlah tile lebar
 const MAP_H      = 24;       // jumlah tile tinggi
 const SPEED      = 180;      // pixel per detik
@@ -1050,11 +1047,7 @@ function buatMapData() {
 }
 
 function preload() {
-  // Load Kenney Tiny Dungeon tileset
-  this.load.spritesheet('kenney', TILEMAP_URL, {
-    frameWidth: KENNEY_TILE,
-    frameHeight: KENNEY_TILE
-  });
+  // Grafis programatik, tidak perlu asset external
 }
 
 const TILE_COLORS = {
@@ -1073,94 +1066,147 @@ function create() {
   const totalW = MAP_W * TILE;
   const totalH = MAP_H * TILE;
 
-  // ── Gambar tilemap menggunakan Kenney Tiny Dungeon sprites ──
-  // Tile frame mapping (12x11 grid, 16x16 each):
-  // Floor tiles: 24=sand, 12=stone, 0=dirt/grass
-  // Wall tiles:  3=stone wall, 4=dark stone, 25=sand wall  
-  // Decorations: 36=barrel, 37=chest, 72=fence H, 73=fence V
-  // Characters:  84=wizard, 85=warrior, 86=knight, 87=mage
+  // ── Gambar tilemap programatik - colorful & hidup ──
+  this.mapGraphics = this.add.graphics();
 
-  const KT = {
-    GRASS1: 24, GRASS2: 25, GRASS3: 12,    // floor variants
-    STONE:  0,  STONE2: 1,  STONE3: 13,    // stone floor
-    PATH:   36, PATH2:  48,                 // path/sand
-    WALL:   3,  WALL2:  4,  WALL3: 2,      // walls
-    TREE:   15, TREE2:  27, BUSH: 26,       // nature
-    BLDG:   5,  BLDG2:  6,  BLDG3: 17,    // building tiles
-    DOOR:   8,  WINDOW: 18,                 // building detail
-  };
-
-  // Tile variants per zona
-  const getTileFrame = (t, r, c) => {
-    const isTaman   = r <= 7;
-    const isKelas   = r >= 8 && r <= 15;
-    const isLapangan = r >= 16;
-    const alt = (r + c) % 3;
-
-    if (t === 0) { // floor/grass
-      if (isTaman)    return alt === 0 ? KT.GRASS1 : alt === 1 ? KT.GRASS2 : KT.GRASS1;
-      if (isKelas)    return alt === 0 ? KT.STONE  : alt === 1 ? KT.STONE2 : KT.STONE3;
-      if (isLapangan) return alt === 0 ? KT.PATH2  : KT.STONE;
-    }
-    if (t === 1) return KT.WALL;    // border wall
-    if (t === 2) return KT.PATH;    // path
-    if (t === 3) return isTaman ? KT.TREE : KT.BUSH; // tree/bush
-    if (t === 4) return isKelas ? (alt===0?KT.BLDG:KT.BLDG2) : KT.WALL2; // building
-    return KT.GRASS1;
-  };
-
-  this.mapTiles = [];
   for (let r = 0; r < MAP_H; r++) {
-    this.mapTiles[r] = [];
     for (let c = 0; c < MAP_W; c++) {
       const t = mapData[r][c];
-      const x = c * TILE + TILE/2;
-      const y = r * TILE + TILE/2;
-      const frame = getTileFrame(t, r, c);
+      const x = c * TILE, y = r * TILE;
+      const isTaman    = r <= 7;
+      const isLapangan = r >= 16;
+      const alt = (r + c) % 2;
 
-      // Draw base tile using Kenney spritesheet
-      const sprite = this.add.image(x, y, 'kenney', frame)
-        .setDisplaySize(TILE, TILE)
-        .setOrigin(0.5, 0.5);
-      this.mapTiles[r][c] = sprite;
-
-      // Add overlay decoration for special tiles
-      if (t === 3) {
-        // Second layer for trees — darker canopy on top
-        const canopy = this.add.image(x, y - TILE*0.2, 'kenney', KT.TREE2)
-          .setDisplaySize(TILE * 0.9, TILE * 0.9)
-          .setOrigin(0.5, 0.5)
-          .setAlpha(0.9);
-      }
-      if (t === 4 && r % 2 === 0 && c % 2 === 0) {
-        // Window detail on buildings
-        const win = this.add.image(x, y, 'kenney', KT.WINDOW)
-          .setDisplaySize(TILE, TILE)
-          .setAlpha(0.7);
-      }
-
-      // Lapangan garis putih
-      if (r >= 16 && r <= 22 && t === 0) {
-        if (c === MAP_W/2 || r === 19) {
-          const line = this.add.graphics();
-          line.fillStyle(0xffffff, 0.12);
-          if (c === MAP_W/2) line.fillRect(x-1, y-TILE/2, 2, TILE);
-          if (r === 19) line.fillRect(x-TILE/2, y-1, TILE, 2);
+      if (t === 0) {
+        // Rumput - variasi warna per zona
+        const g1 = isTaman ? 0x4CAF50 : isLapangan ? 0x66BB6A : 0x43A047;
+        const g2 = isTaman ? 0x43A047 : isLapangan ? 0x57A85C : 0x388E3C;
+        this.mapGraphics.fillStyle(alt ? g1 : g2, 1);
+        this.mapGraphics.fillRect(x, y, TILE, TILE);
+        // Rumput detail
+        this.mapGraphics.fillStyle(0x000000, 0.06);
+        this.mapGraphics.fillRect(x, y+TILE-3, TILE, 3);
+        // Bunga di taman
+        if (isTaman && (r*7+c*3)%13===0) {
+          const fc = [0xFF8FAB, 0xFFE082, 0xFF7043, 0x80DEEA][(r+c)%4];
+          this.mapGraphics.fillStyle(fc, 1);
+          this.mapGraphics.fillCircle(x+TILE/2, y+TILE/2, 5);
+          this.mapGraphics.fillStyle(0xFFFFFF, 0.8);
+          this.mapGraphics.fillCircle(x+TILE/2, y+TILE/2, 2);
         }
+        // Garis lapangan
+        if (isLapangan) {
+          if (c===MAP_W/2) { this.mapGraphics.fillStyle(0xFFFFFF,0.2); this.mapGraphics.fillRect(x+TILE/2-1, y, 2, TILE); }
+          if (r===19)      { this.mapGraphics.fillStyle(0xFFFFFF,0.15); this.mapGraphics.fillRect(x, y+TILE/2-1, TILE, 2); }
+        }
+      }
+      else if (t === 1) {
+        // Dinding border - bata merah
+        this.mapGraphics.fillStyle(0x8D6E63, 1);
+        this.mapGraphics.fillRect(x, y, TILE, TILE);
+        this.mapGraphics.fillStyle(0x6D4C41, 1);
+        // Bata pattern
+        const brickRow = (alt ? 0 : TILE/2);
+        for (let bx = brickRow; bx < TILE; bx += TILE/2) {
+          this.mapGraphics.fillRect(x+bx, y, 1, TILE);
+        }
+        for (let by = 0; by < TILE; by += TILE/3) {
+          this.mapGraphics.fillRect(x, y+by, TILE, 1);
+        }
+      }
+      else if (t === 2) {
+        // Jalan - kerikil coklat keemasan
+        this.mapGraphics.fillStyle(alt ? 0xD4A574 : 0xC49558, 1);
+        this.mapGraphics.fillRect(x, y, TILE, TILE);
+        // Tekstur batu jalan
+        this.mapGraphics.fillStyle(0x000000, 0.07);
+        if ((r+c*2)%4===0) this.mapGraphics.fillRect(x+4, y+4, TILE/2-6, TILE/2-6);
+        if ((r+c*2)%4===2) this.mapGraphics.fillRect(x+TILE/2+2, y+TILE/2+2, TILE/2-6, TILE/2-6);
+        // Border jalan
+        this.mapGraphics.fillStyle(0x000000, 0.1);
+        this.mapGraphics.fillRect(x, y, TILE, 1);
+        this.mapGraphics.fillRect(x, y, 1, TILE);
+      }
+      else if (t === 3) {
+        // Pohon - multi layer
+        // Tanah/rumput di bawah
+        this.mapGraphics.fillStyle(0x388E3C, 1);
+        this.mapGraphics.fillRect(x, y, TILE, TILE);
+        // Batang
+        this.mapGraphics.fillStyle(0x6D4C41, 1);
+        this.mapGraphics.fillRect(x+TILE/2-4, y+TILE/2, 8, TILE/2);
+        // Kanopi lapis 1 (gelap)
+        this.mapGraphics.fillStyle(0x2E7D32, 1);
+        this.mapGraphics.fillCircle(x+TILE/2, y+TILE/2, TILE/2-2);
+        // Kanopi lapis 2 (hijau tengah)
+        this.mapGraphics.fillStyle(0x388E3C, 1);
+        this.mapGraphics.fillCircle(x+TILE/2-3, y+TILE/2-5, TILE/3);
+        this.mapGraphics.fillCircle(x+TILE/2+4, y+TILE/2-3, TILE/3.5);
+        // Highlight
+        this.mapGraphics.fillStyle(0x66BB6A, 0.7);
+        this.mapGraphics.fillCircle(x+TILE/2-5, y+TILE/2-10, TILE/6);
+        // Titik refleksi
+        this.mapGraphics.fillStyle(0xA5D6A7, 0.5);
+        this.mapGraphics.fillCircle(x+TILE/2-7, y+TILE/2-12, 3);
+      }
+      else if (t === 4) {
+        // Bangunan - gedung sekolah
+        // Dinding utama
+        this.mapGraphics.fillStyle(alt ? 0xFFF8E1 : 0xFFF3E0, 1);
+        this.mapGraphics.fillRect(x, y, TILE, TILE);
+        // Atap berwarna cerah
+        this.mapGraphics.fillStyle(0xF44336, 1);
+        this.mapGraphics.fillRect(x, y, TILE, 8);
+        // Highlight atap
+        this.mapGraphics.fillStyle(0xEF9A9A, 0.5);
+        this.mapGraphics.fillRect(x+2, y+2, TILE-4, 3);
+        // Jendela
+        if (r%2===0) {
+          this.mapGraphics.fillStyle(0x64B5F6, 0.9);
+          this.mapGraphics.fillRect(x+5, y+12, 14, 12);
+          this.mapGraphics.fillStyle(0xFFFFFF, 0.4);
+          this.mapGraphics.fillRect(x+5, y+12, 6, 12);
+          // Frame jendela
+          this.mapGraphics.fillStyle(0x8D6E63, 0.5);
+          this.mapGraphics.fillRect(x+5, y+12, 14, 1);
+          this.mapGraphics.fillRect(x+5, y+23, 14, 1);
+          this.mapGraphics.fillRect(x+12, y+12, 1, 12);
+        }
+        // Bayangan bawah
+        this.mapGraphics.fillStyle(0x000000, 0.12);
+        this.mapGraphics.fillRect(x, y+TILE-4, TILE, 4);
       }
     }
   }
 
-  // ── Label zona ──
+  // Tambah dekorasi kecil di sekeliling map (bunga di border taman)
+  for (let c = 1; c < MAP_W-1; c++) {
+    if (mapData[7][c] === 2 && c !== MAP_W/2-1 && c !== MAP_W/2) {
+      // Lampu jalan di batas zona taman-kelas
+      if (c % 4 === 0) {
+        this.mapGraphics.fillStyle(0xFFD54F, 1);
+        this.mapGraphics.fillCircle(c*TILE+TILE/2, 7*TILE+TILE/2, 5);
+        this.mapGraphics.fillStyle(0xFFEB3B, 0.3);
+        this.mapGraphics.fillCircle(c*TILE+TILE/2, 7*TILE+TILE/2, 10);
+      }
+    }
+  }
+
+  // ── Label zona dengan style bagus ──
   const zoneLabels = [
-    { text: '🌸 TAMAN', row: 3,  col: MAP_W/2, color: '#FFD93D' },
-    { text: '📚 AREA KELAS', row: 11, col: MAP_W/2, color: '#ffffff' },
-    { text: '⚽ LAPANGAN', row: 19, col: MAP_W/2, color: '#6BCB77' },
+    { text: '🌸 TAMAN', row: 3,  col: MAP_W/2, color: '#FFD93D', bg: 0x1B5E20 },
+    { text: '📚 AREA KELAS', row: 11, col: MAP_W/2, color: '#FFD93D', bg: 0x0D47A1 },
+    { text: '⚽ LAPANGAN', row: 19, col: MAP_W/2, color: '#FFD93D', bg: 0x1B5E20 },
   ];
-  zoneLabels.forEach(({ text, row, col, color }) => {
-    this.add.text(col*TILE, row*TILE, text, {
+  zoneLabels.forEach(({ text, row, col, color, bg }) => {
+    // Background pill
+    const tx = col*TILE, ty = row*TILE;
+    const gfx = this.add.graphics();
+    gfx.fillStyle(bg, 0.75);
+    gfx.fillRoundedRect(tx-70, ty-14, 140, 28, 14);
+    this.add.text(tx, ty, text, {
       fontFamily: 'Nunito', fontSize: '14px', fontStyle: 'bold',
-      color, stroke: '#000000', strokeThickness: 5, alpha: 0.85
+      color, stroke: '#000000', strokeThickness: 3
     }).setOrigin(0.5, 0.5).setDepth(5);
   });
 
@@ -1184,44 +1230,72 @@ function create() {
   const startY = Math.floor(MAP_H/2) * TILE + TILE*3;
   myPlayer.x = startX; myPlayer.y = startY;
 
-  // ── Player sprite menggunakan Kenney Tiny Dungeon ──
-  // Pilih frame karakter berdasarkan outfit color yang dipilih
-  const outfitColors = ['#4D96FF','#FF6B35','#6BCB77','#C77DFF','#FF6B9D','#FFD93D','#FF4757','#2ed573'];
-  const playerFrames = [85, 86, 88, 84, 97, 98, 96, 87]; // frame per outfit color
-  const outfitIdx = outfitColors.indexOf(myPlayer.outfitColor || '#4D96FF');
-  const playerFrame = playerFrames[outfitIdx >= 0 ? outfitIdx : 0];
+  // ── Custom character renderer dari character creator ──
+  function hexStrToInt(hex) { return parseInt(hex.replace('#',''), 16); }
+  const skinInt    = hexStrToInt(myPlayer.skinColor   || '#FFD3A3');
+  const outfitInt  = hexStrToInt(myPlayer.outfitColor || '#4D96FF');
+  const S = TILE * 0.9; // skala karakter
 
   // Shadow
-  this.playerShadow = this.add.ellipse(startX, startY+16, 28, 8, 0x000000, 0.3);
+  this.playerShadow = this.add.ellipse(startX, startY+S*0.55, S*0.8, S*0.22, 0x000000, 0.28);
 
-  // Invisible physics body (collision only)
-  this.playerBody = this.add.rectangle(startX, startY, 20, 28, 0x000000, 0);
+  // Body (invisible physics)
+  this.playerBody = this.add.rectangle(startX, startY, S*0.55, S*0.95, 0x000000, 0);
   this.physics.add.existing(this.playerBody);
   this.playerBody.body.setCollideWorldBounds(true);
-  this.playerBody.body.setSize(20, 28);
+  this.playerBody.body.setSize(S*0.55, S*0.95);
   this.physics.add.collider(this.playerBody, this.collideGroup);
 
-  // Kenney character sprite
-  this.playerSprite = this.add.image(startX, startY, 'kenney', playerFrame)
-    .setDisplaySize(TILE * 1.3, TILE * 1.3)
-    .setOrigin(0.5, 0.5);
+  // Legs
+  this.playerLegL = this.add.rectangle(startX-S*0.14, startY+S*0.38, S*0.22, S*0.32, outfitInt - 0x181818);
+  this.playerLegR = this.add.rectangle(startX+S*0.14, startY+S*0.38, S*0.22, S*0.32, outfitInt - 0x181818);
+  // Body/torso
+  this.playerTorso = this.add.rectangle(startX, startY+S*0.08, S*0.52, S*0.36, outfitInt);
+  // Belt detail
+  this.playerBelt  = this.add.rectangle(startX, startY+S*0.22, S*0.52, S*0.07, outfitInt - 0x303030);
+  // Arms
+  this.playerArmL  = this.add.rectangle(startX-S*0.32, startY+S*0.1, S*0.18, S*0.3, skinInt - 0x101010);
+  this.playerArmR  = this.add.rectangle(startX+S*0.32, startY+S*0.1, S*0.18, S*0.3, skinInt - 0x101010);
+  // Neck
+  this.playerNeck  = this.add.rectangle(startX, startY-S*0.12, S*0.22, S*0.16, skinInt);
+  // Head
+  this.playerHead  = this.add.circle(startX, startY-S*0.38, S*0.28, skinInt);
+  // Eyes
+  this.playerEyeL  = this.add.circle(startX-S*0.1, startY-S*0.4, S*0.055, 0x1a1a1a);
+  this.playerEyeR  = this.add.circle(startX+S*0.1, startY-S*0.4, S*0.055, 0x1a1a1a);
+  // Eye shine
+  this.playerShineL = this.add.circle(startX-S*0.08, startY-S*0.42, S*0.025, 0xffffff);
+  this.playerShineR = this.add.circle(startX+S*0.12, startY-S*0.42, S*0.025, 0xffffff);
+  // Hair / hat area
+  this.playerHair  = this.add.arc(startX, startY-S*0.55, S*0.28, 180, 360, false, outfitInt + 0x101010);
 
-  // Accessory emoji on top
-  this.playerAvatar = this.add.text(startX, startY - TILE * 0.8,
-    myPlayer.accessory || '', { fontSize:'16px' }).setOrigin(0.5, 0.5);
+  // Accessory emoji on head
+  this.playerAvatar = this.add.text(startX, startY - S*0.9,
+    myPlayer.accessory || '', { fontSize: Math.round(S*0.55)+'px' }).setOrigin(0.5, 0.5);
 
   // Name label
-  this.playerLabel = this.add.text(startX, startY + TILE * 0.7, myPlayer.nama, {
+  this.playerLabel = this.add.text(startX, startY+S*0.72, myPlayer.nama, {
     fontFamily:'Nunito', fontSize:'11px', fontStyle:'bold',
     color:'#fff', stroke:'#000', strokeThickness:3
   }).setOrigin(0.5, 0);
 
-  // Helper to update all player parts
+  const _parts = ['playerShadow','playerLegL','playerLegR','playerTorso','playerBelt',
+    'playerArmL','playerArmR','playerNeck','playerHead','playerEyeL','playerEyeR',
+    'playerShineL','playerShineR','playerHair','playerAvatar','playerLabel'];
+
   this._updatePlayerPos = (px, py) => {
-    this.playerShadow.setPosition(px, py+16);
-    this.playerSprite.setPosition(px, py);
-    this.playerAvatar.setPosition(px, py - TILE * 0.8);
-    this.playerLabel.setPosition(px, py + TILE * 0.7);
+    const off = {
+      playerShadow:[0,S*0.55], playerLegL:[-S*0.14,S*0.38], playerLegR:[S*0.14,S*0.38],
+      playerTorso:[0,S*0.08],  playerBelt:[0,S*0.22],
+      playerArmL:[-S*0.32,S*0.1], playerArmR:[S*0.32,S*0.1],
+      playerNeck:[0,-S*0.12], playerHead:[0,-S*0.38],
+      playerEyeL:[-S*0.1,-S*0.4], playerEyeR:[S*0.1,-S*0.4],
+      playerShineL:[-S*0.08,-S*0.42], playerShineR:[S*0.12,-S*0.42],
+      playerHair:[0,-S*0.55], playerAvatar:[0,-S*0.9], playerLabel:[0,S*0.72]
+    };
+    _parts.forEach(k => {
+      if (this[k] && off[k]) this[k].setPosition(px+off[k][0], py+off[k][1]);
+    });
   };
 
   // ── Kamera ──
@@ -1323,10 +1397,11 @@ function update(time, delta) {
     const sp = this.otherSprites[id];
     if (!sp) continue;
     const ox = data.x, oy = data.y;
-    sp.circle.setPosition(ox, oy);
-    sp.avatar.setPosition(ox, oy - TILE*0.75);
-    sp.label.setPosition(ox, oy + TILE*0.65);
-    if (sp.shadow) sp.shadow.setPosition(ox, oy+16);
+    sp.circle.setPosition(ox, oy+TILE*0.85*0.08);
+    sp.avatar.setPosition(ox, oy - TILE*0.85*0.85);
+    sp.label.setPosition(ox, oy + TILE*0.85*0.72);
+    if (sp.shadow) sp.shadow.setPosition(ox, oy + TILE*0.85*0.52);
+    if (sp.head) sp.head.setPosition(ox, oy - TILE*0.85*0.36);
   }
 }
 
@@ -1535,21 +1610,30 @@ function tambahOtherPlayer(p) {
   const skinHex  = p.skinColor  ? parseInt(p.skinColor.replace('#',''), 16)  : 0xFFD3A3;
   const outfitHex = p.outfitColor ? parseInt(p.outfitColor.replace('#',''), 16) : 0x4D96FF;
 
-  const outfitColors2 = ['#4D96FF','#FF6B35','#6BCB77','#C77DFF','#FF6B9D','#FFD93D','#FF4757','#2ed573'];
-  const pFrames2 = [85, 86, 88, 84, 97, 98, 96, 87];
-  const oi2 = outfitColors2.indexOf(p.outfitColor || '');
-  const pFrame2 = pFrames2[oi2 >= 0 ? oi2 : Math.abs(p.nama.charCodeAt(0)) % pFrames2.length];
+  // Drawn character for other players
+  function hx(h) { return parseInt((h||'#4D96FF').replace('#',''), 16); }
+  const OS = TILE * 0.85;
+  const oSkin   = hx(p.skinColor);
+  const oOutfit = hx(p.outfitColor);
 
-  const shadow = gameScene.add.ellipse(p.x, p.y+16, 26, 7, 0x000000, 0.25);
-  const body   = gameScene.add.image(p.x, p.y, 'kenney', pFrame2)
-    .setDisplaySize(TILE * 1.2, TILE * 1.2).setOrigin(0.5, 0.5);
-  const acc    = gameScene.add.text(p.x, p.y - TILE*0.75, p.accessory||'', { fontSize:'13px' }).setOrigin(0.5,0.5);
-  const label  = gameScene.add.text(p.x, p.y + TILE*0.65, p.nama, {
+  const shadow = gameScene.add.ellipse(p.x, p.y+OS*0.52, OS*0.85, OS*0.2, 0x000000, 0.25);
+  // Legs
+  gameScene.add.rectangle(p.x-OS*0.13, p.y+OS*0.36, OS*0.22, OS*0.3, oOutfit - 0x1a1a1a);
+  gameScene.add.rectangle(p.x+OS*0.13, p.y+OS*0.36, OS*0.22, OS*0.3, oOutfit - 0x1a1a1a);
+  const body   = gameScene.add.rectangle(p.x, p.y+OS*0.08, OS*0.5, OS*0.34, oOutfit);
+  gameScene.add.rectangle(p.x-OS*0.3, p.y+OS*0.08, OS*0.17, OS*0.28, oSkin - 0x101010);
+  gameScene.add.rectangle(p.x+OS*0.3, p.y+OS*0.08, OS*0.17, OS*0.28, oSkin - 0x101010);
+  gameScene.add.rectangle(p.x, p.y-OS*0.12, OS*0.2, OS*0.14, oSkin);
+  const head   = gameScene.add.circle(p.x, p.y-OS*0.36, OS*0.26, oSkin);
+  gameScene.add.circle(p.x-OS*0.09, p.y-OS*0.38, OS*0.05, 0x1a1a1a);
+  gameScene.add.circle(p.x+OS*0.09, p.y-OS*0.38, OS*0.05, 0x1a1a1a);
+  const acc    = gameScene.add.text(p.x, p.y - OS*0.85, p.accessory||'', { fontSize: Math.round(OS*0.5)+'px' }).setOrigin(0.5,0.5);
+  const label  = gameScene.add.text(p.x, p.y + OS*0.72, p.nama, {
     fontFamily: 'Nunito', fontSize: '11px', fontStyle: 'bold',
     color: '#fff', stroke: '#000', strokeThickness: 2
   }).setOrigin(0.5, 0);
 
-  gameScene.otherSprites[p.id] = { circle: body, avatar: acc, label, shadow };
+  gameScene.otherSprites[p.id] = { circle: body, avatar: acc, label, shadow, head };
   updatePemainList();
 }
 
@@ -1655,31 +1739,50 @@ function buatNPC(scene) {
       dirX: 0, dirY: 0
     };
 
-    // NPC sprite dari Kenney - tiap NPC punya karakter berbeda
-    const npcFrames = { prof:84, ibu:97, robot:96, penjelajah:87 };
-    const npcFrame  = npcFrames[npc.id] || 85;
+    // NPC - drawn programatically dengan karakter unik per NPC
+    const NS = TILE * 0.85;
+    const npcSkinColors = { prof:0xFFDBAC, ibu:0xF4C2A1, robot:0x90CAF9, penjelajah:0xFFCC80 };
+    const npcSkin = npcSkinColors[npc.id] || 0xFFD3A3;
 
     // Shadow
-    const npcShadow = scene.add.ellipse(px, py+14, 28, 8, 0x000000, 0.3);
+    scene.add.ellipse(px, py+NS*0.52, NS*0.9, NS*0.2, 0x000000, 0.25);
 
-    // Glow ring
-    const glow = scene.add.circle(px, py, 22, npc.warna, 0.2);
-    scene.tweens.add({
-      targets: glow, scaleX:{from:1,to:1.5}, scaleY:{from:1,to:1.5}, alpha:{from:0.25,to:0},
-      duration: 1400, repeat: -1, ease: 'Sine.easeOut'
-    });
+    // Legs
+    scene.add.rectangle(px-NS*0.13, py+NS*0.36, NS*0.22, NS*0.3, npc.warna - 0x202020);
+    scene.add.rectangle(px+NS*0.13, py+NS*0.36, NS*0.22, NS*0.3, npc.warna - 0x202020);
+    // Torso
+    scene.add.rectangle(px, py+NS*0.08, NS*0.5, NS*0.34, npc.warna);
+    // Arms
+    scene.add.rectangle(px-NS*0.3, py+NS*0.08, NS*0.17, NS*0.28, npcSkin - 0x101010);
+    scene.add.rectangle(px+NS*0.3, py+NS*0.08, NS*0.17, NS*0.28, npcSkin - 0x101010);
+    // Neck
+    scene.add.rectangle(px, py-NS*0.12, NS*0.2, NS*0.14, npcSkin);
+    // Head
+    const headCircle = scene.add.circle(px, py-NS*0.36, NS*0.26, npcSkin);
+    // Eyes
+    scene.add.circle(px-NS*0.09, py-NS*0.38, NS*0.05, 0x1a1a1a);
+    scene.add.circle(px+NS*0.09, py-NS*0.38, NS*0.05, 0x1a1a1a);
+    scene.add.circle(px-NS*0.07, py-NS*0.4,  NS*0.022, 0xffffff);
+    scene.add.circle(px+NS*0.11, py-NS*0.4,  NS*0.022, 0xffffff);
 
-    // Kenney character sprite
-    const circle = scene.add.image(px, py, 'kenney', npcFrame)
-      .setDisplaySize(TILE * 1.4, TILE * 1.4)
-      .setOrigin(0.5, 0.5);
+    // NPC emoji as hat/identifier
+    const emojiSize = Math.round(NS*0.5);
+    const avatar = scene.add.text(px, py-NS*0.82, npc.emoji,
+      { fontSize: emojiSize+'px' }).setOrigin(0.5,0.5);
+
+    // Glow ring around NPC
+    const circle = scene.add.circle(px, py, NS*0.62, npc.warna, 0.0);
+    // Subtle bounce
     scene.tweens.add({
-      targets: circle, y: py-3, duration: 1200,
+      targets: [headCircle, avatar], y: '-=4', duration: 1100,
       yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
     });
-
-    // Placeholder avatar (not shown, just for compatibility)
-    const avatar = scene.add.text(px, py-TILE, '', { fontSize:'1px' }).setOrigin(0.5,0.5);
+    // Pulse glow
+    const glowRing = scene.add.circle(px, py, NS*0.7, npc.warna, 0.15);
+    scene.tweens.add({
+      targets: glowRing, scaleX:{from:1,to:1.4}, scaleY:{from:1,to:1.4}, alpha:{from:0.15,to:0},
+      duration: 1500, repeat: -1, ease: 'Sine.easeOut'
+    });
     // Nama
     const label = scene.add.text(px, py+26, npc.nama, {
       fontFamily:'Nunito', fontSize:'11px', fontStyle:'bold',
