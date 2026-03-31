@@ -3158,18 +3158,26 @@ function aiMateriReset() {
   aiPdfFile = null;
   aiHasilMateri = null;
   aiHasilSoal = [];
-  document.getElementById('ai-materi-step1').style.display = 'block';
-  document.getElementById('ai-materi-step2').style.display = 'none';
-  document.getElementById('ai-hasil-preview').style.display = 'none';
+  const step1 = document.getElementById('ai-materi-step1');
+  const step2 = document.getElementById('ai-materi-step2');
+  const hasilPreview = document.getElementById('ai-hasil-preview');
+  if (step1) step1.style.display = 'block';
+  if (step2) step2.style.display = 'none';
+  if (hasilPreview) hasilPreview.style.display = 'none';
   ['pdf','artikel','youtube'].forEach(t => {
     document.getElementById('ai-src-' + t)?.classList.remove('active');
-    document.getElementById('ai-input-' + t).style.display = 'none';
+    const el = document.getElementById('ai-input-' + t);
+    if (el) el.style.display = 'none';
   });
-  document.getElementById('ai-pdf-label').textContent = 'Klik untuk pilih file PDF';
-  document.getElementById('ai-pdf-dropzone').style.borderColor = '#D8BBFF';
-  document.getElementById('ai-artikel-url').value = '';
-  document.getElementById('ai-soal-hasil-wrap').style.display = 'none';
-  setAIStatus('Membaca sumber...', 10);
+  const pdfLabel = document.getElementById('ai-pdf-label');
+  const pdfZone  = document.getElementById('ai-pdf-dropzone');
+  const artUrl   = document.getElementById('ai-artikel-url');
+  const soalWrap = document.getElementById('ai-soal-hasil-wrap');
+  if (pdfLabel) pdfLabel.textContent = 'Klik untuk pilih file PDF';
+  if (pdfZone)  pdfZone.style.borderColor = '#D8BBFF';
+  if (artUrl)   artUrl.value = '';
+  if (soalWrap) soalWrap.style.display = 'none';
+  try { setAIStatus('Membaca sumber...', 10); } catch(e) {}
 }
 
 // Helper: load script dinamis
@@ -3257,7 +3265,7 @@ async function submitMateri() {
       const kelasIdVal = document.getElementById('m-kelas-id').value;
       if (kelasIdVal) formData.append('kelas_id', kelasIdVal);
 
-      const res = await fetch('http://localhost:3000/api/materi/upload', {
+      const res = await fetch(`${API}/materi/upload`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
@@ -4214,7 +4222,17 @@ Bahasa Indonesia, soal bervariasi (jangan semua definisi).`
       teks = teks.replace(/```json\n?/gi,'').replace(/```\n?/g,'').trim();
       const fi = teks.indexOf('['), la = teks.lastIndexOf(']');
       if (fi>=0&&la>=0) teks = teks.slice(fi, la+1);
-      let soalAI = JSON.parse(teks);
+      // Robust: hapus trailing comma dan karakter bermasalah
+      teks = teks.replace(/,(\s*[}\]])/g, '$1');
+      let soalAI = [];
+      try {
+        soalAI = JSON.parse(teks);
+      } catch(parseErr) {
+        // Fallback: parse per objek satu-satu
+        const objs = teks.match(/\{[\s\S]*?\}/g) || [];
+        soalAI = objs.map(o => { try { return JSON.parse(o); } catch(e) { return null; }}).filter(Boolean);
+        if (soalAI.length === 0) throw new Error('Format soal dari AI tidak valid. Silakan coba lagi!');
+      }
 
       questions = soalAI.map(s => {
         const cocok = (s.opsi||[]).find(o => o.trim().toLowerCase()===s.jawaban?.trim().toLowerCase());
