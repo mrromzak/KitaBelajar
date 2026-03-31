@@ -973,7 +973,7 @@ function buatZonaSoal() {
   });
 }
 
-function update() {
+function update(time, delta) {
   if (!this.playerBody) return;
   const body = this.playerBody.body;
   const up    = this.cursors.up.isDown    || this.wasd.up.isDown    || mobileKeys.up;
@@ -999,6 +999,8 @@ function update() {
       const dx=px-z.x, dy=py-z.y;
       if (Math.sqrt(dx*dx+dy*dy)<SOAL_RADIUS) { tampilSoal(z); break; }
     }
+    // Update patrol NPC
+    updateNPCPatrol(delta);
     // Cek proximity NPC
     cekProximityNPC(px, py);
   }
@@ -1297,14 +1299,33 @@ let npcSprites = [];
 let activeNPC = null;
 let npcChatHistory = {};
 
+// ── Patrol state per NPC ──
+const NPC_PATROL_SPEED = 35;   // pixel/detik — lambat & santai
+const NPC_PATROL_RADIUS = TILE * 4; // max jarak dari home
+const NPC_STOP_MIN = 2000;     // min diam (ms)
+const NPC_STOP_MAX = 4000;     // max diam (ms)
+
 function buatNPC(scene) {
   NPC_LIST.forEach(npc => {
     const px = npc.x * TILE + TILE/2;
     const py = npc.y * TILE + TILE/2;
 
+    // Simpan posisi home
+    npc.homeX  = px;
+    npc.homeY  = py;
+    npc.worldX = px;
+    npc.worldY = py;
+
+    // Patrol state
+    npc.patrol = {
+      targetX: px, targetY: py,
+      moving: false,
+      stopUntil: 0,
+      dirX: 0, dirY: 0
+    };
+
     // Lingkaran NPC
     const circle = scene.add.circle(px, py, 20, npc.warna);
-    // Efek glow berkedip
     scene.tweens.add({
       targets: circle, alpha: { from: 0.7, to: 1 },
       duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
@@ -1323,9 +1344,66 @@ function buatNPC(scene) {
       duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
     });
 
-    npcSprites.push({ npc, circle, avatar, label, bubble, x: px, y: py });
-    npc.worldX = px;
-    npc.worldY = py;
+    npcSprites.push({ npc, circle, avatar, label, bubble });
+  });
+}
+
+// ── Update patrol semua NPC — dipanggil dari update() Phaser ──
+let lastPatrolTime = 0;
+function updateNPCPatrol(delta) {
+  const now = Date.now();
+  // Jangan update kalau dialog sedang terbuka
+  if (document.getElementById('npc-overlay')?.classList.contains('show')) return;
+
+  npcSprites.forEach(({ npc, circle, avatar, label, bubble }) => {
+    const p = npc.patrol;
+
+    if (!p.moving) {
+      // Sedang diam — cek apakah sudah waktunya jalan lagi
+      if (now < p.stopUntil) return;
+
+      // Pilih titik tujuan random dalam radius dari home
+      const angle  = Math.random() * Math.PI * 2;
+      const dist   = Math.random() * NPC_PATROL_RADIUS;
+      const tx = npc.homeX + Math.cos(angle) * dist;
+      const ty = npc.homeY + Math.sin(angle) * dist;
+
+      p.targetX = tx;
+      p.targetY = ty;
+      p.moving  = true;
+
+      // Hitung arah
+      const dx = tx - npc.worldX;
+      const dy = ty - npc.worldY;
+      const len = Math.sqrt(dx*dx + dy*dy) || 1;
+      p.dirX = dx / len;
+      p.dirY = dy / len;
+    } else {
+      // Sedang jalan — gerakkan ke target
+      const speed = NPC_PATROL_SPEED * (delta / 1000);
+      const dx = p.targetX - npc.worldX;
+      const dy = p.targetY - npc.worldY;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+
+      if (dist < 4) {
+        // Sudah sampai — berhenti dulu
+        npc.worldX = p.targetX;
+        npc.worldY = p.targetY;
+        p.moving   = false;
+        p.stopUntil = now + NPC_STOP_MIN + Math.random() * (NPC_STOP_MAX - NPC_STOP_MIN);
+      } else {
+        npc.worldX += p.dirX * speed;
+        npc.worldY += p.dirY * speed;
+      }
+
+      // Update posisi sprite
+      const nx = npc.worldX;
+      const ny = npc.worldY;
+      circle.setPosition(nx, ny);
+      avatar.setPosition(nx, ny - 2);
+      label.setPosition(nx, ny + 26);
+      bubble.setPosition(nx, ny - 32);
+    }
   });
 }
 
