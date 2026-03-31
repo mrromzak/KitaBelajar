@@ -413,15 +413,15 @@
 
   /* ===== STREAM (materi posts) ===== */
   .stream { display: flex; flex-direction: column; gap: 14px; }
-  .stream-post { background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); overflow: hidden; transition: all 0.2s; }
-  .stream-post:hover { box-shadow: var(--shadow); }
-  .stream-post-header { display: flex; align-items: center; gap: 12px; padding: 16px 20px 12px; }
-  .stream-post-icon { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .stream-post { background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); overflow: hidden; transition: all 0.2s; margin-bottom: 16px; }
+  .stream-post:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+  .stream-post-header { display: flex; align-items: center; gap: 12px; padding: 18px 20px 14px; }
+  .stream-post-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
   .stream-post-meta h4 { font-weight: 800; font-size: 15px; line-height: 1.3; }
   .stream-post-meta p { font-size: 12px; color: var(--muted); margin-top: 2px; font-weight: 600; }
   .stream-post-actions { margin-left: auto; display: flex; gap: 6px; }
-  .stream-post-body { padding: 0 20px 16px; border-top: 1px solid #F5F5F5; }
-  .stream-post-body-text { font-size: 14px; line-height: 1.7; color: var(--text); padding-top: 12px; }
+  .stream-post-body { padding: 0 20px 20px; border-top: 1px solid #F5F5F5; }
+  .stream-post-body-text { font-size: 14px; line-height: 1.7; color: var(--text); padding-top: 14px; }
   .stream-toggle { background: none; border: none; cursor: pointer; font-size: 12px; font-weight: 700; color: var(--blue); font-family: Nunito,sans-serif; padding: 0; }
 
   /* ===== JOIN / BUAT KELAS button ===== */
@@ -1032,7 +1032,7 @@
         <button class="tab-btn active" id="tab-materi-btn" onclick="switchKelasTab('materi')">📚 Materi</button>
         <button class="tab-btn" id="tab-kuis-btn" onclick="switchKelasTab('kuis')">📋 Tugas & Kuis</button>
       </div>
-      <div id="kelas-stream"></div>
+      <div id="kelas-stream" style="display:flex;flex-direction:column;gap:0;padding-top:4px"></div>
       <div id="kelas-kuis-stream" style="display:none">
         <!-- Filter bar -->
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap" id="kuis-filter-bar">
@@ -4182,12 +4182,33 @@ async function mulaiStage(stageIdx) {
       }
     } else {
       // Generate soal dari materi pakai AI (Groq)
+      // Ambil konten materi — teks atau deskripsi (PDF tidak punya konten teks)
+      const materiDenganKonten = materiList.filter(m =>
+        (m.konten && m.konten.length > 50) || (m.deskripsi && m.deskripsi.length > 30)
+      );
+
+      // Kalau semua materi adalah PDF (konten kosong), coba bank soal dulu
+      if (materiDenganKonten.length === 0) {
+        const soalData2 = await api('GET', `/soal?mapel=${encodeURIComponent(qkActiveKategori.mapel)}`);
+        const bankSoal2 = soalData2.soal || soalData2.data || [];
+        if (bankSoal2.length > 0) {
+          const shuffled2 = bankSoal2.sort(() => Math.random()-0.5);
+          questions = shuffled2.slice(0, QK_SOAL_PER_STAGE).map(s => ({
+            q: s.pertanyaan, emoji: s.emoji || getMapelEmoji(s.mapel),
+            opts: Array.isArray(s.opsi) ? s.opsi : JSON.parse(s.opsi || '[]'),
+            jawaban: s.jawaban, ans: -1, label: s.mapel, poin: s.poin || 100
+          }));
+          questions.forEach(q => { q.ans = q.opts.findIndex(o => o === q.jawaban); if (q.ans < 0) q.ans = 0; });
+        } else {
+          toast('Materi di kelas ini berupa PDF — AI tidak bisa membaca isinya. Minta guru tambahkan soal ke bank soal! 📝', 'error');
+          showLoading(false); return;
+        }
+      } else {
       toast('🤖 AI sedang buat soal dari materi...', '');
-      const kontenMateri = materiList.slice(0, 3).map(m => `
-        Judul: ${m.judul}
-        Mapel: ${m.mapel || qkActiveKategori.mapel}
-        ${m.konten ? 'Isi: ' + m.konten.substring(0, 800) : ''}
-      `).join('\n---\n');
+      const kontenMateri = materiDenganKonten.slice(0, 4).map(m => {
+        const isi = m.konten && m.konten.length > 50 ? m.konten.substring(0, 600) : (m.deskripsi || '');
+        return `Judul: ${m.judul}\nMapel: ${m.mapel || qkActiveKategori.mapel}\nIsi: ${isi}`;
+      }).join('\n---\n').substring(0, 2500); // batasi total
 
       const tingkatNames = ['sangat mudah','mudah','sedang','susah','sangat susah'];
       const tingkat = tingkatNames[stageIdx] || 'sedang';
@@ -4197,21 +4218,19 @@ async function mulaiStage(stageIdx) {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer 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` },
         body: JSON.stringify({
           model: 'llama-3.1-8b-instant',
-          max_tokens: 1800,
-          temperature: 0.85,
+          max_tokens: 2000,
+          temperature: 0.7,
           messages: [{
             role: 'system',
-            content: 'Kamu pembuat soal ujian. Jawab HANYA dengan JSON array valid, tanpa teks lain. "jawaban" harus PERSIS SAMA dengan salah satu item di "opsi".'
+            content: 'Kamu pembuat soal. Balas HANYA JSON array. Tidak ada teks lain. Tidak ada markdown. Hanya [ ... ]'
           },{
             role: 'user',
-            content: `Buat tepat ${QK_SOAL_PER_STAGE} soal pilihan ganda tingkat ${tingkat} berdasarkan materi berikut:
+            content: `Buat ${QK_SOAL_PER_STAGE} soal pilihan ganda tingkat ${tingkat} dari materi ini:
 
 ${kontenMateri}
 
-Format:
-[{"pertanyaan":"...?","emoji":"emoji relevan","opsi":["A lengkap","B lengkap","C lengkap","D lengkap"],"jawaban":"teks persis sama dengan opsi yang benar","poin":${50*(stageIdx+1)}}]
-
-Bahasa Indonesia, soal bervariasi (jangan semua definisi).`
+Balas HANYA array JSON seperti ini (tidak ada teks lain):
+[{"pertanyaan":"Pertanyaan?","emoji":"📚","opsi":["Opsi A","Opsi B","Opsi C","Opsi D"],"jawaban":"Opsi A","poin":${50*(stageIdx+1)}}]`
           }]
         })
       });
@@ -4243,7 +4262,8 @@ Bahasa Indonesia, soal bervariasi (jangan semua definisi).`
           label: qkActiveKategori.mapel, poin: s.poin || 100, fromAI: true
         };
       }).filter(s => s.opts.length >= 2);
-    }
+      } // end else materiDenganKonten > 0
+    } // end else (ada materi)
 
     if (questions.length === 0) {
       toast('Tidak bisa membuat soal. Coba lagi!', 'error');
