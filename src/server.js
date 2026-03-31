@@ -145,3 +145,67 @@ httpServer.listen(PORT, () => {
 });
 
 module.exports = app;
+
+// Tambahkan endpoint ini di src/server.js setelah endpoint proxy/fetch yang sudah ada
+
+// ── Proxy: YouTube Transcript via third-party ──
+app.get('/api/proxy/youtube-transcript', async (req, res) => {
+  const { videoId } = req.query;
+  if (!videoId) return res.json({ success: false, pesan: 'videoId wajib diisi' });
+
+  // Coba beberapa strategi
+  const strategies = [
+    // Strategi 1: youtubetranscript.com
+    async () => {
+      const r = await fetch(`https://api.youtubetranscript.com/?videoID=${videoId}`, {
+        headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' }
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json();
+      if (!Array.isArray(data) || data.length === 0) throw new Error('Empty');
+      return data.map(i => i.text).join(' ').replace(/\s+/g, ' ').trim();
+    },
+
+    // Strategi 2: Fetch langsung halaman YouTube dan parse timedtext
+    async () => {
+      const pageRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+        headers: { 
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8'
+        }
+      });
+      const html = await pageRes.text();
+      // Cari URL caption dari halaman
+      const captionMatch = html.match(/"captionTracks":\[(\{.+?\})\]/);
+      if (!captionMatch) throw new Error('No captions');
+      const captionData = JSON.parse('[' + captionMatch[1] + ']');
+      const caption = captionData.find(c => c.languageCode === 'id') || 
+                      captionData.find(c => c.languageCode === 'en') ||
+                      captionData[0];
+      if (!caption?.baseUrl) throw new Error('No caption URL');
+      
+      const captionRes = await fetch(caption.baseUrl + '&fmt=json3');
+      const captionJson = await captionRes.json();
+      const transcript = captionJson.events
+        ?.filter(e => e.segs)
+        .map(e => e.segs.map(s => s.utf8 || '').join(''))
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!transcript || transcript.length < 50) throw new Error('Too short');
+      return transcript;
+    }
+  ];
+
+  for (let i = 0; i < strategies.length; i++) {
+    try {
+      const transcript = await strategies[i]();
+      const truncated = transcript.length > 8000 ? transcript.substring(0, 8000) + '...' : transcript;
+      return res.json({ success: true, transcript: truncated, strategi: i + 1 });
+    } catch(e) {
+      console.log(`YouTube transcript strategi ${i+1} gagal:`, e.message);
+    }
+  }
+
+  res.json({ success: false, pesan: 'Transcript tidak tersedia untuk video ini' });
+});
