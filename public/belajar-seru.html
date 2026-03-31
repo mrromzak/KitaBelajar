@@ -1431,7 +1431,7 @@
     <!-- Sidebar kiri: daftar soal -->
     <div id="sb-sidebar" style="width:220px;background:#1a1a2e;display:flex;flex-direction:column;flex-shrink:0">
       <div style="padding:16px;border-bottom:1px solid rgba(255,255,255,0.1)">
-        <button onclick="tutupSoalBuilder()" style="background:none;border:none;color:rgba(255,255,255,0.6);cursor:pointer;font-family:Nunito,sans-serif;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;padding:0">
+        <button onclick="tutupSoalBuilderDenganKonfirmasi()" style="background:none;border:none;color:rgba(255,255,255,0.6);cursor:pointer;font-family:Nunito,sans-serif;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;padding:0">
           ← Kembali
         </button>
         <div style="margin-top:12px;font-family:'Fredoka One',cursive;font-size:16px;color:white" id="sb-judul-label">Bank Soal</div>
@@ -3287,13 +3287,27 @@ function bukaSoalBuilder(fromKuis = false) {
 
 function tutupSoalBuilder() {
   if (sbFromKuis) {
+    showPage('page-kelas');
     openModal('modal-buat-kuis');
     loadBankSoal();
     switchKuisSoalTab('bank');
   } else {
     showPage('page-guru');
-    loadGuruSoalPreview();
+    loadGuruDashboard();
   }
+}
+
+async function tutupSoalBuilderDenganKonfirmasi() {
+  sbSimpanStateAktif();
+  const adaSoalBelumSimpan = sbSoalList.some(s => s.pertanyaan.trim() && !s.dbId);
+  if (adaSoalBelumSimpan) {
+    const pilih = confirm('Ada soal yang belum tersimpan.\n\nKlik OK untuk simpan dulu, atau Batal untuk keluar tanpa simpan.');
+    if (pilih) {
+      await sbSimpanSemua();
+      return; // sbSimpanSemua akan handle navigasi
+    }
+  }
+  tutupSoalBuilder();
 }
 
 function sbPopulateMapel() {
@@ -3342,8 +3356,13 @@ function sbSimpanStateAktif() {
 
   if (s.tipe === 'pilihan_ganda') {
     s.opsi = Array.from(document.querySelectorAll('.sb-opsi-input')).map(i => i.value.trim());
-    s.jawabanIdx = s.opsi.findIndex((_, i) => document.getElementById(`sb-radio-${i}`)?.checked);
-    s.jawaban = s.jawabanIdx >= 0 ? s.opsi[s.jawabanIdx] : '';
+    // Cari radio yang dicentang
+    let idx = -1;
+    document.querySelectorAll('input[name="sb-jawaban"]').forEach((r, i) => {
+      if (r.checked) idx = i;
+    });
+    s.jawabanIdx = idx;
+    s.jawaban = idx >= 0 && s.opsi[idx] ? s.opsi[idx] : '';
   } else if (s.tipe === 'isian') {
     s.jawaban = document.getElementById('sb-jawaban-isian')?.value || '';
   } else if (s.tipe === 'benar_salah') {
@@ -3530,14 +3549,11 @@ async function sbSimpanSemua() {
   btn.textContent = '💾 Simpan Semua';
 
   if (berhasil > 0) {
-    toast(`✅ ${berhasil} soal tersimpan!${gagal > 0 ? ` (${gagal} gagal/kosong)` : ''}`, 'success');
-    loadGuruSoalPreview();
-    // Jika dari kuis, kembali otomatis
-    if (sbFromKuis) {
-      setTimeout(() => tutupSoalBuilder(), 1200);
-    }
-  } else {
-    toast('Tidak ada soal yang valid! Lengkapi pertanyaan & jawaban dulu.', 'error');
+    toast(`✅ ${berhasil} soal tersimpan!${gagal > 0 ? ` (${gagal} soal dilewati karena kosong/tidak valid)` : ''}`, 'success');
+    // Tandai semua soal sudah disimpan
+    setTimeout(() => tutupSoalBuilder(), 1200);
+  } else if (gagal > 0) {
+    toast('Soal tidak valid! Pastikan pertanyaan & jawaban benar terisi.', 'error');
   }
 }
 
