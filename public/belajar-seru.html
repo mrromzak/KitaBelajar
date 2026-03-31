@@ -687,7 +687,7 @@
       <div class="section-title" style="margin-bottom:0">🏫 Kelas Saya</div>
       <div style="display:flex;gap:8px">
         <button onclick="bukaZepQuizGuru()" style="background:linear-gradient(135deg,#7b2ff7,#a64cff);color:white;border:none;padding:10px 22px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
-          🎯 Host Zep Quiz
+          🎯 Host Kita Quiz
         </button>
         <button onclick="openModal('modal-buat-kelas')" style="background:var(--blue);color:white;border:none;padding:10px 22px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
           ＋ Buat Kelas
@@ -2997,9 +2997,11 @@ Bahasa Indonesia, tingkat ${target}.`
     }, 500);
 
   } catch(e) {
-    toast('Error: ' + e.message, 'error');
-    console.error(e);
-    aiMateriReset();
+    if (e.message !== 'STOP') {
+      toast('Error: ' + e.message, 'error');
+      console.error(e);
+      aiMateriReset();
+    }
   }
 }
 
@@ -3124,52 +3126,59 @@ async function fetchYouTubeInfo(url) {
   const channel = document.getElementById('ai-yt-channel')?.textContent || '';
   const deskripsiManual = document.getElementById('ai-yt-deskripsi')?.value.trim() || '';
 
+  // Kalau sudah ada deskripsi manual, langsung pakai — tidak perlu fetch transcript
+  if (deskripsiManual) {
+    toast('📝 Menggunakan deskripsi manual...', '');
+    return {
+      judul: title || deskripsiManual.substring(0, 60),
+      konten: `Judul Video: "${title}"\n${channel ? 'Channel: ' + channel : ''}\nURL: ${url}\nLink Embed: https://www.youtube.com/embed/${videoId}\n\nDeskripsi / Topik dari guru:\n${deskripsiManual}\n\nBuat materi pelajaran lengkap dan terstruktur berdasarkan topik di atas.`,
+      sumber: 'manual'
+    };
+  }
+
   // Coba ambil transcript otomatis
   setAIStatus('Mencoba ambil transcript YouTube...', 15);
   let transcript = await fetchTranscriptYoutube(videoId);
 
-  let konten = '';
-  let sumber = '';
-
   if (transcript && transcript.length > 200) {
-    // Berhasil dapat transcript!
-    // Potong jika terlalu panjang
     if (transcript.length > 6000) transcript = transcript.substring(0, 6000) + '...';
-    sumber = 'transcript otomatis';
-    konten = `Judul Video: "${title}"
-${channel ? 'Channel: ' + channel : ''}
-URL: ${url}
-
-TRANSCRIPT VIDEO:
-${transcript}
-
-${deskripsiManual ? '\nCatatan tambahan dari guru:\n' + deskripsiManual : ''}`;
-
     toast('✅ Transcript berhasil diambil!', 'success');
-  } else {
-    // Transcript gagal — gunakan deskripsi manual
-    if (!deskripsiManual) {
-      throw new Error('Transcript YouTube tidak bisa diambil otomatis untuk video ini. Silakan isi kolom "Topik / Deskripsi Video" agar AI bisa membuat materi.');
-    }
-    sumber = 'deskripsi manual';
-    konten = `Judul Video: "${title}"
-${channel ? 'Channel: ' + channel : ''}
-URL: ${url}
-Link Embed: https://www.youtube.com/embed/${videoId}
-
-Deskripsi / Topik yang dijelaskan guru:
-${deskripsiManual}
-
-Catatan: Transcript otomatis tidak tersedia. Buat materi berdasarkan deskripsi di atas.`;
-
-    toast('⚠️ Transcript tidak tersedia, menggunakan deskripsi manual', '');
+    return {
+      judul: title || 'Materi dari YouTube',
+      konten: `Judul Video: "${title}"\n${channel ? 'Channel: ' + channel : ''}\nURL: ${url}\n\nTRANSCRIPT VIDEO:\n${transcript}`,
+      sumber: 'transcript'
+    };
   }
 
-  return {
-    judul: title || deskripsiManual.substring(0, 60),
-    konten,
-    sumber
-  };
+  // Transcript gagal DAN tidak ada deskripsi — tampilkan form deskripsi dan minta guru isi
+  const deskEl = document.getElementById('ai-yt-deskripsi');
+  const deskWrap = deskEl?.closest('.form-group');
+  if (deskWrap) {
+    deskWrap.style.border = '2.5px solid var(--orange)';
+    deskWrap.style.borderRadius = '12px';
+    deskWrap.style.padding = '12px';
+    deskWrap.style.background = '#FFF8F3';
+    setTimeout(() => deskEl?.focus(), 100);
+  }
+  // Kembali ke step 1 agar guru bisa isi deskripsi
+  aiMateriReset();
+  pilihSumberAI('youtube');
+  document.getElementById('ai-youtube-url').value = url;
+  // Restore preview jika ada
+  await ambilInfoYoutube(url);
+
+  toast('⚠️ Transcript tidak tersedia. Isi deskripsi video lalu klik Buat Materi lagi!', 'error');
+
+  // Highlight field deskripsi
+  const desk2 = document.getElementById('ai-yt-deskripsi');
+  if (desk2) {
+    desk2.style.border = '2.5px solid var(--orange)';
+    desk2.style.background = '#FFF8F3';
+    desk2.placeholder = '⚠️ Transcript tidak bisa diambil. Tuliskan isi/topik video di sini agar AI bisa membuat materi...';
+    desk2.focus();
+  }
+
+  throw new Error('STOP'); // Special signal untuk stop tanpa toast error tambahan
 }
 
 // ── Simpan hasil AI ke database ─────────────────────────────
