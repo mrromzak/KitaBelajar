@@ -1344,14 +1344,21 @@
       <div id="ai-input-youtube" style="display:none">
         <div class="form-group">
           <label>URL Video YouTube</label>
-          <input type="url" id="ai-youtube-url" placeholder="https://youtube.com/watch?v=..." style="width:100%;padding:12px 14px;border:2px solid #E8E8E8;border-radius:12px;font-family:Nunito,sans-serif;font-size:14px;outline:none">
+          <input type="url" id="ai-youtube-url" placeholder="https://youtube.com/watch?v=..." style="width:100%;padding:12px 14px;border:2px solid #E8E8E8;border-radius:12px;font-family:Nunito,sans-serif;font-size:14px;outline:none" oninput="praviewYoutube(this.value)">
         </div>
-        <div id="ai-yt-preview" style="display:none;background:#F8F9FA;border-radius:12px;padding:12px;display:none;align-items:center;gap:10px;margin-top:8px">
+        <div id="ai-yt-preview" style="display:none;background:#F8F9FA;border-radius:12px;padding:12px;align-items:center;gap:10px;margin-bottom:10px">
           <div style="font-size:24px">🎬</div>
           <div>
             <div id="ai-yt-title" style="font-weight:800;font-size:13px"></div>
             <div id="ai-yt-channel" style="font-size:11px;color:var(--muted)"></div>
           </div>
+        </div>
+        <div class="form-group">
+          <label>Topik / Deskripsi Video <span style="color:var(--orange);font-weight:800">*wajib diisi</span></label>
+          <textarea id="ai-yt-deskripsi" rows="3" placeholder="Jelaskan isi video ini... contoh: Video ini membahas tentang fotosintesis pada tumbuhan, proses pengubahan cahaya matahari menjadi energi, dan faktor-faktor yang mempengaruhinya." style="width:100%;padding:12px 14px;border:2px solid #E8E8E8;border-radius:12px;font-family:Nunito,sans-serif;font-size:13px;outline:none;box-sizing:border-box;resize:vertical"></textarea>
+        </div>
+        <div style="background:#EEF5FF;border-radius:10px;padding:10px 12px;font-size:12px;color:var(--blue);font-weight:600">
+          💡 YouTube tidak menyediakan akses transcript publik. Tulis ringkasan/topik video agar AI bisa membuat materi yang tepat dan relevan.
         </div>
       </div>
 
@@ -3042,38 +3049,60 @@ async function fetchArtikel(url) {
 }
 
 // ── Ambil info YouTube via oEmbed ───────────────────────────
-async function fetchYouTubeInfo(url) {
-  // Ekstrak video ID
-  const match = url.match(/(?:v=|youtu\.be\/)([^&\s]+)/);
-  if (!match) throw new Error('URL YouTube tidak valid');
-  const videoId = match[1];
+// ── Preview YouTube (debounce saat user ketik URL) ──────────
+let ytPreviewTimeout = null;
+function praviewYoutube(url) {
+  clearTimeout(ytPreviewTimeout);
+  if (!url || url.length < 10) return;
+  ytPreviewTimeout = setTimeout(() => ambilInfoYoutube(url), 800);
+}
 
-  // Cek preview dulu
+async function ambilInfoYoutube(url) {
+  const match = url.match(/(?:v=|youtu\.be\/)([^&\s]+)/);
+  if (!match) return;
+  const videoId = match[1];
   try {
-    const oembedRes = await fetch(`https://www.youtube.com/oembed?url=https://youtube.com/watch?v=${videoId}&format=json`);
-    const oembed = await oembedRes.json();
-    document.getElementById('ai-yt-title').textContent = oembed.title || '';
+    const res = await fetch(`https://www.youtube.com/oembed?url=https://youtube.com/watch?v=${videoId}&format=json`);
+    if (!res.ok) return;
+    const oembed = await res.json();
+    document.getElementById('ai-yt-title').textContent   = oembed.title || '';
     document.getElementById('ai-yt-channel').textContent = oembed.author_name || '';
     document.getElementById('ai-yt-preview').style.display = 'flex';
-
-    // Buat konten dari judul + deskripsi (transcript tidak bisa diambil tanpa API key)
-    const konten = `Video YouTube: "${oembed.title}"
-Channel: ${oembed.author_name}
-URL: ${url}
-
-[Materi ini dibuat berdasarkan video YouTube. AI akan membuat materi berdasarkan judul dan topik video.]
-
-Topik video: ${oembed.title}
-Buat materi pelajaran lengkap berdasarkan topik ini.`;
-
-    return { judul: oembed.title, konten };
+    // Auto-fill deskripsi jika kosong
+    const desk = document.getElementById('ai-yt-deskripsi');
+    if (desk && !desk.value.trim()) {
+      desk.value = `Video berjudul "${oembed.title}" dari channel ${oembed.author_name}. `;
+      desk.focus();
+    }
   } catch(e) {
-    // Fallback tanpa oEmbed
-    return {
-      judul: 'Materi dari YouTube',
-      konten: `Video YouTube URL: ${url}\nBuat materi pelajaran berdasarkan topik dari video ini.`
-    };
+    document.getElementById('ai-yt-preview').style.display = 'none';
   }
+}
+
+async function fetchYouTubeInfo(url) {
+  const match = url.match(/(?:v=|youtu\.be\/)([^&\s]+)/);
+  if (!match) throw new Error('URL YouTube tidak valid. Pastikan format: youtube.com/watch?v=...');
+  const videoId = match[1];
+
+  const deskripsi = document.getElementById('ai-yt-deskripsi')?.value.trim() || '';
+  if (!deskripsi) throw new Error('Deskripsi video wajib diisi! Jelaskan isi video agar AI bisa membuat materi yang tepat.');
+
+  const title = document.getElementById('ai-yt-title')?.textContent || 'Video YouTube';
+  const channel = document.getElementById('ai-yt-channel')?.textContent || '';
+
+  // Buat konten kaya dari deskripsi yang diisi guru
+  const konten = `Judul Video: "${title}"
+${channel ? 'Channel: ' + channel : ''}
+URL: ${url}
+Link Embed: https://www.youtube.com/embed/${videoId}
+
+Deskripsi / Isi Video (ditulis oleh guru):
+${deskripsi}
+
+Berdasarkan informasi di atas, buatlah materi pelajaran yang lengkap, terstruktur, dan mudah dipahami siswa.
+Gunakan deskripsi di atas sebagai dasar konten materi — kembangkan dengan penjelasan yang lebih rinci dan contoh nyata.`;
+
+  return { judul: title || deskripsi.substring(0, 50), konten };
 }
 
 // ── Simpan hasil AI ke database ─────────────────────────────
@@ -3138,6 +3167,8 @@ function aiMateriReset() {
   document.getElementById('ai-pdf-dropzone').style.borderColor = '#D8BBFF';
   document.getElementById('ai-artikel-url').value = '';
   document.getElementById('ai-youtube-url').value = '';
+  const ytDesk = document.getElementById('ai-yt-deskripsi');
+  if (ytDesk) ytDesk.value = '';
   document.getElementById('ai-yt-preview').style.display = 'none';
   document.getElementById('ai-soal-hasil-wrap').style.display = 'none';
   setAIStatus('Membaca sumber...', 10);
