@@ -168,21 +168,47 @@
   #voting-result-banner .result-map { font-size: 40px; margin-bottom: 6px; }
   #voting-result-banner p { color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 700; }
 
-  /* ── LOGIN ── */
+  /* ── LOGIN & CHARACTER CREATOR ── */
   #login-box {
-    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 28px; padding: 44px 36px; max-width: 420px; width: 92%;
-    text-align: center;
+    background: rgba(15,15,35,0.95); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 28px; padding: 32px 28px; max-width: 520px; width: 95%;
+    text-align: center; max-height: 95vh; overflow-y: auto;
   }
-  #login-box h1 { font-family: 'Press Start 2P', monospace; font-size: 14px; color: #FFD93D; margin-bottom: 6px; text-shadow: 2px 2px 0 #FF6B35; }
-  #login-box p { color: rgba(255,255,255,0.5); font-size: 13px; margin-bottom: 28px; }
-  .login-input { width: 100%; padding: 13px 16px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color: white; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700; outline: none; margin-bottom: 12px; transition: border-color 0.2s; }
+  #login-box h1 { font-family: 'Press Start 2P', monospace; font-size: 13px; color: #FFD93D; margin-bottom: 4px; text-shadow: 2px 2px 0 #FF6B35; }
+  #login-box p { color: rgba(255,255,255,0.5); font-size: 12px; margin-bottom: 20px; }
+  .login-input { width: 100%; padding: 12px 16px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color: white; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700; outline: none; margin-bottom: 12px; transition: border-color 0.2s; }
   .login-input:focus { border-color: #FFD93D; }
   .login-input::placeholder { color: rgba(255,255,255,0.3); font-weight: 400; }
   #btn-masuk { width: 100%; padding: 14px; border-radius: 14px; border: none; background: linear-gradient(135deg, #FFD93D, #FF6B35); color: #1a1a2e; font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 16px; cursor: pointer; transition: all 0.2s; margin-top: 4px; }
   #btn-masuk:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(255,107,53,0.4); }
   #btn-kembali { background: none; border: 1.5px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); border-radius: 50px; padding: 9px 22px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; margin-top: 12px; transition: all 0.2s; }
   #btn-kembali:hover { border-color: rgba(255,255,255,0.5); color: white; }
+  /* Character Creator */
+  .cc-section { margin-bottom: 16px; text-align: left; }
+  .cc-label { font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: block; }
+  .cc-swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+  .cc-swatch {
+    width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+    border: 3px solid transparent; transition: all 0.2s; flex-shrink: 0;
+  }
+  .cc-swatch:hover { transform: scale(1.15); }
+  .cc-swatch.selected { border-color: #FFD93D; transform: scale(1.15); box-shadow: 0 0 0 2px rgba(255,217,61,0.4); }
+  .cc-outfit {
+    width: 36px; height: 36px; border-radius: 8px; cursor: pointer;
+    border: 3px solid transparent; transition: all 0.2s;
+  }
+  .cc-outfit:hover { transform: scale(1.1); }
+  .cc-outfit.selected { border-color: #FFD93D; box-shadow: 0 0 0 2px rgba(255,217,61,0.4); }
+  .cc-acc { font-size: 24px; cursor: pointer; padding: 4px 6px; border-radius: 8px; border: 2px solid transparent; transition: all 0.2s; }
+  .cc-acc:hover { background: rgba(255,255,255,0.1); }
+  .cc-acc.selected { border-color: #FFD93D; background: rgba(255,217,61,0.15); }
+  /* Character Preview */
+  #cc-preview-wrap {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; margin: 0 0 16px;
+  }
+  #cc-preview-canvas { border-radius: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+  #cc-preview-name { font-size: 13px; font-weight: 800; color: white; }
 
   /* ── Skor popup ── */
   .skor-popup {
@@ -263,16 +289,48 @@
 <!-- LOGIN -->
 <div id="login-overlay">
   <div id="login-box">
-    <div style="font-size:48px;margin-bottom:12px">🌍</div>
+    <div style="font-size:36px;margin-bottom:8px">🌍</div>
     <h1>KitaBelajar World</h1>
-    <p>Masukkan nama & kode kelas untuk masuk ke dunia belajar!</p>
-    <input class="login-input" id="inp-nama" placeholder="Nama kamu..." maxlength="20">
-    <input class="login-input" id="inp-avatar" placeholder="Avatar (emoji, contoh: 🦁)" maxlength="2" style="text-align:center;font-size:24px">
-    <input class="login-input" id="inp-kode-kelas" placeholder="Kode kelas (opsional)" maxlength="10" style="text-align:center;text-transform:uppercase">
+    <p>Buat karaktermu & masuk ke dunia belajar!</p>
+
+    <!-- Character Preview -->
+    <div id="cc-preview-wrap">
+      <canvas id="cc-preview-canvas" width="100" height="120"></canvas>
+      <div id="cc-preview-name" style="color:rgba(255,255,255,0.4)">Nama kamu...</div>
+    </div>
+
+    <!-- Nama -->
+    <div class="cc-section">
+      <input class="login-input" id="inp-nama" placeholder="Nama kamu..." maxlength="20" oninput="updatePreviewName(this.value)">
+    </div>
+
+    <!-- Skin Color -->
+    <div class="cc-section">
+      <span class="cc-label">🎨 Warna Kulit</span>
+      <div class="cc-swatches" id="cc-skin-list"></div>
+    </div>
+
+    <!-- Outfit Color -->
+    <div class="cc-section">
+      <span class="cc-label">👕 Warna Baju</span>
+      <div class="cc-swatches" id="cc-outfit-list"></div>
+    </div>
+
+    <!-- Accessories -->
+    <div class="cc-section">
+      <span class="cc-label">🎩 Aksesori</span>
+      <div class="cc-swatches" id="cc-acc-list" style="gap:6px"></div>
+    </div>
+
+    <!-- Kode Kelas -->
+    <div class="cc-section" style="margin-top:4px">
+      <input class="login-input" id="inp-kode-kelas" placeholder="Kode kelas (opsional)" maxlength="10" style="text-align:center;text-transform:uppercase;margin-bottom:0">
+    </div>
+
     <button id="btn-masuk" onclick="masukDunia()">🚀 Masuk ke Dunia!</button>
     <br>
     <button id="btn-kembali" onclick="window.history.back()">← Kembali ke Dashboard</button>
-    <p style="margin-top:16px;font-size:11px;color:rgba(255,255,255,0.3)">Gerakan: WASD / Arrow Keys<br>Soal muncul otomatis saat kamu masuki area</p>
+    <p style="margin-top:12px;font-size:11px;color:rgba(255,255,255,0.25)">WASD / Arrow Keys untuk bergerak</p>
   </div>
 </div>
 
@@ -432,7 +490,115 @@ const SPEED      = 180;      // pixel per detik
 const SOAL_RADIUS = TILE * 2; // radius zona soal
 
 // ── Pemain saya ──
-let myPlayer = { id: '', nama: '', avatar: '🦁', x: 400, y: 300, skor: 0 };
+let myPlayer = { id: '', nama: '', avatar: '🦁', skinColor: '#FFD3A3', outfitColor: '#4D96FF', accessory: '', x: 400, y: 300, skor: 0 };
+
+// ── Character Creator ──
+const CC_SKINS    = ['#FFDBAC','#F1C27D','#E0AC69','#C68642','#8D5524','#FFDAB9'];
+const CC_OUTFITS  = ['#4D96FF','#FF6B35','#6BCB77','#C77DFF','#FF6B9D','#FFD93D','#FF4757','#2ed573'];
+const CC_ACCS     = ['','🎓','⛑️','🎩','👒','🧢','😎','🌟'];
+
+let selSkin    = 0;
+let selOutfit  = 0;
+let selAcc     = 0;
+
+function initCharCreator() {
+  // Render skin swatches
+  const skinEl = document.getElementById('cc-skin-list');
+  if (!skinEl) return;
+  skinEl.innerHTML = CC_SKINS.map((c,i) =>
+    `<div class="cc-swatch${i===selSkin?' selected':''}" style="background:${c}" onclick="pickSkin(${i})"></div>`
+  ).join('');
+  // Render outfit swatches
+  const outfitEl = document.getElementById('cc-outfit-list');
+  outfitEl.innerHTML = CC_OUTFITS.map((c,i) =>
+    `<div class="cc-outfit${i===selOutfit?' selected':''}" style="background:${c}" onclick="pickOutfit(${i})"></div>`
+  ).join('');
+  // Render accessories
+  const accEl = document.getElementById('cc-acc-list');
+  accEl.innerHTML = CC_ACCS.map((a,i) =>
+    `<div class="cc-acc${i===selAcc?' selected':''}" onclick="pickAcc(${i})">${a||'✗'}</div>`
+  ).join('');
+  drawPreview();
+}
+
+function pickSkin(i) {
+  selSkin = i;
+  document.querySelectorAll('#cc-skin-list .cc-swatch').forEach((el,idx) => el.classList.toggle('selected', idx===i));
+  drawPreview();
+}
+function pickOutfit(i) {
+  selOutfit = i;
+  document.querySelectorAll('#cc-outfit-list .cc-outfit').forEach((el,idx) => el.classList.toggle('selected', idx===i));
+  drawPreview();
+}
+function pickAcc(i) {
+  selAcc = i;
+  document.querySelectorAll('#cc-acc-list .cc-acc').forEach((el,idx) => el.classList.toggle('selected', idx===i));
+  drawPreview();
+}
+function updatePreviewName(v) {
+  const el = document.getElementById('cc-preview-name');
+  if (el) el.textContent = v || 'Nama kamu...';
+  el.style.color = v ? 'white' : 'rgba(255,255,255,0.4)';
+}
+
+function drawPreview() {
+  const canvas = document.getElementById('cc-preview-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = 100, H = 120;
+  ctx.clearRect(0, 0, W, H);
+  const cx = W/2, cy = H/2 + 8;
+  const skin   = CC_SKINS[selSkin];
+  const outfit = CC_OUTFITS[selOutfit];
+  const acc    = CC_ACCS[selAcc];
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath(); ctx.ellipse(cx, cy+28, 18, 6, 0, 0, Math.PI*2); ctx.fill();
+
+  // Body (outfit)
+  ctx.fillStyle = outfit;
+  ctx.beginPath();
+  ctx.roundRect(cx-12, cy+2, 24, 22, 4);
+  ctx.fill();
+
+  // Darker shade on body
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+  ctx.beginPath(); ctx.roundRect(cx-12, cy+2, 24, 8, [4,4,0,0]); ctx.fill();
+
+  // Neck
+  ctx.fillStyle = skin;
+  ctx.fillRect(cx-5, cy-4, 10, 8);
+
+  // Head
+  ctx.fillStyle = skin;
+  ctx.beginPath(); ctx.arc(cx, cy-14, 16, 0, Math.PI*2); ctx.fill();
+
+  // Eyes
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.beginPath(); ctx.arc(cx-5, cy-15, 2.5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+5, cy-15, 2.5, 0, Math.PI*2); ctx.fill();
+
+  // Mouth (smile)
+  ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(cx, cy-11, 5, 0.2, Math.PI-0.2); ctx.stroke();
+
+  // Eye shine
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.beginPath(); ctx.arc(cx-4, cy-16.5, 1, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+6, cy-16.5, 1, 0, Math.PI*2); ctx.fill();
+
+  // Accessory
+  if (acc) {
+    ctx.font = '18px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(acc, cx, cy-26);
+  }
+}
+
+
 let otherPlayers = {};
 let socket = null;
 let soalAktif = null;
@@ -483,12 +649,14 @@ const MAPS = {
 // ============================================================
 function masukDunia() {
   const nama = document.getElementById('inp-nama').value.trim();
-  const avatar = document.getElementById('inp-avatar').value.trim() || '🦁';
   if (!nama) { tampilNotif('Masukkan namamu dulu!', 'error'); return; }
 
-  myPlayer.id   = 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2,4);
-  myPlayer.nama = nama;
-  myPlayer.avatar = avatar;
+  myPlayer.id        = 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2,4);
+  myPlayer.nama      = nama;
+  myPlayer.skinColor = CC_SKINS[selSkin];
+  myPlayer.outfitColor = CC_OUTFITS[selOutfit];
+  myPlayer.accessory = CC_ACCS[selAcc];
+  myPlayer.avatar    = CC_ACCS[selAcc] || '😊'; // fallback emoji for socket
 
   document.getElementById('hud-avatar').textContent = avatar;
   document.getElementById('hud-nama').textContent = nama;
@@ -649,7 +817,7 @@ function selesaiVoting() {
     document.getElementById('game-container').style.display = 'block';
     // Join socket kalau tersedia
     if (socket && socket.connected) {
-      socket.emit('world:join', { id: myPlayer.id, nama: myPlayer.nama, avatar: myPlayer.avatar, x: myPlayer.x, y: myPlayer.y });
+      socket.emit('world:join', { id: myPlayer.id, nama: myPlayer.nama, avatar: myPlayer.avatar, accessory: myPlayer.accessory, skinColor: myPlayer.skinColor, outfitColor: myPlayer.outfitColor, x: myPlayer.x, y: myPlayer.y });
     }
     initGame(winMap);
     loadSoal();
@@ -716,16 +884,83 @@ function initGame(mapId) {
 //  MAP GENERATORS — 6 map unik
 // ============================================================
 function genSekolah() {
+  // Zone map:
+  // Rows 0-7:   🌸 TAMAN (Garden) - lush green, trees, flowers, benches
+  // Rows 8-15:  📚 AREA KELAS (Classroom) - buildings, paths, NPCs
+  // Rows 16-23: ⚽ LAPANGAN (Field) - open green, track, goals
+
   const map = [];
-  for (let r=0;r<MAP_H;r++) { map[r]=[];
-    for (let c=0;c<MAP_W;c++) {
-      if (r===0||r===MAP_H-1||c===0||c===MAP_W-1){map[r][c]=1;continue;}
-      if (r>=MAP_H/2-1&&r<=MAP_H/2){map[r][c]=2;continue;}
-      if (c>=MAP_W/2-1&&c<=MAP_W/2){map[r][c]=2;continue;}
-      if ((r<5&&c<5)||(r<5&&c>MAP_W-6)||(r>MAP_H-6&&c<5)||(r>MAP_H-6&&c>MAP_W-6)){map[r][c]=Math.random()<0.4?3:0;continue;}
-      if (r>=3&&r<=8&&c>=6&&c<=12){map[r][c]=4;continue;}
-      if (r>=3&&r<=8&&c>=MAP_W-13&&c<=MAP_W-7){map[r][c]=4;continue;}
-      map[r][c]=Math.random()<0.05?3:0;
+  for (let r=0; r<MAP_H; r++) {
+    map[r] = [];
+    for (let c=0; c<MAP_W; c++) {
+
+      // ─── Border dinding luar ───
+      if (r===0||r===MAP_H-1||c===0||c===MAP_W-1) { map[r][c]=1; continue; }
+
+      // ─── ZONA TAMAN (r 1-7) ───
+      if (r >= 1 && r <= 7) {
+        // Pagar taman (baris 7 = batas)
+        if (r === 7) { map[r][c] = (c%4===0) ? 4 : 2; continue; }
+        // Gerbang masuk di tengah
+        if (r === 7 && (c === MAP_W/2-1 || c === MAP_W/2)) { map[r][c] = 0; continue; }
+        // Pohon besar di sudut taman
+        if ((r>=1&&r<=4&&c>=1&&c<=3)||(r>=1&&r<=4&&c>=MAP_W-4&&c<=MAP_W-2)) { map[r][c]=3; continue; }
+        if ((r>=4&&r<=6&&c>=1&&c<=3)||(r>=4&&r<=6&&c>=MAP_W-4&&c<=MAP_W-2)) { map[r][c]=3; continue; }
+        // Jalan setapak di taman (tengah vertikal)
+        if (c===MAP_W/2-1||c===MAP_W/2) { map[r][c]=2; continue; }
+        // Jalan horizontal taman
+        if (r===4) { map[r][c]=2; continue; }
+        // Bunga/dekorasi acak
+        if (Math.random()<0.12) { map[r][c]=3; continue; }
+        map[r][c]=0;
+        continue;
+      }
+
+      // ─── ZONA KELAS (r 8-15) ───
+      if (r >= 8 && r <= 15) {
+        // Jalan utama horizontal di tengah zona
+        if (r===11||r===12) { map[r][c]=2; continue; }
+        // Jalan vertikal utama
+        if (c===MAP_W/2-1||c===MAP_W/2) { map[r][c]=2; continue; }
+        // Gedung kelas kiri (r8-10, c2-12)
+        if (r>=8&&r<=10&&c>=2&&c<=12) { map[r][c]=4; continue; }
+        // Gedung kelas kanan (r8-10, c19-29)
+        if (r>=8&&r<=10&&c>=19&&c<=29) { map[r][c]=4; continue; }
+        // Gedung kelas bawah kiri (r13-15, c2-12)
+        if (r>=13&&r<=15&&c>=2&&c<=12) { map[r][c]=4; continue; }
+        // Gedung kelas bawah kanan (r13-15, c19-29)
+        if (r>=13&&r<=15&&c>=19&&c<=29) { map[r][c]=4; continue; }
+        // Pohon kecil di sisi jalan
+        if ((c===1||c===MAP_W-2)&&(r%2===0)) { map[r][c]=3; continue; }
+        map[r][c]=0;
+        continue;
+      }
+
+      // ─── BATAS ZONA (r 15-16) ───
+      if (r===15) {
+        if (c===MAP_W/2-1||c===MAP_W/2) { map[r][c]=2; continue; }
+        map[r][c]=(c%5===0)?3:0; continue;
+      }
+
+      // ─── ZONA LAPANGAN (r 16-22) ───
+      if (r >= 16 && r <= 22) {
+        // Garis pinggir lapangan
+        if (r===16&&c>=4&&c<=MAP_W-5) { map[r][c]=2; continue; }
+        // Gawang kiri
+        if ((r>=18&&r<=20)&&(c===4||c===3)) { map[r][c]=4; continue; }
+        // Gawang kanan
+        if ((r>=18&&r<=20)&&(c===MAP_W-5||c===MAP_W-4)) { map[r][c]=4; continue; }
+        // Lingkaran tengah lapangan (titik tengah)
+        if (r===19&&(c===MAP_W/2-1||c===MAP_W/2)) { map[r][c]=2; continue; }
+        // Track lari di pinggir
+        if (c===5||c===MAP_W-6) { map[r][c]=2; continue; }
+        // Rumput lapangan (open, very few trees)
+        if (Math.random()<0.02) { map[r][c]=3; continue; }
+        map[r][c]=0;
+        continue;
+      }
+
+      map[r][c] = 0;
     }
   }
   return map;
@@ -831,48 +1066,125 @@ function create() {
   const totalW = MAP_W * TILE;
   const totalH = MAP_H * TILE;
 
-  // ── Gambar tilemap ──
+  // ── Gambar tilemap dengan rendering kaya ──
   this.mapGraphics = this.add.graphics();
+
+  // Zone color palettes
+  const zoneGrass = (r) => {
+    if (r <= 7)  return 0x4a9e4a;  // Taman - hijau segar
+    if (r <= 15) return 0x3d7a3d;  // Kelas - hijau sedang
+    return 0x5aab5a;               // Lapangan - hijau cerah
+  };
+
   for (let r = 0; r < MAP_H; r++) {
     for (let c = 0; c < MAP_W; c++) {
       const t = mapData[r][c];
       const x = c * TILE, y = r * TILE;
-      const col = tileColors[t] ?? tileColors[0];
-      this.mapGraphics.fillStyle(col, 1);
-      this.mapGraphics.fillRect(x, y, TILE-1, TILE-1);
-      // Dekorasi
-      if (t === 3) {
-        this.mapGraphics.fillStyle(tileColors[3] + 0x001500, 1);
-        this.mapGraphics.fillCircle(x+TILE/2, y+TILE/2, TILE/2.5);
+
+      if (t === 0) {
+        // Grass - warna bervariasi per zona
+        const base = zoneGrass(r);
+        this.mapGraphics.fillStyle(base, 1);
+        this.mapGraphics.fillRect(x, y, TILE-1, TILE-1);
+        // Detail rumput kecil (titik lebih gelap)
+        if ((r+c)%3===0) {
+          this.mapGraphics.fillStyle(base - 0x0a1a0a, 0.4);
+          this.mapGraphics.fillRect(x+8, y+12, 3, 5);
+          this.mapGraphics.fillRect(x+18, y+6, 3, 5);
+        }
+        // Bunga di taman
+        if (r<=7 && (r+c*3)%11===0) {
+          this.mapGraphics.fillStyle(0xFFB3D9, 1);
+          this.mapGraphics.fillCircle(x+TILE/2, y+TILE/2, 4);
+          this.mapGraphics.fillStyle(0xFFFF99, 1);
+          this.mapGraphics.fillCircle(x+TILE/2, y+TILE/2, 2);
+        }
+        // Garis lapangan
+        if (r>=16 && r<=22) {
+          if (c===MAP_W/2) {
+            this.mapGraphics.fillStyle(0xffffff, 0.15);
+            this.mapGraphics.fillRect(x+TILE/2-1, y, 2, TILE);
+          }
+          if (r===19) {
+            this.mapGraphics.fillStyle(0xffffff, 0.1);
+            this.mapGraphics.fillRect(x, y+TILE/2-1, TILE, 2);
+          }
+        }
       }
-      if (t === 1) {
-        this.mapGraphics.fillStyle(tileColors[1] + 0x001020, 0.5);
-        this.mapGraphics.fillRect(x+2, y+TILE/2-2, TILE-4, 4);
+      else if (t === 1) {
+        // Dinding/air - biru gelap dengan efek
+        this.mapGraphics.fillStyle(0x1a5276, 1);
+        this.mapGraphics.fillRect(x, y, TILE-1, TILE-1);
+        this.mapGraphics.fillStyle(0x2980b9, 0.3);
+        this.mapGraphics.fillRect(x+2, y+2, TILE-5, 6);
       }
-      if (t === 4) {
-        this.mapGraphics.fillStyle(tileColors[4] + 0x101010, 1);
-        this.mapGraphics.fillRect(x+4, y+4, TILE-8, TILE-8);
-        this.mapGraphics.fillStyle(0x000000, 0.3);
-        this.mapGraphics.fillRect(x+TILE/2-5, y+TILE-14, 10, 10);
+      else if (t === 2) {
+        // Jalan/Path
+        const isMainPath = (c===MAP_W/2-1||c===MAP_W/2);
+        const pathCol = isMainPath ? 0xC4A882 : 0xB8986A;
+        this.mapGraphics.fillStyle(pathCol, 1);
+        this.mapGraphics.fillRect(x, y, TILE-1, TILE-1);
+        // Tekstur jalan (garis halus)
+        this.mapGraphics.fillStyle(0x000000, 0.08);
+        this.mapGraphics.fillRect(x, y, TILE-1, 2);
+        this.mapGraphics.fillRect(x, y+TILE-3, TILE-1, 2);
       }
-      if (t === 2) {
-        this.mapGraphics.fillStyle(0xffffff, 0.08);
-        this.mapGraphics.fillRect(x+TILE/2-1, y, 2, TILE);
+      else if (t === 3) {
+        // Pohon/semak
+        // Tanah di bawah
+        this.mapGraphics.fillStyle(0x3d7a3d, 1);
+        this.mapGraphics.fillRect(x, y, TILE-1, TILE-1);
+        // Batang
+        this.mapGraphics.fillStyle(0x6B4226, 1);
+        this.mapGraphics.fillRect(x+TILE/2-3, y+TILE/2, 6, TILE/2);
+        // Kanopi - 3 lapis untuk efek lebih hidup
+        this.mapGraphics.fillStyle(0x1a7a1a, 1);
+        this.mapGraphics.fillCircle(x+TILE/2, y+TILE/2, TILE/2-2);
+        this.mapGraphics.fillStyle(0x27ae60, 1);
+        this.mapGraphics.fillCircle(x+TILE/2-4, y+TILE/2-4, TILE/3);
+        this.mapGraphics.fillStyle(0x2ecc71, 0.7);
+        this.mapGraphics.fillCircle(x+TILE/2+3, y+TILE/2-6, TILE/3.5);
+        // Highlight
+        this.mapGraphics.fillStyle(0x58d68d, 0.5);
+        this.mapGraphics.fillCircle(x+TILE/2-2, y+TILE/2-8, TILE/5);
       }
-      // Bintang di angkasa
-      if (mapDef.id === 'angkasa' && t === 0 && Math.random() < 0.15) {
-        this.mapGraphics.fillStyle(0xffffff, Math.random() * 0.8 + 0.2);
-        this.mapGraphics.fillCircle(x + Math.random()*TILE, y + Math.random()*TILE, 1.5);
+      else if (t === 4) {
+        // Bangunan/gedung
+        // Dinding
+        this.mapGraphics.fillStyle(0xE8D5B7, 1);
+        this.mapGraphics.fillRect(x, y, TILE-1, TILE-1);
+        // Atap (baris pertama gedung lebih gelap)
+        this.mapGraphics.fillStyle(0xC0392B, 0.8);
+        this.mapGraphics.fillRect(x, y, TILE-1, 8);
+        // Jendela
+        if (r%2===0 && c%2===0) {
+          this.mapGraphics.fillStyle(0x85C1E9, 0.8);
+          this.mapGraphics.fillRect(x+6, y+10, 12, 10);
+          this.mapGraphics.fillStyle(0xffffff, 0.3);
+          this.mapGraphics.fillRect(x+6, y+10, 5, 10);
+        } else {
+          this.mapGraphics.fillStyle(0x85C1E9, 0.6);
+          this.mapGraphics.fillRect(x+6, y+10, 12, 10);
+        }
+        // Bayangan bawah gedung
+        this.mapGraphics.fillStyle(0x000000, 0.15);
+        this.mapGraphics.fillRect(x, y+TILE-5, TILE-1, 4);
       }
     }
   }
 
-  // ── Label map ──
-  const mapLabel = mapDef.emoji + ' ' + mapDef.nama;
-  this.add.text(totalW/2, 28, mapLabel, {
-    fontFamily: 'Nunito', fontSize: '16px', fontStyle: 'bold', color: '#FFD93D',
-    stroke: '#000', strokeThickness: 4
-  }).setOrigin(0.5, 0.5);
+  // ── Label zona ──
+  const zoneLabels = [
+    { text: '🌸 TAMAN', row: 4,  col: MAP_W/2, color: '#FFB3D9' },
+    { text: '📚 AREA KELAS', row: 11, col: MAP_W/2, color: '#FFD93D' },
+    { text: '⚽ LAPANGAN', row: 19, col: MAP_W/2, color: '#6BCB77' },
+  ];
+  zoneLabels.forEach(({ text, row, col, color }) => {
+    this.add.text(col*TILE, row*TILE, text, {
+      fontFamily: 'Nunito', fontSize: '13px', fontStyle: 'bold',
+      color, stroke: '#000', strokeThickness: 4, alpha: 0.7
+    }).setOrigin(0.5, 0.5);
+  });
 
   // ── Physics world ──
   this.physics.world.setBounds(TILE, TILE, totalW - TILE*2, totalH - TILE*2);
@@ -894,18 +1206,54 @@ function create() {
   const startY = Math.floor(MAP_H/2) * TILE + TILE*3;
   myPlayer.x = startX; myPlayer.y = startY;
 
-  const playerColor = mapDef.id === 'angkasa' ? 0x4D96FF : 0xFF6B35;
-  this.playerBody = this.add.circle(startX, startY, 18, playerColor);
+  // ── Custom character renderer ──
+  function hexStrToInt(hex) {
+    return parseInt(hex.replace('#',''), 16);
+  }
+  const skinInt   = hexStrToInt(myPlayer.skinColor  || '#FFD3A3');
+  const outfitInt = hexStrToInt(myPlayer.outfitColor || '#4D96FF');
+
+  // Shadow
+  this.playerShadow = this.add.ellipse(startX, startY+20, 32, 10, 0x000000, 0.25);
+
+  // Body (outfit)
+  this.playerBody = this.add.rectangle(startX, startY+8, 24, 22, outfitInt);
   this.physics.add.existing(this.playerBody);
   this.playerBody.body.setCollideWorldBounds(true);
-  this.playerBody.body.setCircle(18);
+  this.playerBody.body.setSize(24, 38);  // full collision height
+  this.playerBody.body.setOffset(-12, -8);
   this.physics.add.collider(this.playerBody, this.collideGroup);
 
-  this.playerAvatar = this.add.text(startX, startY-2, myPlayer.avatar, { fontSize:'22px' }).setOrigin(0.5,0.5);
-  this.playerLabel  = this.add.text(startX, startY+24, myPlayer.nama, {
-    fontFamily:'Nunito', fontSize:'12px', fontStyle:'bold', color:'#fff', stroke:'#000', strokeThickness:3
-  }).setOrigin(0.5,0);
-  this.playerShadow = this.add.ellipse(startX, startY+16, 32, 10, 0x000000, 0.3);
+  // Neck
+  this.playerNeck = this.add.rectangle(startX, startY-4, 10, 8, skinInt);
+
+  // Head
+  this.playerHead = this.add.circle(startX, startY-16, 14, skinInt);
+
+  // Eyes (dark dots)
+  this.playerEyeL = this.add.circle(startX-5, startY-17, 2, 0x1a1a1a);
+  this.playerEyeR = this.add.circle(startX+5, startY-17, 2, 0x1a1a1a);
+
+  // Accessory emoji on head
+  this.playerAvatar = this.add.text(startX, startY-30,
+    myPlayer.accessory || '', { fontSize:'14px' }).setOrigin(0.5, 0.5);
+
+  // Name label
+  this.playerLabel = this.add.text(startX, startY+24, myPlayer.nama, {
+    fontFamily:'Nunito', fontSize:'11px', fontStyle:'bold',
+    color:'#fff', stroke:'#000', strokeThickness:3
+  }).setOrigin(0.5, 0);
+
+  // Helper to update all player parts
+  this._updatePlayerPos = (px, py) => {
+    this.playerShadow.setPosition(px, py+20);
+    this.playerNeck.setPosition(px, py-4);
+    this.playerHead.setPosition(px, py-16);
+    this.playerEyeL.setPosition(px-5, py-17);
+    this.playerEyeR.setPosition(px+5, py-17);
+    this.playerAvatar.setPosition(px, py-30);
+    this.playerLabel.setPosition(px, py+24);
+  };
 
   // ── Kamera ──
   this.cameras.main.setBounds(0, 0, totalW, totalH);
@@ -986,9 +1334,7 @@ function update(time, delta) {
   if (soalAktif){vx=0;vy=0;}
   body.setVelocity(vx,vy);
   const px=this.playerBody.x, py=this.playerBody.y;
-  this.playerAvatar.setPosition(px,py-2);
-  this.playerLabel.setPosition(px,py+22);
-  this.playerShadow.setPosition(px,py+14);
+  if (this._updatePlayerPos) this._updatePlayerPos(px, py);
   if (Math.abs(px-myPlayer.x)>2||Math.abs(py-myPlayer.y)>2) {
     myPlayer.x=px; myPlayer.y=py;
     if (socket) socket.emit('world:move',{id:myPlayer.id,x:px,y:py});
@@ -1005,12 +1351,17 @@ function update(time, delta) {
     cekProximityNPC(px, py);
   }
   for (const [id,data] of Object.entries(otherPlayers)) {
-    if (this.otherSprites[id]) {
-      const sp=this.otherSprites[id];
-      sp.circle.x=data.x; sp.circle.y=data.y;
-      sp.avatar.setPosition(data.x,data.y-2);
-      sp.label.setPosition(data.x,data.y+22);
-    }
+    const sp = this.otherSprites[id];
+    if (!sp) continue;
+    const ox = data.x, oy = data.y;
+    sp.circle.setPosition(ox, oy+6);
+    sp.avatar.setPosition(ox, oy-26);
+    sp.label.setPosition(ox, oy+20);
+    if (sp.shadow) sp.shadow.setPosition(ox, oy+18);
+    if (sp.neck)   sp.neck.setPosition(ox, oy-4);
+    if (sp.head)   sp.head.setPosition(ox, oy-14);
+    if (sp.eyeL)   sp.eyeL.setPosition(ox-4, oy-15);
+    if (sp.eyeR)   sp.eyeR.setPosition(ox+4, oy-15);
   }
 }
 
@@ -1182,7 +1533,7 @@ function connectSocket() {
   socket.on('world:player_leave', ({ id }) => {
     if (gameScene?.otherSprites[id]) {
       const sp = gameScene.otherSprites[id];
-      sp.circle.destroy(); sp.avatar.destroy(); sp.label.destroy();
+      ['circle','avatar','label','shadow','neck','head','eyeL','eyeR'].forEach(k => sp[k]?.destroy());
       delete gameScene.otherSprites[id];
     }
     delete otherPlayers[id];
@@ -1202,7 +1553,7 @@ function selesaiVotingDenganPemenang(winner) {
     vo.classList.remove('show');
     vo.style.display = 'none';
     if (socket && socket.connected) {
-      socket.emit('world:join', { id: myPlayer.id, nama: myPlayer.nama, avatar: myPlayer.avatar, x: myPlayer.x, y: myPlayer.y });
+      socket.emit('world:join', { id: myPlayer.id, nama: myPlayer.nama, avatar: myPlayer.avatar, accessory: myPlayer.accessory, skinColor: myPlayer.skinColor, outfitColor: myPlayer.outfitColor, x: myPlayer.x, y: myPlayer.y });
     }
     document.getElementById('game-container').style.display = 'block';
     initGame(winner);
@@ -1214,13 +1565,24 @@ function tambahOtherPlayer(p) {
   if (!p || !p.id) return;
   otherPlayers[p.id] = p;
   if (!gameScene) return;
-  const circle = gameScene.add.circle(p.x, p.y, 16, 0x4D96FF);
-  const avatar = gameScene.add.text(p.x, p.y - 2, p.avatar, { fontSize: '20px' }).setOrigin(0.5, 0.5);
-  const label  = gameScene.add.text(p.x, p.y + 20, p.nama, {
+
+  // Render karakter lain dengan skin/outfit mereka (atau default jika tidak ada data)
+  const skinHex  = p.skinColor  ? parseInt(p.skinColor.replace('#',''), 16)  : 0xFFD3A3;
+  const outfitHex = p.outfitColor ? parseInt(p.outfitColor.replace('#',''), 16) : 0x4D96FF;
+
+  const shadow = gameScene.add.ellipse(p.x, p.y+18, 28, 8, 0x000000, 0.2);
+  const body   = gameScene.add.rectangle(p.x, p.y+6, 20, 18, outfitHex);
+  const neck   = gameScene.add.rectangle(p.x, p.y-4, 8, 7, skinHex);
+  const head   = gameScene.add.circle(p.x, p.y-14, 12, skinHex);
+  const eyeL   = gameScene.add.circle(p.x-4, p.y-15, 1.8, 0x1a1a1a);
+  const eyeR   = gameScene.add.circle(p.x+4, p.y-15, 1.8, 0x1a1a1a);
+  const acc    = gameScene.add.text(p.x, p.y-26, p.accessory||p.avatar||'', { fontSize:'12px' }).setOrigin(0.5,0.5);
+  const label  = gameScene.add.text(p.x, p.y+20, p.nama, {
     fontFamily: 'Nunito', fontSize: '11px', fontStyle: 'bold',
     color: '#fff', stroke: '#000', strokeThickness: 2
   }).setOrigin(0.5, 0);
-  gameScene.otherSprites[p.id] = { circle, avatar, label };
+
+  gameScene.otherSprites[p.id] = { circle: body, avatar: acc, label, shadow, neck, head, eyeL, eyeR };
   updatePemainList();
 }
 
@@ -1269,28 +1631,30 @@ function tampilSkorPopup(teks, benar) {
 function joyDown(dir) { mobileKeys[dir] = true; }
 function joyUp(dir)   { mobileKeys[dir] = false; }
 
-// ── Coba ambil token dari localStorage ──
+// ── Coba ambil data dari localStorage ──
 window.addEventListener('load', () => {
-  const savedNama   = localStorage.getItem('kb_nama');
-  const savedAvatar = localStorage.getItem('kb_avatar');
-  if (savedNama)   document.getElementById('inp-nama').value = savedNama;
-  if (savedAvatar) document.getElementById('inp-avatar').value = savedAvatar;
+  const savedNama = localStorage.getItem('kb_nama');
+  if (savedNama) {
+    const el = document.getElementById('inp-nama');
+    if (el) { el.value = savedNama; updatePreviewName(savedNama); }
+  }
+  initCharCreator();
 });
 
 // ============================================================
 //  NPC AI — Karakter yang bisa diajak bicara
 // ============================================================
 const NPC_LIST = [
-  { id:'prof', x: 8, y: 6, emoji:'👴', nama:'Prof. Arif', warna:0x4D96FF,
+  { id:'prof', x: 6, y: 3, emoji:'👴', nama:'Prof. Arif', warna:0x4D96FF,
     topik:'matematika dan sains',
     greeting:'Halo! Aku Prof. Arif, ahli matematika dan sains. Ada yang ingin kamu pelajari?' },
-  { id:'ibu', x: 22, y: 6, emoji:'👩‍🏫', nama:'Ibu Sari', warna:0xFF6B9D,
+  { id:'ibu', x: 24, y: 3, emoji:'👩‍🏫', nama:'Ibu Sari', warna:0xFF6B9D,
     topik:'bahasa Indonesia dan sejarah',
     greeting:'Selamat datang! Aku Ibu Sari. Aku bisa bantu kamu belajar bahasa dan sejarah Indonesia!' },
-  { id:'robot', x: 8, y: 18, emoji:'🤖', nama:'RoboKiki', warna:0x6BCB77,
+  { id:'robot', x: 6, y: 19, emoji:'🤖', nama:'RoboKiki', warna:0x6BCB77,
     topik:'semua pelajaran dan teka-teki',
     greeting:'Beep boop! Aku RoboKiki 🤖 Aku tahu segalanya! Tanya aku apa saja!' },
-  { id:'penjelajah', x: 22, y: 18, emoji:'🧭', nama:'Pak Jelajah', warna:0xFFD93D,
+  { id:'penjelajah', x: 24, y: 19, emoji:'🧭', nama:'Pak Jelajah', warna:0xFFD93D,
     topik:'geografi dan IPS',
     greeting:'Hei petualang! Aku Pak Jelajah. Mau tahu tentang dunia dan geografi?' },
 ];
@@ -1324,14 +1688,22 @@ function buatNPC(scene) {
       dirX: 0, dirY: 0
     };
 
-    // Lingkaran NPC
-    const circle = scene.add.circle(px, py, 20, npc.warna);
+    // Glow pulsing ring
+    const glow = scene.add.circle(px, py, 28, npc.warna, 0.2);
     scene.tweens.add({
-      targets: circle, alpha: { from: 0.7, to: 1 },
-      duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+      targets: glow, scaleX:{from:1,to:1.4}, scaleY:{from:1,to:1.4}, alpha:{from:0.2,to:0},
+      duration: 1400, repeat: -1, ease: 'Sine.easeOut'
     });
-    // Avatar
-    const avatar = scene.add.text(px, py-2, npc.emoji, { fontSize:'20px' }).setOrigin(0.5,0.5);
+    // Body circle
+    const circle = scene.add.circle(px, py, 22, npc.warna);
+    scene.tweens.add({
+      targets: circle, alpha: { from: 0.85, to: 1 },
+      duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+    });
+    // Inner face circle (lighter)
+    scene.add.circle(px, py, 14, npc.warna + 0x303030, 0.9);
+    // Avatar emoji
+    const avatar = scene.add.text(px, py-1, npc.emoji, { fontSize:'18px' }).setOrigin(0.5,0.5);
     // Nama
     const label = scene.add.text(px, py+26, npc.nama, {
       fontFamily:'Nunito', fontSize:'11px', fontStyle:'bold',
