@@ -1153,6 +1153,20 @@
         <button class="tab-btn" id="tab-murid-btn" onclick="switchKelasTab('murid')">👥 Murid</button>
         <button class="tab-btn" id="tab-chat-btn" onclick="switchKelasTab('chat')">💬 Chat</button>
       </div>
+      <!-- Banner meeting — muncul di tab Materi saat guru share link -->
+      <div id="kelas-meeting-banner" style="display:none;margin-bottom:12px;border-radius:16px;overflow:hidden;border:2px solid #1d6fe8;background:linear-gradient(135deg,#EEF5FF,#E0EEFF)">
+        <div style="display:flex;align-items:center;gap:16px;padding:16px 20px">
+          <div style="font-size:40px;flex-shrink:0">📹</div>
+          <div style="flex:1">
+            <div style="font-weight:800;font-size:15px;color:#1d4ed8;margin-bottom:2px">Meeting Sedang Berlangsung!</div>
+            <div id="kelas-meeting-banner-sub" style="font-size:13px;color:#3b82f6;font-weight:600">Guru mengundang kamu untuk bergabung</div>
+          </div>
+          <a id="kelas-meeting-banner-link" href="#" target="_blank"
+            style="background:var(--blue);color:white;padding:10px 20px;border-radius:50px;font-weight:800;font-size:14px;text-decoration:none;white-space:nowrap;flex-shrink:0;font-family:Nunito,sans-serif">
+            Gabung Sekarang →
+          </a>
+        </div>
+      </div>
       <div id="kelas-stream" style="display:flex;flex-direction:column;gap:0;padding-top:4px"></div>
       <div id="kelas-murid-stream" style="display:none;padding-top:4px"></div>
       <div id="kelas-chat-stream" style="display:none;padding-top:4px">
@@ -2778,8 +2792,35 @@ async function openKelas(kelasId, colorIdx) {
         role: currentUser.role
       });
     }
-    // Reset tombol meeting murid (akan diupdate oleh socket vc:meeting_started)
     vcCurrentKelasId = kelasId;
+
+    // Restore banner jika meeting masih aktif (setelah refresh)
+    hideMeetingBanner();
+    const savedMeeting = localStorage.getItem('kb_meeting_' + kelasId);
+    if (savedMeeting) {
+      try {
+        const m = JSON.parse(savedMeeting);
+        // Abaikan jika lebih dari 8 jam (meeting sudah lama)
+        if (Date.now() - (m.ts || 0) < 8 * 60 * 60 * 1000) {
+          if (currentUser?.role === 'murid') {
+            setTimeout(() => showMeetingBanner(m.roomUrl), 300);
+            setTimeout(() => {
+              const btn = document.getElementById('vc-meeting-btn');
+              if (btn) { btn.style.display = 'flex'; btn.textContent = '📹 Gabung Meeting'; }
+            }, 300);
+          } else if (currentUser?.role === 'guru') {
+            // Guru restore overlay panel
+            setTimeout(() => {
+              const roomName = vcGetRoomName(kelasId);
+              vcMeetingTabUrl = m.roomUrl;
+              vcShowMeetingPanel(roomName);
+            }, 300);
+          }
+        } else {
+          localStorage.removeItem('kb_meeting_' + kelasId);
+        }
+      } catch(e) { localStorage.removeItem('kb_meeting_' + kelasId); }
+    }
   } catch(e) {
     toast('Gagal membuka kelas', 'error');
   }
@@ -3101,7 +3142,10 @@ function vcMulaiMeeting() {
   const roomUrl  = 'https://meet.jit.si/' + roomName;
   vcCurrentKelasId = kelasId;
   vcStartJitsi(roomName);
-  socket.emit('kelas:meeting_started', { kelasId, nama: currentKelas?.nama || 'Kelas', roomUrl });
+  // Broadcast banner ke semua murid di kelas
+  socket.emit('kelas:meeting_banner', { kelasId, roomUrl, nama: currentKelas?.nama || 'Kelas' });
+  // Simpan ke localStorage agar overlay bisa di-restore setelah refresh
+  localStorage.setItem('kb_meeting_' + kelasId, JSON.stringify({ roomUrl, ts: Date.now() }));
 }
 
 // ── Murid: join meeting ───────────────────────────────────────
@@ -3192,20 +3236,57 @@ function vcShareLink() {
 }
 
 function vcLeave() {
+  const kelasId = vcCurrentKelasId || currentKelas?.id;
+  if (kelasId) {
+    // Broadcast ke murid agar banner hilang
+    socket.emit('kelas:meeting_ended', { kelasId });
+    localStorage.removeItem('kb_meeting_' + kelasId);
+  }
   vcJitsiApi = null;
   vcMeetingTabUrl = null;
   document.getElementById('vc-overlay').classList.remove('active');
   vcCurrentKelasId = null;
+  hideMeetingBanner();
 }
 
-// Notifikasi meeting dimulai → murid terima dan tampilkan tombol join
-socket.on('kelas:meeting_started', ({ kelasId, roomUrl }) => {
+// ── Meeting Banner helpers ────────────────────────────────────
+function showMeetingBanner(roomUrl) {
+  const banner = document.getElementById('kelas-meeting-banner');
+  if (!banner) return;
+  const link = document.getElementById('kelas-meeting-banner-link');
+  if (link && roomUrl) {
+    const displayName = encodeURIComponent(currentUser?.nama || 'Peserta');
+    link.href = `${roomUrl}#userInfo.displayName="${displayName}"&config.prejoinPageEnabled=false&config.defaultLanguage="id"`;
+  }
+  banner.style.display = 'block';
+}
+
+function hideMeetingBanner() {
+  const banner = document.getElementById('kelas-meeting-banner');
+  if (banner) banner.style.display = 'none';
+}
+
+// Murid terima banner meeting dari guru
+socket.on('kelas:meeting_banner', ({ kelasId, roomUrl }) => {
   if (currentUser?.role !== 'murid') return;
   if (currentKelas?.id !== kelasId) return;
-  vcCurrentRoomUrl = roomUrl;
+  // Simpan ke localStorage agar banner tetap muncul setelah refresh
+  localStorage.setItem('kb_meeting_' + kelasId, JSON.stringify({ roomUrl, ts: Date.now() }));
+  showMeetingBanner(roomUrl);
+  // Tampilkan juga tombol join di sidebar
   const btn = document.getElementById('vc-meeting-btn');
   if (btn) { btn.style.display = 'flex'; btn.textContent = '📹 Gabung Meeting'; }
-  toast('📹 Guru memulai meeting! Klik "Gabung Meeting"', 'info');
+  toast('📹 Guru memulai meeting! Lihat banner di atas untuk bergabung.', 'info');
+});
+
+// Guru akhiri meeting → semua murid sembunyi banner
+socket.on('kelas:meeting_ended', ({ kelasId }) => {
+  if (currentKelas?.id !== kelasId) return;
+  localStorage.removeItem('kb_meeting_' + kelasId);
+  hideMeetingBanner();
+  const btn = document.getElementById('vc-meeting-btn');
+  if (btn && currentUser?.role === 'murid') btn.style.display = 'none';
+  toast('Meeting telah berakhir.', 'info');
 });
 
 // ============================================================
