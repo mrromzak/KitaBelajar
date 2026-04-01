@@ -46,6 +46,20 @@ module.exports = function (io) {
       io.to('kelas:' + kelasId).emit('kelas:pesan_baru', pesan);
     });
 
+    // ── Private Chat ──────────────────────────────
+    // User join channel pribadinya agar bisa terima pesan
+    socket.on('private:join', ({ userId }) => {
+      if (userId) socket.join('user:' + userId);
+    });
+
+    // Kirim pesan privat ke user tertentu
+    socket.on('private:send', (payload) => {
+      const { toUserId } = payload;
+      if (toUserId) {
+        io.to('user:' + toUserId).emit('private:receive', payload);
+      }
+    });
+
     socket.on('disconnect', () => {
       const info = connectedUsers[socket.id];
       if (info) {

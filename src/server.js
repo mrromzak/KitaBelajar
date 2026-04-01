@@ -36,6 +36,7 @@ app.use('/api/materi',    require('./routes/materi'));
 app.use('/api/soal',      require('./routes/soal'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/zepquiz',   require('./routes/zepquiz'));
+app.use('/api/chat',      require('./routes/chat'));
 
 const quizRoutes = require('./routes/quiz');
 app.use('/api/quiz', quizRoutes);

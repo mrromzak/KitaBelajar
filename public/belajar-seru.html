@@ -1300,6 +1300,32 @@
   </div>
 </div>
 
+<!-- Modal Private Chat -->
+<div class="modal-overlay" id="modal-private-chat">
+  <div class="modal" style="max-width:440px;padding:0;border-radius:20px;overflow:hidden;display:flex;flex-direction:column;height:85vh;max-height:600px">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:12px;padding:16px 20px;background:var(--blue);color:white;flex-shrink:0">
+      <div id="pc-avatar" style="font-size:28px;width:40px;height:40px;background:rgba(255,255,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center">👩‍🏫</div>
+      <div style="flex:1">
+        <div id="pc-nama" style="font-weight:800;font-size:15px">Nama</div>
+        <div id="pc-status" style="font-size:11px;opacity:0.8">Chat Privat</div>
+      </div>
+      <button onclick="closeModal('modal-private-chat')" style="background:rgba(255,255,255,0.2);border:none;color:white;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <!-- Messages -->
+    <div id="pc-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px;background:#F9F9F9"></div>
+    <!-- Input -->
+    <div style="display:flex;gap:8px;padding:12px 16px;background:white;border-top:1.5px solid #F0F0F0;flex-shrink:0">
+      <input id="pc-input" type="text" placeholder="Tulis pesan..." maxlength="500"
+        style="flex:1;padding:10px 16px;border:2px solid #E8E8E8;border-radius:50px;font-family:Nunito,sans-serif;font-size:14px;outline:none"
+        onkeydown="if(event.key==='Enter')kirimPrivateChat()"
+        onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='#E8E8E8'">
+      <button onclick="kirimPrivateChat()"
+        style="background:var(--blue);color:white;border:none;padding:10px 18px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer">➤</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Tambah Mata Pelajaran --><div class="modal-overlay" id="modal-tambah-mapel">
   <div class="modal" style="max-width:420px">
     <h3>📖 Tambah Mata Pelajaran</h3>
@@ -2507,7 +2533,15 @@ async function openKelas(kelasId, colorIdx) {
         </button>
       </div>`;
     } else {
-      aksiCard.innerHTML = `<div class="sidebar-card">
+      const guruNama = k.guru?.nama || k.guru_nama || 'Guru';
+      const guruId = k.guru_id || '';
+      aksiCard.innerHTML = `<div class="sidebar-card" style="display:flex;flex-direction:column;gap:10px">
+        <button onclick="bukaPrivateChat('${guruId}','${guruNama.replace(/'/g,"\\'")}','👩‍🏫')"
+          style="width:100%;padding:12px;border-radius:12px;border:none;background:#EEF5FF;color:var(--blue);font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s"
+          onmouseover="this.style.background='var(--blue)';this.style.color='white'"
+          onmouseout="this.style.background='#EEF5FF';this.style.color='var(--blue)'">
+          💬 Chat dengan Guru
+        </button>
         <button onclick="konfirmasiKeluarKelas('${k.id || kelasId}','${(k.nama||'').replace(/'/g,"\\'")}')"
           style="width:100%;padding:12px;border-radius:12px;border:none;background:#FFF0F5;color:var(--pink);font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s"
           onmouseover="this.style.background='var(--pink)';this.style.color='white'"
@@ -2652,7 +2686,8 @@ function renderMuridList(muridList) {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><p>Belum ada murid yang bergabung</p></div>';
     return;
   }
-  const onlineIds = new Set(kelasOnlineUsers.map(u => u.userId));
+  const onlineIds = new Set(kelasOnlineUsers.filter(u => u.role === 'murid').map(u => u.userId));
+  const onlineMuridCount = muridList.filter(m => onlineIds.has(m.id)).length;
   const sortedList = [...muridList].sort((a, b) => {
     const aOnline = onlineIds.has(a.id) ? 0 : 1;
     const bOnline = onlineIds.has(b.id) ? 0 : 1;
@@ -2660,7 +2695,7 @@ function renderMuridList(muridList) {
   });
   el.innerHTML = `
     <div style="margin-bottom:12px;font-size:13px;color:var(--muted);font-weight:700">
-      ${muridList.length} murid · <span style="color:#22C55E">● ${onlineIds.size} online</span>
+      ${muridList.length} murid · <span style="color:#22C55E">● ${onlineMuridCount} online</span>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px">
       ${sortedList.map(m => {
@@ -2674,9 +2709,14 @@ function renderMuridList(muridList) {
             <div style="font-weight:800;font-size:14px">${m.nama}</div>
             <div style="font-size:12px;color:${isOnline ? '#16A34A' : 'var(--muted)'};font-weight:600">${isOnline ? '● Online' : '○ Offline'}</div>
           </div>
-          <div style="text-align:right">
-            <div style="font-size:12px;color:var(--muted);font-weight:700">Lv.${m.level || 1}</div>
-            <div style="font-size:11px;color:var(--orange);font-weight:700">${m.xp || 0} XP</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="text-align:right">
+              <div style="font-size:12px;color:var(--muted);font-weight:700">Lv.${m.level || 1}</div>
+              <div style="font-size:11px;color:var(--orange);font-weight:700">${m.xp || 0} XP</div>
+            </div>
+            <button onclick="bukaPrivateChat('${m.id}','${m.nama.replace(/'/g,"\\'")}','${m.avatar || '🦁'}')"
+              style="background:var(--blue);color:white;border:none;padding:7px 12px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:12px;cursor:pointer;flex-shrink:0"
+              title="Chat privat dengan ${m.nama}">💬</button>
           </div>
         </div>`;
       }).join('')}
@@ -2775,6 +2815,102 @@ socket.on('kelas:pesan_baru', (pesan) => {
     if (btn) btn.textContent = '💬 Chat 🔴';
   }
 });
+
+// ============================================================
+//  PRIVATE CHAT
+// ============================================================
+let privateChatTargetId = null;
+let privateChatTargetNama = '';
+let privateChatTargetAvatar = '';
+
+// Bergabung ke channel private user ini sendiri agar bisa terima pesan
+socket.on('connect', () => {
+  if (currentUser) socket.emit('private:join', { userId: currentUser.id });
+});
+socket.emit('private:join', { userId: currentUser?.id });
+
+socket.on('private:receive', (pesan) => {
+  // Tampilkan jika modal sedang terbuka dengan pengirim yang sama
+  if (privateChatTargetId && pesan.dari_id === privateChatTargetId) {
+    appendPrivateMessage(pesan, false);
+  } else {
+    // Notifikasi pesan masuk
+    const nama = pesan.pengirim_nama || 'Seseorang';
+    toast(`💬 Pesan dari ${nama}: ${pesan.isi.substring(0,40)}${pesan.isi.length > 40 ? '...' : ''}`, 'info');
+  }
+});
+
+async function bukaPrivateChat(userId, nama, avatar) {
+  if (!userId) { toast('Tidak bisa membuka chat', 'error'); return; }
+  privateChatTargetId = userId;
+  privateChatTargetNama = nama;
+  privateChatTargetAvatar = avatar;
+
+  document.getElementById('pc-avatar').textContent = avatar;
+  document.getElementById('pc-nama').textContent = nama;
+  document.getElementById('pc-status').textContent = 'Chat Privat';
+  document.getElementById('pc-messages').innerHTML =
+    '<div style="text-align:center;color:var(--muted);font-size:13px;padding:24px">Memuat pesan...</div>';
+
+  openModal('modal-private-chat');
+
+  try {
+    const data = await api('GET', `/chat/private/${userId}`);
+    const box = document.getElementById('pc-messages');
+    box.innerHTML = '';
+    (data.data || []).forEach(p => appendPrivateMessage(p, p.dari_id === currentUser.id));
+    scrollPrivateChatToBottom();
+  } catch(e) {
+    document.getElementById('pc-messages').innerHTML =
+      '<div style="text-align:center;color:var(--muted);font-size:13px;padding:24px">Gagal memuat pesan</div>';
+  }
+}
+
+function appendPrivateMessage(p, isSelf) {
+  const box = document.getElementById('pc-messages');
+  if (!box) return;
+  const waktu = new Date(p.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  const ava = isSelf ? (currentUser?.avatar || '🦁') : privateChatTargetAvatar;
+  const div = document.createElement('div');
+  div.style.cssText = `display:flex;flex-direction:column;align-items:${isSelf ? 'flex-end' : 'flex-start'};gap:2px`;
+  div.innerHTML = `
+    <div style="display:flex;align-items:flex-end;gap:6px;flex-direction:${isSelf ? 'row-reverse' : 'row'}">
+      <div style="font-size:18px;flex-shrink:0">${ava}</div>
+      <div style="max-width:78%;padding:10px 14px;border-radius:${isSelf ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isSelf ? 'var(--blue)' : 'white'};color:${isSelf ? 'white' : 'var(--text)'};font-size:14px;font-weight:600;border:${isSelf ? 'none' : '1.5px solid #E8E8E8'};word-break:break-word">${escapeHtml(p.isi)}</div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);padding:0 32px">${waktu}</div>`;
+  box.appendChild(div);
+}
+
+function scrollPrivateChatToBottom() {
+  const box = document.getElementById('pc-messages');
+  if (box) box.scrollTop = box.scrollHeight;
+}
+
+async function kirimPrivateChat() {
+  const input = document.getElementById('pc-input');
+  const isi = input.value.trim();
+  if (!isi || !privateChatTargetId) return;
+  input.value = '';
+  try {
+    const data = await api('POST', `/chat/private/${privateChatTargetId}`, { isi });
+    if (data.success) {
+      socket.emit('private:send', {
+        toUserId: privateChatTargetId,
+        isi,
+        dari_id: currentUser.id,
+        pengirim_nama: currentUser.nama,
+        pengirim_avatar: currentUser.avatar,
+        created_at: new Date().toISOString()
+      });
+      appendPrivateMessage({ isi, created_at: new Date().toISOString() }, true);
+      scrollPrivateChatToBottom();
+    }
+  } catch(e) {
+    toast('Gagal mengirim pesan', 'error');
+    input.value = isi;
+  }
+}
 
 function copyToClipboard(text) {
   navigator.clipboard?.writeText(text).then(() => toast(`Kode "${text}" disalin! 📋`, 'success'))
