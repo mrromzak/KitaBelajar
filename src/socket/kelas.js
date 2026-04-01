@@ -51,6 +51,16 @@ module.exports = function (io) {
       socket.to('kelas:' + kelasId).emit('kelas:meeting_started', { kelasId, nama, roomUrl });
     });
 
+    // Guru broadcast banner meeting ke seluruh anggota kelas
+    socket.on('kelas:meeting_banner', ({ kelasId, roomUrl, nama }) => {
+      socket.to('kelas:' + kelasId).emit('kelas:meeting_banner', { kelasId, roomUrl, nama });
+    });
+
+    // Guru akhiri meeting → hide banner semua murid
+    socket.on('kelas:meeting_ended', ({ kelasId }) => {
+      socket.to('kelas:' + kelasId).emit('kelas:meeting_ended', { kelasId });
+    });
+
     // Edit pesan kelas — broadcast ke seluruh anggota kelas
     socket.on('kelas:edit_pesan', ({ kelasId, msgId, isi }) => {
       io.to('kelas:' + kelasId).emit('kelas:pesan_diedit', { msgId, isi });

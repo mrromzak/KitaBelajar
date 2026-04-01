@@ -605,7 +605,7 @@
   .q-dot.current { border-color: var(--orange); box-shadow: 0 0 0 2px rgba(255,107,53,0.3); }
 </style>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-<script src="https://meet.jit.si/external_api.js"></script>
+<script src="https://meet.ffmuc.net/external_api.js"></script>
 </head>
 <body>
 
@@ -3139,7 +3139,7 @@ function vcMulaiMeeting() {
   const kelasId = currentKelas?.id;
   if (!kelasId) return;
   const roomName = vcGetRoomName(kelasId);
-  const roomUrl  = 'https://meet.jit.si/' + roomName;
+  const roomUrl  = 'https://meet.ffmuc.net/' + roomName;
   vcCurrentKelasId = kelasId;
   vcStartJitsi(roomName);
   // Broadcast banner ke semua murid di kelas
@@ -3162,8 +3162,8 @@ function vcStartJitsi(roomName) {
   const displayName = encodeURIComponent(
     (currentUser?.nama || 'Peserta') + (currentUser?.role === 'guru' ? ' 👩‍🏫' : '')
   );
-  // Parameter #config & #userInfo dikirim lewat fragment URL — didukung meet.jit.si
-  const url = `https://meet.jit.si/${roomName}#userInfo.displayName="${displayName}"&config.prejoinPageEnabled=false&config.defaultLanguage="id"`;
+  // Parameter #config & #userInfo dikirim lewat fragment URL — didukung meet.ffmuc.net dan Jitsi lainnya
+  const url = `https://meet.ffmuc.net/${roomName}#userInfo.displayName="${displayName}"&config.prejoinPageEnabled=false&config.defaultLanguage="id"`;
   window.open(url, '_blank');
   // Tampilkan panel info di halaman (bukan overlay)
   vcShowMeetingPanel(roomName);
@@ -3173,7 +3173,7 @@ function vcStartJitsi(roomName) {
 let vcMeetingTabUrl = null;
 
 function vcShowMeetingPanel(roomName) {
-  const url = 'https://meet.jit.si/' + roomName;
+  const url = 'https://meet.ffmuc.net/' + roomName;
   vcMeetingTabUrl = url;
   document.getElementById('vc-panel-title').textContent = '📹 ' + (currentKelas?.nama || 'Meeting Aktif');
   document.getElementById('vc-panel-url').textContent = url;
@@ -3195,7 +3195,7 @@ function vcReopenTab() {
 function vcShareLink() {
   const kelasId = vcCurrentKelasId || currentKelas?.id;
   if (!kelasId) return;
-  const url = 'https://meet.jit.si/' + vcGetRoomName(kelasId);
+  const url = 'https://meet.ffmuc.net/' + vcGetRoomName(kelasId);
 
   // Copy clipboard — fallback ke select+copy jika API gagal
   function copyToClipboardFallback(text) {
