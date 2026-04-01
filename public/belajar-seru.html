@@ -2518,6 +2518,7 @@ async function openKelas(kelasId, colorIdx) {
     document.getElementById('kelas-add-materi-btn').style.display = isGuru ? 'inline-flex' : 'none';
     document.getElementById('kelas-add-kuis-btn').style.display = isGuru ? 'inline-flex' : 'none';
     document.getElementById('kelas-code-card').style.display = isGuru ? 'block' : 'none';
+    document.getElementById('tab-murid-btn').style.display = isGuru ? '' : 'none';
 
     document.getElementById('kelas-info-sidebar').innerHTML = `
       <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted);font-weight:600">Mapel</span><span style="font-weight:700">${k.mapel || '–'}</span></div>
