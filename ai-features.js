@@ -482,12 +482,7 @@ Balas HANYA JSON array:
         3000
       );
 
-      let teks = teksRaw.replace(/```json\n?/gi,'').replace(/```\n?/g,'').trim();
-      const lastBracket = teks.lastIndexOf('}]');
-      if (lastBracket !== -1 && !teks.endsWith(']')) teks = teks.substring(0, lastBracket + 2);
-      const firstBracket = teks.indexOf('[');
-      if (firstBracket > 0) teks = teks.substring(firstBracket);
-      semuaSoal = semuaSoal.concat(JSON.parse(teks));
+      semuaSoal = semuaSoal.concat(cleanAndParseJSON(teksRaw));
       if (b < totalBatch - 1) await new Promise(r => setTimeout(r, 500));
     }
 
@@ -504,43 +499,36 @@ Balas HANYA JSON array:
   btn.textContent = '✨ Generate Soal!';
 }
 
+// ── Helper: bersihkan & parse JSON dari respons AI ────────────
+function cleanAndParseJSON(raw) {
+  let teks = raw
+    .replace(/```json\n?/gi, '').replace(/```\n?/g, '')  // hapus markdown code block
+    .trim();
+
+  // Ambil hanya bagian dari '[' hingga ']' terakhir
+  const start = teks.indexOf('[');
+  const end   = teks.lastIndexOf(']');
+  if (start !== -1 && end !== -1) teks = teks.slice(start, end + 1);
+
+  // Perbaiki JSON terpotong — potong di '}' terakhir sebelum ']'
+  const lastObj = teks.lastIndexOf('}');
+  if (lastObj !== -1 && !teks.trim().endsWith(']')) teks = teks.slice(0, lastObj + 1) + ']';
+
+  // Hapus trailing comma sebelum ] atau } (JSON tidak boleh punya trailing comma)
+  teks = teks.replace(/,\s*([}\]])/g, '$1');
+
+  // Coba parse langsung dulu
+  try { return JSON.parse(teks); } catch(_) {}
+
+  // Fallback: ganti single quote ke double quote pada property name & string value
   try {
-    const teksRaw = await callAI(
-      `Kamu adalah pembuat soal ujian untuk siswa SD/SMP Indonesia.
-Buat soal pilihan ganda yang berkualitas, jelas, dan sesuai tingkat kesulitan.
-Selalu jawab HANYA dalam format JSON array yang valid dan lengkap, tanpa teks lain di luar JSON, tanpa markdown. Pastikan JSON tidak terpotong.`,
-      `Buat tepat ${jumlah} soal pilihan ganda untuk:
-- Mata pelajaran: ${mapel}
-- Topik: ${topik}
-- Tingkat kesulitan: ${tingkat}
-
-BALAS HANYA dengan JSON array (isi semua ${jumlah} soal, jangan terpotong):
-[{"pertanyaan":"teks soal","emoji":"emoji relevan","opsi":["pilihan A","pilihan B","pilihan C","pilihan D"],"jawaban":"teks jawaban benar","poin":100}]
-
-Bahasa Indonesia, sesuai kurikulum SD/SMP Indonesia.`,
-      3000
-    );
-
-    let teks = teksRaw.replace(/```json\n?/gi,'').replace(/```\n?/g,'').trim();
-    // Perbaiki JSON terpotong
-    const lastBracket = teks.lastIndexOf('}]');
-    if (lastBracket !== -1 && !teks.endsWith(']')) teks = teks.substring(0, lastBracket + 2);
-    const firstBracket = teks.indexOf('[');
-    if (firstBracket > 0) teks = teks.substring(firstBracket);
-    generatedSoalData = JSON.parse(teks);
-
-    const preview = generatedSoalData.map((s, i) =>
-      `${i+1}. ${s.emoji} ${s.pertanyaan}\n   A. ${s.opsi[0]}  B. ${s.opsi[1]}  C. ${s.opsi[2]}  D. ${s.opsi[3]}\n   ✅ Jawaban: ${s.jawaban}`
-    ).join('\n\n');
-
-    document.getElementById('ai-gen-output').textContent = preview;
-    document.getElementById('ai-gen-result').style.display = 'block';
+    const fixed = teks
+      .replace(/'/g, '"')                          // single → double quote
+      .replace(/([{,]\s*)(\w+)\s*:/g, '$1"$2":');  // bare key → "key"
+    return JSON.parse(fixed);
   } catch(e) {
-    alert('Gagal generate soal: ' + e.message);
+    throw new Error('JSON tidak valid dari AI: ' + e.message);
   }
-
-  btn.disabled = false;
-  btn.textContent = '✨ Generate Soal!';
 }
 
 async function simpanSoalDariAI() {

@@ -605,6 +605,7 @@
   .q-dot.current { border-color: var(--orange); box-shadow: 0 0 0 2px rgba(255,107,53,0.3); }
 </style>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="https://meet.jit.si/external_api.js"></script>
 </head>
 <body>
 
@@ -1459,14 +1460,21 @@
   <div id="vc-topbar">
     <div>
       <div id="vc-topbar-title">📹 Ruang Belajar</div>
-      <div id="vc-topbar-info" style="color:#8b949e;font-size:12px">Daily.co • max 64 peserta</div>
+      <div id="vc-topbar-info" style="color:#8b949e;font-size:12px">Jitsi Meet • Gratis unlimited</div>
     </div>
-    <button class="vc-btn vc-btn-end" onclick="vcLeave()" title="Keluar Meeting" style="width:auto;border-radius:50px;padding:0 20px;font-size:14px;font-weight:800;font-family:Nunito,sans-serif">
-      📵 Keluar Meeting
-    </button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button id="vc-btn-share" onclick="vcShareLink()"
+        style="background:#238636;color:white;border:none;border-radius:50px;padding:0 16px;height:40px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px">
+        🔗 Bagikan Link
+      </button>
+      <button onclick="vcLeave()" class="vc-btn vc-btn-end"
+        style="width:auto;border-radius:50px;padding:0 20px;font-size:14px;font-weight:800;font-family:Nunito,sans-serif">
+        📵 Keluar
+      </button>
+    </div>
   </div>
-  <iframe id="vc-iframe" allow="camera; microphone; fullscreen; display-capture; autoplay"
-    style="flex:1;border:none;width:100%;background:#0d1117"></iframe>
+  <!-- Jitsi External API akan mount di sini -->
+  <div id="vc-jitsi-container" style="flex:1;width:100%;background:#0d1117"></div>
 </div>
 
 <!-- Modal Private Chat -->
@@ -3058,46 +3066,110 @@ socket.on('kelas:pesan_dihapus', ({ msgId }) => {
 
 let vcCurrentKelasId = null;
 
-// ── Generate Jitsi room URL unik per kelas ────────────────────
-function vcGetRoomUrl(kelasId) {
-  // Nama room: "kitabelajar-" + 12 karakter pertama kelas_id (sudah lowercase UUID)
-  const roomName = 'kitabelajar-' + kelasId.replace(/-/g, '').slice(0, 12);
-  return 'https://meet.jit.si/' + roomName;
+// ── Jitsi Meeting (External API — auto login nama akun) ───────
+let vcJitsiApi    = null;
+let vcCurrentRoomUrl = null;
+
+function vcGetRoomName(kelasId) {
+  return 'kitabelajar-' + kelasId.replace(/-/g, '').slice(0, 16);
 }
 
 // ── Guru: mulai meeting ───────────────────────────────────────
 function vcMulaiMeeting() {
   const kelasId = currentKelas?.id;
   if (!kelasId) return;
-  const roomUrl = vcGetRoomUrl(kelasId);
+  const roomName = vcGetRoomName(kelasId);
+  const roomUrl  = 'https://meet.jit.si/' + roomName;
   vcCurrentKelasId = kelasId;
-  vcOpenIframe(roomUrl);
-  // Beritahu murid — kirim roomUrl supaya bisa langsung join
+  vcStartJitsi(roomName);
   socket.emit('kelas:meeting_started', { kelasId, nama: currentKelas?.nama || 'Kelas', roomUrl });
 }
 
 // ── Murid: join meeting ───────────────────────────────────────
 function vcJoinMeeting() {
-  if (!vcCurrentRoomUrl) { toast('Meeting belum dimulai oleh guru', 'error'); return; }
-  vcCurrentKelasId = currentKelas?.id;
-  vcOpenIframe(vcCurrentRoomUrl);
+  const kelasId = currentKelas?.id;
+  if (!kelasId) { toast('Buka kelas dulu', 'error'); return; }
+  const roomName = vcGetRoomName(kelasId);
+  vcCurrentKelasId = kelasId;
+  vcStartJitsi(roomName);
 }
 
-let vcCurrentRoomUrl = null;
+// ── Buka Jitsi dengan nama & avatar dari akun yang login ─────
+function vcStartJitsi(roomName) {
+  // Destroy instance lama jika ada
+  if (vcJitsiApi) { try { vcJitsiApi.dispose(); } catch(e) {} vcJitsiApi = null; }
 
-function vcOpenIframe(url) {
   document.getElementById('vc-topbar-title').textContent = '📹 ' + (currentKelas?.nama || 'Ruang Belajar');
-  document.getElementById('vc-iframe').src = url;
   document.getElementById('vc-overlay').classList.add('active');
+
+  const displayName = (currentUser?.nama || 'Peserta') +
+    (currentUser?.role === 'guru' ? ' 👩‍🏫' : '');
+
+  vcJitsiApi = new JitsiMeetExternalAPI('meet.jit.si', {
+    roomName,
+    parentNode: document.getElementById('vc-jitsi-container'),
+    width: '100%',
+    height: '100%',
+    userInfo: {
+      displayName,
+      email: currentUser?.email || '',
+    },
+    configOverwrite: {
+      startWithAudioMuted: false,
+      startWithVideoMuted: false,
+      disableDeepLinking: true,
+      prejoinPageEnabled: false,       // langsung masuk tanpa halaman preview
+      defaultLanguage: 'id',
+    },
+    interfaceConfigOverwrite: {
+      SHOW_JITSI_WATERMARK: false,
+      SHOW_WATERMARK_FOR_GUESTS: false,
+      DEFAULT_REMOTE_DISPLAY_NAME: 'Peserta',
+      TOOLBAR_BUTTONS: [
+        'microphone', 'camera', 'desktop', 'fullscreen',
+        'fodeviceselection', 'hangup', 'chat', 'raisehand',
+        'videoquality', 'tileview', 'settings',
+      ],
+    },
+  });
+
+  // Otomatis tutup overlay saat user klik "Leave" di dalam Jitsi
+  vcJitsiApi.addEventListener('readyToClose', () => vcLeave());
+}
+
+// ── Bagikan link meeting ──────────────────────────────────────
+function vcShareLink() {
+  const kelasId = vcCurrentKelasId || currentKelas?.id;
+  if (!kelasId) return;
+  const url = 'https://meet.jit.si/' + vcGetRoomName(kelasId);
+
+  // Copy ke clipboard
+  navigator.clipboard.writeText(url).then(() => {
+    toast('🔗 Link meeting disalin!', 'info');
+  }).catch(() => {});
+
+  // Kirim juga ke chat kelas
+  if (kelasChatKelasId) {
+    api('POST', `/kelas/${kelasChatKelasId}/chat`, {
+      isi: `📹 Bergabung ke meeting: ${url}`
+    }).then(() => {
+      socket.emit('kelas:chat', {
+        kelasId: kelasChatKelasId,
+        isi: `📹 Bergabung ke meeting: ${url}`,
+        pengirim: { id: currentUser.id, nama: currentUser.nama, avatar: currentUser.avatar, role: currentUser.role }
+      });
+    }).catch(() => {});
+  }
 }
 
 function vcLeave() {
-  document.getElementById('vc-iframe').src = '';
+  if (vcJitsiApi) { try { vcJitsiApi.dispose(); } catch(e) {} vcJitsiApi = null; }
+  document.getElementById('vc-jitsi-container').innerHTML = '';
   document.getElementById('vc-overlay').classList.remove('active');
   vcCurrentKelasId = null;
 }
 
-// Notifikasi meeting dimulai → murid terima URL dan tampilkan tombol join
+// Notifikasi meeting dimulai → murid terima dan tampilkan tombol join
 socket.on('kelas:meeting_started', ({ kelasId, roomUrl }) => {
   if (currentUser?.role !== 'murid') return;
   if (currentKelas?.id !== kelasId) return;
