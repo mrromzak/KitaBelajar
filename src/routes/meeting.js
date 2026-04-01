@@ -43,7 +43,6 @@ router.post('/buat', authMiddleware, guruOnly, async (req, res) => {
         body: JSON.stringify({
           name: roomName,
           properties: {
-            max_participants: 64,
             enable_screenshare: true,
             exp: Math.floor(Date.now() / 1000) + (6 * 60 * 60),
             eject_at_room_exp: true,
