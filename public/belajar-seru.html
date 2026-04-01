@@ -40,6 +40,53 @@
   #toast.error { background: var(--red); }
   #toast.info { background: var(--blue); }
 
+  /* ===== NOTIFICATION BELL ===== */
+  .bell-btn {
+    position: relative; background: none; border: 2px solid #eee;
+    width: 40px; height: 40px; border-radius: 50%; font-size: 18px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .bell-btn:hover { background: #F8F9FA; border-color: var(--yellow); }
+  .bell-badge {
+    position: absolute; top: -4px; right: -4px;
+    background: var(--red); color: white; font-size: 10px; font-weight: 800;
+    min-width: 18px; height: 18px; border-radius: 9px;
+    align-items: center; justify-content: center; padding: 0 4px;
+    border: 2px solid white; display: none;
+  }
+  .bell-badge.show { display: flex; }
+  #bell-dropdown {
+    position: fixed; top: 68px; right: 16px; width: 340px; max-height: 480px;
+    background: white; border-radius: 18px; box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    z-index: 200; display: none; flex-direction: column; overflow: hidden;
+    border: 1.5px solid #f0f0f0;
+  }
+  #bell-dropdown.open { display: flex; }
+  .bell-dd-header {
+    padding: 14px 16px 12px; font-weight: 800; font-size: 15px;
+    border-bottom: 1.5px solid #f0f0f0;
+    display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+  }
+  .bell-dd-list { overflow-y: auto; flex: 1; }
+  .bell-notif-item {
+    padding: 11px 14px; border-bottom: 1px solid #f8f8f8; cursor: pointer;
+    transition: background 0.15s; display: flex; align-items: flex-start; gap: 10px;
+    border-left: 3px solid transparent;
+  }
+  .bell-notif-item:hover { background: #f8f9fa; }
+  .bell-notif-item.unread { background: #fffdf5; }
+  .bell-notif-item.type-private { border-left-color: var(--orange); }
+  .bell-notif-item.type-kelas   { border-left-color: var(--blue); }
+  .bell-notif-item.type-materi  { border-left-color: var(--green); }
+  .bell-notif-item.type-quiz    { border-left-color: var(--purple); }
+  .bell-notif-icon { font-size: 20px; min-width: 28px; margin-top: 1px; }
+  .bell-notif-body { flex: 1; min-width: 0; }
+  .bell-notif-judul { font-weight: 800; font-size: 13px; }
+  .bell-notif-isi { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bell-notif-time { font-size: 11px; color: #bbb; margin-top: 3px; }
+  .bell-empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; font-weight: 600; }
+
   /* ===== LOADING OVERLAY ===== */
   #loading {
     display: none; position: fixed; inset: 0;
@@ -612,6 +659,9 @@
         <span id="murid-nav-avatar">🦁</span>
         <span id="murid-nav-name">Murid</span>
       </button>
+      <button class="bell-btn" onclick="toggleBellDropdown()" title="Notifikasi">
+        🔔<span class="bell-badge" id="bell-badge-murid"></span>
+      </button>
       <button class="nav-btn back" onclick="doLogout()">← Keluar</button>
     </div>
   </nav>
@@ -663,6 +713,9 @@
         <span id="guru-nav-avatar">👩‍🏫</span>
         <span id="guru-nav-name">Guru</span>
         <span style="font-size:11px;background:var(--blue);color:white;padding:2px 8px;border-radius:50px">Guru</span>
+      </button>
+      <button class="bell-btn" onclick="toggleBellDropdown()" title="Notifikasi">
+        🔔<span class="bell-badge" id="bell-badge-guru"></span>
       </button>
       <button class="nav-btn back" onclick="doLogout()">← Keluar</button>
     </div>
@@ -1325,6 +1378,17 @@
   to   { transform: translateX(0);    opacity: 1; }
 }
 </style>
+
+<!-- Bell Notification Dropdown -->
+<div id="bell-dropdown">
+  <div class="bell-dd-header">
+    <span>🔔 Notifikasi</span>
+    <button onclick="bellTandaiSemuaDibaca()" style="background:none;border:none;color:var(--blue);font-family:Nunito,sans-serif;font-weight:700;font-size:12px;cursor:pointer;padding:4px 8px;border-radius:8px" onmouseover="this.style.background='#EEF5FF'" onmouseout="this.style.background='none'">✓ Semua dibaca</button>
+  </div>
+  <div class="bell-dd-list" id="bell-list">
+    <div class="bell-empty">🔔<br>Belum ada notifikasi</div>
+  </div>
+</div>
 
 <!-- Modal Private Chat -->
 <div class="modal-overlay" id="modal-private-chat">
@@ -2111,6 +2175,7 @@ async function doLogin() {
       // Bersihkan key mapel lama yang shared (migrasi ke per-user)
       localStorage.removeItem('kb_mapel_list');
       joinPrivateChannel();
+      loadBellNotifications();
       toast(`Selamat datang, ${currentUser.nama}! 🎉`, 'success');
       if (currentUser.role === 'guru') {
         loadGuruDashboard();
@@ -2144,6 +2209,7 @@ async function doRegister() {
       localStorage.setItem('kb_token', token);
       localStorage.setItem('kb_user', JSON.stringify(currentUser));
       joinPrivateChannel();
+      loadBellNotifications();
       toast(`Akun berhasil dibuat! Selamat datang ${nama}! 🎉`, 'success');
       if (currentUser.role === 'guru') {
         loadGuruDashboard();
@@ -2843,6 +2909,16 @@ socket.on('kelas:pesan_baru', (pesan) => {
     const btn = document.getElementById('tab-chat-btn');
     if (btn) btn.textContent = '💬 Chat 🔴';
   }
+  // Tambah ke bell notification
+  addBellNotif({
+    id: 'kelas_' + (pesan.id || Date.now()),
+    tipe: 'kelas',
+    judul: `${pesan.pengirim?.nama || 'Seseorang'} — ${currentKelas?.nama || 'Kelas'}`,
+    pesan: pesan.isi || '',
+    created_at: pesan.created_at || new Date().toISOString(),
+    dibaca: false,
+    kelas_id: pesan.kelas_id
+  });
 });
 
 // ============================================================
@@ -2873,6 +2949,18 @@ socket.on('private:receive', (pesan) => {
     _notifPrivateChatData = pesan;
     tampilkanNotifPrivateChat(pesan);
   }
+  // Selalu tambah ke bell notification (private = prioritas tinggi)
+  addBellNotif({
+    id: 'priv_' + (pesan.id || Date.now()),
+    tipe: 'private',
+    judul: pesan.pengirim_nama || 'Pesan Privat',
+    pesan: pesan.isi || '',
+    created_at: new Date().toISOString(),
+    dibaca: false,
+    dari_id: pesan.dari_id,
+    pengirim_nama: pesan.pengirim_nama,
+    pengirim_avatar: pesan.pengirim_avatar
+  });
 });
 
 function tampilkanNotifPrivateChat(pesan) {
@@ -2907,6 +2995,144 @@ function bukaNotifPrivateChat() {
     p.pengirim_avatar || '🦁'
   );
 }
+
+// ============================================================
+//  NOTIFICATION BELL
+// ============================================================
+let bellNotifs = [];
+let bellUnreadCount = 0;
+
+function addBellNotif(notif) {
+  if (notif.id && bellNotifs.find(n => n.id === notif.id)) return; // cegah duplikat
+  bellNotifs.unshift(notif);
+  if (bellNotifs.length > 50) bellNotifs.pop();
+  if (!notif.dibaca) {
+    bellUnreadCount++;
+    updateBellBadge();
+  }
+  if (document.getElementById('bell-dropdown').classList.contains('open')) {
+    renderBellDropdown();
+  }
+}
+
+function updateBellBadge() {
+  const count = bellUnreadCount > 0 ? (bellUnreadCount > 99 ? '99+' : String(bellUnreadCount)) : '';
+  document.querySelectorAll('.bell-badge').forEach(b => {
+    b.textContent = count;
+    if (bellUnreadCount > 0) b.classList.add('show');
+    else b.classList.remove('show');
+  });
+}
+
+function toggleBellDropdown() {
+  const dd = document.getElementById('bell-dropdown');
+  if (dd.classList.contains('open')) {
+    dd.classList.remove('open');
+  } else {
+    renderBellDropdown();
+    dd.classList.add('open');
+  }
+}
+
+function closeBellDropdown() {
+  document.getElementById('bell-dropdown')?.classList.remove('open');
+}
+
+function renderBellDropdown() {
+  const list = document.getElementById('bell-list');
+  if (!list) return;
+  if (bellNotifs.length === 0) {
+    list.innerHTML = '<div class="bell-empty">🔔<br>Belum ada notifikasi</div>';
+    return;
+  }
+  list.innerHTML = bellNotifs.slice(0, 30).map(n => {
+    const icon = { private: '💬', kelas: '🏫', materi: '📚', quiz: '📝' }[n.tipe] || '🔔';
+    const timeStr = n.created_at ? formatBellTime(new Date(n.created_at)) : '';
+    const safe_id     = escapeHtml(n.id || '');
+    const safe_tipe   = escapeHtml(n.tipe || '');
+    const safe_dariId = escapeHtml(n.dari_id || '');
+    const safe_nama   = (n.pengirim_nama || '').replace(/'/g, '&apos;');
+    const safe_ava    = (n.pengirim_avatar || '').replace(/'/g, '&apos;');
+    const safe_kelas  = escapeHtml(n.kelas_id || '');
+    return `<div class="bell-notif-item type-${safe_tipe}${n.dibaca ? '' : ' unread'}"
+      onclick="klikBellNotif('${safe_id}','${safe_tipe}','${safe_dariId}','${safe_nama}','${safe_ava}','${safe_kelas}')">
+      <div class="bell-notif-icon">${icon}</div>
+      <div class="bell-notif-body">
+        <div class="bell-notif-judul">${escapeHtml(n.judul || '')}</div>
+        <div class="bell-notif-isi">${escapeHtml(n.pesan || '')}</div>
+        <div class="bell-notif-time">${timeStr}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function formatBellTime(date) {
+  const diff = Math.floor((Date.now() - date) / 1000);
+  if (diff < 60) return 'Baru saja';
+  if (diff < 3600) return `${Math.floor(diff / 60)} menit lalu`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} jam lalu`;
+  return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+}
+
+function klikBellNotif(id, tipe, dariId, namaPengirim, avatarPengirim, kelasId) {
+  closeBellDropdown();
+  const notif = bellNotifs.find(n => n.id === id);
+  if (notif && !notif.dibaca) {
+    notif.dibaca = true;
+    bellUnreadCount = Math.max(0, bellUnreadCount - 1);
+    updateBellBadge();
+  }
+  if (tipe === 'private' && dariId) {
+    bukaPrivateChat(dariId, namaPengirim || 'Seseorang', avatarPengirim || '🦁');
+  } else if (tipe === 'kelas' && kelasId && currentKelas?.id === kelasId) {
+    switchKelasTab('chat');
+  }
+}
+
+async function bellTandaiSemuaDibaca() {
+  bellNotifs.forEach(n => { n.dibaca = true; });
+  bellUnreadCount = 0;
+  updateBellBadge();
+  renderBellDropdown();
+  try { await api('PATCH', '/notifikasi/baca-semua'); } catch(e) {}
+}
+
+async function loadBellNotifications() {
+  if (!currentUser) return;
+  bellNotifs = [];
+  bellUnreadCount = 0;
+  try {
+    const data = await api('GET', '/notifikasi');
+    (data.data || []).forEach(n => {
+      const tipe = n.judul?.includes('Materi') ? 'materi'
+                 : (n.judul?.includes('Kuis') || n.judul?.includes('Quiz')) ? 'quiz'
+                 : 'notif';
+      bellNotifs.push({ id: n.id, tipe, judul: n.judul, pesan: n.pesan, created_at: n.created_at, dibaca: n.dibaca });
+      if (!n.dibaca) bellUnreadCount++;
+    });
+    updateBellBadge();
+  } catch(e) {}
+}
+
+// Tutup dropdown jika klik di luar
+document.addEventListener('click', (e) => {
+  const dd = document.getElementById('bell-dropdown');
+  if (dd?.classList.contains('open') && !dd.contains(e.target) && !e.target.closest('.bell-btn')) {
+    closeBellDropdown();
+  }
+});
+
+// Socket: notifikasi materi/quiz dari backend
+socket.on('notif:baru', (notif) => {
+  addBellNotif({
+    id: 'n_' + Date.now() + '_' + Math.random(),
+    tipe: notif.tipe || 'notif',
+    judul: notif.judul,
+    pesan: notif.pesan,
+    created_at: notif.created_at || new Date().toISOString(),
+    dibaca: false
+  });
+});
 
 async function bukaPrivateChat(userId, nama, avatar) {
   if (!userId) { toast('Tidak bisa membuka chat', 'error'); return; }
@@ -4872,6 +5098,7 @@ function showResult() {
 window.addEventListener('load', () => {
   if (token && currentUser) {
     joinPrivateChannel(); // join private socket channel dari session tersimpan
+    loadBellNotifications();
     if (currentUser.role === 'guru') {
       loadGuruDashboard();
     } else {

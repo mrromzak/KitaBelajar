@@ -8,13 +8,15 @@ const app = express();
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 3000;
 
-// Socket.io setup
+// Socket.io setup — io di-expose ke routes via app.set('io', io)
 const io = new Server(httpServer, {
   cors: {
     origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:3001', '*'],
     credentials: true
   }
 });
+
+app.set('io', io); // Expose io ke routes (req.app.get('io'))
 
 app.use(cors({
   origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:3001', '*'],
@@ -37,6 +39,7 @@ app.use('/api/soal',      require('./routes/soal'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/zepquiz',   require('./routes/zepquiz'));
 app.use('/api/chat',      require('./routes/chat'));
+app.use('/api/notifikasi', require('./routes/notifikasi'));
 
 const quizRoutes = require('./routes/quiz');
 app.use('/api/quiz', quizRoutes);

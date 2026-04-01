@@ -134,6 +134,32 @@ router.post('/', authMiddleware, async (req, res) => {
       if (qsErr) console.warn('[quiz_soal insert]', qsErr.message);
     }
 
+    // Notifikasi ke murid di kelas jika kuis punya kelas_id
+    if (kelas_id) {
+      const { v4: uuidv4 } = require('uuid');
+      const { data: muridList } = await supabase
+        .from('kelas_murid').select('murid_id').eq('kelas_id', kelas_id);
+      if (muridList?.length) {
+        const notifs = muridList.map(m => ({
+          id: uuidv4(), user_id: m.murid_id,
+          judul: '📝 Kuis Baru!',
+          pesan: `Guru membuat kuis baru: "${judul}" (${mapel || 'Umum'})`
+        }));
+        await supabase.from('notifikasi').insert(notifs);
+        const io = req.app.get('io');
+        if (io) {
+          muridList.forEach(m => {
+            io.to('user:' + m.murid_id).emit('notif:baru', {
+              tipe: 'quiz',
+              judul: '📝 Kuis Baru!',
+              pesan: `Guru membuat kuis baru: "${judul}" (${mapel || 'Umum'})`,
+              created_at: new Date().toISOString()
+            });
+          });
+        }
+      }
+    }
+
     return res.status(201).json({ success: true, quiz, pesan: 'Kuis berhasil dibuat' });
   } catch(e) {
     console.error('[POST /quiz]', e.message);

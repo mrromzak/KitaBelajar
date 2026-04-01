@@ -70,6 +70,18 @@ router.post('/upload', authMiddleware, guruOnly, upload.single('file'), async (r
           pesan: `Guru menambahkan materi baru: "${judul}" (${mapel})`
         }));
         await supabase.from('notifikasi').insert(notifs);
+        // Emit real-time socket ke setiap murid
+        const io = req.app.get('io');
+        if (io) {
+          muridList.forEach(m => {
+            io.to('user:' + m.murid_id).emit('notif:baru', {
+              tipe: 'materi',
+              judul: '📚 Materi Baru!',
+              pesan: `Guru menambahkan materi baru: "${judul}" (${mapel})`,
+              created_at: new Date().toISOString()
+            });
+          });
+        }
       }
     }
 
@@ -118,6 +130,17 @@ router.post('/', authMiddleware, guruOnly, async (req, res) => {
           pesan: `Guru menambahkan materi baru: "${judul}" (${mapel})`
         }));
         await supabase.from('notifikasi').insert(notifs);
+        const io = req.app.get('io');
+        if (io) {
+          muridList.forEach(m => {
+            io.to('user:' + m.murid_id).emit('notif:baru', {
+              tipe: 'materi',
+              judul: '📚 Materi Baru!',
+              pesan: `Guru menambahkan materi baru: "${judul}" (${mapel})`,
+              created_at: new Date().toISOString()
+            });
+          });
+        }
       }
     }
 
