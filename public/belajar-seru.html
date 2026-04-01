@@ -38,6 +38,7 @@
   #toast.show { transform: translateX(-50%) translateY(0); }
   #toast.success { background: var(--green); }
   #toast.error { background: var(--red); }
+  #toast.info { background: var(--blue); }
 
   /* ===== LOADING OVERLAY ===== */
   #loading {
@@ -2084,6 +2085,7 @@ async function doLogin() {
       localStorage.setItem('kb_user', JSON.stringify(currentUser));
       // Bersihkan key mapel lama yang shared (migrasi ke per-user)
       localStorage.removeItem('kb_mapel_list');
+      joinPrivateChannel();
       toast(`Selamat datang, ${currentUser.nama}! 🎉`, 'success');
       if (currentUser.role === 'guru') {
         loadGuruDashboard();
@@ -2116,6 +2118,7 @@ async function doRegister() {
       currentUser = data.user;
       localStorage.setItem('kb_token', token);
       localStorage.setItem('kb_user', JSON.stringify(currentUser));
+      joinPrivateChannel();
       toast(`Akun berhasil dibuat! Selamat datang ${nama}! 🎉`, 'success');
       if (currentUser.role === 'guru') {
         loadGuruDashboard();
@@ -2823,20 +2826,24 @@ let privateChatTargetId = null;
 let privateChatTargetNama = '';
 let privateChatTargetAvatar = '';
 
-// Bergabung ke channel private user ini sendiri agar bisa terima pesan
-socket.on('connect', () => {
-  if (currentUser) socket.emit('private:join', { userId: currentUser.id });
-});
-socket.emit('private:join', { userId: currentUser?.id });
+// Bergabung ke channel private — dipanggil setelah login berhasil
+function joinPrivateChannel() {
+  if (currentUser?.id) socket.emit('private:join', { userId: currentUser.id });
+}
+// Jika socket reconnect (misal setelah internet terputus), join ulang
+socket.on('connect', () => { joinPrivateChannel(); });
 
 socket.on('private:receive', (pesan) => {
-  // Tampilkan jika modal sedang terbuka dengan pengirim yang sama
-  if (privateChatTargetId && pesan.dari_id === privateChatTargetId) {
+  const modalOpen = document.getElementById('modal-private-chat')?.classList.contains('open');
+  // Tampilkan di modal jika terbuka dengan pengirim yang sama
+  if (modalOpen && privateChatTargetId === pesan.dari_id) {
     appendPrivateMessage(pesan, false);
+    scrollPrivateChatToBottom();
   } else {
-    // Notifikasi pesan masuk
+    // Toast notifikasi — klik untuk buka chat
     const nama = pesan.pengirim_nama || 'Seseorang';
-    toast(`💬 Pesan dari ${nama}: ${pesan.isi.substring(0,40)}${pesan.isi.length > 40 ? '...' : ''}`, 'info');
+    const ava = pesan.pengirim_avatar || '🦁';
+    toast(`${ava} ${nama}: ${pesan.isi.substring(0, 35)}${pesan.isi.length > 35 ? '...' : ''}`, 'info');
   }
 });
 
@@ -4803,6 +4810,7 @@ function showResult() {
 // ============================================================
 window.addEventListener('load', () => {
   if (token && currentUser) {
+    joinPrivateChannel(); // join private socket channel dari session tersimpan
     if (currentUser.role === 'guru') {
       loadGuruDashboard();
     } else {
@@ -4827,7 +4835,7 @@ function switchKelasTab(tab) {
   document.getElementById('kelas-stream').style.display = tab === 'materi' ? 'block' : 'none';
   document.getElementById('kelas-kuis-stream').style.display = tab === 'kuis' ? 'block' : 'none';
   document.getElementById('kelas-murid-stream').style.display = tab === 'murid' ? 'block' : 'none';
-  document.getElementById('kelas-chat-stream').style.display = tab === 'chat' ? 'flex' : 'none';
+  document.getElementById('kelas-chat-stream').style.display = tab === 'chat' ? 'block' : 'none';
   if (tab === 'murid' && currentKelas) loadKelasMurid(currentKelas.id);
   if (tab === 'chat') {
     document.getElementById('tab-chat-btn').textContent = '💬 Chat';
