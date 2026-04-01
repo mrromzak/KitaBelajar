@@ -3058,27 +3058,25 @@ socket.on('kelas:pesan_dihapus', ({ msgId }) => {
 
 let vcCurrentKelasId = null;
 
-// ── Guru: mulai meeting via Daily.co ─────────────────────────
-async function vcMulaiMeeting() {
-  const kelasId = currentKelas?.id;
-  if (!kelasId) return;
-  const btn = document.getElementById('vc-meeting-btn');
-  if (btn) btn.textContent = '⏳ Membuat room...';
-  try {
-    const data = await api('POST', '/meeting/buat', { kelas_id: kelasId });
-    if (!data.success) throw new Error(data.pesan);
-    vcCurrentKelasId = kelasId;
-    vcOpenIframe(data.url);
-    // Beritahu murid — kirim roomUrl supaya bisa langsung join
-    socket.emit('kelas:meeting_started', { kelasId, nama: currentKelas?.nama || 'Kelas', roomUrl: data.url });
-  } catch(e) {
-    toast('Gagal membuat meeting: ' + e.message, 'error');
-  } finally {
-    if (btn) btn.textContent = '📹 Mulai Meeting';
-  }
+// ── Generate Jitsi room URL unik per kelas ────────────────────
+function vcGetRoomUrl(kelasId) {
+  // Nama room: "kitabelajar-" + 12 karakter pertama kelas_id (sudah lowercase UUID)
+  const roomName = 'kitabelajar-' + kelasId.replace(/-/g, '').slice(0, 12);
+  return 'https://meet.jit.si/' + roomName;
 }
 
-// ── Murid: join meeting dari URL yang diterima via socket ─────
+// ── Guru: mulai meeting ───────────────────────────────────────
+function vcMulaiMeeting() {
+  const kelasId = currentKelas?.id;
+  if (!kelasId) return;
+  const roomUrl = vcGetRoomUrl(kelasId);
+  vcCurrentKelasId = kelasId;
+  vcOpenIframe(roomUrl);
+  // Beritahu murid — kirim roomUrl supaya bisa langsung join
+  socket.emit('kelas:meeting_started', { kelasId, nama: currentKelas?.nama || 'Kelas', roomUrl });
+}
+
+// ── Murid: join meeting ───────────────────────────────────────
 function vcJoinMeeting() {
   if (!vcCurrentRoomUrl) { toast('Meeting belum dimulai oleh guru', 'error'); return; }
   vcCurrentKelasId = currentKelas?.id;
@@ -3099,7 +3097,7 @@ function vcLeave() {
   vcCurrentKelasId = null;
 }
 
-// Notifikasi meeting dimulai oleh guru → simpan URL + tampilkan tombol join untuk murid
+// Notifikasi meeting dimulai → murid terima URL dan tampilkan tombol join
 socket.on('kelas:meeting_started', ({ kelasId, roomUrl }) => {
   if (currentUser?.role !== 'murid') return;
   if (currentKelas?.id !== kelasId) return;

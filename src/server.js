@@ -40,7 +40,6 @@ app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/zepquiz',   require('./routes/zepquiz'));
 app.use('/api/chat',      require('./routes/chat'));
 app.use('/api/notifikasi', require('./routes/notifikasi'));
-app.use('/api/meeting',   require('./routes/meeting'));
 
 const quizRoutes = require('./routes/quiz');
 app.use('/api/quiz', quizRoutes);
