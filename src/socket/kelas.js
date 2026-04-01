@@ -8,6 +8,8 @@ module.exports = function (io) {
   const connectedUsers = {};
   // kelasId -> Set<socketId>
   const kelasRooms = {};
+  // kelasId -> { roomUrl, nama, ts } — meeting yang sedang aktif
+  const activeMeetings = {};
 
   function broadcastOnlineList(kelasId) {
     if (!kelasRooms[kelasId]) return;
@@ -25,6 +27,11 @@ module.exports = function (io) {
       if (!kelasRooms[kelasId]) kelasRooms[kelasId] = new Set();
       kelasRooms[kelasId].add(socket.id);
       broadcastOnlineList(kelasId);
+
+      // Jika ada meeting aktif di kelas ini, langsung kirim ke murid yang baru join
+      if (role === 'murid' && activeMeetings[kelasId]) {
+        socket.emit('kelas:meeting_banner', { kelasId, ...activeMeetings[kelasId] });
+      }
     });
 
     socket.on('kelas:leave', ({ kelasId }) => {
@@ -51,13 +58,15 @@ module.exports = function (io) {
       socket.to('kelas:' + kelasId).emit('kelas:meeting_started', { kelasId, nama, roomUrl });
     });
 
-    // Guru broadcast banner meeting ke seluruh anggota kelas
+    // Guru broadcast banner meeting → simpan di server + relay ke semua murid
     socket.on('kelas:meeting_banner', ({ kelasId, roomUrl, nama }) => {
+      activeMeetings[kelasId] = { roomUrl, nama, ts: Date.now() };
       socket.to('kelas:' + kelasId).emit('kelas:meeting_banner', { kelasId, roomUrl, nama });
     });
 
-    // Guru akhiri meeting → hide banner semua murid
+    // Guru akhiri meeting → hapus dari server + hide banner semua murid
     socket.on('kelas:meeting_ended', ({ kelasId }) => {
+      delete activeMeetings[kelasId];
       socket.to('kelas:' + kelasId).emit('kelas:meeting_ended', { kelasId });
     });
 
