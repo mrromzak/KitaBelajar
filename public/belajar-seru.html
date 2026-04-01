@@ -1301,6 +1301,31 @@
   </div>
 </div>
 
+<!-- Notifikasi Pesan Privat -->
+<div id="notif-private-chat" style="
+  position:fixed;bottom:24px;right:24px;z-index:9999;
+  background:white;border-radius:18px;box-shadow:0 8px 32px rgba(0,0,0,0.18);
+  padding:14px 16px;max-width:320px;width:calc(100vw - 48px);
+  display:none;align-items:center;gap:12px;
+  border-left:5px solid var(--blue);
+  animation:slideInRight 0.3s ease">
+  <div id="notif-pc-avatar" style="font-size:28px;flex-shrink:0">🦁</div>
+  <div style="flex:1;min-width:0">
+    <div style="font-weight:800;font-size:13px;color:var(--text)" id="notif-pc-nama">Seseorang</div>
+    <div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="notif-pc-isi">Pesan baru</div>
+  </div>
+  <button id="notif-pc-btn" onclick="bukaNotifPrivateChat()"
+    style="background:var(--blue);color:white;border:none;padding:8px 14px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:12px;cursor:pointer;flex-shrink:0">Balas</button>
+  <button onclick="tutupNotifPrivateChat()"
+    style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--muted);flex-shrink:0;padding:0 2px">✕</button>
+</div>
+<style>
+@keyframes slideInRight {
+  from { transform: translateX(120%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+</style>
+
 <!-- Modal Private Chat -->
 <div class="modal-overlay" id="modal-private-chat">
   <div class="modal" style="max-width:440px;padding:0;border-radius:20px;overflow:hidden;display:flex;flex-direction:column;height:85vh;max-height:600px">
@@ -2834,19 +2859,54 @@ function joinPrivateChannel() {
 // Jika socket reconnect (misal setelah internet terputus), join ulang
 socket.on('connect', () => { joinPrivateChannel(); });
 
+let _notifPrivateChatData = null;
+let _notifPrivateChatTimer = null;
+
 socket.on('private:receive', (pesan) => {
   const modalOpen = document.getElementById('modal-private-chat')?.classList.contains('open');
-  // Tampilkan di modal jika terbuka dengan pengirim yang sama
   if (modalOpen && privateChatTargetId === pesan.dari_id) {
+    // Modal sudah terbuka dengan pengirim ini — langsung tampilkan
     appendPrivateMessage(pesan, false);
     scrollPrivateChatToBottom();
   } else {
-    // Toast notifikasi — klik untuk buka chat
-    const nama = pesan.pengirim_nama || 'Seseorang';
-    const ava = pesan.pengirim_avatar || '🦁';
-    toast(`${ava} ${nama}: ${pesan.isi.substring(0, 35)}${pesan.isi.length > 35 ? '...' : ''}`, 'info');
+    // Simpan data untuk tombol "Balas"
+    _notifPrivateChatData = pesan;
+    tampilkanNotifPrivateChat(pesan);
   }
 });
+
+function tampilkanNotifPrivateChat(pesan) {
+  const nama = pesan.pengirim_nama || 'Seseorang';
+  const ava  = pesan.pengirim_avatar || '🦁';
+  const isi  = pesan.isi || '';
+
+  document.getElementById('notif-pc-avatar').textContent = ava;
+  document.getElementById('notif-pc-nama').textContent   = nama;
+  document.getElementById('notif-pc-isi').textContent    = isi.length > 50 ? isi.substring(0, 50) + '…' : isi;
+
+  const el = document.getElementById('notif-private-chat');
+  el.style.display = 'flex';
+
+  // Auto-hilang setelah 6 detik
+  if (_notifPrivateChatTimer) clearTimeout(_notifPrivateChatTimer);
+  _notifPrivateChatTimer = setTimeout(tutupNotifPrivateChat, 6000);
+}
+
+function tutupNotifPrivateChat() {
+  document.getElementById('notif-private-chat').style.display = 'none';
+  if (_notifPrivateChatTimer) clearTimeout(_notifPrivateChatTimer);
+}
+
+function bukaNotifPrivateChat() {
+  tutupNotifPrivateChat();
+  if (!_notifPrivateChatData) return;
+  const p = _notifPrivateChatData;
+  bukaPrivateChat(
+    p.dari_id,
+    p.pengirim_nama || 'Seseorang',
+    p.pengirim_avatar || '🦁'
+  );
+}
 
 async function bukaPrivateChat(userId, nama, avatar) {
   if (!userId) { toast('Tidak bisa membuka chat', 'error'); return; }

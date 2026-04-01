@@ -3,6 +3,7 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const supabase = require('../supabase');
 const { authMiddleware } = require('../middleware/auth');
+const { encrypt, decrypt } = require('../utils/crypto');
 
 // GET /api/chat/private/:userId — ambil riwayat chat privat dengan user tertentu
 router.get('/private/:userId', authMiddleware, async (req, res) => {
@@ -27,7 +28,8 @@ router.get('/private/:userId', authMiddleware, async (req, res) => {
       .eq('dari_id', otherId)
       .eq('dibaca', false);
 
-    res.json({ success: true, data: data || [] });
+    const result = (data || []).map(p => ({ ...p, isi: decrypt(p.isi) }));
+    res.json({ success: true, data: result });
   } catch (err) {
     res.status(500).json({ success: false, pesan: err.message });
   }
@@ -39,18 +41,19 @@ router.post('/private/:userId', authMiddleware, async (req, res) => {
     const { isi } = req.body;
     if (!isi?.trim()) return res.status(400).json({ success: false, pesan: 'Pesan tidak boleh kosong.' });
 
+    const plainIsi = isi.trim();
     const id = uuidv4();
     const { error } = await supabase.from('pesan_private').insert({
       id,
       dari_id: req.user.id,
       ke_id: req.params.userId,
-      isi: isi.trim()
+      isi: encrypt(plainIsi)
     });
     if (error) throw error;
 
     res.status(201).json({
       success: true,
-      data: { id, dari_id: req.user.id, ke_id: req.params.userId, isi: isi.trim(), created_at: new Date().toISOString() }
+      data: { id, dari_id: req.user.id, ke_id: req.params.userId, isi: plainIsi, created_at: new Date().toISOString() }
     });
   } catch (err) {
     res.status(500).json({ success: false, pesan: err.message });
@@ -77,7 +80,7 @@ router.get('/inbox', authMiddleware, async (req, res) => {
       if (!partner || seen.has(partner.id)) continue;
       seen.add(partner.id);
       const unread = (data || []).filter(m => m.dari_id === partner.id && m.ke_id === myId && !m.dibaca).length;
-      conversations.push({ partner, last_message: p.isi, last_at: p.created_at, unread });
+      conversations.push({ partner, last_message: decrypt(p.isi), last_at: p.created_at, unread });
     }
 
     res.json({ success: true, data: conversations });
