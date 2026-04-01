@@ -12,7 +12,7 @@ router.post('/', authMiddleware, guruOnly, async (req, res) => {
       return res.status(400).json({ success: false, pesan: 'Nama kelas dan tahun ajaran wajib diisi.' });
 
     const id = uuidv4();
-    const kode_akses = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const kode_akses = (req.body.kode_akses || '').trim().toUpperCase() || Math.random().toString(36).substring(2, 8).toUpperCase();
 
     const { error } = await supabase.from('kelas').insert({ id, nama, tahun_ajar, guru_id: req.user.id, kode_akses });
     if (error) throw error;
@@ -55,7 +55,8 @@ router.get('/:id', authMiddleware, async (req, res) => {
       .select('murid:murid_id(id, nama, avatar, xp, level)')
       .eq('kelas_id', req.params.id);
 
-    res.json({ success: true, data: { ...kelas, murid: muridList?.map(m => m.murid) || [] } });
+    const murid = muridList?.map(m => m.murid) || [];
+    res.json({ success: true, data: { ...kelas, murid, total_murid: murid.length } });
   } catch (err) {
     res.status(500).json({ success: false, pesan: err.message });
   }
