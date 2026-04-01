@@ -25,8 +25,8 @@ router.post('/buat', authMiddleware, guruOnly, async (req, res) => {
     const { kelas_id } = req.body;
     if (!kelas_id) return res.status(400).json({ success: false, pesan: 'kelas_id wajib.' });
 
-    // Nama room unik per kelas (pakai kelas_id saja agar bisa di-reuse)
-    const roomName = 'kb-' + kelas_id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 28);
+    // Nama room: lowercase only, hanya huruf kecil + angka + strip
+    const roomName = 'kb-' + kelas_id.replace(/[^a-z0-9]/g, '').slice(0, 28);
 
     // Cek apakah room sudah ada
     const checkRes = await fetch(`${DAILY_BASE}/rooms/${roomName}`, { headers: dailyHeaders() });
@@ -36,7 +36,7 @@ router.post('/buat', authMiddleware, guruOnly, async (req, res) => {
       const existing = await checkRes.json();
       roomUrl = existing.url;
     } else {
-      // Buat room baru
+      // Buat room baru — hanya properti yang didukung semua plan
       const createRes = await fetch(`${DAILY_BASE}/rooms`, {
         method: 'POST',
         headers: dailyHeaders(),
@@ -44,18 +44,17 @@ router.post('/buat', authMiddleware, guruOnly, async (req, res) => {
           name: roomName,
           properties: {
             max_participants: 64,
-            enable_chat: false,          // chat sudah ada di aplikasi kita
             enable_screenshare: true,
-            enable_recording: 'none',
-            exp: Math.floor(Date.now() / 1000) + (6 * 60 * 60), // expired 6 jam
+            exp: Math.floor(Date.now() / 1000) + (6 * 60 * 60),
             eject_at_room_exp: true,
-            start_video_off: false,
-            start_audio_off: false,
           }
         })
       });
       const created = await createRes.json();
-      if (!createRes.ok) throw new Error(created.error || 'Gagal membuat room Daily.co');
+      if (!createRes.ok) {
+        console.error('[Daily.co error]', JSON.stringify(created));
+        throw new Error(created.error || created.info || 'Gagal membuat room Daily.co');
+      }
       roomUrl = created.url;
     }
 
