@@ -1031,8 +1031,22 @@
       <div class="tabs">
         <button class="tab-btn active" id="tab-materi-btn" onclick="switchKelasTab('materi')">📚 Materi</button>
         <button class="tab-btn" id="tab-kuis-btn" onclick="switchKelasTab('kuis')">📋 Tugas & Kuis</button>
+        <button class="tab-btn" id="tab-murid-btn" onclick="switchKelasTab('murid')">👥 Murid</button>
+        <button class="tab-btn" id="tab-chat-btn" onclick="switchKelasTab('chat')">💬 Chat</button>
       </div>
       <div id="kelas-stream" style="display:flex;flex-direction:column;gap:0;padding-top:4px"></div>
+      <div id="kelas-murid-stream" style="display:none;padding-top:4px"></div>
+      <div id="kelas-chat-stream" style="display:none;padding-top:4px">
+        <div id="kelas-chat-messages" style="display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto;padding:12px;background:#F9F9F9;border-radius:16px;margin-bottom:12px"></div>
+        <div style="display:flex;gap:8px">
+          <input id="kelas-chat-input" type="text" placeholder="Tulis pesan..." maxlength="500"
+            style="flex:1;padding:12px 16px;border:2px solid #E8E8E8;border-radius:50px;font-family:Nunito,sans-serif;font-size:14px;outline:none"
+            onkeydown="if(event.key==='Enter')kirimPesanKelas()"
+            onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='#E8E8E8'">
+          <button onclick="kirimPesanKelas()"
+            style="background:var(--orange);color:white;border:none;padding:12px 20px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer">Kirim ➤</button>
+        </div>
+      </div>
       <div id="kelas-kuis-stream" style="display:none">
         <!-- Filter bar -->
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap" id="kuis-filter-bar">
@@ -2507,6 +2521,17 @@ async function openKelas(kelasId, colorIdx) {
     switchKelasTab('materi');
     await loadKelasStream(kelasId);
     loadKelasKuis(kelasId);
+    loadKelasChatHistory(kelasId);
+    // Bergabung ke socket room kelas
+    if (currentUser) {
+      socket.emit('kelas:join', {
+        kelasId,
+        userId: currentUser.id,
+        nama: currentUser.nama,
+        avatar: currentUser.avatar || '🦁',
+        role: currentUser.role
+      });
+    }
   } catch(e) {
     toast('Gagal membuka kelas', 'error');
   }
@@ -2593,6 +2618,7 @@ async function loadKelasStream(kelasId) {
 }
 
 function kembaliDashboard() {
+  if (currentKelas?.id) socket.emit('kelas:leave', { kelasId: currentKelas.id });
   currentKelas = null;
   if (currentUser?.role === 'guru') loadGuruDashboard();
   else loadMuridDashboard();
@@ -2602,6 +2628,153 @@ function copyKodeKelas() {
   const kode = document.getElementById('kelas-code-display').textContent.trim();
   copyToClipboard(kode);
 }
+
+// ============================================================
+//  LIST MURID KELAS + ONLINE/OFFLINE
+// ============================================================
+let kelasOnlineUsers = []; // diupdate via socket
+
+async function loadKelasMurid(kelasId) {
+  const el = document.getElementById('kelas-murid-stream');
+  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat daftar murid...</div>';
+  try {
+    const data = await api('GET', `/kelas/${kelasId}`);
+    const muridList = data.data?.murid || [];
+    renderMuridList(muridList);
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat murid</p></div>';
+  }
+}
+
+function renderMuridList(muridList) {
+  const el = document.getElementById('kelas-murid-stream');
+  if (!muridList.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><p>Belum ada murid yang bergabung</p></div>';
+    return;
+  }
+  const onlineIds = new Set(kelasOnlineUsers.map(u => u.userId));
+  const sortedList = [...muridList].sort((a, b) => {
+    const aOnline = onlineIds.has(a.id) ? 0 : 1;
+    const bOnline = onlineIds.has(b.id) ? 0 : 1;
+    return aOnline - bOnline;
+  });
+  el.innerHTML = `
+    <div style="margin-bottom:12px;font-size:13px;color:var(--muted);font-weight:700">
+      ${muridList.length} murid · <span style="color:#22C55E">● ${onlineIds.size} online</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${sortedList.map(m => {
+        const isOnline = onlineIds.has(m.id);
+        return `<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:white;border-radius:14px;border:2px solid ${isOnline ? '#D1FAE5' : '#F3F4F6'};transition:all 0.2s">
+          <div style="position:relative;flex-shrink:0">
+            <div style="width:40px;height:40px;border-radius:12px;background:${isOnline ? '#D1FAE5' : '#F3F4F6'};display:flex;align-items:center;justify-content:center;font-size:22px">${m.avatar || '🦁'}</div>
+            <div style="position:absolute;bottom:-2px;right:-2px;width:12px;height:12px;border-radius:50%;background:${isOnline ? '#22C55E' : '#9CA3AF'};border:2px solid white"></div>
+          </div>
+          <div style="flex:1">
+            <div style="font-weight:800;font-size:14px">${m.nama}</div>
+            <div style="font-size:12px;color:${isOnline ? '#16A34A' : 'var(--muted)'};font-weight:600">${isOnline ? '● Online' : '○ Offline'}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:12px;color:var(--muted);font-weight:700">Lv.${m.level || 1}</div>
+            <div style="font-size:11px;color:var(--orange);font-weight:700">${m.xp || 0} XP</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// ============================================================
+//  CHAT KELAS
+// ============================================================
+let kelasChatKelasId = null;
+
+async function loadKelasChatHistory(kelasId) {
+  kelasChatKelasId = kelasId;
+  const box = document.getElementById('kelas-chat-messages');
+  box.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">Memuat pesan...</div>';
+  try {
+    const data = await api('GET', `/kelas/${kelasId}/chat`);
+    const pesanList = data.data || [];
+    box.innerHTML = '';
+    pesanList.forEach(p => appendChatMessage(p));
+    scrollChatToBottom();
+  } catch(e) {
+    box.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">Gagal memuat chat</div>';
+  }
+}
+
+function appendChatMessage(p) {
+  const box = document.getElementById('kelas-chat-messages');
+  if (!box) return;
+  const isSelf = p.pengirim?.id === currentUser?.id || p.pengirim_id === currentUser?.id;
+  const pengirim = p.pengirim || { nama: 'Pengguna', avatar: '🦁', role: 'murid' };
+  const waktu = new Date(p.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  const isGuru = pengirim.role === 'guru';
+  const div = document.createElement('div');
+  div.style.cssText = `display:flex;flex-direction:column;align-items:${isSelf ? 'flex-end' : 'flex-start'};gap:2px`;
+  div.innerHTML = `
+    ${!isSelf ? `<div style="font-size:11px;color:var(--muted);font-weight:700;padding:0 8px">${pengirim.avatar || '🦁'} ${pengirim.nama}${isGuru ? ' 👩‍🏫' : ''}</div>` : ''}
+    <div style="max-width:75%;padding:10px 14px;border-radius:${isSelf ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isSelf ? 'var(--orange)' : 'white'};color:${isSelf ? 'white' : 'var(--text)'};font-size:14px;font-weight:600;border:${isSelf ? 'none' : '1.5px solid #E8E8E8'};word-break:break-word">${escapeHtml(p.isi)}</div>
+    <div style="font-size:10px;color:var(--muted);padding:0 8px">${waktu}</div>`;
+  box.appendChild(div);
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function scrollChatToBottom() {
+  const box = document.getElementById('kelas-chat-messages');
+  if (box) box.scrollTop = box.scrollHeight;
+}
+
+async function kirimPesanKelas() {
+  const input = document.getElementById('kelas-chat-input');
+  const isi = input.value.trim();
+  if (!isi || !kelasChatKelasId) return;
+  input.value = '';
+  try {
+    const data = await api('POST', `/kelas/${kelasChatKelasId}/chat`, { isi });
+    if (data.success) {
+      // Kirim via socket untuk real-time ke user lain
+      socket.emit('kelas:chat', {
+        kelasId: kelasChatKelasId,
+        isi,
+        pengirim: { id: currentUser.id, nama: currentUser.nama, avatar: currentUser.avatar, role: currentUser.role }
+      });
+      // Tampilkan langsung di sisi pengirim
+      appendChatMessage({ ...data.data, pengirim: currentUser });
+      scrollChatToBottom();
+    }
+  } catch(e) {
+    toast('Gagal mengirim pesan', 'error');
+    input.value = isi;
+  }
+}
+
+// Socket listeners untuk kelas
+socket.on('kelas:online_list', (list) => {
+  kelasOnlineUsers = list;
+  if (currentKelasTab === 'murid' && currentKelas) {
+    // Re-render list murid dengan status online terbaru
+    api('GET', `/kelas/${currentKelas.id}`).then(data => {
+      const muridList = data.data?.murid || [];
+      renderMuridList(muridList);
+    }).catch(() => {});
+  }
+});
+
+socket.on('kelas:pesan_baru', (pesan) => {
+  // Jangan duplikat pesan yang dikirim sendiri (sudah di-append oleh kirimPesanKelas)
+  if (pesan.pengirim?.id === currentUser?.id) return;
+  appendChatMessage(pesan);
+  scrollChatToBottom();
+  // Notifikasi jika tidak sedang di tab chat
+  if (currentKelasTab !== 'chat') {
+    const btn = document.getElementById('tab-chat-btn');
+    if (btn) btn.textContent = '💬 Chat 🔴';
+  }
+});
 
 function copyToClipboard(text) {
   navigator.clipboard?.writeText(text).then(() => toast(`Kode "${text}" disalin! 📋`, 'success'))
@@ -4513,8 +4686,17 @@ function switchKelasTab(tab) {
   currentKelasTab = tab;
   document.getElementById('tab-materi-btn').classList.toggle('active', tab === 'materi');
   document.getElementById('tab-kuis-btn').classList.toggle('active', tab === 'kuis');
+  document.getElementById('tab-murid-btn').classList.toggle('active', tab === 'murid');
+  document.getElementById('tab-chat-btn').classList.toggle('active', tab === 'chat');
   document.getElementById('kelas-stream').style.display = tab === 'materi' ? 'block' : 'none';
   document.getElementById('kelas-kuis-stream').style.display = tab === 'kuis' ? 'block' : 'none';
+  document.getElementById('kelas-murid-stream').style.display = tab === 'murid' ? 'block' : 'none';
+  document.getElementById('kelas-chat-stream').style.display = tab === 'chat' ? 'flex' : 'none';
+  if (tab === 'murid' && currentKelas) loadKelasMurid(currentKelas.id);
+  if (tab === 'chat') {
+    document.getElementById('tab-chat-btn').textContent = '💬 Chat';
+    scrollChatToBottom();
+  }
 }
 
 // ============================================================

@@ -99,6 +99,9 @@ require('./socket/zepquiz')(io);
 // Socket.io World handler
 require('./socket/world')(io);
 
+// Socket.io Kelas (chat + online/offline)
+require('./socket/kelas')(io);
+
 // ── Proxy: fetch artikel untuk AI Materi ──
 const https = require('https');
 const http  = require('http');

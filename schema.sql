@@ -154,6 +154,18 @@ CREATE TABLE IF NOT EXISTS notifikasi (
 );
 
 -- =====================================================
+--  TABEL PESAN_KELAS (chat kelas)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS pesan_kelas (
+  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  kelas_id    UUID NOT NULL REFERENCES kelas(id) ON DELETE CASCADE,
+  pengirim_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  isi         TEXT NOT NULL,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_pesan_kelas_kelas_id ON pesan_kelas(kelas_id);
+
+-- =====================================================
 --  SUPABASE STORAGE BUCKET (untuk upload file materi)
 -- =====================================================
 -- Jalankan ini juga untuk membuat bucket penyimpanan file:

@@ -56,7 +56,10 @@ router.get('/:id', authMiddleware, async (req, res) => {
       .eq('kelas_id', req.params.id);
 
     const murid = muridList?.map(m => m.murid) || [];
-    res.json({ success: true, data: { ...kelas, murid, total_murid: murid.length } });
+    const { count: totalMateri } = await supabase
+      .from('materi').select('id', { count: 'exact', head: true })
+      .eq('kelas_id', req.params.id);
+    res.json({ success: true, data: { ...kelas, murid, total_murid: murid.length, total_materi: totalMateri || 0 } });
   } catch (err) {
     res.status(500).json({ success: false, pesan: err.message });
   }
@@ -89,6 +92,40 @@ router.post('/join', authMiddleware, muridOnly, async (req, res) => {
     });
 
     res.json({ success: true, pesan: `Berhasil bergabung ke ${kelas.nama}!`, data: { kelas_id: kelas.id, nama: kelas.nama } });
+  } catch (err) {
+    res.status(500).json({ success: false, pesan: err.message });
+  }
+});
+
+// GET /api/kelas/:id/chat — Ambil pesan chat kelas
+router.get('/:id/chat', authMiddleware, async (req, res) => {
+  try {
+    const { data } = await supabase
+      .from('pesan_kelas')
+      .select('*, pengirim:pengirim_id(id, nama, avatar, role)')
+      .eq('kelas_id', req.params.id)
+      .order('created_at', { ascending: true })
+      .limit(100);
+    res.json({ success: true, data: data || [] });
+  } catch (err) {
+    res.status(500).json({ success: false, pesan: err.message });
+  }
+});
+
+// POST /api/kelas/:id/chat — Kirim pesan chat kelas
+router.post('/:id/chat', authMiddleware, async (req, res) => {
+  try {
+    const { isi } = req.body;
+    if (!isi?.trim()) return res.status(400).json({ success: false, pesan: 'Pesan tidak boleh kosong.' });
+    const id = uuidv4();
+    const { error } = await supabase.from('pesan_kelas').insert({
+      id, kelas_id: req.params.id, pengirim_id: req.user.id, isi: isi.trim()
+    });
+    if (error) throw error;
+    res.status(201).json({
+      success: true,
+      data: { id, kelas_id: req.params.id, pengirim_id: req.user.id, isi: isi.trim(), created_at: new Date().toISOString() }
+    });
   } catch (err) {
     res.status(500).json({ success: false, pesan: err.message });
   }
