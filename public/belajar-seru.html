@@ -2050,6 +2050,10 @@ function renderMarkdown(text) {
     // Bold & italic
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g,     '<em>$1</em>')
+    // Markdown links [teks](url)
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="color:var(--blue);font-weight:700;text-decoration:underline">$1</a>')
+    // Plain URLs (http/https) not already inside an href
+    .replace(/(?<!href=["'])(?<![">])(https?:\/\/[^\s<>"]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color:var(--blue);font-weight:700;text-decoration:underline">$1</a>')
     // Bullet list
     .replace(/^\* (.+)$/gm,   '<li style="margin-left:18px;margin-bottom:4px">$1</li>')
     .replace(/^- (.+)$/gm,    '<li style="margin-left:18px;margin-bottom:4px">$1</li>')

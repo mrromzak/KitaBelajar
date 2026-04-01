@@ -10,6 +10,8 @@
 //    httpServer.listen(PORT, ...);
 // =====================================================
 
+const supabase = require('../supabase');
+
 module.exports = function(io) {
 
   // rooms[kode] = { kode, quiz, soal[], pemain{}, status, soalIdx, timer, scores{} }
@@ -63,10 +65,24 @@ module.exports = function(io) {
     });
 
     // ── MURID: Join room ─────────────────────────────────────
-    socket.on('zep:join_room', ({ kode_room, user }) => {
+    socket.on('zep:join_room', async ({ kode_room, user }) => {
       const room = rooms[kode_room];
       if (!room) { socket.emit('zep:error', { pesan: 'Room tidak ditemukan.' }); return; }
       if (room.status !== 'lobby') { socket.emit('zep:error', { pesan: 'Quiz sudah dimulai.' }); return; }
+
+      // Validasi: murid harus terdaftar di kelas yang sama dengan kuis ini
+      if (room.quiz?.kelas_id) {
+        const { data: member } = await supabase
+          .from('kelas_murid')
+          .select('kelas_id')
+          .eq('kelas_id', room.quiz.kelas_id)
+          .eq('murid_id', user.id)
+          .single();
+        if (!member) {
+          socket.emit('zep:error', { pesan: 'Kamu tidak terdaftar di kelas ini.' });
+          return;
+        }
+      }
 
       room.pemain[user.id] = { ...user, socketId: socket.id };
       room.scores[user.id] = 0;
