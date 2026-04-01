@@ -3153,9 +3153,23 @@ function vcShareLink() {
   if (!kelasId) return;
   const url = 'https://meet.jit.si/' + vcGetRoomName(kelasId);
 
-  navigator.clipboard.writeText(url).then(() => {
-    toast('🔗 Link meeting disalin!', 'info');
-  }).catch(() => {});
+  // Copy clipboard — fallback ke select+copy jika API gagal
+  function copyToClipboardFallback(text) {
+    const el = document.createElement('textarea');
+    el.value = text;
+    el.style.cssText = 'position:fixed;top:-9999px;left:-9999px';
+    document.body.appendChild(el);
+    el.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(el);
+  }
+
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).catch(() => copyToClipboardFallback(url));
+  } else {
+    copyToClipboardFallback(url);
+  }
+  toast('🔗 Link meeting disalin!', 'info');
 
   // Kirim ke chat kelas
   const chatKelasId = kelasChatKelasId || kelasId;
@@ -3168,9 +3182,13 @@ function vcShareLink() {
         isi: `📹 Bergabung ke meeting kelas: ${url}`,
         pengirim: { id: currentUser.id, nama: currentUser.nama, avatar: currentUser.avatar, role: currentUser.role }
       });
-      toast('🔗 Link dikirim ke chat kelas!', 'info');
+      toast('✅ Link dikirim ke chat kelas!', 'info');
+    } else {
+      toast('🔗 Link disalin! (Chat gagal terkirim)', 'info');
     }
-  }).catch(() => {});
+  }).catch(() => {
+    toast('🔗 Link disalin! (Chat gagal terkirim)', 'info');
+  });
 }
 
 function vcLeave() {
