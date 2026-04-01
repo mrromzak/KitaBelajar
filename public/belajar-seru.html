@@ -40,6 +40,70 @@
   #toast.error { background: var(--red); }
   #toast.info { background: var(--blue); }
 
+  /* ===== VIDEO CALL ===== */
+  #vc-overlay {
+    display: none; position: fixed; inset: 0; background: #0d1117; z-index: 1000;
+    flex-direction: column; font-family: Nunito, sans-serif;
+  }
+  #vc-overlay.active { display: flex; }
+  #vc-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px; background: #161b22; flex-shrink: 0;
+  }
+  #vc-topbar-title { color: white; font-weight: 800; font-size: 16px; }
+  #vc-topbar-info { color: #8b949e; font-size: 13px; font-weight: 600; }
+  #vc-grid {
+    flex: 1; display: grid; gap: 8px; padding: 12px; overflow: hidden;
+    align-items: center; justify-items: center;
+  }
+  .vc-tile {
+    position: relative; border-radius: 16px; overflow: hidden;
+    background: #21262d; width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .vc-tile video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .vc-tile-label {
+    position: absolute; bottom: 8px; left: 10px;
+    color: white; font-size: 12px; font-weight: 800;
+    background: rgba(0,0,0,0.55); padding: 3px 10px; border-radius: 20px;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .vc-tile-avatar {
+    font-size: 56px; color: #8b949e;
+  }
+  .vc-muted-badge {
+    position: absolute; top: 8px; right: 8px;
+    background: rgba(220,38,38,0.9); color: white; border-radius: 50%;
+    width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; display: none;
+  }
+  .vc-muted-badge.show { display: flex; }
+  #vc-controls {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    padding: 16px 20px; background: #161b22; flex-shrink: 0; flex-wrap: wrap;
+  }
+  .vc-btn {
+    width: 52px; height: 52px; border-radius: 50%; border: none; cursor: pointer;
+    font-size: 20px; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; background: #30363d; color: white;
+  }
+  .vc-btn:hover { transform: scale(1.1); }
+  .vc-btn.active { background: #dc2626; }
+  .vc-btn-end { background: #dc2626; width: 60px; height: 60px; font-size: 22px; }
+  .vc-btn-end:hover { background: #b91c1c; }
+  #vc-no-video { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+
+  /* Tombol mulai meeting di sidebar */
+  .btn-meeting {
+    width: 100%; padding: 12px; border-radius: 12px; border: none;
+    background: #EEF5FF; color: var(--blue); font-family: Nunito, sans-serif;
+    font-weight: 800; font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;
+  }
+  .btn-meeting:hover { background: var(--blue); color: white; }
+  .btn-meeting.live { background: #FFF0F0; color: var(--red); }
+  .btn-meeting.live:hover { background: var(--red); color: white; }
+
   /* ===== NOTIFICATION BELL ===== */
   .bell-btn {
     position: relative; background: none; border: 2px solid #eee;
@@ -1390,6 +1454,21 @@
   </div>
 </div>
 
+<!-- ========== VIDEO CALL OVERLAY ========== -->
+<div id="vc-overlay">
+  <div id="vc-topbar">
+    <div>
+      <div id="vc-topbar-title">📹 Ruang Belajar</div>
+      <div id="vc-topbar-info" style="color:#8b949e;font-size:12px">Daily.co • max 64 peserta</div>
+    </div>
+    <button class="vc-btn vc-btn-end" onclick="vcLeave()" title="Keluar Meeting" style="width:auto;border-radius:50px;padding:0 20px;font-size:14px;font-weight:800;font-family:Nunito,sans-serif">
+      📵 Keluar Meeting
+    </button>
+  </div>
+  <iframe id="vc-iframe" allow="camera; microphone; fullscreen; display-capture; autoplay"
+    style="flex:1;border:none;width:100%;background:#0d1117"></iframe>
+</div>
+
 <!-- Modal Private Chat -->
 <div class="modal-overlay" id="modal-private-chat">
   <div class="modal" style="max-width:440px;padding:0;border-radius:20px;overflow:hidden;display:flex;flex-direction:column;height:85vh;max-height:600px">
@@ -2623,7 +2702,10 @@ async function openKelas(kelasId, colorIdx) {
 
     const aksiCard = document.getElementById('kelas-aksi-card');
     if (isGuru) {
-      aksiCard.innerHTML = `<div class="sidebar-card">
+      aksiCard.innerHTML = `<div class="sidebar-card" style="display:flex;flex-direction:column;gap:10px">
+        <button id="vc-meeting-btn" class="btn-meeting" onclick="vcMulaiMeeting()">
+          📹 Mulai Meeting
+        </button>
         <button onclick="konfirmasiHapusKelas('${k.id || kelasId}','${(k.nama||'').replace(/'/g,"\\'")}')"
           style="width:100%;padding:12px;border-radius:12px;border:none;background:#FFF0F0;color:var(--red);font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s"
           onmouseover="this.style.background='var(--red)';this.style.color='white'"
@@ -2635,6 +2717,9 @@ async function openKelas(kelasId, colorIdx) {
       const guruNama = k.guru?.nama || k.guru_nama || 'Guru';
       const guruId = k.guru_id || '';
       aksiCard.innerHTML = `<div class="sidebar-card" style="display:flex;flex-direction:column;gap:10px">
+        <button id="vc-meeting-btn" class="btn-meeting" onclick="vcJoinMeeting()" style="display:none">
+          📹 Gabung Meeting
+        </button>
         <button onclick="bukaPrivateChat('${guruId}','${guruNama.replace(/'/g,"\\'")}','👩‍🏫')"
           style="width:100%;padding:12px;border-radius:12px;border:none;background:#EEF5FF;color:var(--blue);font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s"
           onmouseover="this.style.background='var(--blue)';this.style.color='white'"
@@ -2666,6 +2751,8 @@ async function openKelas(kelasId, colorIdx) {
         role: currentUser.role
       });
     }
+    // Reset tombol meeting murid (akan diupdate oleh socket vc:meeting_started)
+    vcCurrentKelasId = kelasId;
   } catch(e) {
     toast('Gagal membuka kelas', 'error');
   }
@@ -2963,6 +3050,63 @@ socket.on('kelas:pesan_diedit', ({ msgId, isi }) => {
 socket.on('kelas:pesan_dihapus', ({ msgId }) => {
   const el = document.getElementById('msg-' + msgId);
   if (el) el.remove();
+});
+
+// ============================================================
+//  VIDEO CALL — Daily.co (iframe embed, maks 64 peserta)
+// ============================================================
+
+let vcCurrentKelasId = null;
+
+// ── Guru: mulai meeting via Daily.co ─────────────────────────
+async function vcMulaiMeeting() {
+  const kelasId = currentKelas?.id;
+  if (!kelasId) return;
+  const btn = document.getElementById('vc-meeting-btn');
+  if (btn) btn.textContent = '⏳ Membuat room...';
+  try {
+    const data = await api('POST', '/meeting/buat', { kelas_id: kelasId });
+    if (!data.success) throw new Error(data.pesan);
+    vcCurrentKelasId = kelasId;
+    vcOpenIframe(data.url);
+    // Beritahu murid — kirim roomUrl supaya bisa langsung join
+    socket.emit('kelas:meeting_started', { kelasId, nama: currentKelas?.nama || 'Kelas', roomUrl: data.url });
+  } catch(e) {
+    toast('Gagal membuat meeting: ' + e.message, 'error');
+  } finally {
+    if (btn) btn.textContent = '📹 Mulai Meeting';
+  }
+}
+
+// ── Murid: join meeting dari URL yang diterima via socket ─────
+function vcJoinMeeting() {
+  if (!vcCurrentRoomUrl) { toast('Meeting belum dimulai oleh guru', 'error'); return; }
+  vcCurrentKelasId = currentKelas?.id;
+  vcOpenIframe(vcCurrentRoomUrl);
+}
+
+let vcCurrentRoomUrl = null;
+
+function vcOpenIframe(url) {
+  document.getElementById('vc-topbar-title').textContent = '📹 ' + (currentKelas?.nama || 'Ruang Belajar');
+  document.getElementById('vc-iframe').src = url;
+  document.getElementById('vc-overlay').classList.add('active');
+}
+
+function vcLeave() {
+  document.getElementById('vc-iframe').src = '';
+  document.getElementById('vc-overlay').classList.remove('active');
+  vcCurrentKelasId = null;
+}
+
+// Notifikasi meeting dimulai oleh guru → simpan URL + tampilkan tombol join untuk murid
+socket.on('kelas:meeting_started', ({ kelasId, roomUrl }) => {
+  if (currentUser?.role !== 'murid') return;
+  if (currentKelas?.id !== kelasId) return;
+  vcCurrentRoomUrl = roomUrl;
+  const btn = document.getElementById('vc-meeting-btn');
+  if (btn) { btn.style.display = 'flex'; btn.textContent = '📹 Gabung Meeting'; }
+  toast('📹 Guru memulai meeting! Klik "Gabung Meeting"', 'info');
 });
 
 // ============================================================

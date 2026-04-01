@@ -40,6 +40,7 @@ app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/zepquiz',   require('./routes/zepquiz'));
 app.use('/api/chat',      require('./routes/chat'));
 app.use('/api/notifikasi', require('./routes/notifikasi'));
+app.use('/api/meeting',   require('./routes/meeting'));
 
 const quizRoutes = require('./routes/quiz');
 app.use('/api/quiz', quizRoutes);
@@ -105,6 +106,9 @@ require('./socket/world')(io);
 
 // Socket.io Kelas (chat + online/offline)
 require('./socket/kelas')(io);
+
+// Socket.io Video Call — Daily.co (signaling notifikasi meeting)
+require('./socket/videocall')(io);
 
 // ── Proxy: fetch artikel untuk AI Materi ──
 const https = require('https');

@@ -46,6 +46,11 @@ module.exports = function (io) {
       io.to('kelas:' + kelasId).emit('kelas:pesan_baru', pesan);
     });
 
+    // Guru mulai meeting → broadcast ke seluruh murid di kelas (sertakan roomUrl)
+    socket.on('kelas:meeting_started', ({ kelasId, nama, roomUrl }) => {
+      socket.to('kelas:' + kelasId).emit('kelas:meeting_started', { kelasId, nama, roomUrl });
+    });
+
     // Edit pesan kelas — broadcast ke seluruh anggota kelas
     socket.on('kelas:edit_pesan', ({ kelasId, msgId, isi }) => {
       io.to('kelas:' + kelasId).emit('kelas:pesan_diedit', { msgId, isi });
