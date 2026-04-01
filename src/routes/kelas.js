@@ -134,6 +134,51 @@ router.post('/:id/chat', authMiddleware, async (req, res) => {
   }
 });
 
+// PUT /api/kelas/:id/chat/:msgId — Edit pesan (hanya pengirim atau guru)
+router.put('/:id/chat/:msgId', authMiddleware, async (req, res) => {
+  try {
+    const { isi } = req.body;
+    if (!isi?.trim()) return res.status(400).json({ success: false, pesan: 'Pesan tidak boleh kosong.' });
+
+    const { data: msg } = await supabase
+      .from('pesan_kelas').select('id, pengirim_id').eq('id', req.params.msgId).eq('kelas_id', req.params.id).single();
+    if (!msg) return res.status(404).json({ success: false, pesan: 'Pesan tidak ditemukan.' });
+
+    const isOwner = msg.pengirim_id === req.user.id;
+    const isGuru = req.user.role === 'guru';
+    if (!isOwner && !isGuru) return res.status(403).json({ success: false, pesan: 'Tidak punya akses.' });
+
+    const { error } = await supabase.from('pesan_kelas')
+      .update({ isi: encrypt(isi.trim()) })
+      .eq('id', req.params.msgId);
+    if (error) throw error;
+
+    res.json({ success: true, data: { id: req.params.msgId, isi: isi.trim() } });
+  } catch (err) {
+    res.status(500).json({ success: false, pesan: err.message });
+  }
+});
+
+// DELETE /api/kelas/:id/chat/:msgId — Hapus pesan (hanya pengirim atau guru)
+router.delete('/:id/chat/:msgId', authMiddleware, async (req, res) => {
+  try {
+    const { data: msg } = await supabase
+      .from('pesan_kelas').select('id, pengirim_id').eq('id', req.params.msgId).eq('kelas_id', req.params.id).single();
+    if (!msg) return res.status(404).json({ success: false, pesan: 'Pesan tidak ditemukan.' });
+
+    const isOwner = msg.pengirim_id === req.user.id;
+    const isGuru = req.user.role === 'guru';
+    if (!isOwner && !isGuru) return res.status(403).json({ success: false, pesan: 'Tidak punya akses.' });
+
+    const { error } = await supabase.from('pesan_kelas').delete().eq('id', req.params.msgId);
+    if (error) throw error;
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, pesan: err.message });
+  }
+});
+
 // DELETE /api/kelas/:id
 router.delete('/:id', authMiddleware, guruOnly, async (req, res) => {
   try {

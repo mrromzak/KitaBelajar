@@ -46,6 +46,16 @@ module.exports = function (io) {
       io.to('kelas:' + kelasId).emit('kelas:pesan_baru', pesan);
     });
 
+    // Edit pesan kelas — broadcast ke seluruh anggota kelas
+    socket.on('kelas:edit_pesan', ({ kelasId, msgId, isi }) => {
+      io.to('kelas:' + kelasId).emit('kelas:pesan_diedit', { msgId, isi });
+    });
+
+    // Hapus pesan kelas — broadcast ke seluruh anggota kelas
+    socket.on('kelas:hapus_pesan', ({ kelasId, msgId }) => {
+      io.to('kelas:' + kelasId).emit('kelas:pesan_dihapus', { msgId });
+    });
+
     // ── Private Chat ──────────────────────────────
     // User join channel pribadinya agar bisa terima pesan
     socket.on('private:join', ({ userId }) => {

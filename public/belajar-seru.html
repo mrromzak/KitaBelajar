@@ -2648,7 +2648,8 @@ async function openKelas(kelasId, colorIdx) {
 
     showPage('page-kelas');
     switchKelasTab('materi');
-    await loadKelasStream(kelasId);
+    // Muat semua tab secara paralel — tidak ada yang blocking
+    loadKelasStream(kelasId);
     loadKelasKuis(kelasId);
     loadKelasChatHistory(kelasId);
     // Bergabung ke socket room kelas
@@ -2671,22 +2672,8 @@ async function loadKelasStream(kelasId) {
   const stream = document.getElementById('kelas-stream');
   stream.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat materi...</div>';
   try {
-    // Coba dengan filter kelas dulu, fallback ke semua materi
-    let list = [];
-    const tryEndpoints = [
-      `/materi?kelas_id=${kelasId}`,
-      `/materi?kelas=${kelasId}`,
-      `/kelas/${kelasId}/materi`,
-      `/materi`
-    ];
-    for (const ep of tryEndpoints) {
-      try {
-        const data = await api('GET', ep);
-        const found = data.materi || data.data || [];
-        if (found.length > 0) { list = found; break; }
-        if (data.success && found.length === 0 && ep.includes('kelas_id')) { break; } // endpoint ada tapi kosong
-      } catch(e) {}
-    }
+    const data = await api('GET', `/materi?kelas_id=${kelasId}`);
+    const list = data.materi || data.data || [];
     const isGuru = currentUser?.role === 'guru';
 
     if (list.length === 0) {
@@ -2842,15 +2829,27 @@ function appendChatMessage(p) {
   const box = document.getElementById('kelas-chat-messages');
   if (!box) return;
   const isSelf = p.pengirim?.id === currentUser?.id || p.pengirim_id === currentUser?.id;
+  const isGuruUser = currentUser?.role === 'guru';
+  const canEdit = isSelf || isGuruUser;
   const pengirim = p.pengirim || { nama: 'Pengguna', avatar: '🦁', role: 'murid' };
   const waktu = new Date(p.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   const isGuru = pengirim.role === 'guru';
+  const msgId = p.id || '';
   const div = document.createElement('div');
+  div.id = 'msg-' + msgId;
   div.style.cssText = `display:flex;flex-direction:column;align-items:${isSelf ? 'flex-end' : 'flex-start'};gap:2px`;
+  const actionBtns = canEdit && msgId ? `
+    <span style="display:inline-flex;gap:4px;opacity:0.6">
+      ${isSelf ? `<button onclick="editPesanKelas('${msgId}')" title="Edit" style="background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;border-radius:6px;color:inherit">✏️</button>` : ''}
+      <button onclick="hapusPesanKelas('${msgId}')" title="Hapus" style="background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;border-radius:6px;color:inherit">🗑️</button>
+    </span>` : '';
   div.innerHTML = `
     ${!isSelf ? `<div style="font-size:11px;color:var(--muted);font-weight:700;padding:0 8px">${pengirim.avatar || '🦁'} ${pengirim.nama}${isGuru ? ' 👩‍🏫' : ''}</div>` : ''}
-    <div style="max-width:75%;padding:10px 14px;border-radius:${isSelf ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isSelf ? 'var(--orange)' : 'white'};color:${isSelf ? 'white' : 'var(--text)'};font-size:14px;font-weight:600;border:${isSelf ? 'none' : '1.5px solid #E8E8E8'};word-break:break-word">${escapeHtml(p.isi)}</div>
-    <div style="font-size:10px;color:var(--muted);padding:0 8px">${waktu}</div>`;
+    <div id="msg-bubble-${msgId}" style="max-width:75%;padding:10px 14px;border-radius:${isSelf ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isSelf ? 'var(--orange)' : 'white'};color:${isSelf ? 'white' : 'var(--text)'};font-size:14px;font-weight:600;border:${isSelf ? 'none' : '1.5px solid #E8E8E8'};word-break:break-word">${escapeHtml(p.isi)}</div>
+    <div style="display:flex;align-items:center;gap:6px;padding:0 8px">
+      <span style="font-size:10px;color:var(--muted)">${waktu}</span>
+      ${actionBtns}
+    </div>`;
   box.appendChild(div);
 }
 
@@ -2861,6 +2860,37 @@ function escapeHtml(str) {
 function scrollChatToBottom() {
   const box = document.getElementById('kelas-chat-messages');
   if (box) box.scrollTop = box.scrollHeight;
+}
+
+async function editPesanKelas(msgId) {
+  const bubble = document.getElementById('msg-bubble-' + msgId);
+  if (!bubble) return;
+  const currentText = bubble.textContent.replace(/ ✏️$/, '');
+  const newText = prompt('Edit pesan:', currentText);
+  if (!newText || newText.trim() === currentText.trim()) return;
+  try {
+    const data = await api('PUT', `/kelas/${kelasChatKelasId}/chat/${msgId}`, { isi: newText.trim() });
+    if (data.success) {
+      bubble.textContent = newText.trim() + ' ✏️';
+      socket.emit('kelas:edit_pesan', { kelasId: kelasChatKelasId, msgId, isi: newText.trim() });
+    }
+  } catch(e) {
+    toast('Gagal mengedit pesan', 'error');
+  }
+}
+
+async function hapusPesanKelas(msgId) {
+  if (!confirm('Hapus pesan ini?')) return;
+  try {
+    const data = await api('DELETE', `/kelas/${kelasChatKelasId}/chat/${msgId}`);
+    if (data.success) {
+      const el = document.getElementById('msg-' + msgId);
+      if (el) el.remove();
+      socket.emit('kelas:hapus_pesan', { kelasId: kelasChatKelasId, msgId });
+    }
+  } catch(e) {
+    toast('Gagal menghapus pesan', 'error');
+  }
 }
 
 async function kirimPesanKelas() {
@@ -2919,6 +2949,16 @@ socket.on('kelas:pesan_baru', (pesan) => {
     dibaca: false,
     kelas_id: pesan.kelas_id
   });
+});
+
+socket.on('kelas:pesan_diedit', ({ msgId, isi }) => {
+  const bubble = document.getElementById('msg-bubble-' + msgId);
+  if (bubble) bubble.textContent = isi + ' ✏️';
+});
+
+socket.on('kelas:pesan_dihapus', ({ msgId }) => {
+  const el = document.getElementById('msg-' + msgId);
+  if (el) el.remove();
 });
 
 // ============================================================
