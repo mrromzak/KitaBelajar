@@ -2864,7 +2864,7 @@ async function loadKelasStream(kelasId) {
         const ytMatch = m.konten.match(/(?:youtube\.com\/embed\/|youtube\.com\/watch\?v=|youtu\.be\/)([^?&]+)/);
         const videoId = ytMatch ? ytMatch[1] : null;
         const embedUrl = videoId
-          ? `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=1`
+          ? `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=1`
           : m.konten;
         const watchUrl = videoId
           ? `https://www.youtube.com/watch?v=${videoId}`
