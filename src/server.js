@@ -70,6 +70,9 @@ io.use((socket, next) => {
 
 app.set('io', io);
 
+// ── Trust proxy (Railway/Heroku pakai reverse proxy) ────────
+app.set('trust proxy', 1);
+
 // ── Security Middleware (urutan penting) ────────────────────
 app.use(helmetMiddleware);           // Security headers + CSP
 app.use(blockBadReferer);            // Blokir referer judol/berbahaya

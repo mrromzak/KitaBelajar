@@ -3928,6 +3928,28 @@ async function prosesAIMateri() {
       kontenSumber = await fetchArtikel(url);
       judulSumber = url;
 
+    } else if (aiSumberAktif === 'youtube') {
+      const url = document.getElementById('ai-youtube-url').value.trim();
+      if (!url) { toast('Masukkan URL video YouTube!', 'error'); aiMateriReset(); return; }
+      setAIStatus('Mengambil transkrip YouTube...', 20);
+      const videoIdMatch = url.match(/(?:v=|youtu\.be\/)([^&?]+)/);
+      const videoId = videoIdMatch?.[1];
+      if (!videoId) { toast('URL YouTube tidak valid!', 'error'); aiMateriReset(); return; }
+      try {
+        const res = await fetch(`${API}/proxy/youtube-transcript?videoId=${videoId}`);
+        const data = await res.json();
+        if (data.success && data.transcript) {
+          kontenSumber = data.transcript;
+        } else {
+          toast('Transkrip tidak tersedia untuk video ini. Coba video lain.', 'error');
+          aiMateriReset(); return;
+        }
+      } catch(e) {
+        toast('Gagal mengambil transkrip YouTube.', 'error');
+        aiMateriReset(); return;
+      }
+      judulSumber = url;
+
     }
 
     if (!kontenSumber || kontenSumber.length < 50) {
@@ -3941,11 +3963,10 @@ async function prosesAIMateri() {
     // ── 2. Generate materi dengan AI ───────────────────────
     setAIStatus('AI sedang membuat materi...', 50);
 
-    const resMateri = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const resMateri = await fetch(`${API}/ai/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY_MATERI}` },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
         max_tokens: 1500,
         messages: [{
           role: 'system',
@@ -3978,9 +3999,9 @@ Buat dalam Bahasa Indonesia, mudah dipahami siswa ${target}.`
         }]
       })
     });
-    const dataMateri = await resMateri.json();
-    if (dataMateri.error) throw new Error(dataMateri.error.message);
-    const materiTeks = dataMateri.choices?.[0]?.message?.content || '';
+    const resMateriJson = await resMateri.json();
+    if (!resMateriJson.success) throw new Error(resMateriJson.pesan || 'AI error');
+    const materiTeks = resMateriJson.data?.choices?.[0]?.message?.content || '';
 
     // Ekstrak judul dari hasil AI
     const judulMatch = materiTeks.match(/##\s+(.+)/);
@@ -3993,11 +4014,10 @@ Buat dalam Bahasa Indonesia, mudah dipahami siswa ${target}.`
     if (genSoal) {
       setAIStatus('Membuat soal latihan...', 75);
       try {
-        const resSoal = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        const resSoal = await fetch(`${API}/ai/chat`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY_MATERI}` },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({
-            model: 'llama-3.1-8b-instant',
             max_tokens: 1200,
             messages: [{
               role: 'system',
@@ -4015,8 +4035,8 @@ Bahasa Indonesia, tingkat ${target}.`
             }]
           })
         });
-        const dataSoal = await resSoal.json();
-        let teks = dataSoal.choices?.[0]?.message?.content || '[]';
+        const dataSoalJson = await resSoal.json();
+        let teks = dataSoalJson.data?.choices?.[0]?.message?.content || '[]';
         teks = teks.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
         aiHasilSoal = JSON.parse(teks);
       } catch(e) {
@@ -4092,9 +4112,7 @@ async function fetchArtikel(url) {
     if (data.success) return data.teks;
     throw new Error(data.pesan || 'Gagal fetch artikel');
   } catch(e) {
-    // Fallback: minta user paste manual
-    const manual = prompt(`Tidak bisa fetch artikel otomatis.\n\nCopy-paste isi artikel dari:\n${url}\n\nPaste di sini:`);
-    return manual || '';
+    throw new Error('Gagal mengambil artikel. Pastikan URL dari domain yang diizinkan (Wikipedia, Kemdikbud, dll).');
   }
 }
 
