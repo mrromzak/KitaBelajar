@@ -101,7 +101,6 @@ const quizRoutes = require('./routes/quiz');
 app.use('/api/quiz', quizRoutes);
 
 // ── Fix: POST /api/hasil-quiz — simpan hasil kuis murid ──
-const jwt = require('jsonwebtoken');
 const { createClient } = require('@supabase/supabase-js');
 const _sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY);
 app.post('/api/hasil-quiz', async (req, res) => {
