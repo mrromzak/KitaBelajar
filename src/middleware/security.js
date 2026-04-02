@@ -100,7 +100,7 @@ const helmetMiddleware = helmet({
                        'https://www.youtube.com', 'https://youtube.com',
                        'https://www.youtube-nocookie.com', 'https://youtube-nocookie.com',
                        'https://accounts.google.com'],
-      frameAncestors: ["'none'"],
+      frameAncestors: ["'self'", 'https://accounts.google.com'],
     },
   },
   crossOriginEmbedderPolicy: false,
