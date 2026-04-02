@@ -64,23 +64,31 @@ const helmetMiddleware = helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc:     ["'self'"],
+      // unsafe-inline diperlukan karena HTML menggunakan onclick/onchange inline
+      // unsafe-eval diperlukan oleh beberapa library (socket.io, dll)
       scriptSrc:      ["'self'", "'unsafe-inline'", "'unsafe-eval'",
                        'https://cdn.socket.io', 'https://cdn.jsdelivr.net',
-                       'https://cdnjs.cloudflare.com', 'https://fonts.googleapis.com'],
+                       'https://cdnjs.cloudflare.com', 'https://fonts.googleapis.com',
+                       'https://meet.ffmuc.net', 'https://*.daily.co'],
+      // Izinkan inline event handler (onclick, onchange, dll di HTML)
+      scriptSrcAttr:  ["'unsafe-inline'"],
       styleSrc:       ["'self'", "'unsafe-inline'",
                        'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com'],
       fontSrc:        ["'self'", 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'],
       imgSrc:         ["'self'", 'data:', 'https:', 'blob:'],
-      connectSrc:     ["'self'", 'wss:', 'ws:', 'https://api.groq.com',
-                       'https://*.supabase.co', 'https://api.daily.co'],
+      connectSrc:     ["'self'",
+                       'wss:', 'ws:',
+                       'https://api.groq.com',
+                       'https://*.supabase.co',
+                       'https://api.daily.co',
+                       'https://*.railway.app', 'wss://*.railway.app'],
       mediaSrc:       ["'self'", 'https:', 'blob:'],
       objectSrc:      ["'none'"],
-      frameSrc:       ["'self'", 'https://*.daily.co'],
+      frameSrc:       ["'self'", 'https://*.daily.co', 'https://meet.ffmuc.net', 'https://*.jitsi.org'],
       frameAncestors: ["'none'"],
-      upgradeInsecureRequests: [],
     },
   },
-  crossOriginEmbedderPolicy: false, // Biarkan false agar socket.io berjalan normal
+  crossOriginEmbedderPolicy: false,
   hsts: {
     maxAge: 31536000,
     includeSubDomains: true,
