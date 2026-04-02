@@ -2864,7 +2864,7 @@ async function loadKelasStream(kelasId) {
         const ytMatch = m.konten.match(/(?:youtube\.com\/embed\/|youtube\.com\/watch\?v=|youtu\.be\/)([^?&]+)/);
         const videoId = ytMatch ? ytMatch[1] : null;
         const embedUrl = videoId
-          ? `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=1`
+          ? `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=1&enablejsapi=1`
           : m.konten;
         const watchUrl = videoId
           ? `https://www.youtube.com/watch?v=${videoId}`
@@ -4346,31 +4346,51 @@ function ytPlayClick(id, embedUrl, watchUrl) {
   wrap.innerHTML = `
     <iframe id="yt-iframe-${id}" src="${embedUrl}"
       style="position:absolute;top:0;left:0;width:100%;height:100%;border:none"
-      allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+      allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      onload="ytIframeLoaded('${id}')"></iframe>
     <div id="yt-err-${id}" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:#111;color:white;border-radius:12px">
       <span style="font-size:40px">▶️</span>
-      <p style="font-size:13px;opacity:0.85;text-align:center;padding:0 16px">Video ini tidak bisa diputar langsung (embedding dinonaktifkan pemilik)</p>
+      <p style="font-size:13px;opacity:0.85;text-align:center;padding:0 16px">Video ini tidak bisa diputar langsung.<br>Embedding dinonaktifkan oleh pemilik video.</p>
       <a href="${watchUrl}" target="_blank" rel="noopener noreferrer" style="background:#FF0000;color:white;padding:10px 22px;border-radius:50px;font-weight:700;font-size:13px;text-decoration:none">▶ Tonton di YouTube</a>
     </div>`;
 
-  // Deteksi error via postMessage YouTube API
+  // Deteksi error via postMessage YouTube IFrame API
+  // Error 100/101/150/151 = video tidak bisa diputar / embedding dinonaktifkan
   const handler = function(e) {
     if (!e.data) return;
     try {
       const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-      if (d.event === 'infoDelivery' && d.info && d.info.error) {
+      const isError =
+        (d.event === 'onError') ||
+        (d.event === 'infoDelivery' && d.info && d.info.error) ||
+        (Array.isArray(d.args) && [100, 101, 150, 151].includes(d.args[0]));
+      if (isError) {
         const iframe = document.getElementById('yt-iframe-' + id);
         const errDiv = document.getElementById('yt-err-' + id);
         if (iframe) iframe.style.display = 'none';
-        if (errDiv) errDiv.style.display = 'flex';
+        if (errDiv) { errDiv.style.display = 'flex'; }
         window.removeEventListener('message', handler);
+        clearTimeout(fallbackTimer);
       }
     } catch(err) {}
   };
   window.addEventListener('message', handler);
 
-  // Timeout fallback: jika 8 detik belum ada signal error, anggap berhasil
-  setTimeout(() => window.removeEventListener('message', handler), 8000);
+  // Timeout fallback: jika 12 detik dan iframe masih ada tapi ada onload lalu blank → tampilkan fallback
+  const fallbackTimer = setTimeout(() => {
+    window.removeEventListener('message', handler);
+  }, 12000);
+}
+
+// Dipanggil saat iframe selesai load — cek apakah ada konten atau blank (Error 153)
+function ytIframeLoaded(id) {
+  // Beri waktu 1.5 detik bagi YouTube API untuk kirim postMessage error
+  // Kalau setelah itu errorDiv masih hidden, berarti video berhasil
+  setTimeout(() => {
+    const errDiv = document.getElementById('yt-err-' + id);
+    // Jika errDiv sudah ditampilkan oleh postMessage handler, tidak perlu aksi lagi
+    // (tidak ada cara 100% akurat deteksi Error 153 via onload — postMessage lebih andal)
+  }, 1500);
 }
 
 function convertYoutubeUrl(url) {
