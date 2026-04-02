@@ -531,7 +531,7 @@ async function simpanSoalDariAI() {
   let berhasil = 0;
   for (const s of generatedSoalData) {
     try {
-      const res = await fetch('http://localhost:3000/api/soal', {
+      const res = await fetch('/api/soal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
@@ -569,7 +569,7 @@ async function analisisBelajarAI() {
     let hasilData = [];
     if (token) {
       try {
-        const res = await fetch('http://localhost:3000/api/dashboard', {
+        const res = await fetch('/api/dashboard', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const d = await res.json();

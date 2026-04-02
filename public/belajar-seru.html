@@ -2029,8 +2029,8 @@
 // ============================================================
 //  CONFIG
 // ============================================================
-const API = 'https://kitabelajar-production.up.railway.app/api';
-const socket = io('https://kitabelajar-production.up.railway.app');
+const API = window.location.origin + '/api';
+const socket = io(window.location.origin);
 let token = localStorage.getItem('kb_token') || null;
 let currentUser = JSON.parse(localStorage.getItem('kb_user') || 'null');
 let currentRole = 'murid'; // for login page
