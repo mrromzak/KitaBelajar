@@ -4354,32 +4354,47 @@ function ytPlayClick(id, embedUrl, watchUrl) {
       <a href="${watchUrl}" target="_blank" rel="noopener noreferrer" style="background:#FF0000;color:white;padding:10px 22px;border-radius:50px;font-weight:700;font-size:13px;text-decoration:none">▶ Tonton di YouTube</a>
     </div>`;
 
+  function showYTFallback() {
+    const iframe = document.getElementById('yt-iframe-' + id);
+    const errDiv = document.getElementById('yt-err-' + id);
+    if (iframe) iframe.style.display = 'none';
+    if (errDiv) errDiv.style.display = 'flex';
+  }
+
   // Deteksi error via postMessage YouTube IFrame API
-  // Error 100/101/150/151 = video tidak bisa diputar / embedding dinonaktifkan
+  // Error 100/101/150/151/153 = video tidak bisa diputar / embedding dinonaktifkan
+  let videoStarted = false;
   const handler = function(e) {
     if (!e.data) return;
     try {
       const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-      const isError =
-        (d.event === 'onError') ||
-        (d.event === 'infoDelivery' && d.info && d.info.error) ||
-        (Array.isArray(d.args) && [100, 101, 150, 151].includes(d.args[0]));
-      if (isError) {
-        const iframe = document.getElementById('yt-iframe-' + id);
-        const errDiv = document.getElementById('yt-err-' + id);
-        if (iframe) iframe.style.display = 'none';
-        if (errDiv) { errDiv.style.display = 'flex'; }
-        window.removeEventListener('message', handler);
+      // Video berhasil diputar — batalkan fallback timer
+      if (d.event === 'onReady' || (d.event === 'onStateChange' && (d.info === 1 || d.info === 3))) {
+        videoStarted = true;
         clearTimeout(fallbackTimer);
+        window.removeEventListener('message', handler);
+        return;
+      }
+      // Error embedding — tampilkan fallback
+      const errorCode = d.info || (Array.isArray(d.args) ? d.args[0] : null);
+      const isError =
+        d.event === 'onError' ||
+        (d.event === 'infoDelivery' && d.info && d.info.error) ||
+        [100, 101, 150, 151, 153].includes(errorCode);
+      if (isError) {
+        clearTimeout(fallbackTimer);
+        window.removeEventListener('message', handler);
+        showYTFallback();
       }
     } catch(err) {}
   };
   window.addEventListener('message', handler);
 
-  // Timeout fallback: jika 12 detik dan iframe masih ada tapi ada onload lalu blank → tampilkan fallback
+  // Timeout fallback: jika 7 detik video belum start/ready → anggap tidak bisa diputar
   const fallbackTimer = setTimeout(() => {
     window.removeEventListener('message', handler);
-  }, 12000);
+    if (!videoStarted) showYTFallback();
+  }, 7000);
 }
 
 // Dipanggil saat iframe selesai load — cek apakah ada konten atau blank (Error 153)
