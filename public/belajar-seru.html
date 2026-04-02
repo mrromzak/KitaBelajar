@@ -4,22 +4,44 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KitaBelajar — Platform Belajar Menyenangkan</title>
-<!-- Sentry Browser SDK — tangkap error frontend otomatis -->
-<script
-  src="https://browser.sentry-cdn.com/8.x.x/bundle.tracing.min.js"
-  crossorigin="anonymous"
-></script>
+<!-- Error Logger — kirim error JS ke server KitaBelajar sendiri -->
 <script>
-  // DSN diisi setelah daftar di sentry.io
-  const SENTRY_DSN_FRONTEND = '';
-  if (typeof Sentry !== 'undefined' && SENTRY_DSN_FRONTEND) {
-    Sentry.init({
-      dsn: SENTRY_DSN_FRONTEND,
-      environment: location.hostname === 'localhost' ? 'development' : 'production',
-      tracesSampleRate: 0.2,
-      integrations: [Sentry.browserTracingIntegration()],
+  (function() {
+    function kirimError(pesan, stack, extra) {
+      try {
+        fetch('/api/log-error', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pesan: String(pesan).substring(0, 500),
+            stack: stack ? String(stack).substring(0, 2000) : null,
+            url: location.href,
+            user_agent: navigator.userAgent,
+            user_id: (function() { try { return JSON.parse(localStorage.getItem('kb_user') || 'null')?.id || null; } catch { return null; } })(),
+            extra: extra || null
+          })
+        }).catch(function() {});
+      } catch(e) {}
+    }
+
+    // Tangkap semua JS error
+    window.onerror = function(msg, src, line, col, err) {
+      kirimError(msg, err ? err.stack : (src + ':' + line + ':' + col));
+      return false;
+    };
+
+    // Tangkap Promise rejection yang tidak ter-handle
+    window.addEventListener('unhandledrejection', function(e) {
+      var reason = e.reason;
+      kirimError(
+        reason instanceof Error ? reason.message : String(reason),
+        reason instanceof Error ? reason.stack : null,
+        { type: 'unhandledrejection' }
+      );
     });
-  }
+
+    window._logError = kirimError; // expose untuk manual logging jika perlu
+  })();
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
 <style>
@@ -871,6 +893,7 @@
       <button class="bell-btn" onclick="toggleBellDropdown()" title="Notifikasi">
         🔔<span class="bell-badge" id="bell-badge-guru"></span>
       </button>
+      <button onclick="bukaErrorLog()" title="Error Log" style="background:none;border:2px solid #FFCDD2;color:var(--red);padding:7px 12px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:700;font-size:12px;cursor:pointer">🐛 Log</button>
       <button class="nav-btn back" onclick="doLogout()">← Keluar</button>
     </div>
   </nav>
@@ -7438,6 +7461,83 @@ function zepReset() {
     </div>
   </div>
 </div>
+
+<!-- ========== ERROR LOG ADMIN (hanya guru) ========== -->
+<div class="page" id="page-error-log">
+  <nav class="navbar">
+    <div class="logo"><span>🌈</span> KitaBelajar</div>
+    <div class="nav-links">
+      <button class="nav-btn back" onclick="loadGuruDashboard()">← Kembali</button>
+    </div>
+  </nav>
+  <div class="dashboard">
+    <div class="welcome-banner" style="background:linear-gradient(135deg,#FF4757,#FF6B81)">
+      <div>
+        <h2>🐛 Error Log</h2>
+        <p>100 error terbaru dari frontend &amp; backend</p>
+      </div>
+      <div style="font-size:48px">🔍</div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      <button onclick="loadErrorLog('semua')" id="elog-tab-semua" style="padding:8px 18px;border-radius:50px;border:2px solid var(--red);background:var(--red);color:white;font-family:Nunito,sans-serif;font-weight:700;font-size:13px;cursor:pointer">Semua</button>
+      <button onclick="loadErrorLog('frontend')" id="elog-tab-frontend" style="padding:8px 18px;border-radius:50px;border:2px solid #eee;background:white;color:var(--text);font-family:Nunito,sans-serif;font-weight:700;font-size:13px;cursor:pointer">Frontend</button>
+      <button onclick="loadErrorLog('backend')" id="elog-tab-backend" style="padding:8px 18px;border-radius:50px;border:2px solid #eee;background:white;color:var(--text);font-family:Nunito,sans-serif;font-weight:700;font-size:13px;cursor:pointer">Backend</button>
+    </div>
+    <div id="error-log-list"><div style="text-align:center;padding:40px;color:var(--muted)">Memuat...</div></div>
+  </div>
+</div>
+
+<script>
+let _elogFilter = 'semua';
+
+async function bukaErrorLog() {
+  if (currentUser?.role !== 'guru') return;
+  showPage('page-error-log');
+  loadErrorLog('semua');
+}
+
+async function loadErrorLog(filter) {
+  _elogFilter = filter;
+  // Update tab style
+  ['semua','frontend','backend'].forEach(f => {
+    const btn = document.getElementById('elog-tab-' + f);
+    if (!btn) return;
+    if (f === filter) {
+      btn.style.background = 'var(--red)'; btn.style.color = 'white'; btn.style.borderColor = 'var(--red)';
+    } else {
+      btn.style.background = 'white'; btn.style.color = 'var(--text)'; btn.style.borderColor = '#eee';
+    }
+  });
+
+  const el = document.getElementById('error-log-list');
+  el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Memuat...</div>';
+  try {
+    const data = await api('GET', '/error-logs');
+    if (!data.success) { el.innerHTML = '<div style="padding:24px;color:var(--muted)">Gagal memuat log.</div>'; return; }
+
+    let logs = data.data || [];
+    if (filter !== 'semua') logs = logs.filter(l => l.sumber === filter);
+
+    if (logs.length === 0) {
+      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">🎉 Tidak ada error!</div>';
+      return;
+    }
+
+    el.innerHTML = logs.map(l => `
+      <div style="background:white;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow);border-left:4px solid ${l.sumber === 'backend' ? 'var(--red)' : 'var(--orange)'}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+          <span style="background:${l.sumber === 'backend' ? 'var(--red)' : 'var(--orange)'};color:white;padding:3px 10px;border-radius:50px;font-size:11px;font-weight:800">${l.sumber.toUpperCase()}</span>
+          <span style="font-size:12px;color:var(--muted)">${l.created_at ? new Date(l.created_at).toLocaleString('id-ID') : '–'}</span>
+        </div>
+        <div style="font-weight:800;font-size:14px;margin-bottom:6px;word-break:break-word">${l.pesan || '–'}</div>
+        ${l.url ? `<div style="font-size:12px;color:var(--muted);margin-bottom:4px">📍 ${l.url}${l.method ? ' [' + l.method + ']' : ''}</div>` : ''}
+        ${l.stack ? `<details style="margin-top:8px"><summary style="font-size:12px;color:var(--blue);cursor:pointer;font-weight:700">Stack trace</summary><pre style="font-size:11px;background:#f8f8f8;padding:10px;border-radius:8px;overflow-x:auto;margin-top:6px;white-space:pre-wrap;word-break:break-all">${l.stack}</pre></details>` : ''}
+      </div>`).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="padding:24px;color:var(--red)">Gagal memuat error log.</div>';
+  }
+}
+</script>
 
 </body>
 </html>

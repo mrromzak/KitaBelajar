@@ -1,15 +1,4 @@
 require('dotenv').config();
-
-// ── Sentry: inisialisasi SEBELUM semua require lainnya ──────
-const Sentry = require('@sentry/node');
-if (process.env.SENTRY_DSN) {
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-    environment: process.env.NODE_ENV || 'production',
-    tracesSampleRate: 0.2, // 20% request direkam untuk performance
-  });
-}
-
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -178,6 +167,41 @@ require('./socket/kelas')(io);
 // Socket.io Video Call — Daily.co (signaling notifikasi meeting)
 require('./socket/videocall')(io);
 
+// ── Error Logger: terima error dari frontend ─────────────────
+app.post('/api/log-error', async (req, res) => {
+  try {
+    const { pesan, stack, url, user_agent, user_id, extra } = req.body;
+    if (!pesan) return res.json({ success: false });
+    await _sb.from('error_logs').insert({
+      sumber: 'frontend',
+      pesan: String(pesan).substring(0, 500),
+      stack: stack ? String(stack).substring(0, 2000) : null,
+      url: url ? String(url).substring(0, 500) : null,
+      method: null,
+      user_id: user_id || null,
+      user_agent: user_agent ? String(user_agent).substring(0, 300) : null,
+      extra: extra ? JSON.stringify(extra).substring(0, 1000) : null
+    });
+    res.json({ success: true });
+  } catch { res.json({ success: false }); }
+});
+
+// ── Error Logs: lihat log untuk guru ────────────────────────
+app.get('/api/error-logs', async (req, res) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ success: false });
+    const jwt = require('jsonwebtoken');
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    if (user.role !== 'guru') return res.status(403).json({ success: false });
+
+    const { data } = await _sb.from('error_logs')
+      .select('*').order('created_at', { ascending: false }).limit(100);
+    res.json({ success: true, data: data || [] });
+  } catch { res.status(403).json({ success: false }); }
+});
+
 // ── Proxy: Groq AI (agar API key tidak terekspos di frontend) ──
 app.post('/api/ai/chat', aiLimiter, async (req, res) => {
   try {
@@ -310,13 +334,19 @@ app.get('/api', (req, res) => {
 
 app.use((req, res) => res.status(404).json({ success: false, pesan: `Endpoint tidak ditemukan: ${req.method} ${req.path}` }));
 
-// ── Sentry: tangkap semua error yang tidak ter-handle ───────
-if (process.env.SENTRY_DSN) {
-  Sentry.setupExpressErrorHandler(app);
-}
-
 app.use((err, req, res, next) => {
   console.error('❌', err.message);
+  // Simpan error ke Supabase secara async (tidak block response)
+  _sb.from('error_logs').insert({
+    sumber: 'backend',
+    pesan: err.message || String(err),
+    stack: err.stack || null,
+    url: req.path,
+    method: req.method,
+    user_id: null,
+    user_agent: req.headers['user-agent'] || null,
+    extra: JSON.stringify({ body: req.body, query: req.query })
+  }).then(() => {}).catch(() => {});
   res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
 });
 
