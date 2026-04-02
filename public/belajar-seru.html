@@ -4337,8 +4337,8 @@ async function submitMateri() {
   document.getElementById('btn-simpan-materi').disabled = false;
 }
 
-// ── YouTube: klik thumbnail → cek embeddability dulu, baru load iframe ──
-async function ytPlayClick(id, embedUrl, watchUrl) {
+// ── YouTube: klik thumbnail → load iframe, jika error 153 tampilkan fallback ──
+function ytPlayClick(id, embedUrl, watchUrl) {
   const wrap = document.getElementById('yt-wrap-' + id);
   if (!wrap) return;
   wrap.onclick = null;
@@ -4355,22 +4355,7 @@ async function ytPlayClick(id, embedUrl, watchUrl) {
       <a href="${watchUrl}" target="_blank" rel="noopener noreferrer" style="background:#FF0000;color:white;padding:10px 22px;border-radius:50px;font-weight:700;font-size:13px;text-decoration:none">▶ Tonton di YouTube</a>
     </div>`;
 
-  // Tampilkan loading sebentar
-  wrap.innerHTML = `<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:white;font-size:14px">Memuat video...</div>`;
-
-  // Cek embeddability via server (oEmbed API)
-  if (videoId) {
-    try {
-      const r = await fetch(`/api/proxy/youtube-check?videoId=${encodeURIComponent(videoId)}`);
-      const data = await r.json();
-      if (!data.embeddable) {
-        wrap.innerHTML = fallbackHtml;
-        return;
-      }
-    } catch(e) { /* jika cek gagal, tetap coba embed */ }
-  }
-
-  // Video embeddable — load iframe
+  // Load iframe langsung
   wrap.innerHTML = `
     <iframe id="yt-iframe-${id}" src="${embedUrl}"
       style="position:absolute;top:0;left:0;width:100%;height:100%;border:none"
