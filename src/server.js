@@ -8,20 +8,29 @@ const app = express();
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 3000;
 
+// Allowed origins: dari .env (CORS_ORIGIN) + localhost dev
+const allowedOrigins = [
+  'http://localhost:5500',
+  'http://127.0.0.1:5500',
+  'http://localhost:3001',
+  ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(o => o.trim()) : [])
+];
+
+function corsOriginFn(origin, callback) {
+  // Izinkan request tanpa origin (curl, server-to-server)
+  if (!origin) return callback(null, true);
+  if (allowedOrigins.includes(origin)) return callback(null, true);
+  callback(new Error('CORS: origin tidak diizinkan — ' + origin));
+}
+
 // Socket.io setup — io di-expose ke routes via app.set('io', io)
 const io = new Server(httpServer, {
-  cors: {
-    origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:3001', '*'],
-    credentials: true
-  }
+  cors: { origin: corsOriginFn, credentials: true }
 });
 
 app.set('io', io); // Expose io ke routes (req.app.get('io'))
 
-app.use(cors({
-  origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:3001', '*'],
-  credentials: true
-}));
+app.use(cors({ origin: corsOriginFn, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
@@ -108,6 +117,37 @@ require('./socket/kelas')(io);
 
 // Socket.io Video Call — Daily.co (signaling notifikasi meeting)
 require('./socket/videocall')(io);
+
+// ── Proxy: Groq AI (agar API key tidak terekspos di frontend) ──
+app.post('/api/ai/chat', async (req, res) => {
+  try {
+    if (!process.env.GROQ_API_KEY)
+      return res.status(500).json({ success: false, pesan: 'GROQ_API_KEY belum diset di server.' });
+
+    const { messages, max_tokens } = req.body;
+    if (!messages || !Array.isArray(messages))
+      return res.status(400).json({ success: false, pesan: 'messages wajib berupa array.' });
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
+        max_tokens: max_tokens || 1024,
+        messages
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error?.message || 'Groq API error');
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, pesan: err.message });
+  }
+});
 
 // ── Proxy: fetch artikel untuk AI Materi ──
 const https = require('https');

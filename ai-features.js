@@ -5,22 +5,16 @@
 //  Letakkan SETELAH semua script lain
 // ============================================================
 
-// ── GROQ CONFIG — Ganti GROQ_API_KEY dengan key kamu ──
-// Daftar gratis di: https://console.groq.com
-const GROQ_API_KEY = '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';
-const AI_MODEL     = 'llama-3.1-8b-instant'; // gratis, cepat
+// ── AI CONFIG ──────────────────────────────────────────────
+// API key disimpan di .env server, frontend memanggil proxy
 const AI_MAX_TOKENS = 1024;
 
-// ── Helper: panggil Groq API (OpenAI-compatible format) ────
+// ── Helper: panggil Groq via proxy backend ─────────────────
 async function callAI(systemPrompt, userMessage, maxTokens = AI_MAX_TOKENS) {
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+  const res = await fetch('/api/ai/chat', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${GROQ_API_KEY}`
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: AI_MODEL,
       max_tokens: maxTokens,
       messages: [
         { role: 'system', content: systemPrompt },
@@ -28,21 +22,17 @@ async function callAI(systemPrompt, userMessage, maxTokens = AI_MAX_TOKENS) {
       ]
     })
   });
-  const data = await res.json();
-  if (data.error) throw new Error(data.error.message);
-  return data.choices?.[0]?.message?.content || '';
+  const json = await res.json();
+  if (!json.success) throw new Error(json.pesan || 'AI error');
+  return json.data.choices?.[0]?.message?.content || '';
 }
 
 // ── Helper: panggil Groq dengan history chat ───────────────
 async function callAIWithHistory(systemPrompt, history, maxTokens = AI_MAX_TOKENS) {
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+  const res = await fetch('/api/ai/chat', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${GROQ_API_KEY}`
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: AI_MODEL,
       max_tokens: maxTokens,
       messages: [
         { role: 'system', content: systemPrompt },
@@ -50,9 +40,9 @@ async function callAIWithHistory(systemPrompt, history, maxTokens = AI_MAX_TOKEN
       ]
     })
   });
-  const data = await res.json();
-  if (data.error) throw new Error(data.error.message);
-  return data.choices?.[0]?.message?.content || '';
+  const json = await res.json();
+  if (!json.success) throw new Error(json.pesan || 'AI error');
+  return json.data.choices?.[0]?.message?.content || '';
 }
 
 // ============================================================
