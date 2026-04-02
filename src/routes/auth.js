@@ -10,24 +10,14 @@ const { Resend } = require('resend');
 const supabase = require('../supabase');
 const { authMiddleware, JWT_SECRET } = require('../middleware/auth');
 
-// ── Kirim email: Resend (prioritas) atau nodemailer (fallback) ──
-async function sendResetEmail({ to, nama, resetUrl }) {
-  const html = `<div style="font-family:Nunito,sans-serif;max-width:480px;margin:auto">
-    <h2 style="color:#FF6B35">Reset Password KitaBelajar</h2>
-    <p>Halo <b>${nama}</b>! Klik tombol di bawah untuk reset password kamu.</p>
-    <a href="${resetUrl}" style="display:inline-block;background:#FF6B35;color:white;padding:12px 28px;border-radius:50px;text-decoration:none;font-weight:700;margin:16px 0">🔐 Reset Password</a>
-    <p style="color:#888;font-size:13px">Link ini berlaku 1 jam. Abaikan jika kamu tidak meminta reset.</p>
-  </div>`;
-
-  // Pakai Resend jika ada API key
+// ── Generic email sender: Resend (prioritas) atau nodemailer ──
+async function sendEmail({ to, subject, html }) {
   if (process.env.RESEND_API_KEY) {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const from = process.env.RESEND_FROM || 'KitaBelajar <onboarding@resend.dev>';
-    await resend.emails.send({ from, to, subject: '🔐 Reset Password KitaBelajar', html });
+    await resend.emails.send({ from, to, subject, html });
     return;
   }
-
-  // Fallback: nodemailer SMTP
   if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
     console.warn('[email] Tidak ada RESEND_API_KEY atau SMTP config — email tidak dikirim.');
     return;
@@ -39,7 +29,38 @@ async function sendResetEmail({ to, nama, resetUrl }) {
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
     connectionTimeout: 8000, greetingTimeout: 5000, socketTimeout: 10000
   });
-  await transporter.sendMail({ from: `"KitaBelajar" <${process.env.SMTP_USER}>`, to, subject: '🔐 Reset Password KitaBelajar', html });
+  await transporter.sendMail({ from: `"KitaBelajar" <${process.env.SMTP_USER}>`, to, subject, html });
+}
+
+function sendResetEmail({ to, nama, resetUrl }) {
+  return sendEmail({
+    to, subject: '🔐 Reset Password KitaBelajar',
+    html: `<div style="font-family:Nunito,sans-serif;max-width:480px;margin:auto">
+      <h2 style="color:#FF6B35">Reset Password KitaBelajar</h2>
+      <p>Halo <b>${nama}</b>! Klik tombol di bawah untuk reset password kamu.</p>
+      <a href="${resetUrl}" style="display:inline-block;background:#FF6B35;color:white;padding:12px 28px;border-radius:50px;text-decoration:none;font-weight:700;margin:16px 0">🔐 Reset Password</a>
+      <p style="color:#888;font-size:13px">Link ini berlaku 1 jam. Abaikan jika kamu tidak meminta reset.</p>
+    </div>`
+  });
+}
+
+// ── OTP store sementara (in-memory, expired otomatis) ──────────
+const otpStore = new Map(); // email → { otp, data, expiresAt }
+
+function generateOTP() {
+  return String(Math.floor(100000 + Math.random() * 900000)); // 6 digit
+}
+
+function sendOTPEmail({ to, nama, otp }) {
+  return sendEmail({
+    to, subject: '🔑 Kode Verifikasi KitaBelajar',
+    html: `<div style="font-family:Nunito,sans-serif;max-width:480px;margin:auto;text-align:center">
+      <h2 style="color:#FF6B35">Verifikasi Email KitaBelajar</h2>
+      <p>Halo <b>${nama}</b>! Kode OTP kamu adalah:</p>
+      <div style="font-size:42px;font-weight:900;letter-spacing:12px;color:#FF6B35;margin:24px 0;padding:16px;background:#fff5f0;border-radius:16px">${otp}</div>
+      <p style="color:#888;font-size:13px">Kode berlaku 10 menit. Jangan berikan ke siapa pun.</p>
+    </div>`
+  });
 }
 
 // Helper validasi password kuat
@@ -51,9 +72,9 @@ function validatePassword(password) {
 }
 
 // =============================================
-//  POST /api/auth/register
+//  POST /api/auth/send-otp  (langkah 1 registrasi)
 // =============================================
-router.post('/register', async (req, res) => {
+router.post('/send-otp', async (req, res) => {
   try {
     const { nama, email, password, role, kelas, kode_kelas } = req.body;
 
@@ -62,23 +83,68 @@ router.post('/register', async (req, res) => {
     if (!['guru', 'murid'].includes(role))
       return res.status(400).json({ success: false, pesan: 'Role harus "guru" atau "murid".' });
 
-    // Validasi format email
     const normalEmail = validator.normalizeEmail(email) || email.toLowerCase().trim();
     if (!validator.isEmail(normalEmail))
       return res.status(400).json({ success: false, pesan: 'Format email tidak valid.' });
 
-    // Validasi nama (max 100 karakter, tidak boleh hanya spasi)
     const safaNama = nama.trim().substring(0, 100);
     if (safaNama.length < 2)
       return res.status(400).json({ success: false, pesan: 'Nama minimal 2 karakter.' });
 
-    // Validasi password kuat
     const pwError = validatePassword(password);
     if (pwError) return res.status(400).json({ success: false, pesan: pwError });
 
-    // Cek email sudah ada
-    const { data: existing } = await supabase
-      .from('users').select('id').eq('email', normalEmail).single();
+    const { data: existing } = await supabase.from('users').select('id').eq('email', normalEmail).single();
+    if (existing)
+      return res.status(409).json({ success: false, pesan: 'Email sudah terdaftar.' });
+
+    // Generate & simpan OTP
+    const otp = generateOTP();
+    otpStore.set(normalEmail, {
+      otp,
+      data: { nama: safaNama, email: normalEmail, password, role, kelas: kelas || null, kode_kelas: kode_kelas || null },
+      expiresAt: Date.now() + 10 * 60 * 1000 // 10 menit
+    });
+
+    // Kirim OTP di background
+    sendOTPEmail({ to: normalEmail, nama: safaNama, otp })
+      .catch(e => console.error('[send-otp] email gagal:', e.message));
+
+    res.json({ success: true, pesan: 'Kode OTP dikirim ke email kamu.' });
+  } catch (err) {
+    console.error('[send-otp]', err.message);
+    res.status(500).json({ success: false, pesan: 'Gagal mengirim OTP. Coba lagi.' });
+  }
+});
+
+// =============================================
+//  POST /api/auth/register  (langkah 2: verifikasi OTP)
+// =============================================
+router.post('/register', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp)
+      return res.status(400).json({ success: false, pesan: 'Email dan kode OTP wajib diisi.' });
+
+    const normalEmail = validator.normalizeEmail(email) || email.toLowerCase().trim();
+    const entry = otpStore.get(normalEmail);
+
+    if (!entry)
+      return res.status(400).json({ success: false, pesan: 'Kode OTP tidak ditemukan. Minta ulang kode.' });
+    if (Date.now() > entry.expiresAt) {
+      otpStore.delete(normalEmail);
+      return res.status(400).json({ success: false, pesan: 'Kode OTP sudah kedaluwarsa. Minta ulang kode.' });
+    }
+    if (entry.otp !== String(otp).trim())
+      return res.status(400).json({ success: false, pesan: 'Kode OTP salah.' });
+
+    otpStore.delete(normalEmail); // hapus setelah dipakai
+
+    const { nama: safaNama, password, role, kelas, kode_kelas } = entry.data;
+
+    // Cek sekali lagi email belum ada (race condition)
+    const { data: existing } = await supabase.from('users').select('id').eq('email', normalEmail).single();
     if (existing)
       return res.status(409).json({ success: false, pesan: 'Email sudah terdaftar.' });
 
