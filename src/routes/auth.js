@@ -98,17 +98,23 @@ router.post('/send-otp', async (req, res) => {
     if (existing)
       return res.status(409).json({ success: false, pesan: 'Email sudah terdaftar.' });
 
-    // Generate & simpan OTP
+    // Generate OTP
     const otp = generateOTP();
+
+    // Kirim email dulu — kalau gagal langsung return error ke user
+    try {
+      await sendOTPEmail({ to: normalEmail, nama: safaNama, otp });
+    } catch (mailErr) {
+      console.error('[send-otp] email gagal:', mailErr.message);
+      return res.status(500).json({ success: false, pesan: 'Gagal mengirim email OTP. Pastikan email benar atau coba beberapa saat lagi.' });
+    }
+
+    // Simpan OTP hanya setelah email berhasil terkirim
     otpStore.set(normalEmail, {
       otp,
       data: { nama: safaNama, email: normalEmail, password, role, kelas: kelas || null, kode_kelas: kode_kelas || null },
       expiresAt: Date.now() + 10 * 60 * 1000 // 10 menit
     });
-
-    // Kirim OTP di background
-    sendOTPEmail({ to: normalEmail, nama: safaNama, otp })
-      .catch(e => console.error('[send-otp] email gagal:', e.message));
 
     res.json({ success: true, pesan: 'Kode OTP dikirim ke email kamu.' });
   } catch (err) {
@@ -294,11 +300,14 @@ router.post('/forgot-password', async (req, res) => {
 
     const resetUrl = `${process.env.APP_URL || 'https://kitabelajar.up.railway.app'}/?reset_token=${resetToken}`;
 
-    // Kirim email di background — response tidak menunggu
-    sendResetEmail({ to: normalEmail, nama: user.nama, resetUrl })
-      .catch(e => console.error('[forgot-password] email gagal:', e.message));
+    try {
+      await sendResetEmail({ to: normalEmail, nama: user.nama, resetUrl });
+    } catch (mailErr) {
+      console.error('[forgot-password] email gagal:', mailErr.message);
+      return res.status(500).json({ success: false, pesan: 'Gagal mengirim email reset. Pastikan konfigurasi email sudah benar.' });
+    }
 
-    res.json({ success: true, pesan: 'Jika email terdaftar, link reset akan dikirim.', ...(process.env.NODE_ENV !== 'production' && { reset_url: resetUrl }) });
+    res.json({ success: true, pesan: 'Link reset dikirim! Cek email kamu.', ...(process.env.NODE_ENV !== 'production' && { reset_url: resetUrl }) });
   } catch (err) {
     console.error('[forgot-password]', err.message);
     res.status(500).json({ success: false, pesan: 'Gagal memproses permintaan.' });
