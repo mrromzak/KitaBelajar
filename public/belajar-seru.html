@@ -4,6 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KitaBelajar — Platform Belajar Menyenangkan</title>
+<!-- Sentry Browser SDK — tangkap error frontend otomatis -->
+<script
+  src="https://browser.sentry-cdn.com/8.x.x/bundle.tracing.min.js"
+  crossorigin="anonymous"
+></script>
+<script>
+  // DSN diisi setelah daftar di sentry.io
+  const SENTRY_DSN_FRONTEND = '';
+  if (typeof Sentry !== 'undefined' && SENTRY_DSN_FRONTEND) {
+    Sentry.init({
+      dsn: SENTRY_DSN_FRONTEND,
+      environment: location.hostname === 'localhost' ? 'development' : 'production',
+      tracesSampleRate: 0.2,
+      integrations: [Sentry.browserTracingIntegration()],
+    });
+  }
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
 <style>
   :root {

@@ -1,4 +1,15 @@
 require('dotenv').config();
+
+// ── Sentry: inisialisasi SEBELUM semua require lainnya ──────
+const Sentry = require('@sentry/node');
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'production',
+    tracesSampleRate: 0.2, // 20% request direkam untuk performance
+  });
+}
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -298,6 +309,12 @@ app.get('/api', (req, res) => {
 });
 
 app.use((req, res) => res.status(404).json({ success: false, pesan: `Endpoint tidak ditemukan: ${req.method} ${req.path}` }));
+
+// ── Sentry: tangkap semua error yang tidak ter-handle ───────
+if (process.env.SENTRY_DSN) {
+  Sentry.setupExpressErrorHandler(app);
+}
+
 app.use((err, req, res, next) => {
   console.error('❌', err.message);
   res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });

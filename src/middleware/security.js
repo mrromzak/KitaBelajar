@@ -69,7 +69,8 @@ const helmetMiddleware = helmet({
       scriptSrc:      ["'self'", "'unsafe-inline'", "'unsafe-eval'",
                        'https://cdn.socket.io', 'https://cdn.jsdelivr.net',
                        'https://cdnjs.cloudflare.com', 'https://fonts.googleapis.com',
-                       'https://meet.ffmuc.net', 'https://*.daily.co'],
+                       'https://meet.ffmuc.net', 'https://*.daily.co',
+                       'https://browser.sentry-cdn.com'],
       // Izinkan inline event handler (onclick, onchange, dll di HTML)
       scriptSrcAttr:  ["'unsafe-inline'"],
       styleSrc:       ["'self'", "'unsafe-inline'",
@@ -84,6 +85,7 @@ const helmetMiddleware = helmet({
                        'https://cdn.socket.io',
                        'https://meet.ffmuc.net',
                        'https://*.railway.app', 'wss://*.railway.app',
+                       'https://*.sentry.io', 'https://sentry.io',
                        // YouTube IFrame API butuh connect ke domain ini
                        'https://www.youtube.com', 'https://youtube.com',
                        'https://www.youtube-nocookie.com', 'https://i.ytimg.com',
