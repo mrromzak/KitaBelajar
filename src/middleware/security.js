@@ -83,7 +83,11 @@ const helmetMiddleware = helmet({
                        'https://api.daily.co',
                        'https://cdn.socket.io',
                        'https://meet.ffmuc.net',
-                       'https://*.railway.app', 'wss://*.railway.app'],
+                       'https://*.railway.app', 'wss://*.railway.app',
+                       // YouTube IFrame API butuh connect ke domain ini
+                       'https://www.youtube.com', 'https://youtube.com',
+                       'https://www.youtube-nocookie.com', 'https://i.ytimg.com',
+                       'https://*.googlevideo.com'],
       mediaSrc:       ["'self'", 'https:', 'blob:'],
       objectSrc:      ["'none'"],
       frameSrc:       ["'self'",
