@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KitaBelajar — Platform Belajar Menyenangkan</title>
 <!-- Google Identity Services -->
-<script src="https://accounts.google.com/gsi/client" async onload="if(typeof _initGoogle==='function')_initGoogle()"></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
 <!-- Error Logger — kirim error JS ke server KitaBelajar sendiri -->
 <script>
   (function() {
@@ -5838,6 +5838,19 @@ window.addEventListener('load', () => {
   }
   populateMapelSelects();
   populateBuatKelasMapel();
+
+  // Inisialisasi Google login setelah semua fungsi dan DOM siap
+  // Polling karena library Google load async — tunggu max 5 detik
+  let _gTry = 0;
+  const _gPoll = setInterval(() => {
+    _gTry++;
+    if (typeof google !== 'undefined' && google.accounts) {
+      clearInterval(_gPoll);
+      _initGoogle();
+    } else if (_gTry > 50) {
+      clearInterval(_gPoll); // timeout 5 detik
+    }
+  }, 100);
 });
 
 // ============================================================
