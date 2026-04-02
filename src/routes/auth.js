@@ -6,21 +6,40 @@ const validator = require('validator');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const supabase = require('../supabase');
 const { authMiddleware, JWT_SECRET } = require('../middleware/auth');
 
-// ── Email transporter (opsional, butuh SMTP_* di .env) ──────
-function getMailer() {
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) return null;
-  return nodemailer.createTransport({
+// ── Kirim email: Resend (prioritas) atau nodemailer (fallback) ──
+async function sendResetEmail({ to, nama, resetUrl }) {
+  const html = `<div style="font-family:Nunito,sans-serif;max-width:480px;margin:auto">
+    <h2 style="color:#FF6B35">Reset Password KitaBelajar</h2>
+    <p>Halo <b>${nama}</b>! Klik tombol di bawah untuk reset password kamu.</p>
+    <a href="${resetUrl}" style="display:inline-block;background:#FF6B35;color:white;padding:12px 28px;border-radius:50px;text-decoration:none;font-weight:700;margin:16px 0">🔐 Reset Password</a>
+    <p style="color:#888;font-size:13px">Link ini berlaku 1 jam. Abaikan jika kamu tidak meminta reset.</p>
+  </div>`;
+
+  // Pakai Resend jika ada API key
+  if (process.env.RESEND_API_KEY) {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const from = process.env.RESEND_FROM || 'KitaBelajar <onboarding@resend.dev>';
+    await resend.emails.send({ from, to, subject: '🔐 Reset Password KitaBelajar', html });
+    return;
+  }
+
+  // Fallback: nodemailer SMTP
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.warn('[email] Tidak ada RESEND_API_KEY atau SMTP config — email tidak dikirim.');
+    return;
+  }
+  const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT || '587'),
     secure: process.env.SMTP_SECURE === 'true',
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    connectionTimeout: 8000,
-    greetingTimeout: 5000,
-    socketTimeout: 10000
+    connectionTimeout: 8000, greetingTimeout: 5000, socketTimeout: 10000
   });
+  await transporter.sendMail({ from: `"KitaBelajar" <${process.env.SMTP_USER}>`, to, subject: '🔐 Reset Password KitaBelajar', html });
 }
 
 // Helper validasi password kuat
@@ -210,20 +229,9 @@ router.post('/forgot-password', async (req, res) => {
     const resetUrl = `${process.env.APP_URL || 'https://kitabelajar.up.railway.app'}/?reset_token=${resetToken}`;
     const mailer = getMailer();
 
-    if (mailer) {
-      // Jangan blok response — kirim email di background, timeout 10 detik
-      mailer.sendMail({
-        from: `"KitaBelajar" <${process.env.SMTP_USER}>`,
-        to: normalEmail,
-        subject: '🔐 Reset Password KitaBelajar',
-        html: `<div style="font-family:Nunito,sans-serif;max-width:480px;margin:auto">
-          <h2 style="color:#FF6B35">Reset Password KitaBelajar</h2>
-          <p>Halo <b>${user.nama}</b>! Klik tombol di bawah untuk reset password kamu.</p>
-          <a href="${resetUrl}" style="display:inline-block;background:#FF6B35;color:white;padding:12px 28px;border-radius:50px;text-decoration:none;font-weight:700;margin:16px 0">🔐 Reset Password</a>
-          <p style="color:#888;font-size:13px">Link ini berlaku 1 jam. Abaikan jika kamu tidak meminta reset.</p>
-        </div>`
-      }).catch(e => console.error('[forgot-password] email gagal:', e.message));
-    }
+    // Kirim email di background — response tidak menunggu
+    sendResetEmail({ to: normalEmail, nama: user.nama, resetUrl })
+      .catch(e => console.error('[forgot-password] email gagal:', e.message));
 
     res.json({ success: true, pesan: 'Jika email terdaftar, link reset akan dikirim.', ...(process.env.NODE_ENV !== 'production' && { reset_url: resetUrl }) });
   } catch (err) {
