@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KitaBelajar — Platform Belajar Menyenangkan</title>
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async></script>
 <!-- Error Logger — kirim error JS ke server KitaBelajar sendiri -->
 <script>
   (function() {
@@ -719,6 +721,7 @@
         <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#4285F4" d="M44.5 20H24v8.5h11.7C34.2 33.9 29.7 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.5 20-21 0-1.4-.1-2.7-.5-4z"/></svg>
         Masuk dengan Google
       </button>
+      <div id="google-btn-container" style="display:none;justify-content:center;margin-top:8px"></div>
       <div class="login-switch">
         Belum punya akun? <a onclick="showRegister()">Daftar sekarang →</a>
       </div>
@@ -2521,47 +2524,51 @@ async function doResetPassword() {
 }
 
 // ============================================================
-//  GOOGLE LOGIN
+//  GOOGLE LOGIN — Google Identity Services
 // ============================================================
-const GOOGLE_CLIENT_ID = ''; // Diisi dari Google Cloud Console jika tersedia
+const GOOGLE_CLIENT_ID = '1090565500817-q17ik5t91fssrv3ncj215oqh1atfcpmm.apps.googleusercontent.com';
+
+async function _handleGoogleCredential(response) {
+  showLoading(true);
+  try {
+    const data = await api('POST', '/auth/google', { google_token: response.credential });
+    if (data.success) {
+      token = data.token;
+      currentUser = data.user;
+      localStorage.setItem('kb_token', token);
+      localStorage.setItem('kb_user', JSON.stringify(currentUser));
+      joinPrivateChannel();
+      loadBellNotifications();
+      toast(`Selamat datang, ${currentUser.nama}! 🎉`, 'success');
+      if (currentUser.role === 'guru') loadGuruDashboard();
+      else loadMuridDashboard();
+    } else {
+      toast(data.pesan || 'Login Google gagal.', 'error');
+    }
+  } catch(e) { toast('Login Google gagal.', 'error'); }
+  showLoading(false);
+}
 
 function doGoogleLogin() {
-  if (!GOOGLE_CLIENT_ID) {
-    toast('Login Google belum dikonfigurasi oleh admin.', 'error');
+  if (typeof google === 'undefined') {
+    toast('Layanan Google belum siap, coba lagi sebentar.', 'error');
     return;
   }
-  // Buat popup Google OAuth
-  const w = 500, h = 600;
-  const left = (screen.width - w) / 2, top = (screen.height - h) / 2;
-  const popup = window.open(
-    `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(location.origin + '/auth/google/callback')}&response_type=token&scope=email%20profile`,
-    'googleLogin', `width=${w},height=${h},left=${left},top=${top}`
-  );
-  // Terima token dari popup
-  const handler = async (e) => {
-    if (e.data?.type !== 'google_token') return;
-    window.removeEventListener('message', handler);
-    popup?.close();
-    showLoading(true);
-    try {
-      const data = await api('POST', '/auth/google', { google_token: e.data.token });
-      if (data.success) {
-        token = data.token;
-        currentUser = data.user;
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(currentUser));
-        joinPrivateChannel();
-        loadBellNotifications();
-        toast(`Selamat datang, ${currentUser.nama}! 🎉`, 'success');
-        if (currentUser.role === 'guru') loadGuruDashboard();
-        else loadMuridDashboard();
-      } else {
-        toast(data.pesan || 'Login Google gagal.', 'error');
-      }
-    } catch(e) { toast('Login Google gagal.', 'error'); }
-    showLoading(false);
-  };
-  window.addEventListener('message', handler);
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: _handleGoogleCredential,
+    ux_mode: 'popup'
+  });
+  google.accounts.id.prompt((notification) => {
+    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+      // Popup diblokir atau skip — fallback ke One Tap manual
+      google.accounts.id.renderButton(
+        document.getElementById('google-btn-container'),
+        { theme: 'outline', size: 'large', width: 400 }
+      );
+      document.getElementById('google-btn-container').style.display = 'flex';
+    }
+  });
 }
 
 // ============================================================
