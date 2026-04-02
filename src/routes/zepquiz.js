@@ -44,6 +44,7 @@ router.post('/room', authMiddleware, guruOnly, async (req, res) => {
         quiz_id,
         judul: quiz.judul,
         mapel: quiz.mapel,
+        kelas_id: quiz.kelas_id || null,
         durasi_per_soal: quiz.durasi || 15,
         total_soal: soal.length,
         soal: soal.map(s => ({

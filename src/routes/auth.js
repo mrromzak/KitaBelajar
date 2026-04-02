@@ -4,8 +4,21 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const validator = require('validator');
 const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 const supabase = require('../supabase');
 const { authMiddleware, JWT_SECRET } = require('../middleware/auth');
+
+// ── Email transporter (opsional, butuh SMTP_* di .env) ──────
+function getMailer() {
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) return null;
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+  });
+}
 
 // Helper validasi password kuat
 function validatePassword(password) {
@@ -166,6 +179,115 @@ router.put('/profile', authMiddleware, async (req, res) => {
     res.json({ success: true, pesan: 'Profil berhasil diperbarui.' });
   } catch (err) {
     console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
+  }
+});
+
+// =============================================
+//  POST /api/auth/forgot-password
+// =============================================
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, pesan: 'Email wajib diisi.' });
+    const normalEmail = validator.normalizeEmail(email) || email.toLowerCase().trim();
+
+    const { data: user } = await supabase.from('users').select('id, nama').eq('email', normalEmail).single();
+    // Selalu return sukses agar tidak bocor info user terdaftar atau tidak
+    if (!user) return res.json({ success: true, pesan: 'Jika email terdaftar, link reset akan dikirim.' });
+
+    // Generate token reset 1 jam
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetExpiry = new Date(Date.now() + 3600000).toISOString();
+    await supabase.from('users').update({ reset_token: resetToken, reset_token_expiry: resetExpiry }).eq('id', user.id);
+
+    const resetUrl = `${process.env.APP_URL || 'https://kitabelajar.up.railway.app'}/?reset_token=${resetToken}`;
+    const mailer = getMailer();
+
+    if (mailer) {
+      await mailer.sendMail({
+        from: `"KitaBelajar" <${process.env.SMTP_USER}>`,
+        to: normalEmail,
+        subject: '🔐 Reset Password KitaBelajar',
+        html: `<div style="font-family:Nunito,sans-serif;max-width:480px;margin:auto">
+          <h2 style="color:#FF6B35">Reset Password KitaBelajar</h2>
+          <p>Halo <b>${user.nama}</b>! Klik tombol di bawah untuk reset password kamu.</p>
+          <a href="${resetUrl}" style="display:inline-block;background:#FF6B35;color:white;padding:12px 28px;border-radius:50px;text-decoration:none;font-weight:700;margin:16px 0">🔐 Reset Password</a>
+          <p style="color:#888;font-size:13px">Link ini berlaku 1 jam. Abaikan jika kamu tidak meminta reset.</p>
+        </div>`
+      });
+    }
+
+    res.json({ success: true, pesan: 'Jika email terdaftar, link reset akan dikirim.', ...(process.env.NODE_ENV !== 'production' && { reset_url: resetUrl }) });
+  } catch (err) {
+    console.error('[forgot-password]', err.message);
+    res.status(500).json({ success: false, pesan: 'Gagal memproses permintaan.' });
+  }
+});
+
+// =============================================
+//  POST /api/auth/reset-password
+// =============================================
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, password_baru } = req.body;
+    if (!token || !password_baru) return res.status(400).json({ success: false, pesan: 'Token dan password baru wajib diisi.' });
+
+    const pwError = validatePassword(password_baru);
+    if (pwError) return res.status(400).json({ success: false, pesan: pwError });
+
+    const { data: user } = await supabase.from('users')
+      .select('id, reset_token_expiry').eq('reset_token', token).single();
+
+    if (!user) return res.status(400).json({ success: false, pesan: 'Token tidak valid atau sudah digunakan.' });
+    if (new Date(user.reset_token_expiry) < new Date()) return res.status(400).json({ success: false, pesan: 'Token sudah kedaluwarsa. Minta reset ulang.' });
+
+    const hashedPassword = bcrypt.hashSync(password_baru, 10);
+    await supabase.from('users').update({ password: hashedPassword, reset_token: null, reset_token_expiry: null }).eq('id', user.id);
+
+    res.json({ success: true, pesan: 'Password berhasil direset! Silakan login.' });
+  } catch (err) {
+    console.error('[reset-password]', err.message);
+    res.status(500).json({ success: false, pesan: 'Gagal reset password.' });
+  }
+});
+
+// =============================================
+//  POST /api/auth/google — Login/Register via Google OAuth
+// =============================================
+router.post('/google', async (req, res) => {
+  try {
+    const { google_token } = req.body;
+    if (!google_token) return res.status(400).json({ success: false, pesan: 'Google token wajib diisi.' });
+
+    // Verifikasi token ke Google
+    const gRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${google_token}`);
+    const gData = await gRes.json();
+
+    if (!gRes.ok || !gData.email) return res.status(401).json({ success: false, pesan: 'Token Google tidak valid.' });
+    if (process.env.GOOGLE_CLIENT_ID && gData.aud !== process.env.GOOGLE_CLIENT_ID)
+      return res.status(401).json({ success: false, pesan: 'Token Google tidak valid.' });
+
+    const normalEmail = gData.email.toLowerCase().trim();
+    let { data: user } = await supabase.from('users').select('*').eq('email', normalEmail).single();
+
+    if (!user) {
+      // Auto-register — role default murid, bisa diubah setelah login
+      const id = uuidv4();
+      const nama = gData.name || gData.email.split('@')[0];
+      const { error } = await supabase.from('users').insert({
+        id, nama, email: normalEmail, password: bcrypt.hashSync(uuidv4(), 10),
+        role: 'murid', avatar: gData.picture ? null : '🦁', google_id: gData.sub, xp: 0, level: 1
+      });
+      if (error) throw error;
+      await supabase.from('notifikasi').insert({ id: uuidv4(), user_id: id, judul: '🎉 Selamat Datang!', pesan: `Halo ${nama}! Selamat bergabung di KitaBelajar via Google.` });
+      user = { id, nama, email: normalEmail, role: 'murid', avatar: '🦁', xp: 0, level: 1 };
+    }
+
+    const jwtToken = jwt.sign({ id: user.id, nama: user.nama, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ success: true, pesan: `Selamat datang, ${user.nama}!`, token: jwtToken, user: { id: user.id, nama: user.nama, email: user.email, role: user.role, avatar: user.avatar, xp: user.xp, level: user.level } });
+  } catch (err) {
+    console.error('[google-auth]', err.message);
+    res.status(500).json({ success: false, pesan: 'Login Google gagal.' });
   }
 });
 

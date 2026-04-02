@@ -129,6 +129,52 @@ router.put('/notifikasi/:id/baca', authMiddleware, async (req, res) => {
   }
 });
 
+// GET /api/dashboard/penilaian — daftar quiz + skor murid untuk guru
+router.get('/penilaian', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'guru') return res.status(403).json({ success: false, pesan: 'Hanya guru.' });
+  try {
+    const guruId = req.user.id;
+    // Ambil semua quiz milik guru
+    const { data: quizList } = await supabase
+      .from('quiz').select('id, judul, mapel, kelas_id, created_at')
+      .eq('guru_id', guruId).order('created_at', { ascending: false });
+
+    if (!quizList || quizList.length === 0) return res.json({ success: true, data: [] });
+
+    const quizIds = quizList.map(q => q.id);
+
+    // Ambil semua hasil quiz untuk quiz milik guru ini
+    const { data: hasilList } = await supabase
+      .from('hasil_quiz')
+      .select('quiz_id, murid_id, skor, waktu_selesai, murid:murid_id(nama, avatar)')
+      .in('quiz_id', quizIds)
+      .order('waktu_selesai', { ascending: false });
+
+    // Hitung rata-rata per quiz dan susun data
+    const result = quizList.map(q => {
+      const hasilQuiz = (hasilList || []).filter(h => h.quiz_id === q.id);
+      const totalSkor = hasilQuiz.reduce((s, h) => s + (h.skor || 0), 0);
+      const rataRata = hasilQuiz.length > 0 ? Math.round(totalSkor / hasilQuiz.length) : null;
+      return {
+        ...q,
+        total_pengerjaan: hasilQuiz.length,
+        rata_rata: rataRata,
+        hasil: hasilQuiz.map(h => ({
+          murid_id: h.murid_id,
+          nama: h.murid?.nama || 'Murid',
+          avatar: h.murid?.avatar || '🦁',
+          skor: h.skor,
+          waktu_selesai: h.waktu_selesai
+        }))
+      };
+    });
+
+    res.json({ success: true, data: result });
+  } catch (err) {
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan.' });
+  }
+});
+
 // PUT /api/dashboard/notifikasi/baca-semua
 router.put('/notifikasi/baca-semua', authMiddleware, async (req, res) => {
   try {
