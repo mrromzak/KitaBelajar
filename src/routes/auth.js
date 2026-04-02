@@ -16,7 +16,10 @@ function getMailer() {
     host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT || '587'),
     secure: process.env.SMTP_SECURE === 'true',
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    connectionTimeout: 8000,
+    greetingTimeout: 5000,
+    socketTimeout: 10000
   });
 }
 
@@ -208,7 +211,8 @@ router.post('/forgot-password', async (req, res) => {
     const mailer = getMailer();
 
     if (mailer) {
-      await mailer.sendMail({
+      // Jangan blok response — kirim email di background, timeout 10 detik
+      mailer.sendMail({
         from: `"KitaBelajar" <${process.env.SMTP_USER}>`,
         to: normalEmail,
         subject: '🔐 Reset Password KitaBelajar',
@@ -218,7 +222,7 @@ router.post('/forgot-password', async (req, res) => {
           <a href="${resetUrl}" style="display:inline-block;background:#FF6B35;color:white;padding:12px 28px;border-radius:50px;text-decoration:none;font-weight:700;margin:16px 0">🔐 Reset Password</a>
           <p style="color:#888;font-size:13px">Link ini berlaku 1 jam. Abaikan jika kamu tidak meminta reset.</p>
         </div>`
-      });
+      }).catch(e => console.error('[forgot-password] email gagal:', e.message));
     }
 
     res.json({ success: true, pesan: 'Jika email terdaftar, link reset akan dikirim.', ...(process.env.NODE_ENV !== 'production' && { reset_url: resetUrl }) });
@@ -291,7 +295,7 @@ router.post('/google', async (req, res) => {
       const safaNama = (gData.name || gData.email.split('@')[0]).trim().substring(0, 100);
       const avatar = role === 'guru' ? '👩‍🏫' : '🦁';
       const { error } = await supabase.from('users').insert({
-        id, nama: safaNama, email: normalEmail, password: null, role, avatar, xp: 0, level: 1
+        id, nama: safaNama, email: normalEmail, password: bcrypt.hashSync(id, 10), role, avatar, xp: 0, level: 1
       });
       if (error) throw error;
 
