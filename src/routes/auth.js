@@ -227,7 +227,6 @@ router.post('/forgot-password', async (req, res) => {
     }
 
     const resetUrl = `${process.env.APP_URL || 'https://kitabelajar.up.railway.app'}/?reset_token=${resetToken}`;
-    const mailer = getMailer();
 
     // Kirim email di background — response tidak menunggu
     sendResetEmail({ to: normalEmail, nama: user.nama, resetUrl })
