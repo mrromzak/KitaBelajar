@@ -382,11 +382,18 @@ app.get('/api/proxy/youtube-transcript', async (req, res) => {
 app.get('/api/proxy/youtube-check', async (req, res) => {
   const { videoId } = req.query;
   if (!videoId || !/^[a-zA-Z0-9_-]{8,12}$/.test(videoId))
-    return res.json({ embeddable: false });
+    return res.json({ embeddable: true }); // jika tidak tahu, coba saja
   try {
-    const r = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
-    res.json({ embeddable: r.ok });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+    const r = await fetch(
+      `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`,
+      { signal: controller.signal, headers: { 'User-Agent': 'Mozilla/5.0' } }
+    );
+    clearTimeout(timeout);
+    // 401 = embedding dinonaktifkan, selain itu anggap embeddable
+    res.json({ embeddable: r.status !== 401 });
   } catch {
-    res.json({ embeddable: true }); // jika gagal cek, coba saja
+    res.json({ embeddable: true }); // timeout / network error → coba saja
   }
 });
