@@ -60,7 +60,7 @@ router.post('/buat', authMiddleware, guruOnly, async (req, res) => {
     res.json({ success: true, url: roomUrl });
   } catch(err) {
     console.error('[meeting/buat]', err.message);
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 

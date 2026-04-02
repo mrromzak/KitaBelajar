@@ -12,7 +12,13 @@ module.exports = function (io) {
   io.on('connection', (socket) => {
 
     // ── Guru/Murid: Bergabung ke ruang video ──────────────────
-    socket.on('vc:join', ({ kelasId, userId, nama, avatar, role }) => {
+    socket.on('vc:join', ({ kelasId, nama, avatar }) => {
+      // Gunakan data dari JWT, fallback ke data client
+      const userId = socket.user?.id || null;
+      const role   = socket.user?.role || 'murid';
+      const safeNama   = socket.user?.nama || nama || 'Anonim';
+      const safeAvatar = avatar || (role === 'guru' ? '👩‍🏫' : '🦁');
+
       if (!kelasId || !userId) return;
 
       if (!rooms[kelasId]) {
@@ -31,7 +37,7 @@ module.exports = function (io) {
       socket.emit('vc:existing_peers', existingPeers);
 
       // Daftarkan peer baru
-      room.peers[socket.id] = { userId, nama, avatar, role };
+      room.peers[socket.id] = { userId, nama: safeNama, avatar: safeAvatar, role };
       socket.join('vc:' + kelasId);
       socket.data.vcKelasId = kelasId;
       socket.data.vcUserId = userId;
@@ -40,8 +46,8 @@ module.exports = function (io) {
       socket.to('vc:' + kelasId).emit('vc:peer_joined', {
         socketId: socket.id,
         userId,
-        nama,
-        avatar
+        nama: safeNama,
+        avatar: safeAvatar
       });
 
       // Beritahu semua (termasuk diri sendiri) jumlah peserta terkini

@@ -31,7 +31,7 @@ router.get('/private/:userId', authMiddleware, async (req, res) => {
     const result = (data || []).map(p => ({ ...p, isi: decrypt(p.isi) }));
     res.json({ success: true, data: result });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -56,7 +56,7 @@ router.post('/private/:userId', authMiddleware, async (req, res) => {
       data: { id, dari_id: req.user.id, ke_id: req.params.userId, isi: plainIsi, created_at: new Date().toISOString() }
     });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -85,7 +85,7 @@ router.get('/inbox', authMiddleware, async (req, res) => {
 
     res.json({ success: true, data: conversations });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 

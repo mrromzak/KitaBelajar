@@ -2,13 +2,16 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
+const { helmetMiddleware, antiJudolMiddleware, blockBadReferer } = require('./middleware/security');
+
 const app = express();
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 3000;
 
-// Allowed origins: dari .env (CORS_ORIGIN) + localhost dev
+// ── Allowed origins ─────────────────────────────────────────
 const allowedOrigins = [
   'http://localhost:5500',
   'http://127.0.0.1:5500',
@@ -17,22 +20,64 @@ const allowedOrigins = [
 ];
 
 function corsOriginFn(origin, callback) {
-  // Izinkan request tanpa origin (curl, server-to-server)
   if (!origin) return callback(null, true);
   if (allowedOrigins.includes(origin)) return callback(null, true);
   callback(new Error('CORS: origin tidak diizinkan — ' + origin));
 }
 
-// Socket.io setup — io di-expose ke routes via app.set('io', io)
+// ── Rate limiters ───────────────────────────────────────────
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 menit
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, pesan: 'Terlalu banyak request. Coba lagi nanti.' }
+});
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10, // max 10 percobaan login per 15 menit per IP
+  message: { success: false, pesan: 'Terlalu banyak percobaan login. Coba lagi dalam 15 menit.' }
+});
+
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 menit
+  max: 15,
+  message: { success: false, pesan: 'Terlalu banyak request AI. Coba lagi sebentar.' }
+});
+
+// ── Socket.io setup ─────────────────────────────────────────
 const io = new Server(httpServer, {
   cors: { origin: corsOriginFn, credentials: true }
 });
 
-app.set('io', io); // Expose io ke routes (req.app.get('io'))
+// Socket.io auth middleware — verifikasi JWT jika token dikirim
+// Jika tidak ada token, tetap boleh connect (untuk world/voting publik)
+const jwt = require('jsonwebtoken');
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token;
+  if (token) {
+    try {
+      socket.user = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+      socket.user = null;
+    }
+  } else {
+    socket.user = null;
+  }
+  next();
+});
 
+app.set('io', io);
+
+// ── Security Middleware (urutan penting) ────────────────────
+app.use(helmetMiddleware);           // Security headers + CSP
+app.use(blockBadReferer);            // Blokir referer judol/berbahaya
+app.use(globalLimiter);              // Rate limit global
 app.use(cors({ origin: corsOriginFn, credentials: true }));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+app.use(antiJudolMiddleware);        // Blokir konten judol di body
 app.use(express.static(path.join(__dirname, '../public')));
 
 // ── Halaman Utama ──
@@ -40,7 +85,9 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../public', 'belajar-seru.html'));
 });
 
-// Routes
+// Routes — login pakai loginLimiter khusus
+app.use('/api/auth/login',    loginLimiter);
+app.use('/api/auth/register', loginLimiter);
 app.use('/api/auth',      require('./routes/auth'));
 app.use('/api/kelas',     require('./routes/kelas'));
 app.use('/api/materi',    require('./routes/materi'));
@@ -102,7 +149,7 @@ app.post('/api/hasil-quiz', async (req, res) => {
     res.json({ success: true, pesan: 'Hasil disimpan!', xp_gained: xpGain });
   } catch(err) {
     console.error('[POST /hasil-quiz]', err.message);
-    res.status(500).json({ success: false, pesan: err.message });
+    res.status(500).json({ success: false, pesan: 'Gagal menyimpan hasil quiz.' });
   }
 });
 
@@ -119,7 +166,7 @@ require('./socket/kelas')(io);
 require('./socket/videocall')(io);
 
 // ── Proxy: Groq AI (agar API key tidak terekspos di frontend) ──
-app.post('/api/ai/chat', async (req, res) => {
+app.post('/api/ai/chat', aiLimiter, async (req, res) => {
   try {
     if (!process.env.GROQ_API_KEY)
       return res.status(500).json({ success: false, pesan: 'GROQ_API_KEY belum diset di server.' });
@@ -145,37 +192,61 @@ app.post('/api/ai/chat', async (req, res) => {
     if (!response.ok) throw new Error(data.error?.message || 'Groq API error');
     res.json({ success: true, data });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error('[AI proxy]', err.message);
+    res.status(500).json({ success: false, pesan: 'Layanan AI tidak tersedia saat ini.' });
   }
 });
 
 // ── Proxy: fetch artikel untuk AI Materi ──
+// Hanya domain edukatif yang diizinkan (anti-SSRF)
+const PROXY_ALLOWED_DOMAINS = [
+  'wikipedia.org', 'wikimedia.org',
+  'britannica.com', 'nationalgeographic.com',
+  'kemdikbud.go.id', 'bpk.go.id', 'kemkes.go.id',
+  'github.com', 'stackoverflow.com', 'developer.mozilla.org',
+  'medium.com', 'dev.to', 'geeksforgeeks.org', 'w3schools.com',
+  'kompas.com', 'tempo.co', 'republika.co.id',
+  'khanacademy.org', 'coursera.org', 'edx.org'
+];
+
 const https = require('https');
-const http  = require('http');
 app.get('/api/proxy/fetch', async (req, res) => {
   const { url } = req.query;
   if (!url) return res.json({ success: false, pesan: 'URL wajib diisi' });
 
   try {
-    // Validasi URL
     const parsed = new URL(url);
-    if (!['http:', 'https:'].includes(parsed.protocol)) {
-      return res.json({ success: false, pesan: 'Protocol tidak valid' });
+
+    // Validasi protocol — hanya https
+    if (parsed.protocol !== 'https:') {
+      return res.json({ success: false, pesan: 'Hanya URL HTTPS yang diizinkan.' });
     }
 
-    const client = parsed.protocol === 'https:' ? https : http;
-    const request = client.get(url, {
+    // Validasi domain — hanya whitelist (anti-SSRF)
+    const hostname = parsed.hostname.replace(/^www\./, '');
+    const isAllowed = PROXY_ALLOWED_DOMAINS.some(d => hostname === d || hostname.endsWith('.' + d));
+    if (!isAllowed) {
+      return res.json({ success: false, pesan: 'Domain tidak diizinkan untuk proxy.' });
+    }
+
+    const request = https.get(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; KitaBelajar/1.0)',
         'Accept': 'text/html,application/xhtml+xml'
       },
       timeout: 10000
     }, (response) => {
+      // Hanya terima content-type html/text
+      const ct = response.headers['content-type'] || '';
+      if (!ct.includes('text/html') && !ct.includes('text/plain')) {
+        response.destroy();
+        return res.json({ success: false, pesan: 'Tipe konten tidak didukung.' });
+      }
+
       let html = '';
       response.setEncoding('utf8');
-      response.on('data', chunk => { if (html.length < 500000) html += chunk; });
+      response.on('data', chunk => { if (html.length < 300000) html += chunk; });
       response.on('end', () => {
-        // Strip HTML tags, ambil teks bersih
         let teks = html
           .replace(/<script[\s\S]*?<\/script>/gi, '')
           .replace(/<style[\s\S]*?<\/style>/gi, '')
@@ -190,18 +261,17 @@ app.get('/api/proxy/fetch', async (req, res) => {
           .replace(/\s{3,}/g, '\n\n')
           .trim();
 
-        // Ambil max 8000 karakter
         if (teks.length > 8000) teks = teks.substring(0, 8000);
         res.json({ success: true, teks, panjang: teks.length });
       });
     });
-    request.on('error', (e) => res.json({ success: false, pesan: e.message }));
+    request.on('error', () => res.json({ success: false, pesan: 'Gagal mengambil artikel.' }));
     request.on('timeout', () => {
       request.destroy();
-      res.json({ success: false, pesan: 'Request timeout' });
+      res.json({ success: false, pesan: 'Request timeout.' });
     });
   } catch(e) {
-    res.json({ success: false, pesan: e.message });
+    res.json({ success: false, pesan: 'URL tidak valid.' });
   }
 });
 
@@ -234,7 +304,7 @@ app.get('/api', (req, res) => {
 app.use((req, res) => res.status(404).json({ success: false, pesan: `Endpoint tidak ditemukan: ${req.method} ${req.path}` }));
 app.use((err, req, res, next) => {
   console.error('❌', err.message);
-  res.status(500).json({ success: false, pesan: err.message });
+  res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
 });
 
 

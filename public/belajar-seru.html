@@ -2030,8 +2030,10 @@
 //  CONFIG
 // ============================================================
 const API = window.location.origin + '/api';
-const socket = io(window.location.origin);
 let token = localStorage.getItem('kb_token') || null;
+const socket = io(window.location.origin, {
+  auth: { token }
+});
 let currentUser = JSON.parse(localStorage.getItem('kb_user') || 'null');
 let currentRole = 'murid'; // for login page
 let currentRegRole = 'murid';
@@ -6450,7 +6452,7 @@ const CIRCUMFERENCE = 2 * Math.PI * 28; // r=28
 
 function zepConnect() {
   if (zepSocket && zepSocket.connected) return;
-  zepSocket = io(ZEP_SERVER, { transports: ['websocket', 'polling'] });
+  zepSocket = io(ZEP_SERVER, { transports: ['websocket', 'polling'], auth: { token } });
 
   zepSocket.on('connect', () => console.log('🎯 ZepQuiz connected:', zepSocket.id));
   zepSocket.on('disconnect', () => console.log('🎯 ZepQuiz disconnected'));

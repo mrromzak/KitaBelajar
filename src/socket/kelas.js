@@ -21,9 +21,15 @@ module.exports = function (io) {
 
   io.on('connection', (socket) => {
 
-    socket.on('kelas:join', ({ kelasId, userId, nama, avatar, role }) => {
+    socket.on('kelas:join', ({ kelasId, nama, avatar }) => {
+      // Gunakan data dari JWT jika tersedia, fallback ke data client
+      const userId = socket.user?.id || null;
+      const role   = socket.user?.role || 'murid';
+      const safeNama   = socket.user?.nama || nama || 'Anonim';
+      const safeAvatar = avatar || (role === 'guru' ? '👩‍🏫' : '🦁');
+
       socket.join('kelas:' + kelasId);
-      connectedUsers[socket.id] = { userId, nama, avatar, role, kelasId };
+      connectedUsers[socket.id] = { userId, nama: safeNama, avatar: safeAvatar, role, kelasId };
       if (!kelasRooms[kelasId]) kelasRooms[kelasId] = new Set();
       kelasRooms[kelasId].add(socket.id);
       broadcastOnlineList(kelasId);

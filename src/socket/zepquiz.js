@@ -53,7 +53,8 @@ module.exports = function(io) {
         guru,
         pemain: {},
         scores: {},
-        jawaban: {},   // soalIdx -> { userId -> { benar, poin, waktu } }
+        jawaban: {},       // soalIdx -> { userId -> { benar, poin, waktu } }
+        soalStartTime: {}, // soalIdx -> timestamp server (anti-cheat)
         status: 'lobby',
         soalIdx: -1,
         timer: null
@@ -70,13 +71,23 @@ module.exports = function(io) {
       if (!room) { socket.emit('zep:error', { pesan: 'Room tidak ditemukan.' }); return; }
       if (room.status !== 'lobby') { socket.emit('zep:error', { pesan: 'Quiz sudah dimulai.' }); return; }
 
+      // Gunakan userId dari JWT jika tersedia (lebih aman)
+      const userId   = socket.user?.id   || user?.id;
+      const userNama = socket.user?.nama || user?.nama || 'Anonim';
+      const userAvatar = user?.avatar || '🦁';
+
+      if (!userId) {
+        socket.emit('zep:error', { pesan: 'Kamu harus login untuk bergabung.' });
+        return;
+      }
+
       // Validasi: murid harus terdaftar di kelas yang sama dengan kuis ini
       if (room.quiz?.kelas_id) {
         const { data: member } = await supabase
           .from('kelas_murid')
           .select('kelas_id')
           .eq('kelas_id', room.quiz.kelas_id)
-          .eq('murid_id', user.id)
+          .eq('murid_id', userId)
           .single();
         if (!member) {
           socket.emit('zep:error', { pesan: 'Kamu tidak terdaftar di kelas ini.' });
@@ -84,11 +95,11 @@ module.exports = function(io) {
         }
       }
 
-      room.pemain[user.id] = { ...user, socketId: socket.id };
-      room.scores[user.id] = 0;
+      room.pemain[userId] = { id: userId, nama: userNama, avatar: userAvatar, socketId: socket.id };
+      room.scores[userId] = 0;
       socket.join(kode_room);
       socket.data.kode = kode_room;
-      socket.data.userId = user.id;
+      socket.data.userId = userId;
 
       socket.emit('zep:joined', getRoomState(kode_room));
       broadcast(kode_room, 'zep:pemain_masuk', {
@@ -109,7 +120,7 @@ module.exports = function(io) {
     });
 
     // ── MURID: Jawab soal ────────────────────────────────────
-    socket.on('zep:jawab', ({ kode_room, soalIdx, jawaban, waktuSisa }) => {
+    socket.on('zep:jawab', ({ kode_room, soalIdx, jawaban }) => {
       const room = rooms[kode_room];
       if (!room || room.status !== 'playing') return;
       if (room.soalIdx !== soalIdx) return;
@@ -121,11 +132,19 @@ module.exports = function(io) {
       if (!room.jawaban[soalIdx]) room.jawaban[soalIdx] = {};
       if (room.jawaban[soalIdx][userId]) return; // sudah jawab
 
+      // Validasi jawaban — harus string, max 500 karakter
+      if (typeof jawaban !== 'string' || jawaban.trim().length === 0 || jawaban.length > 500) return;
+
       const soal = room.soal[soalIdx];
-      const benar = String(jawaban).trim().toLowerCase() === String(soal.jawaban).trim().toLowerCase();
+      const benar = jawaban.trim().toLowerCase() === String(soal.jawaban).trim().toLowerCase();
       const durasi = room.quiz.durasi_per_soal || 15;
-      // Bonus poin berdasarkan kecepatan (max 100% dari poin soal)
-      const poinDapat = benar ? Math.round((soal.poin || 100) * (0.5 + 0.5 * (waktuSisa / durasi))) : 0;
+
+      // Hitung waktu sisa berdasarkan server timer (anti-cheat: abaikan waktu dari client)
+      const elapsed = (Date.now() - (room.soalStartTime[soalIdx] || Date.now())) / 1000;
+      const waktuSisaServer = Math.max(0, durasi - elapsed);
+
+      // Bonus poin berdasarkan kecepatan (server-side)
+      const poinDapat = benar ? Math.round((soal.poin || 100) * (0.5 + 0.5 * (waktuSisaServer / durasi))) : 0;
 
       room.jawaban[soalIdx][userId] = { benar, poin: poinDapat, waktu: Date.now() };
       room.scores[userId] = (room.scores[userId] || 0) + poinDapat;
@@ -205,6 +224,7 @@ module.exports = function(io) {
     if (!room) return;
     room.soalIdx = idx;
     if (!room.jawaban[idx]) room.jawaban[idx] = {};
+    room.soalStartTime[idx] = Date.now(); // catat waktu server saat soal dikirim
 
     const soal = room.soal[idx];
     const durasi = room.quiz.durasi_per_soal || 15;

@@ -42,7 +42,7 @@ async function dashboardGuru(req, res) {
       }
     });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 }
 
@@ -81,7 +81,7 @@ async function dashboardMurid(req, res) {
       }
     });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 }
 
@@ -103,7 +103,7 @@ router.get('/leaderboard', authMiddleware, async (req, res) => {
     const ranked = (data || []).map((u, i) => ({ ...u, peringkat: i + 1 }));
     res.json({ success: true, data: ranked });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -115,7 +115,7 @@ router.get('/notifikasi', authMiddleware, async (req, res) => {
       .order('created_at', { ascending: false }).limit(20);
     res.json({ success: true, data: data || [] });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -125,7 +125,7 @@ router.put('/notifikasi/:id/baca', authMiddleware, async (req, res) => {
     await supabase.from('notifikasi').update({ dibaca: true }).eq('id', req.params.id).eq('user_id', req.user.id);
     res.json({ success: true, pesan: 'Notifikasi ditandai dibaca.' });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -135,7 +135,7 @@ router.put('/notifikasi/baca-semua', authMiddleware, async (req, res) => {
     await supabase.from('notifikasi').update({ dibaca: true }).eq('user_id', req.user.id);
     res.json({ success: true, pesan: 'Semua notifikasi dibaca.' });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 

@@ -1516,6 +1516,7 @@ function connectSocket() {
     socket = io(WS_SERVER, {
       transports: ['websocket', 'polling'],
       timeout: 3000,
+      auth: { token: localStorage.getItem('kb_token') || null },
       reconnectionAttempts: 2
     });
   } catch(e) {

@@ -20,7 +20,7 @@ router.post('/', authMiddleware, guruOnly, async (req, res) => {
 
     res.status(201).json({ success: true, pesan: `Kelas "${nama}" berhasil dibuat!`, data: { id, nama, tahun_ajar, kode_akses } });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -40,7 +40,7 @@ router.get('/', authMiddleware, async (req, res) => {
     }
     res.json({ success: true, data: query });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -62,7 +62,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
       .eq('kelas_id', req.params.id);
     res.json({ success: true, data: { ...kelas, murid, total_murid: murid.length, total_materi: totalMateri || 0 } });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -94,7 +94,7 @@ router.post('/join', authMiddleware, muridOnly, async (req, res) => {
 
     res.json({ success: true, pesan: `Berhasil bergabung ke ${kelas.nama}!`, data: { kelas_id: kelas.id, nama: kelas.nama } });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -110,7 +110,7 @@ router.get('/:id/chat', authMiddleware, async (req, res) => {
     const result = (data || []).map(p => ({ ...p, isi: decrypt(p.isi) }));
     res.json({ success: true, data: result });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -130,7 +130,7 @@ router.post('/:id/chat', authMiddleware, async (req, res) => {
       data: { id, kelas_id: req.params.id, pengirim_id: req.user.id, isi: plainIsi, created_at: new Date().toISOString() }
     });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -155,7 +155,7 @@ router.put('/:id/chat/:msgId', authMiddleware, async (req, res) => {
 
     res.json({ success: true, data: { id: req.params.msgId, isi: isi.trim() } });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -175,7 +175,7 @@ router.delete('/:id/chat/:msgId', authMiddleware, async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -189,7 +189,7 @@ router.delete('/:id', authMiddleware, guruOnly, async (req, res) => {
     await supabase.from('kelas').delete().eq('id', req.params.id);
     res.json({ success: true, pesan: `Kelas "${kelas.nama}" berhasil dihapus.` });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -214,7 +214,7 @@ router.delete('/:id/leave', authMiddleware, muridOnly, async (req, res) => {
     if (error) throw error;
     res.json({ success: true, pesan: 'Berhasil keluar dari kelas.' });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 

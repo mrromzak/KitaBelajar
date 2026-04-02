@@ -15,7 +15,7 @@ router.get('/', authMiddleware, async (req, res) => {
     if (error) throw error;
     res.json({ success: true, data: data || [] });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -30,7 +30,7 @@ router.patch('/baca-semua', authMiddleware, async (req, res) => {
     if (error) throw error;
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 

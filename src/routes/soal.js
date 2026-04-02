@@ -64,7 +64,7 @@ router.post('/', authMiddleware, guruOnly, async (req, res) => {
     res.status(201).json({ success: true, pesan: 'Soal berhasil ditambahkan!', data: { id } });
   } catch (err) {
     console.error('POST /soal error:', err.message);
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -83,7 +83,7 @@ router.get('/', authMiddleware, guruOnly, async (req, res) => {
     if (error) throw error;
     res.json({ success: true, soal: data || [], data: data || [] });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -106,7 +106,7 @@ router.put('/:id', authMiddleware, guruOnly, async (req, res) => {
     if (error) throw error;
     res.json({ success: true, pesan: 'Soal berhasil diperbarui.' });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -119,7 +119,7 @@ router.delete('/:id', authMiddleware, guruOnly, async (req, res) => {
     await supabase.from('soal').delete().eq('id', req.params.id).eq('guru_id', req.user.id);
     res.json({ success: true, pesan: 'Soal berhasil dihapus.' });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -197,7 +197,7 @@ router.get('/quiz', authMiddleware, async (req, res) => {
     });
   } catch (err) {
     console.error('GET /soal/quiz error:', err.message);
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -236,7 +236,7 @@ router.post('/quiz', authMiddleware, guruOnly, async (req, res) => {
 
     res.status(201).json({ success: true, pesan: `Quiz "${judul}" berhasil dibuat!`, data: { id } });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -262,7 +262,7 @@ router.get('/quiz/:id', authMiddleware, async (req, res) => {
 
     res.json({ success: true, data: { ...quiz, soal: soalList } });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -298,7 +298,7 @@ router.post('/quiz/:id/submit', authMiddleware, async (req, res) => {
     });
   } catch (err) {
     console.error('Submit quiz error:', err.message);
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -313,7 +313,7 @@ router.get('/quiz/:id/leaderboard', authMiddleware, async (req, res) => {
       .limit(10);
     res.json({ success: true, data: data || [] });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 

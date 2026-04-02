@@ -92,7 +92,7 @@ router.post('/upload', authMiddleware, guruOnly, upload.single('file'), async (r
     });
   } catch (err) {
     console.error('Upload error:', err.message);
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -151,7 +151,7 @@ router.post('/', authMiddleware, guruOnly, async (req, res) => {
     });
   } catch (err) {
     console.error('Materi error:', err.message);
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -191,7 +191,7 @@ router.get('/', authMiddleware, async (req, res) => {
     // Return dengan key 'materi' supaya frontend bisa baca
     res.json({ success: true, materi: data || [], data: data || [], total: data?.length || 0 });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -206,7 +206,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
     res.json({ success: true, data: materi });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -227,7 +227,7 @@ router.put('/:id', authMiddleware, guruOnly, async (req, res) => {
 
     res.json({ success: true, pesan: 'Materi berhasil diperbarui.' });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -241,7 +241,7 @@ router.delete('/:id', authMiddleware, guruOnly, async (req, res) => {
     await supabase.from('materi').delete().eq('id', req.params.id);
     res.json({ success: true, pesan: `Materi "${materi.judul}" berhasil dihapus.` });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 
@@ -266,7 +266,7 @@ router.post('/:id/selesai', authMiddleware, async (req, res) => {
 
     res.json({ success: true, pesan: '+20 XP! Materi berhasil diselesaikan.', xp_dapat: 20, total_xp: newXp });
   } catch (err) {
-    res.status(500).json({ success: false, pesan: err.message });
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 

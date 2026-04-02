@@ -10,11 +10,15 @@ const crypto = require('crypto');
 const ALGORITHM = 'aes-256-gcm';
 const KEY_HEX   = process.env.ENCRYPTION_KEY || '';
 
-// Validasi key saat startup
+// Validasi key saat startup — wajib ada di production
 if (!KEY_HEX || KEY_HEX.length !== 64) {
-  console.warn('⚠️  ENCRYPTION_KEY tidak valid di .env — pesan TIDAK terenkripsi!');
-  console.warn('   Jalankan perintah ini untuk generate key baru:');
-  console.warn('   node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
+  if (process.env.NODE_ENV === 'production') {
+    console.error('❌ ENCRYPTION_KEY tidak valid. Server tidak bisa berjalan tanpa enkripsi yang benar.');
+    process.exit(1);
+  } else {
+    console.warn('⚠️  ENCRYPTION_KEY tidak valid di .env — pesan TIDAK terenkripsi (dev mode)!');
+    console.warn('   Generate key: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
+  }
 }
 
 const KEY = KEY_HEX.length === 64 ? Buffer.from(KEY_HEX, 'hex') : null;
