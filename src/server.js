@@ -377,3 +377,16 @@ app.get('/api/proxy/youtube-transcript', async (req, res) => {
 
   res.json({ success: false, pesan: 'Transcript tidak tersedia untuk video ini' });
 });
+
+// ── Cek apakah video YouTube bisa diembed (oEmbed API) ──
+app.get('/api/proxy/youtube-check', async (req, res) => {
+  const { videoId } = req.query;
+  if (!videoId || !/^[a-zA-Z0-9_-]{8,12}$/.test(videoId))
+    return res.json({ embeddable: false });
+  try {
+    const r = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+    res.json({ embeddable: r.ok });
+  } catch {
+    res.json({ embeddable: true }); // jika gagal cek, coba saja
+  }
+});

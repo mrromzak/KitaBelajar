@@ -4337,17 +4337,44 @@ async function submitMateri() {
   document.getElementById('btn-simpan-materi').disabled = false;
 }
 
-// ── YouTube: klik thumbnail → coba load iframe, jika error → fallback link ──
-function ytPlayClick(id, embedUrl, watchUrl) {
+// ── YouTube: klik thumbnail → cek embeddability dulu, baru load iframe ──
+async function ytPlayClick(id, embedUrl, watchUrl) {
   const wrap = document.getElementById('yt-wrap-' + id);
   if (!wrap) return;
-  wrap.onclick = null; // hapus listener agar tidak double-click
+  wrap.onclick = null;
   wrap.style.cursor = 'default';
+
+  // Ambil videoId dari embedUrl
+  const vidMatch = embedUrl.match(/embed\/([^?]+)/);
+  const videoId = vidMatch ? vidMatch[1] : null;
+
+  const fallbackHtml = `
+    <div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:#111;color:white;border-radius:12px">
+      <span style="font-size:40px">▶️</span>
+      <p style="font-size:13px;opacity:0.85;text-align:center;padding:0 16px">Video ini tidak bisa diputar langsung.<br>Embedding dinonaktifkan oleh pemilik video.</p>
+      <a href="${watchUrl}" target="_blank" rel="noopener noreferrer" style="background:#FF0000;color:white;padding:10px 22px;border-radius:50px;font-weight:700;font-size:13px;text-decoration:none">▶ Tonton di YouTube</a>
+    </div>`;
+
+  // Tampilkan loading sebentar
+  wrap.innerHTML = `<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:white;font-size:14px">Memuat video...</div>`;
+
+  // Cek embeddability via server (oEmbed API)
+  if (videoId) {
+    try {
+      const r = await fetch(`/api/proxy/youtube-check?videoId=${encodeURIComponent(videoId)}`);
+      const data = await r.json();
+      if (!data.embeddable) {
+        wrap.innerHTML = fallbackHtml;
+        return;
+      }
+    } catch(e) { /* jika cek gagal, tetap coba embed */ }
+  }
+
+  // Video embeddable — load iframe
   wrap.innerHTML = `
     <iframe id="yt-iframe-${id}" src="${embedUrl}"
       style="position:absolute;top:0;left:0;width:100%;height:100%;border:none"
-      allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      onload="ytIframeLoaded('${id}')"></iframe>
+      allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
     <div id="yt-err-${id}" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:#111;color:white;border-radius:12px">
       <span style="font-size:40px">▶️</span>
       <p style="font-size:13px;opacity:0.85;text-align:center;padding:0 16px">Video ini tidak bisa diputar langsung.<br>Embedding dinonaktifkan oleh pemilik video.</p>
@@ -4361,52 +4388,33 @@ function ytPlayClick(id, embedUrl, watchUrl) {
     if (errDiv) errDiv.style.display = 'flex';
   }
 
-  // Deteksi error via postMessage YouTube IFrame API
-  // Error 100/101/150/151/153 = video tidak bisa diputar / embedding dinonaktifkan
   let videoStarted = false;
   const handler = function(e) {
     if (!e.data) return;
     try {
       const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-      // Video berhasil diputar — batalkan fallback timer
       if (d.event === 'onReady' || (d.event === 'onStateChange' && (d.info === 1 || d.info === 3))) {
         videoStarted = true;
         clearTimeout(fallbackTimer);
         window.removeEventListener('message', handler);
         return;
       }
-      // Error embedding — tampilkan fallback
       const errorCode = d.info || (Array.isArray(d.args) ? d.args[0] : null);
-      const isError =
-        d.event === 'onError' ||
-        (d.event === 'infoDelivery' && d.info && d.info.error) ||
-        [100, 101, 150, 151, 153].includes(errorCode);
-      if (isError) {
+      if (d.event === 'onError' || [100, 101, 150, 151, 153].includes(errorCode)) {
         clearTimeout(fallbackTimer);
         window.removeEventListener('message', handler);
         showYTFallback();
       }
-    } catch(err) {}
+    } catch(e) {}
   };
   window.addEventListener('message', handler);
 
-  // Timeout fallback: jika 7 detik video belum start/ready → anggap tidak bisa diputar
   const fallbackTimer = setTimeout(() => {
     window.removeEventListener('message', handler);
     if (!videoStarted) showYTFallback();
-  }, 7000);
+  }, 8000);
 }
 
-// Dipanggil saat iframe selesai load — cek apakah ada konten atau blank (Error 153)
-function ytIframeLoaded(id) {
-  // Beri waktu 1.5 detik bagi YouTube API untuk kirim postMessage error
-  // Kalau setelah itu errorDiv masih hidden, berarti video berhasil
-  setTimeout(() => {
-    const errDiv = document.getElementById('yt-err-' + id);
-    // Jika errDiv sudah ditampilkan oleh postMessage handler, tidak perlu aksi lagi
-    // (tidak ada cara 100% akurat deteksi Error 153 via onload — postMessage lebih andal)
-  }, 1500);
-}
 
 function convertYoutubeUrl(url) {
   // Convert berbagai format YouTube URL ke embed
