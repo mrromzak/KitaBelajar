@@ -100,10 +100,11 @@ const helmetMiddleware = helmet({
                        'https://www.youtube.com', 'https://youtube.com',
                        'https://www.youtube-nocookie.com', 'https://youtube-nocookie.com',
                        'https://accounts.google.com'],
-      frameAncestors: ["'self'", 'https://accounts.google.com'],
+      frameAncestors: ["'none'"],
     },
   },
   crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: { policy: 'unsafe-none' }, // wajib agar Google popup bisa postMessage ke parent
   referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
   hsts: {
     maxAge: 31536000,

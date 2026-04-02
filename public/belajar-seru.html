@@ -2548,15 +2548,16 @@ function _initGoogle() {
   _googleInited = true;
   google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
-    callback: _handleGoogleCredential
+    callback: _handleGoogleCredential,
+    ux_mode: 'popup',
+    itp_support: true
   });
   ['google-btn-container', 'google-btn-container-reg'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       google.accounts.id.renderButton(el, {
         theme: 'outline', size: 'large', width: 320,
-        text: 'signin_with', locale: 'id',
-        ux_mode: 'popup'
+        text: 'signin_with', locale: 'id'
       });
     }
   });
