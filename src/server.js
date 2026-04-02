@@ -200,15 +200,10 @@ app.post('/api/ai/chat', aiLimiter, async (req, res) => {
 });
 
 // ── Proxy: fetch artikel untuk AI Materi ──
-// Hanya domain edukatif yang diizinkan (anti-SSRF)
-const PROXY_ALLOWED_DOMAINS = [
-  'wikipedia.org', 'wikimedia.org',
-  'britannica.com', 'nationalgeographic.com',
-  'kemdikbud.go.id', 'bpk.go.id', 'kemkes.go.id',
-  'github.com', 'stackoverflow.com', 'developer.mozilla.org',
-  'medium.com', 'dev.to', 'geeksforgeeks.org', 'w3schools.com',
-  'kompas.com', 'tempo.co', 'republika.co.id',
-  'khanacademy.org', 'coursera.org', 'edx.org'
+// Blokir IP internal (anti-SSRF), tapi izinkan semua domain publik
+const BLOCKED_INTERNAL = [
+  /^localhost$/i, /^127\./, /^10\./, /^192\.168\./,
+  /^172\.(1[6-9]|2\d|3[01])\./, /^0\.0\.0\.0$/, /^::1$/
 ];
 
 const https = require('https');
@@ -224,11 +219,10 @@ app.get('/api/proxy/fetch', async (req, res) => {
       return res.json({ success: false, pesan: 'Hanya URL HTTPS yang diizinkan.' });
     }
 
-    // Validasi domain — hanya whitelist (anti-SSRF)
-    const hostname = parsed.hostname.replace(/^www\./, '');
-    const isAllowed = PROXY_ALLOWED_DOMAINS.some(d => hostname === d || hostname.endsWith('.' + d));
-    if (!isAllowed) {
-      return res.json({ success: false, pesan: 'Domain tidak diizinkan untuk proxy.' });
+    // Blokir IP/hostname internal (anti-SSRF)
+    const hostname = parsed.hostname;
+    if (BLOCKED_INTERNAL.some(r => r.test(hostname))) {
+      return res.json({ success: false, pesan: 'URL tidak valid.' });
     }
 
     const request = https.get(url, {

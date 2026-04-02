@@ -2861,17 +2861,25 @@ async function loadKelasStream(kelasId) {
       let bodyHtml = '';
 
       if (m.jenis === 'video' && m.konten) {
-        const embedUrl = m.konten.includes('youtube.com/embed')
-          ? m.konten + (m.konten.includes('?') ? '&' : '?') + 'rel=0&modestbranding=1'
+        // Ekstrak videoId dan buat embed URL
+        const ytMatch = m.konten.match(/(?:youtube\.com\/embed\/|youtu\.be\/)([^?&]+)/);
+        const videoId = ytMatch ? ytMatch[1] : null;
+        // Pakai youtube-nocookie (lebih sedikit dibatasi) + enablejsapi untuk deteksi error
+        const embedUrl = videoId
+          ? `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&enablejsapi=1`
           : m.konten;
-        const watchUrl = m.file_url || m.konten.replace('/embed/', '/watch?v=');
+        const watchUrl = videoId
+          ? `https://www.youtube.com/watch?v=${videoId}`
+          : (m.file_url || m.konten);
         bodyHtml = `<div style="position:relative;padding-bottom:56.25%;height:0;border-radius:12px;overflow:hidden;background:#000">
-          <iframe id="yt-${m.id}" src="${embedUrl}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen
-            onerror="this.style.display='none';document.getElementById('yt-fallback-${m.id}').style.display='flex'"></iframe>
-          <div id="yt-fallback-${m.id}" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:#111;color:white">
+          <iframe id="yt-${m.id}" src="${embedUrl}"
+            style="position:absolute;top:0;left:0;width:100%;height:100%;border:none"
+            allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            onload="setupYTErrorDetect('${m.id}')"></iframe>
+          <div id="yt-fallback-${m.id}" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:#111;color:white;border-radius:12px">
             <span style="font-size:48px">▶️</span>
-            <p style="font-size:14px;opacity:0.8;text-align:center;padding:0 20px">Video ini tidak bisa ditampilkan di sini</p>
-            <a href="${watchUrl}" target="_blank" rel="noopener noreferrer" style="background:#FF0000;color:white;padding:10px 20px;border-radius:50px;font-weight:700;font-size:14px;text-decoration:none">Tonton di YouTube</a>
+            <p style="font-size:14px;opacity:0.8;text-align:center;padding:0 20px">Video ini tidak bisa diputar di sini (embedding dinonaktifkan pemilik)</p>
+            <a href="${watchUrl}" target="_blank" rel="noopener noreferrer" style="background:#FF0000;color:white;padding:10px 24px;border-radius:50px;font-weight:700;font-size:14px;text-decoration:none">▶ Tonton di YouTube</a>
           </div>
         </div>`;
       } else if (m.jenis === 'pdf' && m.file_url) {
@@ -4322,6 +4330,28 @@ async function submitMateri() {
   }
   showLoading(false);
   document.getElementById('btn-simpan-materi').disabled = false;
+}
+
+// ── Deteksi error YouTube (Error 150/153 = embedding diblokir) ──
+// Dipanggil via onload iframe
+const _ytErrorIds = new Set();
+window.addEventListener('message', function(e) {
+  if (!e.data) return;
+  try {
+    const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+    if (d.event === 'infoDelivery' && d.info && d.info.error) {
+      _ytErrorIds.forEach(id => {
+        const iframe = document.getElementById('yt-' + id);
+        const fallback = document.getElementById('yt-fallback-' + id);
+        if (iframe) iframe.style.display = 'none';
+        if (fallback) fallback.style.display = 'flex';
+      });
+    }
+  } catch(err) {}
+});
+
+function setupYTErrorDetect(id) {
+  _ytErrorIds.add(id);
 }
 
 function convertYoutubeUrl(url) {
