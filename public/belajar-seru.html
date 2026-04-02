@@ -1672,7 +1672,15 @@
       </div>
 
       <!-- Input YouTube -->
-
+      <div id="ai-input-youtube" style="display:none">
+        <div class="form-group" style="margin-bottom:8px">
+          <label>URL Video YouTube</label>
+          <input type="url" id="ai-youtube-url" placeholder="https://youtube.com/watch?v=..." style="width:100%;padding:12px 14px;border:2px solid #E8E8E8;border-radius:12px;font-family:Nunito,sans-serif;font-size:14px;outline:none">
+        </div>
+        <div style="background:#FFF0F0;border-radius:10px;padding:10px 12px;font-size:12px;color:#E63946;font-weight:600">
+          ▶️ AI akan membaca subtitle/transkrip video untuk membuat materi
+        </div>
+      </div>
 
       <!-- Config -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
@@ -2853,8 +2861,18 @@ async function loadKelasStream(kelasId) {
       let bodyHtml = '';
 
       if (m.jenis === 'video' && m.konten) {
-        bodyHtml = `<div style="position:relative;padding-bottom:56.25%;height:0;border-radius:12px;overflow:hidden">
-          <iframe src="${m.konten}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen></iframe>
+        const embedUrl = m.konten.includes('youtube.com/embed')
+          ? m.konten + (m.konten.includes('?') ? '&' : '?') + 'rel=0&modestbranding=1'
+          : m.konten;
+        const watchUrl = m.file_url || m.konten.replace('/embed/', '/watch?v=');
+        bodyHtml = `<div style="position:relative;padding-bottom:56.25%;height:0;border-radius:12px;overflow:hidden;background:#000">
+          <iframe id="yt-${m.id}" src="${embedUrl}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen
+            onerror="this.style.display='none';document.getElementById('yt-fallback-${m.id}').style.display='flex'"></iframe>
+          <div id="yt-fallback-${m.id}" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:#111;color:white">
+            <span style="font-size:48px">▶️</span>
+            <p style="font-size:14px;opacity:0.8;text-align:center;padding:0 20px">Video ini tidak bisa ditampilkan di sini</p>
+            <a href="${watchUrl}" target="_blank" rel="noopener noreferrer" style="background:#FF0000;color:white;padding:10px 20px;border-radius:50px;font-weight:700;font-size:14px;text-decoration:none">Tonton di YouTube</a>
+          </div>
         </div>`;
       } else if (m.jenis === 'pdf' && m.file_url) {
         bodyHtml = `<a href="${m.file_url}" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:var(--orange);color:white;padding:10px 20px;border-radius:50px;font-weight:700;font-size:14px;text-decoration:none">📄 Buka / Download PDF</a>
@@ -3851,7 +3869,8 @@ function pilihSumberAI(tipe) {
   aiSumberAktif = tipe;
   ['pdf','artikel','youtube'].forEach(t => {
     document.getElementById('ai-src-' + t)?.classList.toggle('active', t === tipe);
-    document.getElementById('ai-input-' + t).style.display = t === tipe ? 'block' : 'none';
+    const el = document.getElementById('ai-input-' + t);
+    if (el) el.style.display = t === tipe ? 'block' : 'none';
   });
 }
 
