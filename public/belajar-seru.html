@@ -893,7 +893,7 @@
       <button class="bell-btn" onclick="toggleBellDropdown()" title="Notifikasi">
         🔔<span class="bell-badge" id="bell-badge-guru"></span>
       </button>
-      <button onclick="bukaErrorLog()" title="Error Log" style="background:none;border:2px solid #FFCDD2;color:var(--red);padding:7px 12px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:700;font-size:12px;cursor:pointer">🐛 Log</button>
+      <button id="btn-error-log" onclick="bukaErrorLog()" title="Error Log" style="display:none;background:none;border:2px solid #FFCDD2;color:var(--red);padding:7px 12px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:700;font-size:12px;cursor:pointer">🐛 Log</button>
       <button class="nav-btn back" onclick="doLogout()">← Keluar</button>
     </div>
   </nav>
@@ -3970,9 +3970,16 @@ async function submitJoinKelas() {
 // ============================================================
 //  DASHBOARD GURU
 // ============================================================
+// Email akun developer yang boleh lihat error log
+const DEV_EMAILS = ['mrromzak@gmail.com'];
+
 async function loadGuruDashboard() {
   showPage('page-guru');
   if (!currentUser) return;
+
+  // Tampilkan tombol error log hanya untuk developer
+  const btnLog = document.getElementById('btn-error-log');
+  if (btnLog) btnLog.style.display = DEV_EMAILS.includes(currentUser.email) ? 'inline-block' : 'none';
 
   document.getElementById('guru-nav-name').textContent = currentUser.nama;
   document.getElementById('guru-nav-avatar').textContent = currentUser.avatar || '👩‍🏫';
