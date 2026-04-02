@@ -260,7 +260,7 @@ router.post('/reset-password', async (req, res) => {
 // =============================================
 router.post('/google', async (req, res) => {
   try {
-    const { google_token } = req.body;
+    const { google_token, role } = req.body;
     if (!google_token) return res.status(400).json({ success: false, pesan: 'Google token wajib diisi.' });
 
     // Verifikasi token ke Google
@@ -275,20 +275,38 @@ router.post('/google', async (req, res) => {
     let { data: user } = await supabase.from('users').select('*').eq('email', normalEmail).single();
 
     if (!user) {
-      // Auto-register — role default murid, bisa diubah setelah login
+      // Jika role belum dipilih, minta frontend pilih dulu
+      if (!role || !['guru', 'murid'].includes(role)) {
+        return res.json({
+          success: true,
+          is_new: true,
+          google_token: req.body.google_token,
+          nama: gData.name || gData.email.split('@')[0],
+          email: normalEmail
+        });
+      }
+
+      // Buat akun baru dengan role yang dipilih
       const id = uuidv4();
-      const nama = gData.name || gData.email.split('@')[0];
+      const safaNama = (gData.name || gData.email.split('@')[0]).trim().substring(0, 100);
+      const avatar = role === 'guru' ? '👩‍🏫' : '🦁';
       const { error } = await supabase.from('users').insert({
-        id, nama, email: normalEmail, password: bcrypt.hashSync(uuidv4(), 10),
-        role: 'murid', avatar: '🦁', xp: 0, level: 1
+        id, nama: safaNama, email: normalEmail, password: null, role, avatar, xp: 0, level: 1
       });
       if (error) throw error;
-      await supabase.from('notifikasi').insert({ id: uuidv4(), user_id: id, judul: '🎉 Selamat Datang!', pesan: `Halo ${nama}! Selamat bergabung di KitaBelajar via Google.` });
-      user = { id, nama, email: normalEmail, role: 'murid', avatar: '🦁', xp: 0, level: 1 };
+
+      await supabase.from('notifikasi').insert({
+        id: uuidv4(), user_id: id,
+        judul: '🎉 Selamat Datang!',
+        pesan: `Halo ${safaNama}! Selamat bergabung di KitaBelajar. Semangat belajar ya!`
+      });
+
+      const jwtToken = jwt.sign({ id, nama: safaNama, email: normalEmail, role }, JWT_SECRET, { expiresIn: '7d' });
+      return res.status(201).json({ success: true, pesan: `Selamat datang, ${safaNama}!`, token: jwtToken, user: { id, nama: safaNama, email: normalEmail, role, avatar, xp: 0, level: 1 } });
     }
 
     const jwtToken = jwt.sign({ id: user.id, nama: user.nama, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ success: true, pesan: `Selamat datang, ${user.nama}!`, token: jwtToken, user: { id: user.id, nama: user.nama, email: user.email, role: user.role, avatar: user.avatar, xp: user.xp, level: user.level } });
+    res.json({ success: true, is_new: false, pesan: `Selamat datang, ${user.nama}!`, token: jwtToken, user: { id: user.id, nama: user.nama, email: user.email, role: user.role, avatar: user.avatar, xp: user.xp, level: user.level } });
   } catch (err) {
     console.error('[google-auth]', err.message);
     res.status(500).json({ success: false, pesan: 'Login Google gagal.' });

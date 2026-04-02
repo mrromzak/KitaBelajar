@@ -1506,6 +1506,24 @@
   </div>
 </div>
 
+<!-- Modal Pilih Role Google OAuth -->
+<div class="modal-overlay" id="modal-google-role">
+  <div class="modal" style="max-width:400px;text-align:center">
+    <h3>🎉 Selamat Datang!</h3>
+    <p id="google-role-nama" style="color:var(--muted);margin-bottom:4px"></p>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:24px">Kamu mendaftar sebagai apa?</p>
+    <div style="display:flex;gap:16px;justify-content:center">
+      <button onclick="completeGoogleRegister('guru')" style="flex:1;padding:18px 12px;border-radius:18px;border:2px solid var(--orange);background:white;cursor:pointer;font-family:inherit;font-size:15px;font-weight:700;color:var(--orange);transition:all .2s" onmouseover="this.style.background='var(--orange)';this.style.color='white'" onmouseout="this.style.background='white';this.style.color='var(--orange)'">
+        👩‍🏫<br><span style="font-size:13px;font-weight:600">Guru</span>
+      </button>
+      <button onclick="completeGoogleRegister('murid')" style="flex:1;padding:18px 12px;border-radius:18px;border:2px solid #7b2ff7;background:white;cursor:pointer;font-family:inherit;font-size:15px;font-weight:700;color:#7b2ff7;transition:all .2s" onmouseover="this.style.background='#7b2ff7';this.style.color='white'" onmouseout="this.style.background='white';this.style.color='#7b2ff7'">
+        🦁<br><span style="font-size:13px;font-weight:600">Murid</span>
+      </button>
+    </div>
+    <button class="btn-cancel" style="margin-top:16px;width:100%" onclick="closeModal('modal-google-role')">Batal</button>
+  </div>
+</div>
+
 <!-- Modal Buat Kelas (Guru) -->
 <div class="modal-overlay" id="modal-buat-kelas">
   <div class="modal" style="max-width:440px">
@@ -2521,11 +2539,22 @@ async function doResetPassword() {
 // ============================================================
 const GOOGLE_CLIENT_ID = '1090565500817-q17ik5t91fssrv3ncj215oqh1atfcpmm.apps.googleusercontent.com';
 
+let _pendingGoogleToken = null;
+
 async function _handleGoogleCredential(response) {
   showLoading(true);
   try {
     const data = await api('POST', '/auth/google', { google_token: response.credential });
     if (data.success) {
+      if (data.is_new) {
+        // User baru — simpan token Google, minta pilih role
+        _pendingGoogleToken = data.google_token;
+        document.getElementById('google-role-nama').textContent = data.nama || data.email || '';
+        showLoading(false);
+        openModal('modal-google-role');
+        return;
+      }
+      // User lama — langsung login
       token = data.token;
       currentUser = data.user;
       localStorage.setItem('kb_token', token);
@@ -2539,6 +2568,30 @@ async function _handleGoogleCredential(response) {
       toast(data.pesan || 'Login Google gagal.', 'error');
     }
   } catch(e) { toast('Login Google gagal.', 'error'); }
+  showLoading(false);
+}
+
+async function completeGoogleRegister(role) {
+  if (!_pendingGoogleToken) return;
+  closeModal('modal-google-role');
+  showLoading(true);
+  try {
+    const data = await api('POST', '/auth/google', { google_token: _pendingGoogleToken, role });
+    _pendingGoogleToken = null;
+    if (data.success && data.token) {
+      token = data.token;
+      currentUser = data.user;
+      localStorage.setItem('kb_token', token);
+      localStorage.setItem('kb_user', JSON.stringify(currentUser));
+      joinPrivateChannel();
+      loadBellNotifications();
+      toast(`Selamat datang, ${currentUser.nama}! 🎉`, 'success');
+      if (currentUser.role === 'guru') loadGuruDashboard();
+      else loadMuridDashboard();
+    } else {
+      toast(data.pesan || 'Registrasi Google gagal.', 'error');
+    }
+  } catch(e) { toast('Registrasi Google gagal.', 'error'); }
   showLoading(false);
 }
 
