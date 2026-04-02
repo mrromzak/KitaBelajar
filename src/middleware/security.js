@@ -74,7 +74,8 @@ const helmetMiddleware = helmet({
       // Izinkan inline event handler (onclick, onchange, dll di HTML)
       scriptSrcAttr:  ["'unsafe-inline'"],
       styleSrc:       ["'self'", "'unsafe-inline'",
-                       'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com'],
+                       'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com',
+                       'https://accounts.google.com'],
       fontSrc:        ["'self'", 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'],
       imgSrc:         ["'self'", 'data:', 'https:', 'blob:'],
       connectSrc:     ["'self'",
