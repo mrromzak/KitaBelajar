@@ -2864,7 +2864,7 @@ async function loadKelasStream(kelasId) {
         const ytMatch = m.konten.match(/(?:youtube\.com\/embed\/|youtube\.com\/watch\?v=|youtu\.be\/)([^?&]+)/);
         const videoId = ytMatch ? ytMatch[1] : null;
         const embedUrl = videoId
-          ? `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`
+          ? `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=1`
           : m.konten;
         const watchUrl = videoId
           ? `https://www.youtube.com/watch?v=${videoId}`
@@ -4337,67 +4337,16 @@ async function submitMateri() {
   document.getElementById('btn-simpan-materi').disabled = false;
 }
 
-// ── YouTube: klik thumbnail → load iframe, jika error 153 tampilkan fallback ──
+// ── YouTube: klik thumbnail → load iframe langsung ──
 function ytPlayClick(id, embedUrl, watchUrl) {
   const wrap = document.getElementById('yt-wrap-' + id);
   if (!wrap) return;
   wrap.onclick = null;
   wrap.style.cursor = 'default';
-
-  // Ambil videoId dari embedUrl
-  const vidMatch = embedUrl.match(/embed\/([^?]+)/);
-  const videoId = vidMatch ? vidMatch[1] : null;
-
-  const fallbackHtml = `
-    <div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:#111;color:white;border-radius:12px">
-      <span style="font-size:40px">▶️</span>
-      <p style="font-size:13px;opacity:0.85;text-align:center;padding:0 16px">Video ini tidak bisa diputar langsung.<br>Embedding dinonaktifkan oleh pemilik video.</p>
-      <a href="${watchUrl}" target="_blank" rel="noopener noreferrer" style="background:#FF0000;color:white;padding:10px 22px;border-radius:50px;font-weight:700;font-size:13px;text-decoration:none">▶ Tonton di YouTube</a>
-    </div>`;
-
-  // Load iframe langsung
   wrap.innerHTML = `
-    <iframe id="yt-iframe-${id}" src="${embedUrl}"
+    <iframe src="${embedUrl}"
       style="position:absolute;top:0;left:0;width:100%;height:100%;border:none"
-      allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-    <div id="yt-err-${id}" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:#111;color:white;border-radius:12px">
-      <span style="font-size:40px">▶️</span>
-      <p style="font-size:13px;opacity:0.85;text-align:center;padding:0 16px">Video ini tidak bisa diputar langsung.<br>Embedding dinonaktifkan oleh pemilik video.</p>
-      <a href="${watchUrl}" target="_blank" rel="noopener noreferrer" style="background:#FF0000;color:white;padding:10px 22px;border-radius:50px;font-weight:700;font-size:13px;text-decoration:none">▶ Tonton di YouTube</a>
-    </div>`;
-
-  function showYTFallback() {
-    const iframe = document.getElementById('yt-iframe-' + id);
-    const errDiv = document.getElementById('yt-err-' + id);
-    if (iframe) iframe.style.display = 'none';
-    if (errDiv) errDiv.style.display = 'flex';
-  }
-
-  let videoStarted = false;
-  const handler = function(e) {
-    if (!e.data) return;
-    try {
-      const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-      if (d.event === 'onReady' || (d.event === 'onStateChange' && (d.info === 1 || d.info === 3))) {
-        videoStarted = true;
-        clearTimeout(fallbackTimer);
-        window.removeEventListener('message', handler);
-        return;
-      }
-      const errorCode = d.info || (Array.isArray(d.args) ? d.args[0] : null);
-      if (d.event === 'onError' || [100, 101, 150, 151, 153].includes(errorCode)) {
-        clearTimeout(fallbackTimer);
-        window.removeEventListener('message', handler);
-        showYTFallback();
-      }
-    } catch(e) {}
-  };
-  window.addEventListener('message', handler);
-
-  const fallbackTimer = setTimeout(() => {
-    window.removeEventListener('message', handler);
-    if (!videoStarted) showYTFallback();
-  }, 8000);
+      allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>`;
 }
 
 
