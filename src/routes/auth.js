@@ -198,7 +198,11 @@ router.post('/forgot-password', async (req, res) => {
     // Generate token reset 1 jam
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetExpiry = new Date(Date.now() + 3600000).toISOString();
-    await supabase.from('users').update({ reset_token: resetToken, reset_token_expiry: resetExpiry }).eq('id', user.id);
+    const { error: updateErr } = await supabase.from('users').update({ reset_token: resetToken, reset_token_expiry: resetExpiry }).eq('id', user.id);
+    if (updateErr) {
+      console.error('[forgot-password] update token gagal — kolom reset_token mungkin belum ada di Supabase:', updateErr.message);
+      return res.status(500).json({ success: false, pesan: 'Fitur reset sandi belum dikonfigurasi. Hubungi admin.' });
+    }
 
     const resetUrl = `${process.env.APP_URL || 'https://kitabelajar.up.railway.app'}/?reset_token=${resetToken}`;
     const mailer = getMailer();
@@ -276,7 +280,7 @@ router.post('/google', async (req, res) => {
       const nama = gData.name || gData.email.split('@')[0];
       const { error } = await supabase.from('users').insert({
         id, nama, email: normalEmail, password: bcrypt.hashSync(uuidv4(), 10),
-        role: 'murid', avatar: gData.picture ? null : '🦁', google_id: gData.sub, xp: 0, level: 1
+        role: 'murid', avatar: '🦁', xp: 0, level: 1
       });
       if (error) throw error;
       await supabase.from('notifikasi').insert({ id: uuidv4(), user_id: id, judul: '🎉 Selamat Datang!', pesan: `Halo ${nama}! Selamat bergabung di KitaBelajar via Google.` });
