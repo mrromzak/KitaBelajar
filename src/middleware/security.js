@@ -5,13 +5,19 @@
 const helmet = require('helmet');
 
 // ── Daftar kata kunci judol & iklan berbahaya ───────────────
-const BLOCKED_KEYWORDS = [
-  // Judol
-  'slot', 'gacor', 'jackpot', 'togel', 'toto', 'casino', 'poker',
-  'judi', 'bet', 'betting', 'sbobet', 'maxwin', 'scatter', 'rtp',
-  'pragmatic', 'pg soft', 'habanero', 'spadegaming', 'joker123',
-  'slot88', 'slot777', 'olympus', 'mahjong', 'gates of', 'wild west',
-  'bonanza', 'starlight', 'sweet bonanza', 'demo slot', 'link slot',
+// Kata pendek (≤5 huruf) — wajib whole-word agar tidak salah blokir
+// kata Indonesia biasa (mis: "bet" ada di "dibuktikan", "rtp" di URL)
+const BLOCKED_EXACT = [
+  'slot', 'gacor', 'togel', 'toto', 'judi', 'bet', 'rtp',
+  'poker', 'casino', 'sbobet', 'maxwin',
+];
+
+// Kata panjang / frasa — cukup substring
+const BLOCKED_SUBSTR = [
+  'jackpot', 'betting', 'scatter', 'pragmatic', 'pg soft',
+  'habanero', 'spadegaming', 'joker123', 'slot88', 'slot777',
+  'sweet bonanza', 'demo slot', 'link slot', 'gates of olympus',
+  'wild west gold', 'starlight princess',
   // Pinjol & penipuan
   'pinjol', 'kredit cepat', 'dana cair', 'limit besar', 'bunga 0',
   'investasi bodong', 'cuan instan', 'passive income cepat',
@@ -24,7 +30,14 @@ const BLOCKED_KEYWORDS = [
 function containsBlockedContent(text) {
   if (!text || typeof text !== 'string') return false;
   const lower = text.toLowerCase();
-  return BLOCKED_KEYWORDS.some(kw => lower.includes(kw));
+
+  // Whole-word match untuk kata pendek
+  if (BLOCKED_EXACT.some(kw => new RegExp(`(?<![a-z])${kw}(?![a-z])`, 'i').test(lower))) return true;
+
+  // Substring match untuk frasa panjang
+  if (BLOCKED_SUBSTR.some(kw => lower.includes(kw))) return true;
+
+  return false;
 }
 
 // ── Middleware: blokir request body yang mengandung judol ───
