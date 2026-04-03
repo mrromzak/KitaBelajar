@@ -48,9 +48,9 @@ module.exports = function (io) {
     });
 
     // Kirim pesan real-time ke semua anggota kelas
-    socket.on('kelas:chat', ({ kelasId, isi, pengirim }) => {
+    socket.on('kelas:chat', ({ kelasId, id, isi, pengirim }) => {
       const pesan = {
-        id: Date.now().toString(),
+        id: id || Date.now().toString(), // Gunakan DB UUID dari client
         kelas_id: kelasId,
         isi,
         pengirim,

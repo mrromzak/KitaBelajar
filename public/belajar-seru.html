@@ -3390,7 +3390,11 @@ async function editPesanKelas(msgId) {
 }
 
 async function hapusPesanKelas(msgId) {
-  if (!confirm('Hapus pesan ini?')) return;
+  showConfirmHapusPesan(msgId);
+}
+
+async function _eksekusiHapusPesan(msgId) {
+  closeModal('modal-hapus-pesan');
   try {
     const data = await api('DELETE', `/kelas/${kelasChatKelasId}/chat/${msgId}`);
     if (data.success) {
@@ -3403,6 +3407,11 @@ async function hapusPesanKelas(msgId) {
   }
 }
 
+function showConfirmHapusPesan(msgId) {
+  document.getElementById('btn-hapus-pesan-ok').onclick = () => _eksekusiHapusPesan(msgId);
+  openModal('modal-hapus-pesan');
+}
+
 async function kirimPesanKelas() {
   const input = document.getElementById('kelas-chat-input');
   const isi = input.value.trim();
@@ -3411,9 +3420,10 @@ async function kirimPesanKelas() {
   try {
     const data = await api('POST', `/kelas/${kelasChatKelasId}/chat`, { isi });
     if (data.success) {
-      // Kirim via socket untuk real-time ke user lain
+      // Kirim via socket untuk real-time ke user lain (sertakan DB id agar hapus/edit sinkron)
       socket.emit('kelas:chat', {
         kelasId: kelasChatKelasId,
+        id: data.data.id,
         isi,
         pengirim: { id: currentUser.id, nama: currentUser.nama, avatar: currentUser.avatar, role: currentUser.role }
       });
@@ -7362,6 +7372,19 @@ function zepReset() {
     <div style="display:flex;gap:10px">
       <button class="btn-cancel" style="flex:1;padding:13px" onclick="closeModal('modal-hapus-kelas')">Batal</button>
       <button id="btn-hapus-kelas-ok" style="flex:1;padding:13px;background:var(--red);color:white;border:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer" onclick="eksekusiHapusKelas()">🗑️ Ya, Hapus!</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Konfirmasi Hapus Pesan -->
+<div class="modal-overlay" id="modal-hapus-pesan">
+  <div class="modal" style="max-width:360px;text-align:center">
+    <div style="font-size:48px;margin-bottom:12px">🗑️</div>
+    <h3 style="margin-bottom:8px">Hapus Pesan?</h3>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:20px;font-weight:600">Pesan akan dihapus untuk semua orang di kelas ini.</p>
+    <div style="display:flex;gap:10px">
+      <button class="btn-cancel" style="flex:1;padding:13px" onclick="closeModal('modal-hapus-pesan')">Batal</button>
+      <button id="btn-hapus-pesan-ok" style="flex:1;padding:13px;background:var(--red);color:white;border:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">🗑️ Ya, Hapus!</button>
     </div>
   </div>
 </div>
