@@ -245,6 +245,11 @@ function injectAIHTML() {
           <option value="Bahasa Indonesia">📖 Bahasa Indonesia</option>
           <option value="Umum">📚 Umum</option>
         </select>
+        <select class="ai-gen-input" id="ai-gen-jenis">
+          <option value="pilihan_ganda">🔘 Pilihan Ganda (A/B/C/D)</option>
+          <option value="benar_salah">✅ Benar / Salah</option>
+          <option value="campuran">🎲 Campuran (PG + Benar/Salah)</option>
+        </select>
         <select class="ai-gen-input" id="ai-gen-jumlah">
           <option value="3">3 soal</option>
           <option value="5" selected>5 soal</option>
@@ -264,6 +269,7 @@ function injectAIHTML() {
       <div id="ai-gen-result" style="display:none">
         <div class="ai-card-title" style="margin-top:8px">📋 Hasil Generate:</div>
         <div class="ai-result" id="ai-gen-output"></div>
+        <div id="ai-gen-stats" style="font-size:11px;color:#7A7A7A;margin:4px 0 8px;"></div>
         <button class="ai-gen-btn" style="margin-top:8px;background:linear-gradient(135deg,#6BCB77,#4CAF50)" onclick="simpanSoalDariAI()">💾 Simpan Semua ke Bank Soal</button>
       </div>
     </div>
@@ -436,13 +442,131 @@ Guru saat ini: ${window.currentUser?.nama || 'Guru'}`,
 }
 
 // ============================================================
-//  GENERATE SOAL AI
+//  GENERATE SOAL AI — Smart & Accurate (PG + Benar/Salah)
 // ============================================================
 let generatedSoalData = [];
+
+// ── System prompt yang ketat untuk akurasi tinggi ─────────
+function buildSystemPromptSoal(jenis) {
+  const instruksiJenis = jenis === 'benar_salah'
+    ? `Kamu membuat soal BENAR/SALAH.
+ATURAN WAJIB untuk Benar/Salah:
+- Field "jawaban" HANYA boleh berisi string "Benar" atau "Salah" (kapital di huruf pertama, tidak ada kata lain).
+- Pernyataan harus faktual dan bisa diverifikasi secara ilmiah/akademis.
+- Buat pernyataan yang spesifik, bukan ambigu. Hindari kata "biasanya", "mungkin", "kadang".
+- Pastikan distribusi seimbang: sekitar 50% Benar dan 50% Salah.`
+    : `Kamu membuat soal PILIHAN GANDA (A/B/C/D).
+ATURAN WAJIB untuk Pilihan Ganda:
+- Field "jawaban" HARUS berisi teks yang IDENTIK PERSIS dengan salah satu elemen di array "opsi".
+- Hanya SATU jawaban yang benar, tiga lainnya adalah pengecoh yang masuk akal.
+- Pengecoh (opsi salah) harus relevan dengan topik, bukan asal-asalan.
+- Hindari pola jawaban: jangan selalu "C" atau selalu opsi pertama yang benar.`;
+
+  return `Kamu adalah pembuat soal ujian profesional untuk siswa SD/SMP Indonesia.
+Tugasmu adalah membuat soal yang AKURAT SECARA FAKTUAL dan sesuai kurikulum Merdeka Belajar.
+
+${instruksiJenis}
+
+ATURAN UMUM WAJIB (berlaku untuk semua jenis soal):
+1. AKURASI adalah prioritas utama. Setiap soal dan jawaban HARUS benar secara ilmiah/faktual.
+2. Field "pembahasan" WAJIB diisi dengan penjelasan singkat MENGAPA jawaban tersebut benar. Ini memaksamu memverifikasi jawabanmu sendiri.
+3. Jangan buat soal yang ambigu atau punya lebih dari satu jawaban yang mungkin benar.
+4. Gunakan bahasa Indonesia yang baku dan sesuai tingkat pemahaman siswa SD/SMP.
+5. Balas HANYA dengan JSON array yang valid. TIDAK ADA teks lain di luar JSON.
+6. Pastikan setiap soal UNIK, tidak mengulang soal sebelumnya dalam batch yang sama.`;
+}
+
+// ── Builder prompt per jenis ───────────────────────────────
+function buildUserPromptSoal({ jenis, mapel, topik, tingkat, jumlahBatch, nomorMulai, batchKe, totalBatch, soalSebelumnya }) {
+  const contohPG = `[{"jenis":"pilihan_ganda","pertanyaan":"Apa ibu kota Indonesia?","emoji":"🏛️","opsi":["Surabaya","Jakarta","Bandung","Medan"],"jawaban":"Jakarta","pembahasan":"Jakarta adalah ibu kota Republik Indonesia sejak kemerdekaan tahun 1945.","poin":100}]`;
+  const contohBS = `[{"jenis":"benar_salah","pertanyaan":"Matahari terbit dari arah barat.","emoji":"☀️","jawaban":"Salah","pembahasan":"Matahari terbit dari arah timur dan terbenam di barat, akibat rotasi Bumi dari barat ke timur.","poin":50}]`;
+
+  const instruksiJenis = jenis === 'pilihan_ganda'
+    ? `Buat TEPAT ${jumlahBatch} soal PILIHAN GANDA.\nContoh format: ${contohPG}`
+    : jenis === 'benar_salah'
+    ? `Buat TEPAT ${jumlahBatch} soal BENAR/SALAH.\nContoh format: ${contohBS}`
+    : `Buat TEPAT ${jumlahBatch} soal CAMPURAN (gabungkan pilihan_ganda dan benar_salah secara bergantian).\nGunakan format yang sesuai untuk masing-masing jenis.`;
+
+  const konteksBatch = totalBatch > 1
+    ? `\nIni batch ke-${batchKe} dari ${totalBatch}. Soal nomor ${nomorMulai} s.d. ${nomorMulai + jumlahBatch - 1}.`
+    : '';
+
+  const hindariTopik = soalSebelumnya.length > 0
+    ? `\nHINDARI membuat soal dengan pertanyaan serupa:\n${soalSebelumnya.map(s => `- "${s.pertanyaan}"`).join('\n')}`
+    : '';
+
+  return `Mata pelajaran: ${mapel}
+Topik spesifik: ${topik}
+Tingkat kesulitan: ${tingkat}${konteksBatch}
+
+${instruksiJenis}${hindariTopik}
+
+INGAT: Isi "pembahasan" dengan alasan ilmiah/faktual yang memverifikasi jawabanmu. Balas HANYA JSON array.`;
+}
+
+// ── Validasi soal hasil generate ──────────────────────────
+function validasiSoal(soal) {
+  const valid = [];
+  const invalid = [];
+
+  for (const s of soal) {
+    let alasanGagal = null;
+
+    if (!s.pertanyaan || s.pertanyaan.trim().length < 5) {
+      alasanGagal = 'pertanyaan kosong/terlalu pendek';
+    } else if (!s.jawaban) {
+      alasanGagal = 'jawaban tidak ada';
+    } else if (s.jenis === 'pilihan_ganda' || (!s.jenis && s.opsi)) {
+      // Validasi PG: jawaban harus ada di opsi
+      if (!Array.isArray(s.opsi) || s.opsi.length < 2) {
+        alasanGagal = 'opsi pilihan ganda tidak lengkap';
+      } else if (!s.opsi.includes(s.jawaban)) {
+        // Coba cocokkan case-insensitive
+        const cocok = s.opsi.find(o => o.toLowerCase().trim() === s.jawaban.toLowerCase().trim());
+        if (cocok) {
+          s.jawaban = cocok; // perbaiki kapitalisasi
+        } else {
+          alasanGagal = `jawaban "${s.jawaban}" tidak ada di opsi`;
+        }
+      }
+    } else if (s.jenis === 'benar_salah') {
+      // Validasi BS: jawaban harus "Benar" atau "Salah"
+      const j = s.jawaban.trim();
+      if (j.toLowerCase() === 'benar') s.jawaban = 'Benar';
+      else if (j.toLowerCase() === 'salah') s.jawaban = 'Salah';
+      else alasanGagal = `jawaban "${s.jawaban}" bukan "Benar"/"Salah"`;
+    }
+
+    // Tandai jenis jika tidak ada
+    if (!alasanGagal) {
+      if (!s.jenis) s.jenis = s.opsi ? 'pilihan_ganda' : 'benar_salah';
+      s.emoji = s.emoji || (s.jenis === 'benar_salah' ? '✅' : '❓');
+      s.poin  = s.jenis === 'benar_salah' ? (s.poin || 50) : (s.poin || 100);
+      valid.push(s);
+    } else {
+      invalid.push({ soal: s, alasan: alasanGagal });
+    }
+  }
+
+  return { valid, invalid };
+}
+
+// ── Render preview soal ────────────────────────────────────
+function renderPreviewSoal(soalList) {
+  return soalList.map((s, i) => {
+    if (s.jenis === 'benar_salah') {
+      return `${i+1}. ${s.emoji} [B/S] ${s.pertanyaan}\n   ✅ Jawaban: ${s.jawaban}\n   💡 ${s.pembahasan || ''}`;
+    } else {
+      const opsiStr = (s.opsi || []).map((o, idx) => `${String.fromCharCode(65+idx)}. ${o}`).join('  ');
+      return `${i+1}. ${s.emoji} [PG] ${s.pertanyaan}\n   ${opsiStr}\n   ✅ Jawaban: ${s.jawaban}\n   💡 ${s.pembahasan || ''}`;
+    }
+  }).join('\n\n');
+}
 
 async function generateSoalAI() {
   const topik   = document.getElementById('ai-gen-topik').value.trim();
   const mapel   = document.getElementById('ai-gen-mapel').value;
+  const jenis   = document.getElementById('ai-gen-jenis').value;
   const jumlah  = parseInt(document.getElementById('ai-gen-jumlah').value);
   const tingkat = document.getElementById('ai-gen-tingkat').value;
   if (!topik) { alert('Masukkan topik soal dulu!'); return; }
@@ -450,41 +574,75 @@ async function generateSoalAI() {
   const btn = document.getElementById('ai-gen-btn');
   btn.disabled = true;
 
-  const BATCH_SIZE = 10;
+  const BATCH_SIZE = 8; // lebih kecil = lebih akurat per batch
   const totalBatch = Math.ceil(jumlah / BATCH_SIZE);
   let semuaSoal = [];
+  let totalInvalid = 0;
 
   try {
     for (let b = 0; b < totalBatch; b++) {
-      const soalBatch = Math.min(BATCH_SIZE, jumlah - semuaSoal.length);
-      btn.textContent = `⏳ Batch ${b+1}/${totalBatch} (${semuaSoal.length}/${jumlah})...`;
+      const sisaTarget = jumlah - semuaSoal.length;
+      const soalBatch  = Math.min(BATCH_SIZE, sisaTarget);
+      btn.textContent  = `⏳ Batch ${b+1}/${totalBatch} · ${semuaSoal.length}/${jumlah} soal...`;
+
+      // Tentukan jenis per batch (untuk campuran, alternasi)
+      const jenisBatch = jenis === 'campuran'
+        ? (b % 2 === 0 ? 'pilihan_ganda' : 'benar_salah')
+        : jenis;
 
       const teksRaw = await callAI(
-        'Kamu pembuat soal ujian. Balas HANYA dengan JSON array yang valid dan lengkap, tanpa teks lain.',
-        `Buat tepat ${soalBatch} soal pilihan ganda BARU (berbeda dari batch sebelumnya).
-Mata pelajaran: ${mapel}
-Topik: ${topik}
-Tingkat: ${tingkat}
-Batch ke-${b+1}, soal nomor ${semuaSoal.length+1} sampai ${semuaSoal.length+soalBatch}.
-
-Balas HANYA JSON array:
-[{"pertanyaan":"...","emoji":"emoji","opsi":["A","B","C","D"],"jawaban":"teks jawaban benar","poin":100}]`,
-        3000
+        buildSystemPromptSoal(jenisBatch),
+        buildUserPromptSoal({
+          jenis: jenisBatch,
+          mapel,
+          topik,
+          tingkat,
+          jumlahBatch: soalBatch,
+          nomorMulai: semuaSoal.length + 1,
+          batchKe: b + 1,
+          totalBatch,
+          soalSebelumnya: semuaSoal.slice(-5) // kirim 5 soal terakhir biar tidak duplikat
+        }),
+        4000
       );
 
-      semuaSoal = semuaSoal.concat(cleanAndParseJSON(teksRaw));
-      if (b < totalBatch - 1) await new Promise(r => setTimeout(r, 500));
+      const soalMentah = cleanAndParseJSON(teksRaw);
+      const { valid, invalid } = validasiSoal(soalMentah);
+
+      semuaSoal = semuaSoal.concat(valid);
+      totalInvalid += invalid.length;
+
+      // Log soal yang gagal validasi (untuk debugging)
+      if (invalid.length > 0) {
+        console.warn(`[Batch ${b+1}] ${invalid.length} soal gagal validasi:`, invalid);
+      }
+
+      if (b < totalBatch - 1) await new Promise(r => setTimeout(r, 600));
     }
 
     generatedSoalData = semuaSoal.slice(0, jumlah);
-    const preview = generatedSoalData.map((s, i) =>
-      `${i+1}. ${s.emoji} ${s.pertanyaan}\n   A. ${s.opsi[0]}  B. ${s.opsi[1]}  C. ${s.opsi[2]}  D. ${s.opsi[3]}\n   ✅ Jawaban: ${s.jawaban}`
-    ).join('\n\n');
+
+    // Tampilkan preview
+    const preview = renderPreviewSoal(generatedSoalData);
     document.getElementById('ai-gen-output').textContent = preview;
     document.getElementById('ai-gen-result').style.display = 'block';
+
+    // Tampilkan statistik
+    const pgCount = generatedSoalData.filter(s => s.jenis === 'pilihan_ganda').length;
+    const bsCount = generatedSoalData.filter(s => s.jenis === 'benar_salah').length;
+    const statsEl = document.getElementById('ai-gen-stats');
+    if (statsEl) {
+      statsEl.textContent = `✅ ${generatedSoalData.length} soal berhasil` +
+        (pgCount ? ` · 🔘 ${pgCount} PG` : '') +
+        (bsCount ? ` · ✅ ${bsCount} B/S` : '') +
+        (totalInvalid ? ` · ⚠️ ${totalInvalid} dibuang (validasi gagal)` : '');
+    }
+
   } catch(e) {
     alert('Gagal generate soal: ' + e.message);
+    console.error(e);
   }
+
   btn.disabled = false;
   btn.textContent = '✨ Generate Soal!';
 }
@@ -523,37 +681,48 @@ function cleanAndParseJSON(raw) {
 
 async function simpanSoalDariAI() {
   if (!generatedSoalData.length) return;
-  const mapel = document.getElementById('ai-gen-mapel').value;
+  const mapel   = document.getElementById('ai-gen-mapel').value;
   const tingkat = document.getElementById('ai-gen-tingkat').value;
-  const token = localStorage.getItem('kb_token');
+  const token   = localStorage.getItem('kb_token');
   if (!token) { alert('Login dulu!'); return; }
 
   let berhasil = 0;
   for (const s of generatedSoalData) {
     try {
+      const payload = {
+        pertanyaan : s.pertanyaan,
+        emoji      : s.emoji || '❓',
+        mapel,
+        jenis      : s.jenis || 'pilihan_ganda',
+        jawaban    : s.jawaban,
+        pembahasan : s.pembahasan || '',
+        poin       : s.poin || 100,
+        tingkat
+      };
+
+      // Hanya kirim opsi kalau PG
+      if (s.jenis === 'pilihan_ganda' && Array.isArray(s.opsi)) {
+        payload.opsi = JSON.stringify(s.opsi);
+      }
+
       const res = await fetch('/api/soal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({
-          pertanyaan: s.pertanyaan,
-          emoji: s.emoji || '❓',
-          mapel,
-          jenis: 'pilihan_ganda',
-          opsi: JSON.stringify(s.opsi),
-          jawaban: s.jawaban,
-          poin: s.poin || 100,
-          tingkat
-        })
+        body: JSON.stringify(payload)
       });
       const d = await res.json();
       if (d.success) berhasil++;
     } catch(e) {}
   }
 
-  alert(`✅ ${berhasil} dari ${generatedSoalData.length} soal berhasil disimpan ke bank soal!`);
+  const pgCount = generatedSoalData.filter(s => s.jenis === 'pilihan_ganda').length;
+  const bsCount = generatedSoalData.filter(s => s.jenis === 'benar_salah').length;
+  alert(`✅ ${berhasil} dari ${generatedSoalData.length} soal berhasil disimpan!\n🔘 ${pgCount} Pilihan Ganda · ✅ ${bsCount} Benar/Salah`);
   generatedSoalData = [];
   document.getElementById('ai-gen-result').style.display = 'none';
   document.getElementById('ai-gen-topik').value = '';
+  const statsEl = document.getElementById('ai-gen-stats');
+  if (statsEl) statsEl.textContent = '';
 }
 
 // ============================================================
