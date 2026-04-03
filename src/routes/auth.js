@@ -5,54 +5,47 @@ const jwt = require('jsonwebtoken');
 const validator = require('validator');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
+const { Resend } = require('resend');
 const supabase = require('../supabase');
 const { authMiddleware, JWT_SECRET } = require('../middleware/auth');
 
-// ── Email via Brevo HTTP API (tidak diblok Railway, gratis 300/hari) ──
-async function sendEmail({ to, subject, html, text }) {
+// ── OTP via Brevo HTTP API (gratis 300/hari, tidak diblok Railway) ──
+async function sendBrevoEmail({ to, subject, html, text }) {
   const apiKey = process.env.BREVO_API_KEY;
-  if (!apiKey) {
-    console.warn('[email] BREVO_API_KEY belum diset — email tidak dikirim.');
-    throw new Error('Layanan email belum dikonfigurasi. Hubungi admin.');
-  }
+  if (!apiKey) throw new Error('BREVO_API_KEY belum diset di Railway Variables.');
 
   const senderEmail = process.env.BREVO_FROM_EMAIL || 'noreply@kitabelajar.id';
   const senderName  = process.env.BREVO_FROM_NAME  || 'KitaBelajar';
 
-  const payload = JSON.stringify({
-    sender:      { name: senderName, email: senderEmail },
-    to:          [{ email: to }],
-    subject,
-    htmlContent: html,
-    textContent: text || subject
-  });
-
   const res = await fetch('https://api.brevo.com/v3/smtp/email', {
-    method:  'POST',
-    headers: {
-      'api-key':      apiKey,
-      'Content-Type': 'application/json',
-      'Accept':       'application/json'
-    },
-    body: payload
+    method: 'POST',
+    headers: { 'api-key': apiKey, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({
+      sender: { name: senderName, email: senderEmail },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+      textContent: text || subject
+    })
   });
 
   if (!res.ok) {
     const err = await res.text();
-    console.error(`[email] Brevo error ${res.status}:`, err);
-    throw new Error(`Gagal mengirim email (Brevo ${res.status})`);
+    console.error(`[brevo] error ${res.status}:`, err);
+    throw new Error(`Gagal mengirim email OTP (Brevo ${res.status}): ${err}`);
   }
-
   const result = await res.json();
-  console.log(`[email] Terkirim ke ${to} | messageId: ${result.messageId}`);
+  console.log(`[brevo] OTP terkirim ke ${to} | messageId: ${result.messageId}`);
 }
 
-function sendResetEmail({ to, nama, resetUrl }) {
-  return sendEmail({
-    to,
-    subject: 'Reset Password KitaBelajar',
-    text: `Halo ${nama}! Klik link berikut untuk reset password: ${resetUrl} (berlaku 1 jam)`,
-    html: `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"></head>
+// ── Reset password via Resend ────────────────────────────────────
+async function sendResetEmail({ to, nama, resetUrl }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) throw new Error('RESEND_API_KEY belum diset di Railway Variables.');
+
+  const resend = new Resend(apiKey);
+  const from = process.env.RESEND_FROM || 'KitaBelajar <onboarding@resend.dev>';
+  const html = `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#fff8f5;font-family:Nunito,Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
   <tr><td align="center">
@@ -74,8 +67,11 @@ function sendResetEmail({ to, nama, resetUrl }) {
     </table>
   </td></tr>
 </table>
-</body></html>`
-  });
+</body></html>`;
+
+  const { error } = await resend.emails.send({ from, to, subject: 'Reset Password KitaBelajar', html });
+  if (error) throw new Error(`Resend error: ${error.message}`);
+  console.log(`[resend] Reset email terkirim ke ${to}`);
 }
 
 // ── OTP store sementara (in-memory, expired otomatis) ──────────
@@ -86,7 +82,7 @@ function generateOTP() {
 }
 
 function sendOTPEmail({ to, nama, otp }) {
-  return sendEmail({
+  return sendBrevoEmail({
     to,
     subject: 'Kode Verifikasi KitaBelajar',
     text: `Halo ${nama}! Kode OTP kamu: ${otp} (berlaku 10 menit). Jangan berikan ke siapa pun.`,
