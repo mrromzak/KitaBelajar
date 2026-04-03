@@ -5,42 +5,76 @@ const jwt = require('jsonwebtoken');
 const validator = require('validator');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
-const { Resend } = require('resend');
 const supabase = require('../supabase');
 const { authMiddleware, JWT_SECRET } = require('../middleware/auth');
 
-// ── Generic email sender: Resend (prioritas) atau nodemailer ──
-async function sendEmail({ to, subject, html }) {
-  if (process.env.RESEND_API_KEY) {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const from = process.env.RESEND_FROM || 'KitaBelajar <onboarding@resend.dev>';
-    await resend.emails.send({ from, to, subject, html });
-    return;
+// ── Email via Brevo HTTP API (tidak diblok Railway, gratis 300/hari) ──
+async function sendEmail({ to, subject, html, text }) {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) {
+    console.warn('[email] BREVO_API_KEY belum diset — email tidak dikirim.');
+    throw new Error('Layanan email belum dikonfigurasi. Hubungi admin.');
   }
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.warn('[email] Tidak ada RESEND_API_KEY atau SMTP config — email tidak dikirim.');
-    return;
-  }
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    connectionTimeout: 8000, greetingTimeout: 5000, socketTimeout: 10000
+
+  const senderEmail = process.env.BREVO_FROM_EMAIL || 'noreply@kitabelajar.id';
+  const senderName  = process.env.BREVO_FROM_NAME  || 'KitaBelajar';
+
+  const payload = JSON.stringify({
+    sender:      { name: senderName, email: senderEmail },
+    to:          [{ email: to }],
+    subject,
+    htmlContent: html,
+    textContent: text || subject
   });
-  await transporter.sendMail({ from: `"KitaBelajar" <${process.env.SMTP_USER}>`, to, subject, html });
+
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method:  'POST',
+    headers: {
+      'api-key':      apiKey,
+      'Content-Type': 'application/json',
+      'Accept':       'application/json'
+    },
+    body: payload
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    console.error(`[email] Brevo error ${res.status}:`, err);
+    throw new Error(`Gagal mengirim email (Brevo ${res.status})`);
+  }
+
+  const result = await res.json();
+  console.log(`[email] Terkirim ke ${to} | messageId: ${result.messageId}`);
 }
 
 function sendResetEmail({ to, nama, resetUrl }) {
   return sendEmail({
-    to, subject: '🔐 Reset Password KitaBelajar',
-    html: `<div style="font-family:Nunito,sans-serif;max-width:480px;margin:auto">
-      <h2 style="color:#FF6B35">Reset Password KitaBelajar</h2>
-      <p>Halo <b>${nama}</b>! Klik tombol di bawah untuk reset password kamu.</p>
-      <a href="${resetUrl}" style="display:inline-block;background:#FF6B35;color:white;padding:12px 28px;border-radius:50px;text-decoration:none;font-weight:700;margin:16px 0">🔐 Reset Password</a>
-      <p style="color:#888;font-size:13px">Link ini berlaku 1 jam. Abaikan jika kamu tidak meminta reset.</p>
-    </div>`
+    to,
+    subject: 'Reset Password KitaBelajar',
+    text: `Halo ${nama}! Klik link berikut untuk reset password: ${resetUrl} (berlaku 1 jam)`,
+    html: `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#fff8f5;font-family:Nunito,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
+  <tr><td align="center">
+    <table width="480" cellpadding="0" cellspacing="0" style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(255,107,53,.1);">
+      <tr><td style="background:linear-gradient(135deg,#FF6B35,#ff9a6c);padding:32px;text-align:center;">
+        <div style="font-size:26px;font-weight:900;color:white;letter-spacing:2px;">KitaBelajar</div>
+        <div style="color:rgba(255,255,255,.8);font-size:13px;margin-top:4px;">Platform Belajar Seru</div>
+      </td></tr>
+      <tr><td style="padding:36px 40px;text-align:center;">
+        <div style="font-size:48px;margin-bottom:12px;">🔐</div>
+        <h2 style="color:#333;font-size:22px;margin:0 0 8px;">Reset Password</h2>
+        <p style="color:#666;font-size:14px;margin:0 0 28px;">Halo <b>${nama}</b>! Klik tombol di bawah untuk reset password kamu.</p>
+        <a href="${resetUrl}" style="display:inline-block;background:linear-gradient(135deg,#FF6B35,#ff9a6c);color:white;padding:14px 36px;border-radius:50px;text-decoration:none;font-weight:700;font-size:15px;">🔐 Reset Password</a>
+        <p style="color:#aaa;font-size:12px;margin-top:24px;">Link berlaku <b>1 jam</b>. Abaikan jika kamu tidak meminta reset.</p>
+      </td></tr>
+      <tr><td style="background:#fff8f5;padding:16px;text-align:center;border-top:1px solid #ffe8de;">
+        <p style="color:#bbb;font-size:11px;margin:0;">© 2025 KitaBelajar · Email otomatis, jangan dibalas</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`
   });
 }
 
@@ -53,13 +87,37 @@ function generateOTP() {
 
 function sendOTPEmail({ to, nama, otp }) {
   return sendEmail({
-    to, subject: '🔑 Kode Verifikasi KitaBelajar',
-    html: `<div style="font-family:Nunito,sans-serif;max-width:480px;margin:auto;text-align:center">
-      <h2 style="color:#FF6B35">Verifikasi Email KitaBelajar</h2>
-      <p>Halo <b>${nama}</b>! Kode OTP kamu adalah:</p>
-      <div style="font-size:42px;font-weight:900;letter-spacing:12px;color:#FF6B35;margin:24px 0;padding:16px;background:#fff5f0;border-radius:16px">${otp}</div>
-      <p style="color:#888;font-size:13px">Kode berlaku 10 menit. Jangan berikan ke siapa pun.</p>
-    </div>`
+    to,
+    subject: 'Kode Verifikasi KitaBelajar',
+    text: `Halo ${nama}! Kode OTP kamu: ${otp} (berlaku 10 menit). Jangan berikan ke siapa pun.`,
+    html: `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#fff8f5;font-family:Nunito,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
+  <tr><td align="center">
+    <table width="480" cellpadding="0" cellspacing="0" style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(255,107,53,.1);">
+      <tr><td style="background:linear-gradient(135deg,#FF6B35,#ff9a6c);padding:32px;text-align:center;">
+        <div style="font-size:26px;font-weight:900;color:white;letter-spacing:2px;">KitaBelajar</div>
+        <div style="color:rgba(255,255,255,.8);font-size:13px;margin-top:4px;">Platform Belajar Seru</div>
+      </td></tr>
+      <tr><td style="padding:36px 40px;text-align:center;">
+        <div style="font-size:48px;margin-bottom:12px;">📧</div>
+        <h2 style="color:#333;font-size:22px;margin:0 0 8px;">Verifikasi Email</h2>
+        <p style="color:#666;font-size:14px;margin:0 0 28px;">Halo <b>${nama}</b>! Gunakan kode di bawah untuk menyelesaikan pendaftaran.</p>
+        <div style="background:#fff5f0;border:2px dashed #FF6B35;border-radius:16px;padding:24px;margin-bottom:24px;">
+          <div style="font-size:44px;font-weight:900;letter-spacing:14px;color:#FF6B35;font-family:'Courier New',monospace;">${otp}</div>
+          <div style="color:#aaa;font-size:12px;margin-top:10px;">Berlaku <b style="color:#FF6B35;">10 menit</b></div>
+        </div>
+        <div style="background:#fff3cd;border-left:4px solid #ffc107;border-radius:8px;padding:12px 16px;text-align:left;">
+          <p style="color:#856404;font-size:13px;margin:0;">⚠️ Jangan berikan kode ini kepada siapa pun, termasuk tim KitaBelajar.</p>
+        </div>
+      </td></tr>
+      <tr><td style="background:#fff8f5;padding:16px;text-align:center;border-top:1px solid #ffe8de;">
+        <p style="color:#bbb;font-size:11px;margin:0;">© 2025 KitaBelajar · Email otomatis, jangan dibalas</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`
   });
 }
 
