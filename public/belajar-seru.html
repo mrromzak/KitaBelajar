@@ -1002,15 +1002,6 @@
       </div>
     </div>
 
-    <!-- Penilaian Murid -->
-    <div class="panel" style="margin-bottom:28px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div class="panel-title" style="margin-bottom:0">📊 Penilaian Murid</div>
-        <button onclick="loadPenilaian()" style="background:var(--green);color:white;border:none;padding:8px 18px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:700;font-size:13px;cursor:pointer">🔄 Refresh</button>
-      </div>
-      <div id="guru-penilaian-list"><div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">Memuat data penilaian...</div></div>
-    </div>
-
     <!-- Kelola Mapel -->
     <div class="panel" style="margin-bottom:28px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
@@ -1334,6 +1325,7 @@
         <button class="tab-btn" id="tab-kuis-btn" onclick="switchKelasTab('kuis')">📋 Tugas & Kuis</button>
         <button class="tab-btn" id="tab-murid-btn" onclick="switchKelasTab('murid')">👥 Murid</button>
         <button class="tab-btn" id="tab-chat-btn" onclick="switchKelasTab('chat')">💬 Chat</button>
+        <button class="tab-btn" id="tab-penilaian-btn" onclick="switchKelasTab('penilaian')" style="display:none">📊 Penilaian</button>
       </div>
       <!-- Banner meeting — muncul di tab Materi saat guru share link -->
       <div id="kelas-meeting-banner" style="display:none;margin-bottom:12px;border-radius:16px;overflow:hidden;border:2px solid #1d6fe8;background:linear-gradient(135deg,#EEF5FF,#E0EEFF)">
@@ -1362,6 +1354,7 @@
             style="background:var(--orange);color:white;border:none;padding:12px 20px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer">Kirim ➤</button>
         </div>
       </div>
+      <div id="kelas-penilaian-stream" style="display:none;padding-top:4px"></div>
       <div id="kelas-kuis-stream" style="display:none">
         <!-- Filter bar -->
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap" id="kuis-filter-bar">
@@ -2467,6 +2460,14 @@ async function api(method, path, body) {
 }
 
 function openModal(id) {
+  if (id === 'modal-buat-kelas') {
+    const mapelList = getMapelList();
+    if (!mapelList || mapelList.length === 0) {
+      toast('Buat mata pelajaran dulu sebelum membuat kelas! 📖', 'error');
+      setTimeout(() => openTambahMapel(), 300);
+      return;
+    }
+  }
   document.getElementById(id).classList.add('open');
   if (id === 'modal-ai-materi') populateAIMapel();
   if (id === 'modal-buat-kelas') populateBuatKelasMapel();
@@ -3343,6 +3344,7 @@ async function openKelas(kelasId, colorIdx) {
     document.getElementById('kelas-add-kuis-btn').style.display = isGuru ? 'inline-flex' : 'none';
     document.getElementById('kelas-code-card').style.display = isGuru ? 'block' : 'none';
     document.getElementById('tab-murid-btn').style.display = '';
+    document.getElementById('tab-penilaian-btn').style.display = isGuru ? '' : 'none';
 
     document.getElementById('kelas-info-sidebar').innerHTML = `
       <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted);font-weight:600">Mapel</span><span style="font-weight:700">${k.mapel || '–'}</span></div>
@@ -4605,7 +4607,6 @@ async function loadGuruDashboard() {
   renderGuruMapelPanel();
   populateBuatKelasMapel();
   loadGuruSoalPreview();
-  loadPenilaian();
 }
 
 function renderQuizPenilaianCard(q) {
@@ -4661,6 +4662,50 @@ function renderQuizPenilaianCard(q) {
         </table>
       </div>` : `<div style="padding:14px 18px;color:var(--muted);font-size:13px">Belum ada murid yang mengerjakan.</div>`}
     </div>`;
+}
+
+async function loadPenilaianKelas(kelasId) {
+  const el = document.getElementById('kelas-penilaian-stream');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:14px">Memuat data penilaian...</div>';
+  try {
+    const data = await api('GET', `/dashboard/penilaian?kelas_id=${kelasId}`);
+    if (!data.success || !data.data || data.data.length === 0) {
+      el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px"><div style="font-size:40px;margin-bottom:12px">📊</div><div>Belum ada data penilaian untuk kelas ini.</div><div style="font-size:13px;margin-top:6px">Murid perlu mengerjakan soal terlebih dahulu.</div></div>';
+      return;
+    }
+    const byKelas = data.by_kelas || [];
+    const klsData = byKelas[0];
+    if (!klsData) { el.innerHTML = data.data.map(q => renderQuizPenilaianCard(q)).join(''); return; }
+    const hasFun = klsData.fun_quiz && klsData.fun_quiz.length > 0;
+    const hasPR = klsData.pr && klsData.pr.length > 0;
+    if (!hasFun && !hasPR) {
+      el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px"><div style="font-size:40px;margin-bottom:12px">📊</div><div>Belum ada data penilaian untuk kelas ini.</div></div>';
+      return;
+    }
+    // Hitung rata-rata kelas
+    const quizDenganHasil = data.data.filter(q => q.rata_rata !== null);
+    const rataKelas = quizDenganHasil.length > 0
+      ? Math.round(quizDenganHasil.reduce((s, q) => s + q.rata_rata, 0) / quizDenganHasil.length)
+      : null;
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <div style="font-size:13px;color:var(--muted);font-weight:700">Total: ${data.data.length} kuis/tugas</div>
+        ${rataKelas !== null ? `<div style="background:var(--green);color:white;padding:6px 16px;border-radius:50px;font-weight:800;font-size:14px">Rata-rata: ${rataKelas}</div>` : ''}
+      </div>
+      ${hasFun ? `
+        <div style="margin-bottom:16px">
+          <div style="font-size:12px;font-weight:800;color:#FF6B35;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">🎮 Fun Quiz (${klsData.fun_quiz.length})</div>
+          ${klsData.fun_quiz.map(q => renderQuizPenilaianCard(q)).join('')}
+        </div>` : ''}
+      ${hasPR ? `
+        <div>
+          <div style="font-size:12px;font-weight:800;color:#7C3AED;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">📝 PR / Tugas (${klsData.pr.length})</div>
+          ${klsData.pr.map(q => renderQuizPenilaianCard(q)).join('')}
+        </div>` : ''}`;
+  } catch(e) {
+    el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Gagal memuat data penilaian.</div>';
+  }
 }
 
 async function loadPenilaian() {
@@ -6165,7 +6210,7 @@ async function mulaiStage(stageIdx) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer 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` },
         body: JSON.stringify({
-          model: 'llama-3.1-8b-instant',
+          model: 'qwen-qwq-32b',
           max_tokens: 2000,
           temperature: 0.7,
           messages: [{
@@ -6490,11 +6535,14 @@ function switchKelasTab(tab) {
   document.getElementById('tab-kuis-btn').classList.toggle('active', tab === 'kuis');
   document.getElementById('tab-murid-btn').classList.toggle('active', tab === 'murid');
   document.getElementById('tab-chat-btn').classList.toggle('active', tab === 'chat');
+  document.getElementById('tab-penilaian-btn')?.classList.toggle('active', tab === 'penilaian');
   document.getElementById('kelas-stream').style.display = tab === 'materi' ? 'block' : 'none';
   document.getElementById('kelas-kuis-stream').style.display = tab === 'kuis' ? 'block' : 'none';
   document.getElementById('kelas-murid-stream').style.display = tab === 'murid' ? 'block' : 'none';
   document.getElementById('kelas-chat-stream').style.display = tab === 'chat' ? 'block' : 'none';
+  document.getElementById('kelas-penilaian-stream').style.display = tab === 'penilaian' ? 'block' : 'none';
   if (tab === 'murid' && currentKelas) loadKelasMurid(currentKelas.id);
+  if (tab === 'penilaian' && currentKelas) loadPenilaianKelas(currentKelas.id);
   if (tab === 'chat') {
     document.getElementById('tab-chat-btn').textContent = '💬 Chat';
     scrollChatToBottom();
@@ -6749,7 +6797,7 @@ async function generateSoalUntukKuis() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer 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` },
           body: JSON.stringify({
-            model: 'llama-3.1-8b-instant',
+            model: 'qwen-qwq-32b',
             max_tokens: 1500,
             temperature: 0.95,
             top_p: 0.95,
@@ -6803,6 +6851,8 @@ Format JSON (pastikan "jawaban" PERSIS SAMA dengan salah satu teks di "opsi"):
         if (lastClosingBrace !== -1 && !teks.trimEnd().endsWith(']')) {
           teks = teks.substring(0, lastClosingBrace + 1) + ']';
         }
+        // Fix: AI kadang output emoji tanpa tanda kutip, mis: "emoji": 🚀 → "emoji": "🚀"
+        teks = teks.replace(/"emoji"\s*:\s*(?!")([^,}\]\n]+)/g, (_, v) => `"emoji": "${v.trim()}"`);
         let batchSoal;
         try {
           batchSoal = JSON.parse(teks);
