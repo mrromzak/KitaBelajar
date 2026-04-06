@@ -8,17 +8,18 @@ const { encrypt, decrypt } = require('../utils/crypto');
 // POST /api/kelas — Guru buat kelas baru
 router.post('/', authMiddleware, guruOnly, async (req, res) => {
   try {
-    const { nama, tahun_ajar } = req.body;
+    const { nama, tahun_ajar, mapel } = req.body;
     if (!nama || !tahun_ajar)
       return res.status(400).json({ success: false, pesan: 'Nama kelas dan tahun ajaran wajib diisi.' });
 
     const id = uuidv4();
     const kode_akses = (req.body.kode_akses || '').trim().toUpperCase() || Math.random().toString(36).substring(2, 8).toUpperCase();
+    const safeMapel = (mapel || '').trim();
 
-    const { error } = await supabase.from('kelas').insert({ id, nama, tahun_ajar, guru_id: req.user.id, kode_akses });
+    const { error } = await supabase.from('kelas').insert({ id, nama, tahun_ajar, mapel: safeMapel, guru_id: req.user.id, kode_akses });
     if (error) throw error;
 
-    res.status(201).json({ success: true, pesan: `Kelas "${nama}" berhasil dibuat!`, data: { id, nama, tahun_ajar, kode_akses } });
+    res.status(201).json({ success: true, pesan: `Kelas "${nama}" berhasil dibuat!`, data: { id, nama, tahun_ajar, mapel: safeMapel, kode_akses } });
   } catch (err) {
     console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }

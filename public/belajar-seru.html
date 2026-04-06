@@ -736,25 +736,52 @@
   <div class="login-wrap">
     <div class="login-card">
       <h2>🔐 Lupa Sandi</h2>
-      <p class="sub">Masukkan email kamu, kami kirimkan link reset</p>
-      <div id="forgot-form">
+      <!-- Langkah 1: Input email -->
+      <div id="forgot-step-1">
+        <p class="sub">Masukkan email kamu, kami kirimkan kode OTP</p>
         <div class="form-group">
           <label>Email</label>
-          <input type="email" id="forgot-email" placeholder="email@contoh.com">
+          <input type="email" id="forgot-email" placeholder="email@contoh.com" onkeydown="if(event.key==='Enter')doForgotPassword()">
         </div>
-        <button class="btn-login" onclick="doForgotPassword()">📧 Kirim Link Reset</button>
+        <button class="btn-login" onclick="doForgotPassword()">📧 Kirim Kode OTP</button>
       </div>
-      <div id="forgot-success" style="display:none;text-align:center;padding:24px 0">
-        <div style="font-size:48px;margin-bottom:12px">📬</div>
-        <p style="font-weight:700;font-size:16px">Link reset dikirim!</p>
-        <p style="color:var(--muted);font-size:14px;margin-top:8px">Cek email kamu dan klik link di dalamnya.</p>
-        <button class="btn-login" style="margin-top:16px" onclick="showPage('page-login')">← Kembali ke Login</button>
+      <!-- Langkah 2: Verifikasi OTP -->
+      <div id="forgot-step-2" style="display:none">
+        <p class="sub">Kode OTP dikirim ke email kamu. Masukkan kode di bawah:</p>
+        <div style="background:#fff5f0;border:2px dashed #FF6B35;border-radius:16px;padding:16px;margin-bottom:16px;text-align:center">
+          <div style="font-size:13px;color:#FF6B35;font-weight:700;margin-bottom:4px">📧 Cek inbox email kamu</div>
+          <div style="font-size:12px;color:var(--muted)" id="forgot-otp-email-label">–</div>
+        </div>
+        <div class="form-group">
+          <label>Kode OTP (6 digit)</label>
+          <input type="text" id="forgot-otp" placeholder="123456" maxlength="6" inputmode="numeric"
+            style="font-size:28px;font-weight:900;text-align:center;letter-spacing:10px;font-family:'Courier New',monospace"
+            oninput="this.value=this.value.replace(/\D/g,'')"
+            onkeydown="if(event.key==='Enter')doVerifyResetOtp()">
+        </div>
+        <button class="btn-login" onclick="doVerifyResetOtp()">✅ Verifikasi OTP</button>
+        <div style="text-align:center;margin-top:12px">
+          <a onclick="doForgotPassword(true)" style="color:var(--orange);cursor:pointer;font-size:13px;font-weight:700">🔄 Kirim ulang OTP</a>
+        </div>
+      </div>
+      <!-- Langkah 3: Buat sandi baru -->
+      <div id="forgot-step-3" style="display:none">
+        <p class="sub" style="color:#22C55E;font-weight:700">✅ OTP berhasil diverifikasi! Buat sandi baru kamu.</p>
+        <div class="form-group">
+          <label>Sandi Baru</label>
+          <input type="password" id="forgot-pw-baru" placeholder="Minimal 8 karakter, huruf kapital & angka">
+        </div>
+        <div class="form-group">
+          <label>Konfirmasi Sandi</label>
+          <input type="password" id="forgot-pw-konfirm" placeholder="Ulangi sandi baru" onkeydown="if(event.key==='Enter')doResetPasswordStep3()">
+        </div>
+        <button class="btn-login" onclick="doResetPasswordStep3()">🔑 Simpan Sandi Baru</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ========== RESET SANDI ========== -->
+<!-- ========== RESET SANDI (via link lama — tetap untuk kompatibilitas) ========== -->
 <div class="page" id="page-reset">
   <nav class="navbar">
     <div class="logo"><span>🌈</span> KitaBelajar</div>
@@ -877,6 +904,44 @@
 </div>
 
 <!-- ========== DASHBOARD GURU ========== -->
+<!-- ========== DASHBOARD ORANGTUA ========== -->
+<div class="page" id="page-orangtua">
+  <nav class="navbar">
+    <div class="logo"><span>🌈</span> KitaBelajar</div>
+    <div class="nav-links">
+      <span style="font-size:13px;font-weight:700;color:var(--muted)" id="ot-nav-name">Orangtua</span>
+      <button class="nav-btn back" onclick="doLogout()">← Keluar</button>
+    </div>
+  </nav>
+  <div class="dashboard">
+    <div class="welcome-banner" style="background:linear-gradient(135deg,#7C3AED,#A78BFA)">
+      <div>
+        <h2>👨‍👩‍👧 Pantau Aktivitas Anak</h2>
+        <p id="ot-subtitle">Selamat datang! Lihat perkembangan belajar anak kamu.</p>
+      </div>
+      <div style="font-size:48px">📊</div>
+    </div>
+    <div id="ot-anak-list" style="margin-bottom:24px">
+      <div style="text-align:center;padding:24px;color:var(--muted)">Memuat data...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== DETAIL AKTIVITAS ANAK (ORANGTUA) ========== -->
+<div class="page" id="page-orangtua-detail">
+  <nav class="navbar">
+    <div class="logo"><span>🌈</span> KitaBelajar</div>
+    <div class="nav-links">
+      <button class="nav-btn back" onclick="showPage('page-orangtua');loadOrangtuaDashboard()">← Kembali</button>
+    </div>
+  </nav>
+  <div class="dashboard">
+    <div id="ot-detail-content">
+      <div style="text-align:center;padding:40px;color:var(--muted)">Memuat...</div>
+    </div>
+  </div>
+</div>
+
 <div class="page" id="page-guru">
   <nav class="navbar">
     <div class="logo"><span>🌈</span> KitaBelajar</div>
@@ -2465,9 +2530,13 @@ async function doLogin() {
       localStorage.removeItem('kb_mapel_list');
       joinPrivateChannel();
       loadBellNotifications();
+      // Aktifkan push notification (minta izin jika belum)
+      setTimeout(() => subscribePush(), 2000);
       toast(`Selamat datang, ${currentUser.nama}! 🎉`, 'success');
       if (currentUser.role === 'guru') {
         loadGuruDashboard();
+      } else if (currentUser.role === 'orangtua') {
+        loadOrangtuaDashboard();
       } else {
         loadMuridDashboard();
       }
@@ -2524,8 +2593,18 @@ async function doVerifyOTP() {
       localStorage.setItem('kb_user', JSON.stringify(currentUser));
       joinPrivateChannel();
       loadBellNotifications();
+      setTimeout(() => subscribePush(), 2000);
       toast(`Akun berhasil dibuat! Selamat datang ${currentUser.nama}! 🎉`, 'success');
+      // Tampilkan info akun orangtua jika murid
+      if (data.parent_info && currentUser.role === 'murid') {
+        setTimeout(() => {
+          const { parentEmail, parentPassword } = data.parent_info;
+          const msg = `👨‍👩‍👧 Akun orangtua sudah dibuat!\nEmail: ${parentEmail}\nPassword: ${parentPassword}\n\nKredensial ini dikirim ke emailmu. Screenshot ini untuk disimpan!`;
+          alert(msg);
+        }, 1500);
+      }
       if (currentUser.role === 'guru') loadGuruDashboard();
+      else if (currentUser.role === 'orangtua') loadOrangtuaDashboard();
       else loadMuridDashboard();
     } else {
       toast(data.pesan || 'Kode OTP salah atau kedaluwarsa.', 'error');
@@ -2554,27 +2633,79 @@ async function doResendOTP() {
 }
 
 // ============================================================
-//  LUPA SANDI & RESET SANDI
+//  LUPA SANDI & RESET SANDI — 3-step OTP flow
 // ============================================================
-async function doForgotPassword() {
-  const email = document.getElementById('forgot-email').value.trim();
+let _forgotEmail = null;
+let _resetToken = null;
+
+async function doForgotPassword(resend = false) {
+  const email = resend ? _forgotEmail : document.getElementById('forgot-email').value.trim();
   if (!email) { toast('Masukkan email kamu!', 'error'); return; }
   showLoading(true);
   try {
     const data = await api('POST', '/auth/forgot-password', { email });
     if (data.success) {
-      document.getElementById('forgot-form').style.display = 'none';
-      document.getElementById('forgot-success').style.display = 'block';
-      // Dev mode: jika ada reset_url di response, tampilkan di console
-      if (data.reset_url) console.log('Reset URL (dev):', data.reset_url);
+      _forgotEmail = email;
+      document.getElementById('forgot-step-1').style.display = 'none';
+      document.getElementById('forgot-step-2').style.display = 'block';
+      document.getElementById('forgot-step-3').style.display = 'none';
+      document.getElementById('forgot-otp-email-label').textContent = email;
+      document.getElementById('forgot-otp').value = '';
+      if (!resend) toast('✅ Kode OTP dikirim! Cek email kamu.', 'success');
+      else toast('🔄 Kode OTP baru sudah dikirim!', 'success');
     } else {
-      toast(data.pesan || 'Gagal mengirim email reset.', 'error');
+      toast(data.pesan || 'Gagal mengirim OTP.', 'error');
     }
   } catch(e) { toast('Tidak bisa terhubung ke server.', 'error'); }
   showLoading(false);
 }
 
-let _resetToken = null;
+async function doVerifyResetOtp() {
+  const otp = document.getElementById('forgot-otp').value.trim();
+  if (!otp || otp.length !== 6) { toast('Masukkan kode OTP 6 digit!', 'error'); return; }
+  if (!_forgotEmail) { toast('Mulai dari awal, email tidak ditemukan.', 'error'); return; }
+  showLoading(true);
+  try {
+    const data = await api('POST', '/auth/verify-reset-otp', { email: _forgotEmail, otp });
+    if (data.success) {
+      _resetToken = data.reset_token;
+      document.getElementById('forgot-step-1').style.display = 'none';
+      document.getElementById('forgot-step-2').style.display = 'none';
+      document.getElementById('forgot-step-3').style.display = 'block';
+      toast('✅ OTP valid! Buat sandi baru kamu.', 'success');
+    } else {
+      toast(data.pesan || 'Kode OTP salah.', 'error');
+    }
+  } catch(e) { toast('Tidak bisa terhubung ke server.', 'error'); }
+  showLoading(false);
+}
+
+async function doResetPasswordStep3() {
+  const pw1 = document.getElementById('forgot-pw-baru').value;
+  const pw2 = document.getElementById('forgot-pw-konfirm').value;
+  if (!pw1 || pw1 !== pw2) { toast('Sandi tidak cocok!', 'error'); return; }
+  if (!_resetToken) { toast('Sesi habis. Mulai dari awal.', 'error'); return; }
+  showLoading(true);
+  try {
+    const data = await api('POST', '/auth/reset-password', { token: _resetToken, password_baru: pw1 });
+    if (data.success) {
+      toast('🎉 Sandi berhasil diubah! Silakan login.', 'success');
+      _resetToken = null;
+      _forgotEmail = null;
+      // Reset form ke step 1
+      document.getElementById('forgot-step-1').style.display = 'block';
+      document.getElementById('forgot-step-2').style.display = 'none';
+      document.getElementById('forgot-step-3').style.display = 'none';
+      document.getElementById('forgot-email').value = '';
+      showPage('page-login');
+    } else {
+      toast(data.pesan || 'Gagal reset sandi.', 'error');
+    }
+  } catch(e) { toast('Tidak bisa terhubung ke server.', 'error'); }
+  showLoading(false);
+}
+
+// Legacy reset-password via URL token (kompatibilitas link lama)
 async function doResetPassword() {
   const pw1 = document.getElementById('reset-password').value;
   const pw2 = document.getElementById('reset-password2').value;
@@ -2620,8 +2751,10 @@ async function _handleGoogleCredential(response) {
       localStorage.setItem('kb_user', JSON.stringify(currentUser));
       joinPrivateChannel();
       loadBellNotifications();
+      setTimeout(() => subscribePush(), 2000);
       toast(`Selamat datang, ${currentUser.nama}! 🎉`, 'success');
       if (currentUser.role === 'guru') loadGuruDashboard();
+      else if (currentUser.role === 'orangtua') loadOrangtuaDashboard();
       else loadMuridDashboard();
     } else {
       toast(data.pesan || 'Login Google gagal.', 'error');
@@ -2644,8 +2777,10 @@ async function completeGoogleRegister(role) {
       localStorage.setItem('kb_user', JSON.stringify(currentUser));
       joinPrivateChannel();
       loadBellNotifications();
+      setTimeout(() => subscribePush(), 2000);
       toast(`Selamat datang, ${currentUser.nama}! 🎉`, 'success');
       if (currentUser.role === 'guru') loadGuruDashboard();
+      else if (currentUser.role === 'orangtua') loadOrangtuaDashboard();
       else loadMuridDashboard();
     } else {
       toast(data.pesan || 'Registrasi Google gagal.', 'error');
@@ -2707,14 +2842,14 @@ function bukaProfileGuru() {
   document.getElementById('pg-email-display').textContent  = currentUser.email;
   document.getElementById('pg-nama-input').value = currentUser.nama;
   document.getElementById('pg-avatar-picker').style.display = 'none';
-  // Load statistik
+  // Load statistik dari dashboard
   api('GET', '/dashboard').then(data => {
     if (data.success) {
-      const s = data.statistik || {};
-      document.getElementById('pg-stat-murid').textContent  = s.total_murid  || '0';
-      document.getElementById('pg-stat-kelas').textContent  = s.total_kelas  || '0';
-      document.getElementById('pg-stat-materi').textContent = s.total_materi || '0';
-      document.getElementById('pg-stat-soal').textContent   = s.total_soal   || '0';
+      const s = data.data?.stats || {};
+      document.getElementById('pg-stat-murid').textContent  = s.total_murid  ?? '0';
+      document.getElementById('pg-stat-kelas').textContent  = s.total_kelas  ?? '0';
+      document.getElementById('pg-stat-materi').textContent = s.total_materi ?? '0';
+      document.getElementById('pg-stat-soal').textContent   = s.total_soal   ?? '0';
     }
   }).catch(() => {});
   showPage('page-profile-guru');
@@ -2853,6 +2988,150 @@ function doLogout() {
   localStorage.removeItem('kb_user');
   showPage('page-landing');
   toast('Sampai jumpa! 👋');
+}
+
+// ============================================================
+//  DASHBOARD ORANGTUA
+// ============================================================
+async function loadOrangtuaDashboard() {
+  if (!currentUser || currentUser.role !== 'orangtua') return;
+  showPage('page-orangtua');
+  const navName = document.getElementById('ot-nav-name');
+  if (navName) navName.textContent = currentUser.nama;
+  const el = document.getElementById('ot-anak-list');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat data anak...</div>';
+  try {
+    const data = await api('GET', '/orangtua/anak');
+    const anakList = data.data || [];
+    if (anakList.length === 0) {
+      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:48px;margin-bottom:12px">👶</div><p>Belum ada data anak yang terhubung.</p></div>';
+      return;
+    }
+    el.innerHTML = `
+      <div style="font-weight:800;font-size:16px;margin-bottom:16px">👦👧 Daftar Anak</div>
+      ${anakList.map(anak => `
+        <div style="background:white;border-radius:16px;padding:20px;box-shadow:var(--shadow);margin-bottom:12px;display:flex;align-items:center;gap:16px;cursor:pointer"
+             onclick="loadAktivitasAnak('${anak.id}','${anak.nama.replace(/'/g,"\\'")}')">
+          <div style="font-size:44px">${anak.avatar || '🦁'}</div>
+          <div style="flex:1">
+            <div style="font-weight:800;font-size:16px">${anak.nama}</div>
+            <div style="font-size:13px;color:var(--muted)">${anak.email}</div>
+            <div style="display:flex;gap:12px;margin-top:6px">
+              <span style="font-size:12px;background:#EEF5FF;color:var(--blue);padding:3px 10px;border-radius:50px;font-weight:700">⭐ ${anak.xp || 0} XP</span>
+              <span style="font-size:12px;background:#F0FFF4;color:var(--green);padding:3px 10px;border-radius:50px;font-weight:700">🏅 Level ${anak.level || 1}</span>
+            </div>
+          </div>
+          <div style="color:var(--muted);font-size:20px">→</div>
+        </div>`).join('')}`;
+  } catch(e) {
+    el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Gagal memuat data.</div>';
+  }
+}
+
+async function loadAktivitasAnak(muridId, namaMurid) {
+  showPage('page-orangtua-detail');
+  const el = document.getElementById('ot-detail-content');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Memuat aktivitas...</div>';
+  try {
+    const data = await api('GET', `/orangtua/aktivitas/${muridId}`);
+    if (!data.success) throw new Error(data.pesan);
+    const { murid, kelas, hasil_quiz, materi_selesai, total_materi_selesai } = data.data;
+    const rataQuiz = hasil_quiz.length > 0
+      ? Math.round(hasil_quiz.reduce((s, h) => s + (h.skor || 0), 0) / hasil_quiz.length)
+      : null;
+
+    el.innerHTML = `
+      <!-- Profil Anak -->
+      <div style="background:linear-gradient(135deg,#7C3AED,#A78BFA);border-radius:20px;padding:24px;margin-bottom:20px;color:white;display:flex;align-items:center;gap:20px">
+        <div style="font-size:56px">${murid.avatar || '🦁'}</div>
+        <div>
+          <div style="font-size:22px;font-weight:900">${murid.nama}</div>
+          <div style="font-size:13px;opacity:0.8">${murid.email}</div>
+          <div style="display:flex;gap:10px;margin-top:8px">
+            <span style="background:rgba(255,255,255,0.25);padding:4px 12px;border-radius:50px;font-size:12px;font-weight:700">⭐ ${murid.xp || 0} XP</span>
+            <span style="background:rgba(255,255,255,0.25);padding:4px 12px;border-radius:50px;font-size:12px;font-weight:700">🏅 Level ${murid.level || 1}</span>
+            <span style="background:rgba(255,255,255,0.25);padding:4px 12px;border-radius:50px;font-size:12px;font-weight:700">🏆 Rank #${murid.rank || '–'}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistik Ringkas -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+        <div style="background:white;border-radius:14px;padding:16px;text-align:center;box-shadow:var(--shadow)">
+          <div style="font-size:28px;font-weight:900;color:var(--blue)">${kelas.length}</div>
+          <div style="font-size:12px;color:var(--muted);font-weight:700">Kelas</div>
+        </div>
+        <div style="background:white;border-radius:14px;padding:16px;text-align:center;box-shadow:var(--shadow)">
+          <div style="font-size:28px;font-weight:900;color:var(--orange)">${hasil_quiz.length}</div>
+          <div style="font-size:12px;color:var(--muted);font-weight:700">Quiz Dikerjakan</div>
+        </div>
+        <div style="background:white;border-radius:14px;padding:16px;text-align:center;box-shadow:var(--shadow)">
+          <div style="font-size:28px;font-weight:900;color:var(--green)">${rataQuiz !== null ? rataQuiz : '–'}</div>
+          <div style="font-size:12px;color:var(--muted);font-weight:700">Rata-rata Nilai</div>
+        </div>
+      </div>
+
+      <!-- Kelas -->
+      ${kelas.length > 0 ? `
+        <div style="background:white;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow)">
+          <div style="font-weight:800;font-size:15px;margin-bottom:12px">🏫 Kelas yang Diikuti</div>
+          ${kelas.map(k => `
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #F5F5F5">
+              <span style="font-size:20px">📚</span>
+              <div>
+                <div style="font-weight:700">${k.nama}</div>
+                <div style="font-size:12px;color:var(--muted)">${k.mapel || ''} · ${k.tahun_ajar} · Guru: ${k.guru?.nama || '–'}</div>
+              </div>
+            </div>`).join('')}
+        </div>` : ''}
+
+      <!-- Hasil Quiz Terbaru -->
+      ${hasil_quiz.length > 0 ? `
+        <div style="background:white;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow)">
+          <div style="font-weight:800;font-size:15px;margin-bottom:12px">📝 Quiz Terbaru</div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead><tr style="color:var(--muted);border-bottom:1px solid #eee">
+              <th style="text-align:left;padding:8px 0;font-weight:700">Quiz</th>
+              <th style="text-align:center;padding:8px 0;font-weight:700">Skor</th>
+              <th style="text-align:right;padding:8px 0;font-weight:700">Tanggal</th>
+            </tr></thead>
+            <tbody>
+              ${hasil_quiz.map(h => `
+                <tr style="border-bottom:1px solid #f5f5f5">
+                  <td style="padding:8px 0">
+                    <div style="font-weight:700">${h.quiz?.judul || '–'}</div>
+                    <div style="font-size:11px;color:var(--muted)">${h.quiz?.mapel || ''} · ${h.quiz?.tipe === 'pr' ? '📝 PR' : '🎮 Fun'}</div>
+                  </td>
+                  <td style="text-align:center;padding:8px 0">
+                    <span style="background:${h.skor >= 80 ? 'var(--green)' : h.skor >= 60 ? 'var(--yellow)' : 'var(--red)'};color:white;padding:3px 12px;border-radius:50px;font-weight:800">${h.skor}</span>
+                  </td>
+                  <td style="text-align:right;padding:8px 0;color:var(--muted);font-size:12px">
+                    ${h.selesai_at ? new Date(h.selesai_at).toLocaleDateString('id-ID',{day:'numeric',month:'short'}) : '–'}
+                  </td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>` : ''}
+
+      <!-- Materi Selesai -->
+      ${total_materi_selesai > 0 ? `
+        <div style="background:white;border-radius:16px;padding:20px;box-shadow:var(--shadow)">
+          <div style="font-weight:800;font-size:15px;margin-bottom:12px">✅ Materi Sudah Dipelajari (${total_materi_selesai})</div>
+          ${materi_selesai.slice(0,5).map(m => `
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #F5F5F5">
+              <span style="color:var(--green)">✅</span>
+              <div>
+                <div style="font-weight:700;font-size:13px">${m.judul || '–'}</div>
+                <div style="font-size:11px;color:var(--muted)">${m.mapel || ''}</div>
+              </div>
+            </div>`).join('')}
+          ${total_materi_selesai > 5 ? `<div style="text-align:center;font-size:12px;color:var(--muted);margin-top:8px">+${total_materi_selesai-5} materi lainnya</div>` : ''}
+        </div>` : ''}`;
+  } catch(e) {
+    el.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)">Gagal memuat data aktivitas.</div>`;
+  }
 }
 
 // ============================================================
@@ -3247,6 +3526,7 @@ function kembaliDashboard() {
   if (currentKelas?.id) socket.emit('kelas:leave', { kelasId: currentKelas.id });
   currentKelas = null;
   if (currentUser?.role === 'guru') loadGuruDashboard();
+  else if (currentUser?.role === 'orangtua') loadOrangtuaDashboard();
   else loadMuridDashboard();
 }
 
@@ -3306,9 +3586,9 @@ function renderMuridList(muridList) {
               <div style="font-size:12px;color:var(--muted);font-weight:700">Lv.${m.level || 1}</div>
               <div style="font-size:11px;color:var(--orange);font-weight:700">${m.xp || 0} XP</div>
             </div>
-            <button onclick="bukaPrivateChat('${m.id}','${m.nama.replace(/'/g,"\\'")}','${m.avatar || '🦁'}')"
+            ${currentUser?.role === 'guru' ? `<button onclick="bukaPrivateChat('${m.id}','${m.nama.replace(/'/g,"\\'")}','${m.avatar || '🦁'}')"
               style="background:var(--blue);color:white;border:none;padding:7px 12px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:12px;cursor:pointer;flex-shrink:0"
-              title="Chat privat dengan ${m.nama}">💬</button>
+              title="Chat privat dengan ${m.nama}">💬</button>` : ''}
           </div>
         </div>`;
       }).join('')}
@@ -3640,14 +3920,24 @@ socket.on('kelas:meeting_banner', ({ kelasId, roomUrl }) => {
   toast('📹 Guru memulai meeting! Lihat banner di atas untuk bergabung.', 'info');
 });
 
-// Guru akhiri meeting → semua murid sembunyi banner
+// Guru akhiri meeting → semua murid sembunyi banner DAN keluar dari vc overlay
 socket.on('kelas:meeting_ended', ({ kelasId }) => {
   if (currentKelas?.id !== kelasId) return;
   localStorage.removeItem('kb_meeting_' + kelasId);
   hideMeetingBanner();
   const btn = document.getElementById('vc-meeting-btn');
   if (btn && currentUser?.role === 'murid') btn.style.display = 'none';
-  toast('Meeting telah berakhir.', 'info');
+  // Force close vc overlay jika murid sedang di dalamnya
+  if (currentUser?.role === 'murid') {
+    const overlay = document.getElementById('vc-overlay');
+    if (overlay && overlay.classList.contains('active')) {
+      overlay.classList.remove('active');
+      vcCurrentKelasId = null;
+      vcJitsiApi = null;
+      vcMeetingTabUrl = null;
+    }
+  }
+  toast('⏹️ Guru telah mengakhiri meeting. Kamu dikeluarkan dari ruang.', 'info');
 });
 
 // ============================================================
@@ -3663,6 +3953,97 @@ function joinPrivateChannel() {
 }
 // Jika socket reconnect (misal setelah internet terputus), join ulang
 socket.on('connect', () => { joinPrivateChannel(); });
+
+// ============================================================
+//  PUSH NOTIFICATION — Service Worker + Browser Notifications
+// ============================================================
+let _swRegistration = null;
+let _pushEnabled = false;
+
+async function initServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    _swRegistration = await navigator.serviceWorker.register('/sw.js');
+    console.log('[SW] Service worker terdaftar.');
+  } catch(e) {
+    console.warn('[SW] Gagal daftar service worker:', e.message);
+  }
+}
+
+async function requestPushPermission() {
+  if (!('Notification' in window)) return false;
+  if (Notification.permission === 'granted') return true;
+  if (Notification.permission === 'denied') return false;
+  const result = await Notification.requestPermission();
+  return result === 'granted';
+}
+
+async function subscribePush() {
+  if (!currentUser) return;
+  const granted = await requestPushPermission();
+  if (!granted) return;
+  if (!_swRegistration) return;
+
+  try {
+    // Gunakan VAPID public key dari server jika ada, fallback ke browser notification
+    let sub = await _swRegistration.pushManager.getSubscription();
+    if (!sub) {
+      // Coba subscribe dengan dummy key jika VAPID tidak dikonfigurasi
+      // Server akan abaikan jika tidak ada web-push
+      try {
+        const vapidPublicKey = await fetch('/api/push/vapid-key').then(r => r.json()).then(d => d.key).catch(() => null);
+        if (vapidPublicKey) {
+          const convertedKey = urlBase64ToUint8Array(vapidPublicKey);
+          sub = await _swRegistration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: convertedKey
+          });
+        }
+      } catch(e) {
+        console.warn('[Push] Subscribe gagal:', e.message);
+      }
+    }
+
+    if (sub) {
+      const subData = sub.toJSON();
+      await api('POST', '/push/subscribe', {
+        endpoint: subData.endpoint,
+        keys: subData.keys
+      }).catch(() => {});
+      _pushEnabled = true;
+    }
+  } catch(e) {
+    console.warn('[Push] Error subscribe:', e.message);
+  }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+// Tampilkan browser notification saat halaman di background
+function showBrowserNotif(judul, pesan, tag) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if (document.visibilityState === 'visible') return; // tab aktif, tidak perlu notif
+  try {
+    if (_swRegistration) {
+      _swRegistration.showNotification(judul, {
+        body: pesan,
+        icon: '/assets/icon-192.png',
+        tag: tag || 'kb-notif',
+        vibrate: [200, 100, 200]
+      });
+    } else {
+      new Notification(judul, { body: pesan });
+    }
+  } catch(e) {}
+}
+
+// Init SW saat halaman load
+initServiceWorker();
 
 let _notifPrivateChatData = null;
 let _notifPrivateChatTimer = null;
@@ -3690,6 +4071,12 @@ socket.on('private:receive', (pesan) => {
     pengirim_nama: pesan.pengirim_nama,
     pengirim_avatar: pesan.pengirim_avatar
   });
+  // Tampilkan browser notification jika tab tidak aktif
+  showBrowserNotif(
+    `💬 Pesan dari ${pesan.pengirim_nama || 'Seseorang'}`,
+    pesan.isi || 'Pesan baru',
+    'private-' + pesan.dari_id
+  );
 });
 
 function tampilkanNotifPrivateChat(pesan) {
@@ -3861,6 +4248,8 @@ socket.on('notif:baru', (notif) => {
     created_at: notif.created_at || new Date().toISOString(),
     dibaca: false
   });
+  // Browser notification saat tab tidak aktif
+  showBrowserNotif(notif.judul || 'KitaBelajar', notif.pesan || '', 'notif-' + (notif.tipe || 'umum'));
 });
 
 async function bukaPrivateChat(userId, nama, avatar) {
@@ -4116,11 +4505,10 @@ async function loadGuruDashboard() {
     ]);
 
     if (dashData.success) {
-      const s = dashData.statistik || {};
-      document.getElementById('stat-murid').textContent = s.total_murid || '–';
-      document.getElementById('stat-materi').textContent = s.total_materi || '–';
-      document.getElementById('stat-soal').textContent = s.total_soal || '–';
-      document.getElementById('stat-nilai').textContent = (s.rata_nilai ? Math.round(s.rata_nilai) : '–') + '%';
+      const s = dashData.data?.stats || {};
+      document.getElementById('stat-murid').textContent = s.total_murid ?? '–';
+      document.getElementById('stat-materi').textContent = s.total_materi ?? '–';
+      document.getElementById('stat-soal').textContent = s.total_soal ?? '–';
       document.getElementById('guru-info').textContent = `${s.total_murid || 0} murid aktif · ${s.total_materi || 0} materi`;
     }
 
@@ -4143,6 +4531,61 @@ async function loadGuruDashboard() {
   loadPenilaian();
 }
 
+function renderQuizPenilaianCard(q) {
+  const tipeLabel = q.tipe === 'pr' ? '📝 PR' : '🎮 Fun Quiz';
+  const tipeColor = q.tipe === 'pr' ? '#8B5CF6' : '#FF6B35';
+  const headerGrad = q.tipe === 'pr'
+    ? 'linear-gradient(135deg,#7C3AED,#A78BFA)'
+    : 'linear-gradient(135deg,#4D96FF,#6AADFF)';
+  const deadlineInfo = q.deadline
+    ? `<div style="font-size:11px;color:rgba(255,255,255,0.8)">⏰ Deadline: ${new Date(q.deadline).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</div>`
+    : '';
+  return `
+    <div style="margin-bottom:16px;border:2px solid #eee;border-radius:16px;overflow:hidden">
+      <div style="background:${headerGrad};padding:14px 18px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span style="background:rgba(255,255,255,0.25);color:white;font-size:10px;font-weight:800;padding:2px 8px;border-radius:50px">${tipeLabel}</span>
+          </div>
+          <div style="font-weight:800;font-size:15px;color:white">${q.judul}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.8)">${q.mapel} · ${q.total_pengerjaan} murid mengerjakan</div>
+          ${deadlineInfo}
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:22px;font-weight:900;color:white">${q.rata_rata !== null ? q.rata_rata : '–'}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.8)">Rata-rata</div>
+        </div>
+      </div>
+      ${q.hasil.length > 0 ? `
+      <div style="padding:12px 18px">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="color:var(--muted);border-bottom:1px solid #eee">
+              <th style="text-align:left;padding:8px 0;font-weight:700">Murid</th>
+              <th style="text-align:center;padding:8px 0;font-weight:700">Skor</th>
+              <th style="text-align:right;padding:8px 0;font-weight:700">Waktu</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${q.hasil.map(h => `
+              <tr style="border-bottom:1px solid #f5f5f5">
+                <td style="padding:8px 0">
+                  <span style="margin-right:6px">${h.avatar}</span>
+                  <span style="font-weight:700">${h.nama}</span>
+                </td>
+                <td style="text-align:center;padding:8px 0">
+                  <span style="background:${h.skor >= 80 ? 'var(--green)' : h.skor >= 60 ? 'var(--yellow)' : 'var(--red)'};color:white;padding:3px 12px;border-radius:50px;font-weight:800;font-size:13px">${h.skor}</span>
+                </td>
+                <td style="text-align:right;padding:8px 0;color:var(--muted);font-size:12px">
+                  ${h.waktu_selesai ? new Date(h.waktu_selesai).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'}) : '–'}
+                </td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>` : `<div style="padding:14px 18px;color:var(--muted);font-size:13px">Belum ada murid yang mengerjakan.</div>`}
+    </div>`;
+}
+
 async function loadPenilaian() {
   const el = document.getElementById('guru-penilaian-list');
   if (!el) return;
@@ -4150,7 +4593,6 @@ async function loadPenilaian() {
     const data = await api('GET', '/dashboard/penilaian');
     if (!data.success || !data.data || data.data.length === 0) {
       el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:14px">Belum ada data penilaian. Murid perlu mengerjakan soal terlebih dahulu.</div>';
-      // Update stat rata-rata
       document.getElementById('stat-nilai').textContent = '–%';
       return;
     }
@@ -4162,46 +4604,38 @@ async function loadPenilaian() {
       : null;
     document.getElementById('stat-nilai').textContent = rataKeseluruhan !== null ? rataKeseluruhan + '%' : '–%';
 
-    el.innerHTML = data.data.map(q => `
-      <div style="margin-bottom:20px;border:2px solid #eee;border-radius:16px;overflow:hidden">
-        <div style="background:linear-gradient(135deg,#4D96FF,#6AADFF);padding:14px 18px;display:flex;align-items:center;justify-content:space-between">
-          <div>
-            <div style="font-weight:800;font-size:15px;color:white">${q.judul}</div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.8)">${q.mapel} · ${q.total_pengerjaan} murid mengerjakan</div>
+    // Tampilkan per kelas, dipisah fun quiz dan PR
+    const byKelas = data.by_kelas || [];
+    if (byKelas.length === 0) {
+      el.innerHTML = data.data.map(q => renderQuizPenilaianCard(q)).join('');
+      return;
+    }
+
+    el.innerHTML = byKelas.map(kls => {
+      const hasFun = kls.fun_quiz && kls.fun_quiz.length > 0;
+      const hasPR = kls.pr && kls.pr.length > 0;
+      if (!hasFun && !hasPR) return '';
+      return `
+        <div style="margin-bottom:28px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+            <div style="width:4px;height:24px;background:var(--blue);border-radius:4px"></div>
+            <div>
+              <div style="font-weight:800;font-size:16px">${kls.kelas_nama}</div>
+              ${kls.kelas_mapel ? `<div style="font-size:12px;color:var(--muted);font-weight:600">📖 ${kls.kelas_mapel}</div>` : ''}
+            </div>
           </div>
-          <div style="text-align:right">
-            <div style="font-size:22px;font-weight:900;color:white">${q.rata_rata !== null ? q.rata_rata : '–'}</div>
-            <div style="font-size:11px;color:rgba(255,255,255,0.8)">Rata-rata</div>
-          </div>
-        </div>
-        ${q.hasil.length > 0 ? `
-        <div style="padding:12px 18px">
-          <table style="width:100%;border-collapse:collapse;font-size:13px">
-            <thead>
-              <tr style="color:var(--muted);border-bottom:1px solid #eee">
-                <th style="text-align:left;padding:8px 0;font-weight:700">Murid</th>
-                <th style="text-align:center;padding:8px 0;font-weight:700">Skor</th>
-                <th style="text-align:right;padding:8px 0;font-weight:700">Waktu</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${q.hasil.map(h => `
-                <tr style="border-bottom:1px solid #f5f5f5">
-                  <td style="padding:8px 0">
-                    <span style="margin-right:6px">${h.avatar}</span>
-                    <span style="font-weight:700">${h.nama}</span>
-                  </td>
-                  <td style="text-align:center;padding:8px 0">
-                    <span style="background:${h.skor >= 80 ? 'var(--green)' : h.skor >= 60 ? 'var(--yellow)' : 'var(--red)'};color:white;padding:3px 12px;border-radius:50px;font-weight:800;font-size:13px">${h.skor}</span>
-                  </td>
-                  <td style="text-align:right;padding:8px 0;color:var(--muted);font-size:12px">
-                    ${h.waktu_selesai ? new Date(h.waktu_selesai).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'}) : '–'}
-                  </td>
-                </tr>`).join('')}
-            </tbody>
-          </table>
-        </div>` : `<div style="padding:14px 18px;color:var(--muted);font-size:13px">Belum ada murid yang mengerjakan.</div>`}
-      </div>`).join('');
+          ${hasFun ? `
+            <div style="margin-bottom:10px">
+              <div style="font-size:12px;font-weight:800;color:#FF6B35;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">🎮 Fun Quiz (${kls.fun_quiz.length})</div>
+              ${kls.fun_quiz.map(q => renderQuizPenilaianCard(q)).join('')}
+            </div>` : ''}
+          ${hasPR ? `
+            <div>
+              <div style="font-size:12px;font-weight:800;color:#7C3AED;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">📝 PR / Tugas (${kls.pr.length})</div>
+              ${kls.pr.map(q => renderQuizPenilaianCard(q)).join('')}
+            </div>` : ''}
+        </div>`;
+    }).join('');
   } catch(e) {
     el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Gagal memuat data penilaian.</div>';
   }
@@ -5942,8 +6376,11 @@ window.addEventListener('load', () => {
   if (token && currentUser) {
     joinPrivateChannel();
     loadBellNotifications();
+    setTimeout(() => subscribePush(), 3000);
     if (currentUser.role === 'guru') {
       loadGuruDashboard();
+    } else if (currentUser.role === 'orangtua') {
+      loadOrangtuaDashboard();
     } else {
       loadMuridDashboard();
     }

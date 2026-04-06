@@ -71,9 +71,61 @@ function sendResetEmail({ to, nama, resetUrl }) {
 
 // ── OTP store sementara (in-memory, expired otomatis) ──────────
 const otpStore = new Map(); // email → { otp, data, expiresAt }
+// ── Reset OTP store (terpisah dari OTP registrasi) ─────────────
+const resetOtpStore = new Map(); // email → { otp, expiresAt }
 
 function generateOTP() {
   return String(Math.floor(100000 + Math.random() * 900000)); // 6 digit
+}
+
+function generateRandomPassword(length = 10) {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
+function sendParentCredentialsEmail({ to, namaMurid, parentEmail, parentPassword }) {
+  const appUrl = process.env.APP_URL || 'https://kitabelajar.up.railway.app';
+  return sendBrevoEmail({
+    to,
+    subject: 'Akun Orangtua KitaBelajar — Pantau Aktivitas Belajar Anak',
+    text: `Halo! Akun orangtua untuk memantau ${namaMurid} sudah dibuat. Email: ${parentEmail} | Password: ${parentPassword} | Login di: ${appUrl}`,
+    html: `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#fff8f5;font-family:Nunito,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
+  <tr><td align="center">
+    <table width="480" cellpadding="0" cellspacing="0" style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(255,107,53,.1);">
+      <tr><td style="background:linear-gradient(135deg,#FF6B35,#ff9a6c);padding:32px;text-align:center;">
+        <div style="font-size:26px;font-weight:900;color:white;letter-spacing:2px;">KitaBelajar</div>
+        <div style="color:rgba(255,255,255,.8);font-size:13px;margin-top:4px;">Platform Belajar Seru</div>
+      </td></tr>
+      <tr><td style="padding:36px 40px;">
+        <div style="font-size:48px;text-align:center;margin-bottom:12px;">👨‍👩‍👧</div>
+        <h2 style="color:#333;font-size:20px;margin:0 0 8px;text-align:center;">Akun Orangtua Dibuat!</h2>
+        <p style="color:#666;font-size:14px;margin:0 0 24px;text-align:center;">Akun orangtua untuk memantau aktivitas belajar <strong>${namaMurid}</strong> sudah siap.</p>
+        <div style="background:#fff5f0;border:2px solid #FF6B35;border-radius:16px;padding:20px;margin-bottom:20px;">
+          <div style="font-size:13px;color:#666;margin-bottom:8px;font-weight:700">🔑 Kredensial Login Orangtua:</div>
+          <div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="font-size:11px;color:#aaa;font-weight:700;text-transform:uppercase;letter-spacing:1px">Email</div>
+            <div style="font-size:15px;font-weight:800;color:#FF6B35;word-break:break-all">${parentEmail}</div>
+          </div>
+          <div style="background:#fff;border-radius:10px;padding:12px;">
+            <div style="font-size:11px;color:#aaa;font-weight:700;text-transform:uppercase;letter-spacing:1px">Password</div>
+            <div style="font-size:20px;font-weight:900;letter-spacing:4px;color:#333;font-family:'Courier New',monospace">${parentPassword}</div>
+          </div>
+        </div>
+        <a href="${appUrl}" style="display:block;text-align:center;background:linear-gradient(135deg,#FF6B35,#ff9a6c);color:white;padding:14px;border-radius:50px;text-decoration:none;font-weight:800;font-size:15px;margin-bottom:16px;">🚀 Login Sekarang</a>
+        <div style="background:#FFF3E8;border-left:4px solid #FF6B35;border-radius:8px;padding:12px;font-size:12px;color:#856404;">
+          ⚠️ Simpan kredensial ini dengan aman. Gunakan untuk memantau aktivitas belajar anak kamu di KitaBelajar.
+        </div>
+      </td></tr>
+      <tr><td style="background:#fff8f5;padding:16px;text-align:center;border-top:1px solid #ffe8de;">
+        <p style="color:#bbb;font-size:11px;margin:0;">© 2025 KitaBelajar · Email otomatis, jangan dibalas</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`
+  });
 }
 
 function sendOTPEmail({ to, nama, otp }) {
@@ -228,8 +280,48 @@ router.post('/register', async (req, res) => {
       pesan: `Halo ${safaNama}! Selamat bergabung di BelajarSeru. Semangat belajar ya!`
     });
 
+    // Auto-buat akun orangtua jika murid
+    let parentInfo = null;
+    if (role === 'murid') {
+      try {
+        const parentRawPass = generateRandomPassword(10);
+        const parentId = uuidv4();
+        // Email orangtua: format ortu.{6digitacak}@kitabelajar.id
+        const parentEmail = `ortu.${Math.random().toString(36).substring(2, 8)}@kitabelajar.id`;
+        const parentHashedPass = bcrypt.hashSync(parentRawPass, 10);
+
+        await supabase.from('users').insert({
+          id: parentId,
+          nama: `Orangtua ${safaNama}`,
+          email: parentEmail,
+          password: parentHashedPass,
+          role: 'orangtua',
+          avatar: '👨‍👩‍👧',
+          xp: 0,
+          level: 1
+        });
+
+        // Simpan relasi orangtua - murid
+        await supabase.from('parent_student').insert({ parent_id: parentId, murid_id: id });
+
+        // Kirim kredensial ke email murid (async, tidak block response)
+        sendParentCredentialsEmail({ to: normalEmail, namaMurid: safaNama, parentEmail, parentPassword: parentRawPass })
+          .catch(e => console.warn('[parent-email] gagal kirim:', e.message));
+
+        parentInfo = { parentEmail, parentPassword: parentRawPass };
+      } catch(e) {
+        console.warn('[auto-parent] gagal buat akun orangtua:', e.message);
+      }
+    }
+
     const token = jwt.sign({ id, nama: safaNama, email: normalEmail, role }, JWT_SECRET, { expiresIn: '7d' });
-    res.status(201).json({ success: true, pesan: 'Registrasi berhasil!', token, user: { id, nama: safaNama, email: normalEmail, role, avatar } });
+    res.status(201).json({
+      success: true,
+      pesan: 'Registrasi berhasil!' + (parentInfo ? ' Akun orangtua dikirim ke email kamu.' : ''),
+      token,
+      user: { id, nama: safaNama, email: normalEmail, role, avatar },
+      ...(parentInfo && { parent_info: parentInfo })
+    });
   } catch (err) {
     console.error('[register]', err.message);
     res.status(500).json({ success: false, pesan: 'Registrasi gagal. Silakan coba lagi.' });
@@ -327,6 +419,7 @@ router.put('/profile', authMiddleware, async (req, res) => {
 
 // =============================================
 //  POST /api/auth/forgot-password
+//  Langkah 1: kirim OTP ke email user
 // =============================================
 router.post('/forgot-password', async (req, res) => {
   try {
@@ -334,29 +427,26 @@ router.post('/forgot-password', async (req, res) => {
     if (!email) return res.status(400).json({ success: false, pesan: 'Email wajib diisi.' });
     const normalEmail = validator.normalizeEmail(email) || email.toLowerCase().trim();
 
-    const { data: user } = await supabase.from('users').select('id, nama').eq('email', normalEmail).single();
+    const { data: user } = await supabase.from('users').select('id, nama, role').eq('email', normalEmail).single();
     // Selalu return sukses agar tidak bocor info user terdaftar atau tidak
-    if (!user) return res.json({ success: true, pesan: 'Jika email terdaftar, link reset akan dikirim.' });
+    if (!user) return res.json({ success: true, pesan: 'Jika email terdaftar, kode OTP akan dikirim.' });
 
-    // Generate token reset 1 jam
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetExpiry = new Date(Date.now() + 3600000).toISOString();
-    const { error: updateErr } = await supabase.from('users').update({ reset_token: resetToken, reset_token_expiry: resetExpiry }).eq('id', user.id);
-    if (updateErr) {
-      console.error('[forgot-password] update token gagal — kolom reset_token mungkin belum ada di Supabase:', updateErr.message);
-      return res.status(500).json({ success: false, pesan: 'Fitur reset sandi belum dikonfigurasi. Hubungi admin.' });
-    }
+    // Jangan izinkan reset untuk akun orangtua
+    if (user.role === 'orangtua') return res.json({ success: true, pesan: 'Jika email terdaftar, kode OTP akan dikirim.' });
 
-    const resetUrl = `${process.env.APP_URL || 'https://kitabelajar.up.railway.app'}/?reset_token=${resetToken}`;
+    const otp = generateOTP();
 
     try {
-      await sendResetEmail({ to: normalEmail, nama: user.nama, resetUrl });
+      await sendOTPEmail({ to: normalEmail, nama: user.nama, otp });
     } catch (mailErr) {
       console.error('[forgot-password] email gagal:', mailErr.message);
-      return res.status(500).json({ success: false, pesan: 'Gagal mengirim email reset. Pastikan konfigurasi email sudah benar.' });
+      return res.status(500).json({ success: false, pesan: 'Gagal mengirim email OTP. Coba beberapa saat lagi.' });
     }
 
-    res.json({ success: true, pesan: 'Link reset dikirim! Cek email kamu.', ...(process.env.NODE_ENV !== 'production' && { reset_url: resetUrl }) });
+    // Simpan OTP reset di memory (10 menit)
+    resetOtpStore.set(normalEmail, { otp, userId: user.id, expiresAt: Date.now() + 10 * 60 * 1000 });
+
+    res.json({ success: true, pesan: 'Kode OTP dikirim ke email kamu. Berlaku 10 menit.' });
   } catch (err) {
     console.error('[forgot-password]', err.message);
     res.status(500).json({ success: false, pesan: 'Gagal memproses permintaan.' });
@@ -364,7 +454,42 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 // =============================================
+//  POST /api/auth/verify-reset-otp
+//  Langkah 2: verifikasi OTP → dapat reset_token
+// =============================================
+router.post('/verify-reset-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) return res.status(400).json({ success: false, pesan: 'Email dan kode OTP wajib diisi.' });
+
+    const normalEmail = validator.normalizeEmail(email) || email.toLowerCase().trim();
+    const entry = resetOtpStore.get(normalEmail);
+
+    if (!entry) return res.status(400).json({ success: false, pesan: 'Kode OTP tidak ditemukan. Minta ulang kode.' });
+    if (Date.now() > entry.expiresAt) {
+      resetOtpStore.delete(normalEmail);
+      return res.status(400).json({ success: false, pesan: 'Kode OTP sudah kedaluwarsa. Minta ulang.' });
+    }
+    if (entry.otp !== String(otp).trim())
+      return res.status(400).json({ success: false, pesan: 'Kode OTP salah.' });
+
+    resetOtpStore.delete(normalEmail);
+
+    // Buat reset token sementara (15 menit) dan simpan ke DB
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetExpiry = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    await supabase.from('users').update({ reset_token: resetToken, reset_token_expiry: resetExpiry }).eq('id', entry.userId);
+
+    res.json({ success: true, pesan: 'OTP valid! Silakan buat sandi baru.', reset_token: resetToken });
+  } catch (err) {
+    console.error('[verify-reset-otp]', err.message);
+    res.status(500).json({ success: false, pesan: 'Gagal verifikasi OTP.' });
+  }
+});
+
+// =============================================
 //  POST /api/auth/reset-password
+//  Langkah 3: reset password dengan reset_token
 // =============================================
 router.post('/reset-password', async (req, res) => {
   try {

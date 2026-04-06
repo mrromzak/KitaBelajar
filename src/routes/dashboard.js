@@ -13,6 +13,10 @@ async function dashboardGuru(req, res) {
     const guruId = req.user.id;
 
     // Statistik paralel
+    // Ambil kelas milik guru dulu
+    const { data: kelasList } = await supabase.from('kelas').select('id').eq('guru_id', guruId);
+    const kelasIds = kelasList?.map(k => k.id) || [];
+
     const [
       { count: totalMurid },
       { count: totalMateri },
@@ -22,8 +26,9 @@ async function dashboardGuru(req, res) {
       { data: materiTerbaru },
       { data: quizTerbaru }
     ] = await Promise.all([
-      supabase.from('kelas_murid').select('murid_id', { count: 'exact', head: true })
-        .in('kelas_id', (await supabase.from('kelas').select('id').eq('guru_id', guruId)).data?.map(k => k.id) || []),
+      kelasIds.length > 0
+        ? supabase.from('kelas_murid').select('murid_id', { count: 'exact', head: true }).in('kelas_id', kelasIds)
+        : Promise.resolve({ count: 0 }),
       supabase.from('materi').select('id', { count: 'exact', head: true }).eq('guru_id', guruId),
       supabase.from('soal').select('id', { count: 'exact', head: true }).eq('guru_id', guruId),
       supabase.from('quiz').select('id', { count: 'exact', head: true }).eq('guru_id', guruId),
@@ -35,7 +40,13 @@ async function dashboardGuru(req, res) {
     res.json({
       success: true, role: 'guru',
       data: {
-        stats: { total_murid: totalMurid, total_materi: totalMateri, total_soal: totalSoal, total_quiz: totalQuiz },
+        stats: {
+          total_murid: totalMurid || 0,
+          total_materi: totalMateri || 0,
+          total_soal: totalSoal || 0,
+          total_quiz: totalQuiz || 0,
+          total_kelas: kelasIds.length
+        },
         top_murid: topMurid || [],
         materi_terbaru: materiTerbaru || [],
         quiz_terbaru: quizTerbaru || []
@@ -129,34 +140,48 @@ router.put('/notifikasi/:id/baca', authMiddleware, async (req, res) => {
   }
 });
 
-// GET /api/dashboard/penilaian — daftar quiz + skor murid untuk guru
+// GET /api/dashboard/penilaian — daftar quiz + skor murid per kelas untuk guru
 router.get('/penilaian', authMiddleware, async (req, res) => {
   if (req.user.role !== 'guru') return res.status(403).json({ success: false, pesan: 'Hanya guru.' });
   try {
     const guruId = req.user.id;
-    // Ambil semua quiz milik guru
-    const { data: quizList } = await supabase
-      .from('quiz').select('id, judul, mapel, kelas_id, created_at')
-      .eq('guru_id', guruId).order('created_at', { ascending: false });
+    const { kelas_id } = req.query;
 
-    if (!quizList || quizList.length === 0) return res.json({ success: true, data: [] });
+    // Ambil semua quiz milik guru (bisa difilter per kelas)
+    let quizQuery = supabase
+      .from('quiz').select('id, judul, mapel, kelas_id, tipe, deadline, created_at')
+      .eq('guru_id', guruId).order('created_at', { ascending: false });
+    if (kelas_id) quizQuery = quizQuery.eq('kelas_id', kelas_id);
+
+    const { data: quizList } = await quizQuery;
+    if (!quizList || quizList.length === 0) return res.json({ success: true, data: [], by_kelas: [] });
 
     const quizIds = quizList.map(q => q.id);
 
-    // Ambil semua hasil quiz untuk quiz milik guru ini
+    // Ambil info kelas untuk label
+    const kelasIds = [...new Set(quizList.map(q => q.kelas_id).filter(Boolean))];
+    const { data: kelasList } = kelasIds.length > 0
+      ? await supabase.from('kelas').select('id, nama, mapel').in('id', kelasIds)
+      : { data: [] };
+    const kelasMap = Object.fromEntries((kelasList || []).map(k => [k.id, k]));
+
+    // Ambil semua hasil quiz
     const { data: hasilList } = await supabase
       .from('hasil_quiz')
-      .select('quiz_id, murid_id, skor, waktu_selesai, murid:murid_id(nama, avatar)')
+      .select('quiz_id, murid_id, skor, waktu_selesai, murid:murid_id(id, nama, avatar)')
       .in('quiz_id', quizIds)
       .order('waktu_selesai', { ascending: false });
 
-    // Hitung rata-rata per quiz dan susun data
-    const result = quizList.map(q => {
+    // Susun per quiz
+    const quizResult = quizList.map(q => {
       const hasilQuiz = (hasilList || []).filter(h => h.quiz_id === q.id);
       const totalSkor = hasilQuiz.reduce((s, h) => s + (h.skor || 0), 0);
       const rataRata = hasilQuiz.length > 0 ? Math.round(totalSkor / hasilQuiz.length) : null;
+      const kelas = q.kelas_id ? kelasMap[q.kelas_id] : null;
       return {
         ...q,
+        kelas_nama: kelas?.nama || 'Semua Kelas',
+        kelas_mapel: kelas?.mapel || q.mapel || '',
         total_pengerjaan: hasilQuiz.length,
         rata_rata: rataRata,
         hasil: hasilQuiz.map(h => ({
@@ -169,7 +194,24 @@ router.get('/penilaian', authMiddleware, async (req, res) => {
       };
     });
 
-    res.json({ success: true, data: result });
+    // Kelompokkan per kelas untuk tampilan terorganisir
+    const byKelas = {};
+    quizResult.forEach(q => {
+      const key = q.kelas_id || '__semua__';
+      if (!byKelas[key]) {
+        byKelas[key] = {
+          kelas_id: q.kelas_id,
+          kelas_nama: q.kelas_nama,
+          kelas_mapel: q.kelas_mapel,
+          fun_quiz: [],
+          pr: []
+        };
+      }
+      const tipe = q.tipe === 'pr' ? 'pr' : 'fun_quiz';
+      byKelas[key][tipe].push(q);
+    });
+
+    res.json({ success: true, data: quizResult, by_kelas: Object.values(byKelas) });
   } catch (err) {
     console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan.' });
   }

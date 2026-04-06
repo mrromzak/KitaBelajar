@@ -99,6 +99,7 @@ app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/zepquiz',   require('./routes/zepquiz'));
 app.use('/api/chat',      require('./routes/chat'));
 app.use('/api/notifikasi', require('./routes/notifikasi'));
+app.use('/api/orangtua',  require('./routes/orangtua'));
 
 const quizRoutes = require('./routes/quiz');
 app.use('/api/quiz', quizRoutes);
@@ -166,6 +167,73 @@ require('./socket/kelas')(io);
 
 // Socket.io Video Call — Daily.co (signaling notifikasi meeting)
 require('./socket/videocall')(io);
+
+// ── Push Notification: simpan subscription ───────────────────
+app.post('/api/push/subscribe', async (req, res) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ success: false });
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    const { endpoint, keys } = req.body;
+    if (!endpoint || !keys?.p256dh || !keys?.auth) return res.status(400).json({ success: false, pesan: 'Data subscription tidak lengkap.' });
+
+    await _sb.from('push_subscriptions').upsert({
+      user_id: user.id,
+      endpoint,
+      p256dh: keys.p256dh,
+      auth: keys.auth
+    }, { onConflict: 'user_id,endpoint' });
+
+    res.json({ success: true, pesan: 'Notifikasi diaktifkan.' });
+  } catch(e) { res.json({ success: false }); }
+});
+
+// ── Push Notification: hapus subscription ────────────────────
+app.post('/api/push/unsubscribe', async (req, res) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ success: false });
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    const { endpoint } = req.body;
+    if (endpoint) await _sb.from('push_subscriptions').delete().eq('user_id', user.id).eq('endpoint', endpoint);
+    else await _sb.from('push_subscriptions').delete().eq('user_id', user.id);
+    res.json({ success: true });
+  } catch(e) { res.json({ success: false }); }
+});
+
+// Helper: kirim push notification ke user tertentu (jika punya subscription)
+async function sendPushToUser(userId, payload) {
+  try {
+    const webpush = (() => { try { return require('web-push'); } catch { return null; } })();
+    if (!webpush) return; // web-push tidak terinstall, skip
+
+    const vapidPublicKey  = process.env.VAPID_PUBLIC_KEY;
+    const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+    const vapidEmail      = process.env.VAPID_EMAIL || 'mailto:admin@kitabelajar.id';
+    if (!vapidPublicKey || !vapidPrivateKey) return;
+
+    webpush.setVapidDetails(vapidEmail, vapidPublicKey, vapidPrivateKey);
+    const { data: subs } = await _sb.from('push_subscriptions').select('endpoint, p256dh, auth').eq('user_id', userId);
+    if (!subs || subs.length === 0) return;
+
+    const body = JSON.stringify(payload);
+    await Promise.allSettled(subs.map(sub =>
+      webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, body)
+        .catch(async (e) => {
+          if (e.statusCode === 410) { // Gone - subscription expired
+            await _sb.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+          }
+        })
+    ));
+  } catch(e) {
+    console.error('[push]', e.message);
+  }
+}
+
+// Expose helper ke socket handlers
+app.set('sendPushToUser', sendPushToUser);
 
 // ── Error Logger: terima error dari frontend ─────────────────
 app.post('/api/log-error', async (req, res) => {
