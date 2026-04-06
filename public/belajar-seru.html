@@ -3787,6 +3787,13 @@ function vcMulaiMeeting() {
   socket.emit('kelas:meeting_banner', { kelasId, roomUrl, nama: currentKelas?.nama || 'Kelas' });
   // Simpan ke localStorage agar overlay bisa di-restore setelah refresh
   localStorage.setItem('kb_meeting_' + kelasId, JSON.stringify({ roomUrl, ts: Date.now() }));
+  // Ubah tombol sidebar → Akhiri Meeting
+  const btn = document.getElementById('vc-meeting-btn');
+  if (btn) {
+    btn.textContent = '📵 Akhiri Meeting';
+    btn.onclick = () => vcLeave();
+    btn.style.background = 'var(--red)';
+  }
 }
 
 // ── Murid: join meeting ───────────────────────────────────────
@@ -3879,15 +3886,23 @@ function vcShareLink() {
 function vcLeave() {
   const kelasId = vcCurrentKelasId || currentKelas?.id;
   if (kelasId) {
-    // Broadcast ke murid agar banner hilang
+    // Broadcast ke semua (termasuk guru sendiri via io.to di server)
     socket.emit('kelas:meeting_ended', { kelasId });
     localStorage.removeItem('kb_meeting_' + kelasId);
   }
+  // UI cleanup langsung (tidak tunggu socket bounce-back)
   vcJitsiApi = null;
   vcMeetingTabUrl = null;
-  document.getElementById('vc-overlay').classList.remove('active');
   vcCurrentKelasId = null;
+  document.getElementById('vc-overlay').classList.remove('active');
   hideMeetingBanner();
+  // Reset tombol sidebar guru
+  const btn = document.getElementById('vc-meeting-btn');
+  if (btn && currentUser?.role === 'guru') {
+    btn.textContent = '📹 Mulai Meeting';
+    btn.onclick = () => vcMulaiMeeting();
+    btn.style.background = '';
+  }
 }
 
 // ── Meeting Banner helpers ────────────────────────────────────
@@ -3920,24 +3935,33 @@ socket.on('kelas:meeting_banner', ({ kelasId, roomUrl }) => {
   toast('📹 Guru memulai meeting! Lihat banner di atas untuk bergabung.', 'info');
 });
 
-// Guru akhiri meeting → semua murid sembunyi banner DAN keluar dari vc overlay
+// Guru akhiri meeting → semua orang (termasuk guru) tutup overlay & banner
 socket.on('kelas:meeting_ended', ({ kelasId }) => {
   if (currentKelas?.id !== kelasId) return;
   localStorage.removeItem('kb_meeting_' + kelasId);
   hideMeetingBanner();
+  // Tutup vc-overlay untuk semua role
+  const overlay = document.getElementById('vc-overlay');
+  if (overlay && overlay.classList.contains('active')) {
+    overlay.classList.remove('active');
+    vcCurrentKelasId = null;
+    vcJitsiApi = null;
+    vcMeetingTabUrl = null;
+  }
   const btn = document.getElementById('vc-meeting-btn');
-  if (btn && currentUser?.role === 'murid') btn.style.display = 'none';
-  // Force close vc overlay jika murid sedang di dalamnya
-  if (currentUser?.role === 'murid') {
-    const overlay = document.getElementById('vc-overlay');
-    if (overlay && overlay.classList.contains('active')) {
-      overlay.classList.remove('active');
-      vcCurrentKelasId = null;
-      vcJitsiApi = null;
-      vcMeetingTabUrl = null;
+  if (btn) {
+    if (currentUser?.role === 'murid') {
+      btn.style.display = 'none';
+    } else if (currentUser?.role === 'guru') {
+      // Reset tombol guru jika belum di-reset oleh vcLeave()
+      btn.textContent = '📹 Mulai Meeting';
+      btn.onclick = () => vcMulaiMeeting();
+      btn.style.background = '';
     }
   }
-  toast('⏹️ Guru telah mengakhiri meeting. Kamu dikeluarkan dari ruang.', 'info');
+  if (currentUser?.role !== 'guru') {
+    toast('⏹️ Guru telah mengakhiri meeting. Kamu dikeluarkan dari ruang.', 'info');
+  }
 });
 
 // ============================================================

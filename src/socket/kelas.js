@@ -70,10 +70,10 @@ module.exports = function (io) {
       socket.to('kelas:' + kelasId).emit('kelas:meeting_banner', { kelasId, roomUrl, nama });
     });
 
-    // Guru akhiri meeting → hapus dari server + hide banner semua murid
+    // Guru akhiri meeting → hapus dari server + broadcast ke semua (termasuk guru sendiri)
     socket.on('kelas:meeting_ended', ({ kelasId }) => {
       delete activeMeetings[kelasId];
-      socket.to('kelas:' + kelasId).emit('kelas:meeting_ended', { kelasId });
+      io.to('kelas:' + kelasId).emit('kelas:meeting_ended', { kelasId });
     });
 
     // Edit pesan kelas — broadcast ke seluruh anggota kelas
