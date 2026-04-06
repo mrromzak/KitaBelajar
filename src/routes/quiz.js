@@ -215,60 +215,69 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 });
 
 // ============================================================
-//  POST /api/hasil-quiz  — simpan hasil pengerjaan murid
+//  POST /api/quiz/hasil  — simpan hasil pengerjaan murid
 // ============================================================
 router.post('/hasil', authMiddleware, async (req, res) => {
   try {
-    const { quiz_id, skor, benar, total_soal, durasi_detik, jawaban } = req.body;
+    const { quiz_id, skor, jawaban } = req.body;
     const murid_id = req.user.id || req.user.userId;
+    if (!quiz_id) return res.status(400).json({ success: false, pesan: 'quiz_id wajib' });
 
     // Cek apakah sudah pernah mengerjakan
     const { data: existing } = await supabase
       .from('hasil_quiz')
-      .select('id')
+      .select('id, skor')
       .eq('murid_id', murid_id)
       .eq('quiz_id', quiz_id)
-      .single();
+      .maybeSingle();
 
     if (existing) {
-      return res.json({ success: true, pesan: 'Sudah pernah dikerjakan', hasil_id: existing.id });
+      // Update jika skor lebih baik
+      if ((skor || 0) > (existing.skor || 0)) {
+        await supabase.from('hasil_quiz')
+          .update({ skor: skor || 0, jawaban: JSON.stringify(jawaban || []), waktu_selesai: new Date().toISOString() })
+          .eq('id', existing.id);
+      }
+      return res.json({ success: true, pesan: 'Hasil diperbarui', skor });
     }
 
-    // Insert hasil
+    // Insert hasil baru — pakai kolom yang sudah terbukti ada di tabel
+    const { v4: uuidv4 } = require('uuid');
     const { data: hasil, error } = await supabase
       .from('hasil_quiz')
       .insert({
-        murid_id, quiz_id,
+        id: uuidv4(),
+        murid_id,
+        quiz_id,
         skor: skor || 0,
-        benar: benar || 0,
-        total_soal: total_soal || 0,
-        durasi_detik: durasi_detik || 0,
+        jawaban: JSON.stringify(jawaban || []),
         waktu_selesai: new Date().toISOString()
       })
       .select()
       .single();
-    if (error) throw error;
 
-    // Insert detail jawaban jika ada
-    if (jawaban && Array.isArray(jawaban) && hasil) {
-      const details = jawaban.map(j => ({
-        hasil_id: hasil.id,
-        soal_id: j.soal_id,
-        jawaban_user: j.jawaban_user,
-        benar: j.benar,
-        poin_dapat: j.poin_dapat || 0
-      }));
-      await supabase.from('detail_jawaban').insert(details);
+    if (error) {
+      console.error('[POST /quiz/hasil] insert error:', error.message);
+      return res.status(500).json({ success: false, pesan: 'Gagal menyimpan hasil: ' + error.message });
     }
 
-    // Update XP murid
-    const xpGain = skor || 0;
-    await supabase.rpc('increment_xp', { user_id: murid_id, xp_gain: xpGain }).catch(() => {});
+    // Update XP murid (opsional — tidak gagalkan request jika error)
+    try {
+      const xpGain = Math.round((skor || 0) / 10);
+      if (xpGain > 0) {
+        const { data: userData } = await supabase.from('users').select('xp, level').eq('id', murid_id).single();
+        if (userData) {
+          const newXp = (userData.xp || 0) + xpGain;
+          const newLevel = Math.floor(newXp / 1000) + 1;
+          await supabase.from('users').update({ xp: newXp, level: newLevel }).eq('id', murid_id);
+        }
+      }
+    } catch(xpErr) { console.warn('[XP update]', xpErr.message); }
 
-    return res.status(201).json({ success: true, pesan: 'Hasil tersimpan', hasil });
+    return res.status(201).json({ success: true, pesan: 'Hasil tersimpan!', hasil });
   } catch(e) {
-    console.error('[POST /hasil-quiz]', e.message);
-    return res.status(500).json({ success: false, pesan: e.message });
+    console.error('[POST /quiz/hasil]', e.message);
+    return res.status(500).json({ success: false, pesan: 'Gagal menyimpan hasil.' });
   }
 });
 
@@ -279,15 +288,20 @@ router.get('/hasil/cek', authMiddleware, async (req, res) => {
   try {
     const { quiz_id } = req.query;
     const murid_id = req.user.id || req.user.userId;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('hasil_quiz')
-      .select('id, skor, benar, total_soal, waktu_selesai')
+      .select('id, skor, waktu_selesai')
       .eq('murid_id', murid_id)
       .eq('quiz_id', quiz_id)
-      .single();
+      .maybeSingle();
 
+    if (error) {
+      console.error('[GET /quiz/hasil/cek]', error.message);
+      return res.json({ success: true, sudah: false, hasil: null });
+    }
     return res.json({ success: true, sudah: !!data, hasil: data || null });
   } catch(e) {
+    console.error('[GET /quiz/hasil/cek catch]', e.message);
     return res.json({ success: true, sudah: false, hasil: null });
   }
 });

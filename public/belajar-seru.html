@@ -7412,16 +7412,18 @@ async function submitKuisKelas() {
 
   // Kirim hasil ke backend (skor = persentase 0-100 agar konsisten di dashboard guru)
   try {
-    await api('POST', '/quiz/hasil', {
+    const simpan = await api('POST', '/quiz/hasil', {
       quiz_id: kuisKelasData.id,
       skor: pct,
-      benar,
-      total_soal: soal.length,
-      durasi_detik,
       jawaban: detailJawaban
     });
+    if (!simpan.success) {
+      console.warn('Gagal simpan hasil:', simpan.pesan);
+      // Retry sekali jika gagal
+      await api('POST', '/quiz/hasil', { quiz_id: kuisKelasData.id, skor: pct, jawaban: detailJawaban });
+    }
   } catch(e) {
-    console.warn('Gagal simpan hasil:', e);
+    console.warn('Gagal simpan hasil (network):', e);
   }
 
   const emoji = pct >= 80 ? '🎉' : pct >= 60 ? '😊' : pct >= 40 ? '😅' : '💪';
