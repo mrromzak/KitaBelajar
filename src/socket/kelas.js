@@ -34,9 +34,14 @@ module.exports = function (io) {
       kelasRooms[kelasId].add(socket.id);
       broadcastOnlineList(kelasId);
 
-      // Jika ada meeting aktif di kelas ini, langsung kirim ke murid yang baru join
-      if (role === 'murid' && activeMeetings[kelasId]) {
-        socket.emit('kelas:meeting_banner', { kelasId, ...activeMeetings[kelasId] });
+      // Jika ada meeting aktif, kirim banner ke murid yang baru join
+      // Jika tidak ada meeting aktif, kirim sinyal ended agar murid bersihkan stale localStorage
+      if (role === 'murid') {
+        if (activeMeetings[kelasId]) {
+          socket.emit('kelas:meeting_banner', { kelasId, ...activeMeetings[kelasId] });
+        } else {
+          socket.emit('kelas:meeting_ended', { kelasId });
+        }
       }
     });
 

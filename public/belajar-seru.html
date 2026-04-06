@@ -3413,20 +3413,17 @@ async function openKelas(kelasId, colorIdx) {
         const m = JSON.parse(savedMeeting);
         // Abaikan jika lebih dari 8 jam (meeting sudah lama)
         if (Date.now() - (m.ts || 0) < 8 * 60 * 60 * 1000) {
-          if (currentUser?.role === 'murid') {
-            setTimeout(() => showMeetingBanner(m.roomUrl), 300);
-            setTimeout(() => {
-              const btn = document.getElementById('vc-meeting-btn');
-              if (btn) { btn.style.display = 'flex'; btn.textContent = '📹 Gabung Meeting'; }
-            }, 300);
-          } else if (currentUser?.role === 'guru') {
-            // Guru restore overlay panel
+          if (currentUser?.role === 'guru') {
+            // Guru restore overlay panel dari localStorage
+            // (server tidak mengirim meeting_banner ke guru)
             setTimeout(() => {
               const roomName = vcGetRoomName(kelasId);
               vcMeetingTabUrl = m.roomUrl;
               vcShowMeetingPanel(roomName);
             }, 300);
           }
+          // Murid: TIDAK restore dari localStorage — biarkan server yang menentukan
+          // status meeting via kelas:meeting_banner atau kelas:meeting_ended
         } else {
           localStorage.removeItem('kb_meeting_' + kelasId);
         }
@@ -3947,8 +3944,9 @@ socket.on('kelas:meeting_banner', ({ kelasId, roomUrl }) => {
 
 // Guru akhiri meeting → semua orang (termasuk guru) tutup overlay & banner
 socket.on('kelas:meeting_ended', ({ kelasId }) => {
-  if (currentKelas?.id !== kelasId) return;
+  // Selalu hapus localStorage, terlepas dari halaman yang sedang dibuka
   localStorage.removeItem('kb_meeting_' + kelasId);
+  if (currentKelas?.id !== kelasId) return;
   hideMeetingBanner();
   // Tutup tab Jitsi jika masih terbuka
   if (vcJitsiWindow && !vcJitsiWindow.closed) {
@@ -6210,7 +6208,7 @@ async function mulaiStage(stageIdx) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer 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` },
         body: JSON.stringify({
-          model: 'qwen-qwq-32b',
+          model: 'llama-3.3-70b-versatile',
           max_tokens: 2000,
           temperature: 0.7,
           messages: [{
@@ -6797,7 +6795,7 @@ async function generateSoalUntukKuis() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer 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` },
           body: JSON.stringify({
-            model: 'qwen-qwq-32b',
+            model: 'llama-3.3-70b-versatile',
             max_tokens: 1500,
             temperature: 0.95,
             top_p: 0.95,
