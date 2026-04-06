@@ -561,8 +561,25 @@ router.post('/google', async (req, res) => {
         pesan: `Halo ${safaNama}! Selamat bergabung di KitaBelajar. Semangat belajar ya!`
       });
 
+      // Buat akun orangtua otomatis jika role murid
+      let parentInfo = null;
+      if (role === 'murid') {
+        const suffix = uuidv4().replace(/-/g,'').slice(0,6);
+        const parentEmail = `ortu.${suffix}@kitabelajar.id`;
+        const parentPassword = generateRandomPassword(10);
+        const parentId = uuidv4();
+        await supabase.from('users').insert({
+          id: parentId, nama: `Orangtua ${safaNama}`,
+          email: parentEmail, password: bcrypt.hashSync(parentPassword, 10),
+          role: 'orangtua', avatar: '👨‍👩‍👧', xp: 0, level: 1
+        });
+        await supabase.from('parent_student').insert({ parent_id: parentId, murid_id: id });
+        sendParentCredentialsEmail({ to: normalEmail, namaMurid: safaNama, parentEmail, parentPassword }).catch(() => {});
+        parentInfo = { parentEmail, parentPassword };
+      }
+
       const jwtToken = jwt.sign({ id, nama: safaNama, email: normalEmail, role }, JWT_SECRET, { expiresIn: '7d' });
-      return res.status(201).json({ success: true, pesan: `Selamat datang, ${safaNama}!`, token: jwtToken, user: { id, nama: safaNama, email: normalEmail, role, avatar, xp: 0, level: 1 } });
+      return res.status(201).json({ success: true, pesan: `Selamat datang, ${safaNama}!`, token: jwtToken, user: { id, nama: safaNama, email: normalEmail, role, avatar, xp: 0, level: 1 }, parent_info: parentInfo });
     }
 
     const jwtToken = jwt.sign({ id: user.id, nama: user.nama, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });

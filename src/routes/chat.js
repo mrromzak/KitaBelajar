@@ -60,6 +60,39 @@ router.post('/private/:userId', authMiddleware, async (req, res) => {
   }
 });
 
+// PUT /api/chat/private/msg/:msgId — edit pesan privat (hanya milik sendiri)
+router.put('/private/msg/:msgId', authMiddleware, async (req, res) => {
+  try {
+    const { isi } = req.body;
+    if (!isi?.trim()) return res.status(400).json({ success: false, pesan: 'Pesan tidak boleh kosong.' });
+    const { data, error } = await supabase
+      .from('pesan_private')
+      .update({ isi: encrypt(isi.trim()), edited: true })
+      .eq('id', req.params.msgId)
+      .eq('dari_id', req.user.id)
+      .select().single();
+    if (error || !data) return res.status(404).json({ success: false, pesan: 'Pesan tidak ditemukan.' });
+    res.json({ success: true, data: { ...data, isi: isi.trim() } });
+  } catch(err) {
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan.' });
+  }
+});
+
+// DELETE /api/chat/private/msg/:msgId — hapus pesan privat (hanya milik sendiri)
+router.delete('/private/msg/:msgId', authMiddleware, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('pesan_private')
+      .delete()
+      .eq('id', req.params.msgId)
+      .eq('dari_id', req.user.id);
+    if (error) return res.status(500).json({ success: false, pesan: 'Gagal hapus.' });
+    res.json({ success: true });
+  } catch(err) {
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan.' });
+  }
+});
+
 // GET /api/chat/inbox — daftar percakapan (siapa saja yang pernah chat)
 router.get('/inbox', authMiddleware, async (req, res) => {
   try {

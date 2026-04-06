@@ -2515,7 +2515,9 @@ async function doLogin() {
     const data = await api('POST', '/auth/login', { email, password });
     if (data.success) {
       // Validasi role sesuai tab yang dipilih
-      if (data.user.role !== currentRole) {
+      // Orangtua boleh login lewat tab murid
+      const isOrangtuaViaMusidTab = data.user.role === 'orangtua' && currentRole === 'murid';
+      if (data.user.role !== currentRole && !isOrangtuaViaMusidTab) {
         const roleName = currentRole === 'guru' ? 'Guru' : 'Murid';
         const actualRole = data.user.role === 'guru' ? 'Guru' : 'Murid';
         toast(`Akun ini adalah akun ${actualRole}, bukan ${roleName}! Pilih tab yang sesuai.`, 'error');
@@ -3770,6 +3772,7 @@ let vcCurrentKelasId = null;
 // ── Jitsi Meeting (External API — auto login nama akun) ───────
 let vcJitsiApi    = null;
 let vcCurrentRoomUrl = null;
+let vcJitsiWindow = null; // referensi tab Jitsi yang dibuka
 
 function vcGetRoomName(kelasId) {
   return 'kitabelajar-' + kelasId.replace(/-/g, '').slice(0, 16);
@@ -3812,7 +3815,7 @@ function vcStartJitsi(roomName) {
   );
   // Parameter #config & #userInfo dikirim lewat fragment URL — didukung meet.ffmuc.net dan Jitsi lainnya
   const url = `https://meet.ffmuc.net/${roomName}#userInfo.displayName="${displayName}"&config.prejoinPageEnabled=false&config.defaultLanguage="id"`;
-  window.open(url, '_blank');
+  vcJitsiWindow = window.open(url, '_blank');
   // Tampilkan panel info di halaman (bukan overlay)
   vcShowMeetingPanel(roomName);
 }
@@ -3890,6 +3893,11 @@ function vcLeave() {
     socket.emit('kelas:meeting_ended', { kelasId });
     localStorage.removeItem('kb_meeting_' + kelasId);
   }
+  // Tutup tab Jitsi jika masih buka
+  if (vcJitsiWindow && !vcJitsiWindow.closed) {
+    try { vcJitsiWindow.close(); } catch(e) {}
+  }
+  vcJitsiWindow = null;
   // UI cleanup langsung (tidak tunggu socket bounce-back)
   vcJitsiApi = null;
   vcMeetingTabUrl = null;
@@ -3940,6 +3948,11 @@ socket.on('kelas:meeting_ended', ({ kelasId }) => {
   if (currentKelas?.id !== kelasId) return;
   localStorage.removeItem('kb_meeting_' + kelasId);
   hideMeetingBanner();
+  // Tutup tab Jitsi jika masih terbuka
+  if (vcJitsiWindow && !vcJitsiWindow.closed) {
+    try { vcJitsiWindow.close(); } catch(e) {}
+    vcJitsiWindow = null;
+  }
   // Tutup vc-overlay untuk semua role
   const overlay = document.getElementById('vc-overlay');
   if (overlay && overlay.classList.contains('active')) {
@@ -4307,15 +4320,54 @@ function appendPrivateMessage(p, isSelf) {
   if (!box) return;
   const waktu = new Date(p.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   const ava = isSelf ? (currentUser?.avatar || '🦁') : privateChatTargetAvatar;
+  const msgId = p.id || '';
   const div = document.createElement('div');
+  div.dataset.msgId = msgId;
   div.style.cssText = `display:flex;flex-direction:column;align-items:${isSelf ? 'flex-end' : 'flex-start'};gap:2px`;
+  const editedLabel = p.edited ? '<span style="font-size:10px;opacity:0.7;font-style:italic"> (diedit)</span>' : '';
+  const selfActions = isSelf && msgId ? `
+    <div class="pc-msg-actions" style="display:none;gap:4px;margin-top:2px">
+      <button onclick="editPesanPrivat('${msgId}',this)" style="background:none;border:1px solid #ddd;border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:Nunito,sans-serif;font-weight:700;color:var(--blue)">✏️ Edit</button>
+      <button onclick="hapusPesanPrivat('${msgId}',this)" style="background:none;border:1px solid #ddd;border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:Nunito,sans-serif;font-weight:700;color:var(--red)">🗑️ Hapus</button>
+    </div>` : '';
   div.innerHTML = `
-    <div style="display:flex;align-items:flex-end;gap:6px;flex-direction:${isSelf ? 'row-reverse' : 'row'}">
+    <div style="display:flex;align-items:flex-end;gap:6px;flex-direction:${isSelf ? 'row-reverse' : 'row'}"
+         onmouseenter="${isSelf && msgId ? `this.querySelector('.pc-msg-actions')&&(this.querySelector('.pc-msg-actions').style.display='flex')` : ''}"
+         onmouseleave="${isSelf && msgId ? `this.querySelector('.pc-msg-actions')&&(this.querySelector('.pc-msg-actions').style.display='none')` : ''}">
       <div style="font-size:18px;flex-shrink:0">${ava}</div>
-      <div style="max-width:78%;padding:10px 14px;border-radius:${isSelf ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isSelf ? 'var(--blue)' : 'white'};color:${isSelf ? 'white' : 'var(--text)'};font-size:14px;font-weight:600;border:${isSelf ? 'none' : '1.5px solid #E8E8E8'};word-break:break-word">${escapeHtml(p.isi)}</div>
+      <div style="max-width:78%">
+        <div class="pc-msg-bubble" style="padding:10px 14px;border-radius:${isSelf ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isSelf ? 'var(--blue)' : 'white'};color:${isSelf ? 'white' : 'var(--text)'};font-size:14px;font-weight:600;border:${isSelf ? 'none' : '1.5px solid #E8E8E8'};word-break:break-word">${escapeHtml(p.isi)}${editedLabel}</div>
+        ${selfActions}
+      </div>
     </div>
     <div style="font-size:10px;color:var(--muted);padding:0 32px">${waktu}</div>`;
   box.appendChild(div);
+}
+
+async function editPesanPrivat(msgId, btn) {
+  const div = btn.closest('[data-msg-id]');
+  const bubble = div?.querySelector('.pc-msg-bubble');
+  if (!bubble) return;
+  const isiLama = bubble.textContent.replace(' (diedit)', '').trim();
+  const baru = prompt('Edit pesan:', isiLama);
+  if (!baru || baru.trim() === isiLama) return;
+  try {
+    const data = await api('PUT', `/chat/private/msg/${msgId}`, { isi: baru.trim() });
+    if (data.success) {
+      bubble.innerHTML = escapeHtml(baru.trim()) + '<span style="font-size:10px;opacity:0.7;font-style:italic"> (diedit)</span>';
+    }
+  } catch(e) { toast('Gagal edit pesan', 'error'); }
+}
+
+async function hapusPesanPrivat(msgId, btn) {
+  if (!confirm('Hapus pesan ini?')) return;
+  try {
+    const data = await api('DELETE', `/chat/private/msg/${msgId}`);
+    if (data.success) {
+      const div = btn.closest('[data-msg-id]');
+      if (div) div.remove();
+    }
+  } catch(e) { toast('Gagal hapus pesan', 'error'); }
 }
 
 function scrollPrivateChatToBottom() {
@@ -4331,6 +4383,7 @@ async function kirimPrivateChat() {
   try {
     const data = await api('POST', `/chat/private/${privateChatTargetId}`, { isi });
     if (data.success) {
+      const msgId = data.data?.id;
       socket.emit('private:send', {
         toUserId: privateChatTargetId,
         isi,
@@ -4339,7 +4392,7 @@ async function kirimPrivateChat() {
         pengirim_avatar: currentUser.avatar,
         created_at: new Date().toISOString()
       });
-      appendPrivateMessage({ isi, created_at: new Date().toISOString() }, true);
+      appendPrivateMessage({ id: msgId, isi, created_at: new Date().toISOString() }, true);
       scrollPrivateChatToBottom();
     }
   } catch(e) {
@@ -6740,12 +6793,29 @@ Format JSON (pastikan "jawaban" PERSIS SAMA dengan salah satu teks di "opsi"):
 
         let teks = resData.choices?.[0]?.message?.content || '[]';
         teks = teks.replace(/```json\n?/gi,'').replace(/```\n?/g,'').trim();
-        const lastBracket = teks.lastIndexOf('}]');
-        if (lastBracket !== -1 && !teks.endsWith(']')) teks = teks.substring(0, lastBracket + 2);
+        // Ekstrak JSON array dari teks
         const firstBracket = teks.indexOf('[');
         if (firstBracket > 0) teks = teks.substring(firstBracket);
-
-        let batchSoal = JSON.parse(teks);
+        const lastBracket = teks.lastIndexOf(']');
+        if (lastBracket !== -1) teks = teks.substring(0, lastBracket + 1);
+        // Jika truncated, cari objek terakhir yang lengkap
+        const lastClosingBrace = teks.lastIndexOf('}');
+        if (lastClosingBrace !== -1 && !teks.trimEnd().endsWith(']')) {
+          teks = teks.substring(0, lastClosingBrace + 1) + ']';
+        }
+        let batchSoal;
+        try {
+          batchSoal = JSON.parse(teks);
+        } catch(parseErr) {
+          // Coba repair: hapus objek terakhir yang mungkin rusak
+          const idx = teks.lastIndexOf('},{');
+          if (idx !== -1) {
+            try { batchSoal = JSON.parse(teks.substring(0, idx + 1) + ']'); }
+            catch(e2) { throw new Error('Format JSON dari AI tidak valid, coba generate ulang.'); }
+          } else {
+            throw new Error('Format JSON dari AI tidak valid, coba generate ulang.');
+          }
+        }
 
         // ✅ Validasi: pastikan jawaban ada di dalam opsi
         batchSoal = batchSoal.map(s => {
