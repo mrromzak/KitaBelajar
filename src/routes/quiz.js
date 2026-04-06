@@ -237,7 +237,14 @@ router.post('/hasil', authMiddleware, async (req, res) => {
     // Insert hasil
     const { data: hasil, error } = await supabase
       .from('hasil_quiz')
-      .insert({ murid_id, quiz_id, skor: skor || 0, benar: benar || 0, total_soal: total_soal || 0, durasi_detik: durasi_detik || 0 })
+      .insert({
+        murid_id, quiz_id,
+        skor: skor || 0,
+        benar: benar || 0,
+        total_soal: total_soal || 0,
+        durasi_detik: durasi_detik || 0,
+        waktu_selesai: new Date().toISOString()
+      })
       .select()
       .single();
     if (error) throw error;
@@ -274,7 +281,7 @@ router.get('/hasil/cek', authMiddleware, async (req, res) => {
     const murid_id = req.user.id || req.user.userId;
     const { data } = await supabase
       .from('hasil_quiz')
-      .select('id, skor, benar, total_soal, selesai_at')
+      .select('id, skor, benar, total_soal, waktu_selesai')
       .eq('murid_id', murid_id)
       .eq('quiz_id', quiz_id)
       .single();

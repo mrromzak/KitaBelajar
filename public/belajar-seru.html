@@ -4919,32 +4919,40 @@ async function prosesAIMateri() {
         max_tokens: 1500,
         messages: [{
           role: 'system',
-          content: `Kamu adalah guru ${mapel} yang membuat materi pelajaran untuk siswa ${target} Indonesia.
-Buat materi yang terstruktur, mudah dipahami, dan menarik. Gunakan bahasa Indonesia yang baik.`
+          content: `Kamu adalah guru ${mapel} berpengalaman yang ahli membuat materi pelajaran menarik dan mudah dipahami untuk siswa Indonesia.
+Tugas kamu: ubah sumber menjadi materi pembelajaran yang engaging, sistematis, dan memotivasi siswa untuk belajar lebih dalam.
+Gunakan analogi, contoh nyata dari kehidupan sehari-hari, dan bahasa yang ramah untuk usia ${target}.`
         }, {
           role: 'user',
-          content: `Buat materi pelajaran ${mapel} untuk siswa ${target} berdasarkan sumber berikut:
+          content: `Buat materi pelajaran ${mapel} yang menarik untuk siswa ${target} dari sumber berikut:
 
 SUMBER:
 ${kontenSumber}
 
-Format materi:
-## [Judul Materi yang Menarik]
+Gunakan format ini PERSIS:
+## [Judul Kreatif & Menarik yang Menggugah Rasa Ingin Tahu]
 
-**Tujuan Pembelajaran:**
-- Poin 1
-- Poin 2
+**🎯 Yang Akan Kamu Pelajari:**
+- [Tujuan 1 — spesifik dan terukur]
+- [Tujuan 2]
+- [Tujuan 3]
 
-**Materi Utama:**
-[Penjelasan terstruktur dalam 3-5 paragraf dengan sub-judul jika perlu]
+**📖 Penjelasan Lengkap:**
+[3-5 paragraf penjelasan mendalam. Gunakan sub-judul ### jika perlu. Sertakan contoh nyata, analogi menarik, dan hubungan dengan kehidupan sehari-hari siswa ${target}.]
 
-**Ringkasan:**
-[Poin-poin penting dalam bentuk bullet]
+**💡 Poin-Poin Kunci:**
+- [Poin penting 1]
+- [Poin penting 2]
+- [Poin penting 3]
+- [Poin penting 4]
 
-**Fakta Menarik:**
-[1-2 fakta yang membuat siswa penasaran]
+**🤩 Tahukah Kamu?**
+[1-2 fakta mengejutkan atau menarik yang bikin siswa penasaran dan ingin tahu lebih]
 
-Buat dalam Bahasa Indonesia, mudah dipahami siswa ${target}.`
+**🔗 Hubungan dengan Kehidupan Nyata:**
+[Jelaskan 1-2 contoh konkret bagaimana materi ini berguna di kehidupan sehari-hari]
+
+Tulis dalam Bahasa Indonesia yang hidup, hangat, dan mudah dipahami siswa ${target}.`
         }]
       })
     });
@@ -4967,27 +4975,45 @@ Buat dalam Bahasa Indonesia, mudah dipahami siswa ${target}.`
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({
-            max_tokens: 1200,
+            max_tokens: 1600,
             messages: [{
               role: 'system',
-              content: 'Buat soal pilihan ganda. Jawab HANYA dalam format JSON array, tanpa teks lain.'
+              content: `Kamu ahli pembuat soal ujian profesional untuk siswa Indonesia.
+Aturan KETAT:
+1. Balas HANYA JSON object: {"soal":[...]} tanpa teks lain.
+2. Buat CAMPURAN tipe: sekitar 70% pilihan_ganda, 30% benar_salah.
+3. Untuk pilihan_ganda: field "jawaban" HARUS teks PERSIS SAMA dengan salah satu item di "opsi".
+4. Untuk benar_salah: "opsi" HARUS ["Benar","Salah"], "jawaban" HARUS "Benar" atau "Salah".
+5. Semua opsi pilihan ganda harus masuk akal, bukan jawaban yang terlalu jelas salah.
+6. Verifikasi sendiri: pastikan jawaban yang dipilih BENAR secara fakta.`
             }, {
               role: 'user',
-              content: `Buat ${jumlahSoal} soal pilihan ganda untuk materi berikut:
+              content: `Buat ${jumlahSoal} soal untuk materi berikut, tingkat ${target}:
 
 ${kontenFinal.substring(0, 3000)}
 
-Format JSON:
-[{"pertanyaan":"...","emoji":"emoji relevan","opsi":["A","B","C","D"],"jawaban":"teks jawaban benar","poin":100}]
-
-Bahasa Indonesia, tingkat ${target}.`
-            }]
+Format JSON (campur pilihan_ganda dan benar_salah):
+{"soal":[
+  {"jenis":"pilihan_ganda","pertanyaan":"...?","emoji":"📚","opsi":["A lengkap","B lengkap","C lengkap","D lengkap"],"jawaban":"teks persis sama dgn opsi","poin":100},
+  {"jenis":"benar_salah","pertanyaan":"Pernyataan yang bisa benar atau salah...","emoji":"✅","opsi":["Benar","Salah"],"jawaban":"Benar","poin":75}
+]}`
+            }],
+            response_format: { type: 'json_object' }
           })
         });
         const dataSoalJson = await resSoal.json();
-        let teks = dataSoalJson.data?.choices?.[0]?.message?.content || '[]';
-        teks = teks.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
-        aiHasilSoal = JSON.parse(teks);
+        const rawSoal = JSON.parse(dataSoalJson.data?.choices?.[0]?.message?.content || '{}');
+        aiHasilSoal = (rawSoal.soal || rawSoal.questions || []).map(s => {
+          if (s.jenis === 'benar_salah') {
+            s.opsi = ['Benar', 'Salah'];
+            if (!['Benar','Salah'].includes(s.jawaban)) s.jawaban = 'Benar';
+          } else {
+            s.jenis = 'pilihan_ganda';
+            const cocok = (s.opsi||[]).find(o => o.trim().toLowerCase() === s.jawaban?.trim().toLowerCase());
+            s.jawaban = cocok || s.opsi?.[0] || '';
+          }
+          return s;
+        }).filter(s => s.pertanyaan && s.opsi?.length >= 2);
       } catch(e) {
         aiHasilSoal = [];
         console.warn('Gagal generate soal:', e);
@@ -5002,9 +5028,11 @@ Bahasa Indonesia, tingkat ${target}.`
     document.getElementById('ai-hasil-konten').value = kontenFinal;
 
     if (aiHasilSoal.length > 0) {
-      const preview = aiHasilSoal.map((s,i) =>
-        `${i+1}. ${s.emoji} ${s.pertanyaan}\n   A.${s.opsi[0]}  B.${s.opsi[1]}  C.${s.opsi[2]}  D.${s.opsi[3]}\n   ✅ ${s.jawaban}`
-      ).join('\n\n');
+      const preview = aiHasilSoal.map((s,i) => {
+        const label = s.jenis === 'benar_salah' ? '[B/S]' : '[PG]';
+        const opsiStr = s.jenis === 'benar_salah' ? '   Benar / Salah' : `   A.${s.opsi[0]}  B.${s.opsi[1]}  C.${s.opsi[2]}  D.${s.opsi[3]}`;
+        return `${i+1}. ${label} ${s.emoji} ${s.pertanyaan}\n${opsiStr}\n   ✅ ${s.jawaban}`;
+      }).join('\n\n');
       document.getElementById('ai-soal-hasil-list').textContent = preview;
       document.getElementById('ai-soal-hasil-wrap').style.display = 'block';
     }
@@ -6662,7 +6690,11 @@ function renderKuisCard(q, isGuru) {
       <button class="btn-icon btn-delete" onclick="hapusKuis('${q.id}','${(q.judul||'').replace(/'/g,"\\'")}') " title="Hapus">🗑️</button>
     </div>`;
   } else if (sudahDikerjakan) {
-    actionHtml = `<div class="qsc-done-badge">✅ Sudah dikerjakan · ${q.skor_terakhir || 0} poin</div>`;
+    const nilaiColor = q.skor_terakhir >= 80 ? 'var(--green)' : q.skor_terakhir >= 60 ? 'var(--orange)' : 'var(--red)';
+    actionHtml = `<div class="qsc-done-badge" style="flex-direction:column;align-items:flex-end;gap:2px">
+      <span>✅ Sudah dikerjakan</span>
+      <span style="font-size:15px;font-weight:900;color:${nilaiColor}">${q.skor_terakhir || 0}<span style="font-size:11px;font-weight:700"> / 100</span></span>
+    </div>`;
   } else if (deadlineLewat) {
     actionHtml = `<div class="qsc-deadline deadline-over">⛔ Tenggat terlewat</div>`;
   } else {
@@ -6781,22 +6813,28 @@ async function generateSoalUntukKuis() {
             top_p: 0.95,
             messages: [{
               role: 'system',
-              content: `Kamu adalah pembuat soal ujian profesional untuk siswa Indonesia.
-Balas HANYA dengan JSON object: {"soal":[...]} tanpa teks apapun di luar JSON.
-Aturan:
-- Field "jawaban" WAJIB teks PERSIS SAMA dengan salah satu item di array "opsi".
-- Setiap soal harus unik.
-- Variasikan jenis soal: definisi, hitung, contoh, analisis.`
+              content: `Kamu adalah ahli pembuat soal ujian untuk siswa Indonesia.
+ATURAN KETAT — ikuti semua:
+1. Balas HANYA JSON object: {"soal":[...]} tanpa teks lain di luar JSON.
+2. Buat CAMPURAN tipe soal: sekitar 65% pilihan_ganda, 35% benar_salah.
+3. Untuk pilihan_ganda: "jawaban" HARUS teks PERSIS SAMA (karakter demi karakter) dengan salah satu item di "opsi". Verifikasi ulang sebelum menulis.
+4. Untuk benar_salah: "opsi" HARUS persis ["Benar","Salah"], "jawaban" HARUS "Benar" atau "Salah". Buat pernyataan yang tidak ambigu.
+5. Semua pilihan pada soal PG harus masuk akal dan relevan — jangan buat opsi yang jelas salah.
+6. Pastikan fakta/jawaban secara akademis BENAR. Jika tidak yakin, pilih topik yang lebih pasti.`
             }, {
               role: 'user',
-              content: `Buat tepat ${soalBatch} soal pilihan ganda untuk:
+              content: `Buat tepat ${soalBatch} soal untuk:
 - Mata pelajaran: ${mapel}
 - Topik: ${topik}
-- Aspek: ${aspekList[b % aspekList.length]}
-- Tingkat: ${tingkat}${semuaSoal.length > 0 ? '\n\nHindari soal mirip dengan:\n' + semuaSoal.map((s,i) => (i+1)+'. '+s.pertanyaan).join('\n') : ''}
+- Aspek yang dibahas: ${aspekList[b % aspekList.length]}
+- Tingkat kesulitan: ${tingkat}
+- Nomor soal: ${sudahAda + 1} s/d ${sudahAda + soalBatch}${semuaSoal.length > 0 ? '\n\nJANGAN buat soal mirip dengan:\n' + semuaSoal.map((s,i) => (i+1)+'. '+s.pertanyaan).join('\n') : ''}
 
-Balas dengan JSON object (bukan array):
-{"soal":[{"pertanyaan":"teks soal?","emoji":"📚","opsi":["A","B","C","D"],"jawaban":"teks jawaban persis sama dengan salah satu opsi","poin":100}]}`
+Format JSON wajib:
+{"soal":[
+  {"jenis":"pilihan_ganda","pertanyaan":"...?","emoji":"📝","opsi":["pilihan A","pilihan B","pilihan C","pilihan D"],"jawaban":"teks jawaban (HARUS sama persis dengan salah satu opsi)","poin":100},
+  {"jenis":"benar_salah","pertanyaan":"Pernyataan faktual yang bisa dinilai benar/salah...","emoji":"✅","opsi":["Benar","Salah"],"jawaban":"Benar","poin":75}
+]}`
             }],
             response_format: { type: 'json_object' }
           })
@@ -6850,11 +6888,18 @@ Balas dengan JSON object (bukan array):
           } else { throw new Error('Format JSON dari AI tidak valid, coba generate ulang.'); }
         }
 
-        // ✅ Validasi: pastikan jawaban ada di dalam opsi
+        // ✅ Normalisasi & validasi per tipe soal
         batchSoal = batchSoal.map(s => {
-          if (!s.opsi || !Array.isArray(s.opsi) || s.opsi.length < 2) return null;
-          const cocok = s.opsi.find(o => o.trim().toLowerCase() === s.jawaban?.trim().toLowerCase());
-          s.jawaban = cocok ? cocok : s.opsi[0];
+          if (!s.pertanyaan || !s.opsi || !Array.isArray(s.opsi)) return null;
+          if (s.jenis === 'benar_salah') {
+            s.opsi = ['Benar', 'Salah'];
+            if (!['Benar','Salah'].includes(s.jawaban)) s.jawaban = 'Benar';
+          } else {
+            s.jenis = 'pilihan_ganda';
+            if (s.opsi.length < 2) return null;
+            const cocok = s.opsi.find(o => o.trim().toLowerCase() === s.jawaban?.trim().toLowerCase());
+            s.jawaban = cocok ? cocok : s.opsi[0];
+          }
           return s;
         }).filter(Boolean);
 
@@ -6888,15 +6933,26 @@ Balas dengan JSON object (bukan array):
 
     // Render checklist
     const listEl = document.getElementById('kuis-ai-soal-list');
-    listEl.innerHTML = aiSoalUntukKuis.map((s, i) => `
+    const pgCount = aiSoalUntukKuis.filter(s => s.jenis !== 'benar_salah').length;
+    const bsCount = aiSoalUntukKuis.filter(s => s.jenis === 'benar_salah').length;
+    listEl.innerHTML = `<div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px;padding:0 4px">🔵 ${pgCount} Pilihan Ganda · ⭕ ${bsCount} Benar/Salah</div>` +
+    aiSoalUntukKuis.map((s, i) => {
+      const isBS = s.jenis === 'benar_salah';
+      const tipeBadge = isBS
+        ? `<span style="background:#E8F5E9;color:#16A34A;font-size:10px;font-weight:800;padding:2px 7px;border-radius:50px">⭕ B/S</span>`
+        : `<span style="background:#EEF5FF;color:var(--blue);font-size:10px;font-weight:800;padding:2px 7px;border-radius:50px">🔵 PG</span>`;
+      const opsiStr = isBS ? 'Benar / Salah' : s.opsi.map((o,j)=>`${String.fromCharCode(65+j)}. ${o}`).join(' · ');
+      return `
       <label style="display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:10px;cursor:pointer;border-bottom:1px solid #F0EEFF;transition:background .15s" onmouseover="this.style.background='#F3EEFF'" onmouseout="this.style.background=''">
         <input type="checkbox" class="ai-soal-check" value="${i}" onchange="updateKuisTotalLabel()" checked style="margin-top:3px;width:16px;height:16px;cursor:pointer;accent-color:#7b2ff7">
         <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">${tipeBadge}</div>
           <div style="font-weight:700;font-size:13px;line-height:1.5">${s.emoji||'❓'} ${s.pertanyaan}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:3px">${s.opsi.map((o,j)=>`${String.fromCharCode(65+j)}. ${o}`).join(' · ')}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">${opsiStr}</div>
           <div style="font-size:11px;color:#7b2ff7;font-weight:700;margin-top:2px">✅ ${s.jawaban}</div>
         </div>
-      </label>`).join('');
+      </label>`;
+    }).join('');
 
     document.getElementById('kuis-ai-count-label').textContent = `${aiSoalUntukKuis.length} soal digenerate`;
     document.getElementById('kuis-ai-soal-count').textContent = aiSoalUntukKuis.length;
@@ -7133,12 +7189,14 @@ async function submitBuatKuis() {
       toast(`💾 Menyimpan ${soalAITerpilih.length} soal AI ke bank soal...`);
       for (const s of soalAITerpilih) {
         try {
+          const jenisSoal = s.jenis === 'benar_salah' ? 'benar_salah' : 'pilihan_ganda';
+          const opsiSoal = jenisSoal === 'benar_salah' ? ['Benar', 'Salah'] : s.opsi;
           const r = await api('POST', '/soal', {
             pertanyaan: s.pertanyaan,
             emoji: s.emoji || '❓',
             mapel,
-            jenis: 'pilihan_ganda',
-            opsi: JSON.stringify(s.opsi),
+            jenis: jenisSoal,
+            opsi: JSON.stringify(opsiSoal),
             jawaban: s.jawaban,
             poin: s.poin || 100,
             tingkat: document.getElementById('kuis-ai-tingkat')?.value || 'sedang'
@@ -7352,11 +7410,11 @@ async function submitKuisKelas() {
   const pct = Math.round((benar / soal.length) * 100);
   const durasi_detik = Math.round((Date.now() - (kuisStartTime || Date.now())) / 1000);
 
-  // Kirim hasil ke backend
+  // Kirim hasil ke backend (skor = persentase 0-100 agar konsisten di dashboard guru)
   try {
     await api('POST', '/quiz/hasil', {
       quiz_id: kuisKelasData.id,
-      skor: totalPoin,
+      skor: pct,
       benar,
       total_soal: soal.length,
       durasi_detik,
