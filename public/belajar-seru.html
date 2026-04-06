@@ -3926,10 +3926,15 @@ socket.on('kelas:meeting_banner', ({ kelasId, roomUrl }) => {
 
 // Guru akhiri meeting → semua orang (termasuk guru) tutup overlay & banner
 socket.on('kelas:meeting_ended', ({ kelasId }) => {
+  // Cek apakah murid memang sedang/pernah ada di meeting SEBELUM dihapus
+  const sedangDiMeeting = !!localStorage.getItem('kb_meeting_' + kelasId);
   // Selalu hapus localStorage, terlepas dari halaman yang sedang dibuka
   localStorage.removeItem('kb_meeting_' + kelasId);
   if (currentKelas?.id !== kelasId) return;
+
+  const bannerAktif = document.getElementById('kelas-meeting-banner')?.style.display === 'block';
   hideMeetingBanner();
+
   // Tutup tab Jitsi jika masih terbuka
   if (vcJitsiWindow && !vcJitsiWindow.closed) {
     try { vcJitsiWindow.close(); } catch(e) {}
@@ -3948,14 +3953,14 @@ socket.on('kelas:meeting_ended', ({ kelasId }) => {
     if (currentUser?.role === 'murid') {
       btn.style.display = 'none';
     } else if (currentUser?.role === 'guru') {
-      // Reset tombol guru jika belum di-reset oleh vcLeave()
       btn.textContent = '📹 Mulai Meeting';
       btn.onclick = () => vcMulaiMeeting();
       btn.style.background = '';
     }
   }
-  if (currentUser?.role !== 'guru') {
-    toast('⏹️ Guru telah mengakhiri meeting. Kamu dikeluarkan dari ruang.', 'info');
+  // Tampilkan toast HANYA jika murid memang sedang ada di meeting (banner aktif atau localStorage ada)
+  if (currentUser?.role !== 'guru' && (bannerAktif || sedangDiMeeting)) {
+    toast('⏹️ Guru telah mengakhiri meeting.', 'info');
   }
 });
 
