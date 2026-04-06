@@ -113,7 +113,7 @@ app.post('/api/hasil-quiz', async (req, res) => {
     const token = authHeader && authHeader.split(' ')[1];
     if (!token) return res.status(401).json({ success: false, pesan: 'Token tidak ada' });
     const user = jwt.verify(token, process.env.JWT_SECRET);
-    const { quiz_id, skor, jawaban, waktu_selesai } = req.body;
+    const { quiz_id, skor } = req.body;
     if (!quiz_id) return res.status(400).json({ success: false, pesan: 'quiz_id wajib' });
 
     // Cek apakah sudah ada hasil sebelumnya
@@ -123,18 +123,15 @@ app.post('/api/hasil-quiz', async (req, res) => {
     if (existing) {
       // Update jika skor lebih baik
       if (skor > existing.skor) {
-        await _sb.from('hasil_quiz').update({ skor, jawaban: JSON.stringify(jawaban || {}), waktu_selesai: waktu_selesai || new Date().toISOString() })
-          .eq('id', existing.id);
+        await _sb.from('hasil_quiz').update({ skor: skor || 0 }).eq('id', existing.id);
       }
       return res.json({ success: true, pesan: 'Hasil diperbarui', skor_lama: existing.skor, skor_baru: skor });
     }
 
-    // Insert hasil baru
+    // Insert hasil baru — kolom yang ada: id, murid_id, quiz_id, skor, benar, total_soal, durasi_detik
     const { v4: uuidv4 } = require('uuid');
     const { error } = await _sb.from('hasil_quiz').insert({
-      id: uuidv4(), quiz_id, murid_id: user.id, skor: skor || 0,
-      jawaban: JSON.stringify(jawaban || {}),
-      waktu_selesai: waktu_selesai || new Date().toISOString()
+      id: uuidv4(), quiz_id, murid_id: user.id, skor: skor || 0
     });
     if (error) throw error;
 

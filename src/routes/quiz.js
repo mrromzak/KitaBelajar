@@ -235,14 +235,15 @@ router.post('/hasil', authMiddleware, async (req, res) => {
       // Update jika skor lebih baik
       if ((skor || 0) > (existing.skor || 0)) {
         await supabase.from('hasil_quiz')
-          .update({ skor: skor || 0, jawaban: JSON.stringify(jawaban || []), waktu_selesai: new Date().toISOString() })
+          .update({ skor: skor || 0 })
           .eq('id', existing.id);
       }
       return res.json({ success: true, pesan: 'Hasil diperbarui', skor });
     }
 
-    // Insert hasil baru — pakai kolom yang sudah terbukti ada di tabel
+    // Insert hasil baru — kolom yang ada: id, murid_id, quiz_id, skor, benar, total_soal, durasi_detik
     const { v4: uuidv4 } = require('uuid');
+    const { benar, total_soal, durasi_detik } = req.body;
     const { data: hasil, error } = await supabase
       .from('hasil_quiz')
       .insert({
@@ -250,8 +251,9 @@ router.post('/hasil', authMiddleware, async (req, res) => {
         murid_id,
         quiz_id,
         skor: skor || 0,
-        jawaban: JSON.stringify(jawaban || []),
-        waktu_selesai: new Date().toISOString()
+        benar: benar || 0,
+        total_soal: total_soal || 0,
+        durasi_detik: durasi_detik || 0
       })
       .select()
       .single();
@@ -290,7 +292,7 @@ router.get('/hasil/cek', authMiddleware, async (req, res) => {
     const murid_id = req.user.id || req.user.userId;
     const { data, error } = await supabase
       .from('hasil_quiz')
-      .select('id, skor, waktu_selesai')
+      .select('id, skor, benar, total_soal')
       .eq('murid_id', murid_id)
       .eq('quiz_id', quiz_id)
       .maybeSingle();
