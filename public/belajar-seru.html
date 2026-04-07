@@ -687,7 +687,7 @@
 <!-- ========== LOGIN ========== -->
 <div class="page" id="page-login">
   <nav class="navbar">
-    <div class="logo"><span>🌈</span> KitaBelajar</div>
+    <div class="logo"><span></span> KitaBelajar</div>
     <div class="nav-links">
       <button class="nav-btn back" onclick="showPage('page-landing')">← Kembali</button>
     </div>
@@ -6827,7 +6827,6 @@ async function generateSoalUntukKuis() {
             max_tokens: 1500,
             temperature: 0.98,
             top_p: 0.92,
-            seed: Math.floor(Math.random() * 999999),
             messages: [{
               role: 'system',
               content: `Kamu adalah ahli pembuat soal ujian kreatif untuk siswa Indonesia.
@@ -6835,11 +6834,11 @@ ATURAN KETAT — ikuti semua:
 1. Balas HANYA JSON object: {"soal":[...]} tanpa teks apapun di luar JSON.
 2. Buat CAMPURAN tipe soal: sekitar 65% pilihan_ganda, 35% benar_salah.
 3. Untuk pilihan_ganda: "jawaban" HARUS teks PERSIS SAMA dengan salah satu item di "opsi". Verifikasi sebelum menulis.
-4. Untuk benar_salah: "opsi" HARUS persis ["Benar","Salah"], "jawaban" HARUS "Benar" atau "Salah".
-5. VARIASIKAN posisi jawaban benar — jangan selalu opsi pertama atau kedua.
+4. Untuk benar_salah: "opsi" HARUS persis ["Benar","Salah"]. Jawaban harus MIX — sekitar separuh "Benar" dan separuh "Salah". JANGAN semua jawabannya "Benar". Buat pernyataan yang salah agar jawabannya "Salah".
+5. VARIASIKAN posisi jawaban benar di PG — jangan selalu opsi pertama.
 6. Semua opsi PG harus masuk akal dan relevan, bukan jebakan murahan.
 7. Pastikan fakta/jawaban secara akademis BENAR dan tidak ambigu.
-8. Buat soal yang BENAR-BENAR BERBEDA satu sama lain — hindari pola berulang.`
+8. Setiap soal harus UNIK — topik, angle, dan cara bertanya harus berbeda satu sama lain.`
             }, {
               role: 'user',
               content: `[variasi:${seed}] Buat tepat ${soalBatch} soal UNIK untuk:
@@ -6969,7 +6968,6 @@ Format JSON wajib:
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">${tipeBadge}</div>
           <div style="font-weight:700;font-size:13px;line-height:1.5">${s.emoji||'❓'} ${s.pertanyaan}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:3px">${opsiStr}</div>
-          <div style="font-size:11px;color:#7b2ff7;font-weight:700;margin-top:2px">✅ ${s.jawaban}</div>
         </div>
       </label>`;
     }).join('');
