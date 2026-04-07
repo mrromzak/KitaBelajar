@@ -2552,49 +2552,61 @@ async function loadMuridDashboard() {
   document.getElementById('murid-streak').textContent = `Level ${currentUser.level || 1} · ${xp} XP 🔥`;
 
   showLoading(true);
-  await loadMuridKelas();
-  await loadDeadlineAlertDashboard();
+  try {
+    // Satu request menggantikan 15+ request sequential sebelumnya
+    const init = await api('GET', '/dashboard/murid-init');
+    if (init.success) {
+      _muridInitCache = init; // simpan cache untuk digunakan fungsi lain
+      renderMuridKelas(init.kelas || []);
+      tampilDeadlineAlert(init.deadlines || []);
+    }
+  } catch(e) {
+    // Fallback jika endpoint gagal
+    await loadMuridKelas();
+    await loadDeadlineAlertDashboard();
+  }
   showLoading(false);
 }
 
+let _muridInitCache = null;
+
+// Fallback: dipanggil hanya jika endpoint murid-init gagal
 async function loadDeadlineAlertDashboard() {
-  // Ambil semua kelas murid, lalu cek tugas deadline dekat
   try {
     const kelasData = await api('GET', '/kelas');
     const kelasList = kelasData.kelas || kelasData.data || [];
-    let semuaKuis = [];
-
-    for (const k of kelasList.slice(0, 5)) { // max 5 kelas
-      try {
-        const d = await api('GET', `/quiz?kelas_id=${k.id}`);
-        const list = (d.quiz || d.data || []).map(q => ({ ...q, kelas_id: k.id, kelas_nama: k.nama }));
-        // Cek sudah dikerjakan
-        for (const q of list) {
-          if (q.tipe === 'pr' && q.deadline) {
-            try {
-              const cek = await api('GET', `/quiz/hasil/cek?quiz_id=${q.id}`);
-              q.sudah_dikerjakan = cek.sudah || false;
-            } catch(e) { q.sudah_dikerjakan = false; }
-          }
-        }
-        semuaKuis = semuaKuis.concat(list);
-      } catch(e) {}
-    }
-    tampilDeadlineAlert(semuaKuis);
+    const quizPromises = kelasList.slice(0, 5).map(k =>
+      api('GET', `/quiz?kelas_id=${k.id}`)
+        .then(d => (d.quiz || d.data || []).map(q => ({ ...q, kelas_id: k.id, kelas_nama: k.nama })))
+        .catch(() => [])
+    );
+    const allQuizArrays = await Promise.all(quizPromises);
+    const allQuiz = allQuizArrays.flat();
+    const prQuiz = allQuiz.filter(q => q.tipe === 'pr' && q.deadline);
+    const cekPromises = prQuiz.map(q =>
+      api('GET', `/quiz/hasil/cek?quiz_id=${q.id}`)
+        .then(cek => { q.sudah_dikerjakan = cek.sudah || false; })
+        .catch(() => { q.sudah_dikerjakan = false; })
+    );
+    await Promise.all(cekPromises);
+    tampilDeadlineAlert(allQuiz);
   } catch(e) {}
 }
 
+// Fallback: dipanggil hanya jika endpoint murid-init gagal
 async function loadMuridKelas() {
   const grid = document.getElementById('murid-kelas-grid');
   grid.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat kelas...</div>';
-
-  let list = [];
   try {
     const data = await api('GET', '/kelas');
-    list = data.kelas || data.data || data.list || [];
-    if (!Array.isArray(list)) list = [];
-  } catch(e) {}
+    const list = data.kelas || data.data || data.list || [];
+    renderMuridKelas(Array.isArray(list) ? list : []);
+  } catch(e) { renderMuridKelas([]); }
+}
 
+function renderMuridKelas(list) {
+  const grid = document.getElementById('murid-kelas-grid');
+  if (!grid) return;
   if (list.length > 0) {
     grid.innerHTML = list.map((k, i) => renderKelasCard(k, i, 'murid')).join('');
   } else {

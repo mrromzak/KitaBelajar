@@ -240,6 +240,65 @@ router.get('/penilaian', authMiddleware, async (req, res) => {
   }
 });
 
+// GET /api/dashboard/murid-init — satu endpoint untuk semua data awal dashboard murid
+// Menggantikan: /kelas + /quiz?kelas_id=X (loop) + /quiz/hasil/cek?quiz_id=X (loop)
+router.get('/murid-init', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'murid') return res.status(403).json({ success: false, pesan: 'Hanya murid.' });
+  const muridId = req.user.id;
+  try {
+    // Ambil semua kelas murid
+    const { data: kelasMuridRows } = await supabase
+      .from('kelas_murid')
+      .select('kelas:kelas_id(id, nama, tahun_ajar, mapel, kode_akses, guru:guru_id(nama, avatar))')
+      .eq('murid_id', muridId);
+    const kelasList = (kelasMuridRows || []).map(r => r.kelas).filter(Boolean);
+    const kelasIds = kelasList.map(k => k.id);
+
+    if (kelasIds.length === 0) {
+      return res.json({ success: true, kelas: [], deadlines: [] });
+    }
+
+    // Ambil semua quiz aktif dari semua kelas sekaligus (1 query, bukan N)
+    const [{ data: quizList }, { data: hasilList }] = await Promise.all([
+      supabase.from('quiz')
+        .select('id, judul, mapel, kelas_id, tipe, deadline, durasi, status')
+        .in('kelas_id', kelasIds)
+        .eq('status', 'aktif')
+        .order('created_at', { ascending: false }),
+      // Ambil semua hasil quiz murid ini untuk semua kelas sekaligus (1 query, bukan N)
+      supabase.from('hasil_quiz')
+        .select('quiz_id, skor, benar, total_soal')
+        .eq('murid_id', muridId)
+    ]);
+
+    // Index hasil quiz by quiz_id
+    const hasilMap = {};
+    (hasilList || []).forEach(h => { hasilMap[h.quiz_id] = h; });
+
+    // Gabungkan quiz + status sudah/belum dikerjakan
+    const quizWithStatus = (quizList || []).map(q => ({
+      ...q,
+      sudah_dikerjakan: !!hasilMap[q.id],
+      hasil: hasilMap[q.id] || null
+    }));
+
+    // Filter untuk deadline alert: PR dengan deadline dalam 7 hari ke depan
+    const now = new Date();
+    const sevenDays = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const deadlines = quizWithStatus.filter(q =>
+      q.tipe === 'pr' && q.deadline && new Date(q.deadline) > now && new Date(q.deadline) <= sevenDays
+    ).map(q => ({
+      ...q,
+      kelas_nama: kelasList.find(k => k.id === q.kelas_id)?.nama || ''
+    }));
+
+    res.json({ success: true, kelas: kelasList, quiz: quizWithStatus, deadlines });
+  } catch (err) {
+    console.error('murid-init error:', err.message);
+    res.status(500).json({ success: false, pesan: 'Terjadi kesalahan.' });
+  }
+});
+
 // PUT /api/dashboard/notifikasi/baca-semua
 router.put('/notifikasi/baca-semua', authMiddleware, async (req, res) => {
   try {

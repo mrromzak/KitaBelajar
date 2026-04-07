@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
@@ -74,6 +75,7 @@ app.set('io', io);
 app.set('trust proxy', 1);
 
 // ── Security Middleware (urutan penting) ────────────────────
+app.use(compression());              // Gzip semua response
 app.use(helmetMiddleware);           // Security headers + CSP
 app.use(blockBadReferer);            // Blokir referer judol/berbahaya
 app.use(globalLimiter);              // Rate limit global
@@ -81,7 +83,17 @@ app.use(cors({ origin: corsOriginFn, credentials: true }));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(antiJudolMiddleware);        // Blokir konten judol di body
-app.use(express.static(path.join(__dirname, '../public')));
+
+// Static files: CSS/JS di-cache browser 1 hari, HTML tidak di-cache
+app.use(express.static(path.join(__dirname, '../public'), {
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
+      res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 hari
+    } else if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  }
+}));
 
 // ── Halaman Utama ──
 app.get('/', (req, res) => {
