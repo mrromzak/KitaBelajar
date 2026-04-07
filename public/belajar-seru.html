@@ -3012,7 +3012,7 @@ async function loadOrangtuaDashboard() {
       return;
     }
     el.innerHTML = `
-      <div style="font-weight:800;font-size:16px;margin-bottom:16px">👦👧 Daftar Anak</div>
+      <div style="font-weight:800;font-size:16px;margin-bottom:16px">👦👧 Progres Penilaian Anak</div>
       ${anakList.map(anak => `
         <div style="background:white;border-radius:16px;padding:20px;box-shadow:var(--shadow);margin-bottom:12px;display:flex;align-items:center;gap:16px;cursor:pointer"
              onclick="loadAktivitasAnak('${anak.id}','${anak.nama.replace(/'/g,"\\'")}')">
