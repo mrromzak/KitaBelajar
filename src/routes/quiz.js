@@ -9,6 +9,7 @@
 const express = require('express');
 const router  = express.Router();
 const { createClient } = require('@supabase/supabase-js');
+const { decrypt } = require('../utils/crypto');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -64,28 +65,34 @@ router.get('/', authMiddleware, async (req, res) => {
 
 // ============================================================
 //  GET /api/quiz/:id  — detail kuis + soal-soalnya
+//  Guru: soal + jawaban (terdekripsi)
+//  Murid: soal tanpa jawaban (validasi dilakukan server-side saat submit)
 // ============================================================
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
+    const isGuru = req.user.role === 'guru';
 
-    // Ambil info quiz
     const { data: quiz, error: qErr } = await supabase
-      .from('quiz')
-      .select('*')
-      .eq('id', id)
-      .single();
+      .from('quiz').select('*').eq('id', id).single();
     if (qErr) throw qErr;
 
-    // Ambil soal lewat quiz_soal
     const { data: qs, error: sErr } = await supabase
       .from('quiz_soal')
-      .select(`urutan, soal(id, pertanyaan, emoji, mapel, jenis, opsi, jawaban, poin)`)
+      .select('urutan, soal(id, pertanyaan, emoji, mapel, jenis, opsi, jawaban, poin)')
       .eq('quiz_id', id)
       .order('urutan');
     if (sErr) throw sErr;
 
-    const soal = (qs || []).map(r => r.soal);
+    const soal = (qs || []).map(r => {
+      const s = { ...r.soal };
+      if (isGuru) {
+        s.jawaban = decrypt(s.jawaban); // guru boleh lihat jawaban (terdekripsi)
+      } else {
+        delete s.jawaban; // murid tidak menerima jawaban — validasi di server
+      }
+      return s;
+    });
 
     return res.json({ success: true, quiz: { ...quiz, soal } });
   } catch(e) {
@@ -215,57 +222,75 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 });
 
 // ============================================================
-//  POST /api/quiz/hasil  — simpan hasil pengerjaan murid
+//  POST /api/quiz/hasil  — simpan + validasi hasil pengerjaan murid
+//  Body: { quiz_id, jawaban: [{soal_id, jawaban_user}], durasi_detik }
+//  Scoring dilakukan server-side agar jawaban tidak perlu dikirim ke client
 // ============================================================
 router.post('/hasil', authMiddleware, async (req, res) => {
   try {
-    const { quiz_id, skor, jawaban } = req.body;
+    const { quiz_id, jawaban: jawabanMurid, durasi_detik } = req.body;
     const murid_id = req.user.id || req.user.userId;
     if (!quiz_id) return res.status(400).json({ success: false, pesan: 'quiz_id wajib' });
 
     // Cek apakah sudah pernah mengerjakan
     const { data: existing } = await supabase
-      .from('hasil_quiz')
-      .select('id, skor')
-      .eq('murid_id', murid_id)
-      .eq('quiz_id', quiz_id)
-      .maybeSingle();
+      .from('hasil_quiz').select('id, skor, benar, total_soal')
+      .eq('murid_id', murid_id).eq('quiz_id', quiz_id).maybeSingle();
 
     if (existing) {
-      // Update jika skor lebih baik
-      if ((skor || 0) > (existing.skor || 0)) {
-        await supabase.from('hasil_quiz')
-          .update({ skor: skor || 0 })
-          .eq('id', existing.id);
-      }
-      return res.json({ success: true, pesan: 'Hasil diperbarui', skor });
+      return res.json({
+        success: true, pesan: 'Sudah pernah mengerjakan',
+        skor: existing.skor, benar: existing.benar,
+        total_soal: existing.total_soal, totalPoin: existing.skor || 0,
+        detail: []
+      });
     }
 
-    // Insert hasil baru — kolom yang ada: id, murid_id, quiz_id, skor, benar, total_soal, durasi_detik
+    // Ambil soal quiz dengan jawaban terenkripsi untuk validasi
+    const { data: qs, error: sErr } = await supabase
+      .from('quiz_soal')
+      .select('soal(id, jawaban, poin, jenis)')
+      .eq('quiz_id', quiz_id)
+      .order('urutan');
+    if (sErr) throw sErr;
+
+    const soalList = (qs || []).map(r => r.soal).filter(Boolean);
+    const total_soal = soalList.length;
+    let benar = 0, totalPoin = 0;
+    const detail = [];
+
+    soalList.forEach(q => {
+      const jawabanBenar = decrypt(q.jawaban); // dekripsi jawaban dari DB
+      const entry = (jawabanMurid || []).find(j => j.soal_id === q.id);
+      const jawabanUser = entry?.jawaban_user || null;
+      const isBenar = jawabanUser !== null &&
+        jawabanUser.trim().toLowerCase() === jawabanBenar.trim().toLowerCase();
+      const poinDapat = isBenar ? (q.poin || 100) : 0;
+      if (isBenar) { benar++; totalPoin += poinDapat; }
+      detail.push({ soal_id: q.id, benar: isBenar, poin_dapat: poinDapat });
+    });
+
+    const skor = total_soal > 0 ? Math.round((benar / total_soal) * 100) : 0;
+
+    // Simpan hasil
     const { v4: uuidv4 } = require('uuid');
-    const { benar, total_soal, durasi_detik } = req.body;
     const { data: hasil, error } = await supabase
       .from('hasil_quiz')
       .insert({
-        id: uuidv4(),
-        murid_id,
-        quiz_id,
-        skor: skor || 0,
-        benar: benar || 0,
-        total_soal: total_soal || 0,
+        id: uuidv4(), murid_id, quiz_id,
+        skor, benar, total_soal,
         durasi_detik: durasi_detik || 0
       })
-      .select()
-      .single();
+      .select().single();
 
     if (error) {
       console.error('[POST /quiz/hasil] insert error:', error.message);
       return res.status(500).json({ success: false, pesan: 'Gagal menyimpan hasil: ' + error.message });
     }
 
-    // Update XP murid (opsional — tidak gagalkan request jika error)
+    // Update XP murid
     try {
-      const xpGain = Math.round((skor || 0) / 10);
+      const xpGain = Math.round(skor / 10);
       if (xpGain > 0) {
         const { data: userData } = await supabase.from('users').select('xp, level').eq('id', murid_id).single();
         if (userData) {
@@ -276,7 +301,7 @@ router.post('/hasil', authMiddleware, async (req, res) => {
       }
     } catch(xpErr) { console.warn('[XP update]', xpErr.message); }
 
-    return res.status(201).json({ success: true, pesan: 'Hasil tersimpan!', hasil });
+    return res.status(201).json({ success: true, pesan: 'Hasil tersimpan!', hasil, skor, benar, total_soal, totalPoin, detail });
   } catch(e) {
     console.error('[POST /quiz/hasil]', e.message);
     return res.status(500).json({ success: false, pesan: 'Gagal menyimpan hasil.' });

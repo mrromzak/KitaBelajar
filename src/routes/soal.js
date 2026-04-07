@@ -3,6 +3,7 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const supabase = require('../supabase');
 const { authMiddleware, guruOnly } = require('../middleware/auth');
+const { encrypt, decrypt } = require('../utils/crypto');
 
 // =====================================================
 // POST /api/soal – Tambah soal baru
@@ -19,7 +20,7 @@ router.post('/', authMiddleware, guruOnly, async (req, res) => {
       emoji: emoji || '❓',
       mapel, jenis,
       opsi: opsi || null,
-      jawaban,
+      jawaban: encrypt(jawaban),  // enkripsi jawaban sebelum disimpan
       poin: poin || 100,
       tingkat: tingkat || 'mudah',
       guru_id: req.user.id
@@ -81,7 +82,9 @@ router.get('/', authMiddleware, guruOnly, async (req, res) => {
 
     const { data, error } = await query;
     if (error) throw error;
-    res.json({ success: true, soal: data || [], data: data || [] });
+    // Dekripsi jawaban sebelum dikirim ke guru
+    const soal = (data || []).map(s => ({ ...s, jawaban: decrypt(s.jawaban) }));
+    res.json({ success: true, soal, data: soal });
   } catch (err) {
     console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
@@ -97,7 +100,7 @@ router.put('/:id', authMiddleware, guruOnly, async (req, res) => {
     if (pertanyaan) updates.pertanyaan = pertanyaan;
     if (emoji) updates.emoji = emoji;
     if (opsi) updates.opsi = opsi;
-    if (jawaban) updates.jawaban = jawaban;
+    if (jawaban) updates.jawaban = encrypt(jawaban);
     if (poin) updates.poin = poin;
     if (tingkat) updates.tingkat = tingkat;
 

@@ -6805,6 +6805,17 @@ async function generateSoalUntukKuis() {
       const sudahAda  = semuaSoal.length;
       btn.textContent = `⏳ Batch ${b+1}/${totalBatch} (${sudahAda}/${jumlah} soal)...`;
 
+      // Sudut pandang acak per batch agar soal lebih bervariasi
+      const sudutPandang = [
+        'aplikasi nyata di kehidupan sehari-hari','kasus pengecualian dan kondisi khusus',
+        'miskonsepsi umum yang harus diluruskan','perbandingan dan perbedaan mendalam',
+        'perspektif historis dan perkembangannya','dampak, implikasi, dan konsekuensi',
+        'proses mekanisme dan cara kerja detail','fakta jarang diketahui dan unik',
+        'hubungan sebab-akibat','analisis kritis dan evaluasi'
+      ];
+      const sudut = sudutPandang[(b * 3 + Math.floor(Math.random() * sudutPandang.length)) % sudutPandang.length];
+      const seed = Math.random().toString(36).substring(2, 9); // variasi unik tiap request
+
       // Retry logic untuk handle rate limit Groq
       let res, retryCount = 0;
       while (retryCount < 3) {
@@ -6814,31 +6825,35 @@ async function generateSoalUntukKuis() {
           body: JSON.stringify({
             model: 'llama-3.3-70b-versatile',
             max_tokens: 1500,
-            temperature: 0.95,
-            top_p: 0.95,
+            temperature: 0.98,
+            top_p: 0.92,
+            seed: Math.floor(Math.random() * 999999),
             messages: [{
               role: 'system',
-              content: `Kamu adalah ahli pembuat soal ujian untuk siswa Indonesia.
+              content: `Kamu adalah ahli pembuat soal ujian kreatif untuk siswa Indonesia.
 ATURAN KETAT — ikuti semua:
-1. Balas HANYA JSON object: {"soal":[...]} tanpa teks lain di luar JSON.
+1. Balas HANYA JSON object: {"soal":[...]} tanpa teks apapun di luar JSON.
 2. Buat CAMPURAN tipe soal: sekitar 65% pilihan_ganda, 35% benar_salah.
-3. Untuk pilihan_ganda: "jawaban" HARUS teks PERSIS SAMA (karakter demi karakter) dengan salah satu item di "opsi". Verifikasi ulang sebelum menulis.
-4. Untuk benar_salah: "opsi" HARUS persis ["Benar","Salah"], "jawaban" HARUS "Benar" atau "Salah". Buat pernyataan yang tidak ambigu.
-5. Semua pilihan pada soal PG harus masuk akal dan relevan — jangan buat opsi yang jelas salah.
-6. Pastikan fakta/jawaban secara akademis BENAR. Jika tidak yakin, pilih topik yang lebih pasti.`
+3. Untuk pilihan_ganda: "jawaban" HARUS teks PERSIS SAMA dengan salah satu item di "opsi". Verifikasi sebelum menulis.
+4. Untuk benar_salah: "opsi" HARUS persis ["Benar","Salah"], "jawaban" HARUS "Benar" atau "Salah".
+5. VARIASIKAN posisi jawaban benar — jangan selalu opsi pertama atau kedua.
+6. Semua opsi PG harus masuk akal dan relevan, bukan jebakan murahan.
+7. Pastikan fakta/jawaban secara akademis BENAR dan tidak ambigu.
+8. Buat soal yang BENAR-BENAR BERBEDA satu sama lain — hindari pola berulang.`
             }, {
               role: 'user',
-              content: `Buat tepat ${soalBatch} soal untuk:
+              content: `[variasi:${seed}] Buat tepat ${soalBatch} soal UNIK untuk:
 - Mata pelajaran: ${mapel}
 - Topik: ${topik}
-- Aspek yang dibahas: ${aspekList[b % aspekList.length]}
+- Aspek fokus: ${aspekList[b % aspekList.length]}
+- Sudut pandang kreatif: ${sudut}
 - Tingkat kesulitan: ${tingkat}
-- Nomor soal: ${sudahAda + 1} s/d ${sudahAda + soalBatch}${semuaSoal.length > 0 ? '\n\nJANGAN buat soal mirip dengan:\n' + semuaSoal.map((s,i) => (i+1)+'. '+s.pertanyaan).join('\n') : ''}
+- Nomor soal: ${sudahAda + 1} s/d ${sudahAda + soalBatch}${semuaSoal.length > 0 ? '\n\nWAJIB BERBEDA dari soal berikut:\n' + semuaSoal.map((s,i) => `${i+1}. ${s.pertanyaan}`).join('\n') : ''}
 
 Format JSON wajib:
 {"soal":[
-  {"jenis":"pilihan_ganda","pertanyaan":"...?","emoji":"📝","opsi":["pilihan A","pilihan B","pilihan C","pilihan D"],"jawaban":"teks jawaban (HARUS sama persis dengan salah satu opsi)","poin":100},
-  {"jenis":"benar_salah","pertanyaan":"Pernyataan faktual yang bisa dinilai benar/salah...","emoji":"✅","opsi":["Benar","Salah"],"jawaban":"Benar","poin":75}
+  {"jenis":"pilihan_ganda","pertanyaan":"...?","emoji":"📝","opsi":["A...","B...","C...","D..."],"jawaban":"teks SAMA PERSIS dengan salah satu opsi","poin":100},
+  {"jenis":"benar_salah","pertanyaan":"Pernyataan faktual...","emoji":"✅","opsi":["Benar","Salah"],"jawaban":"Benar","poin":75}
 ]}`
             }],
             response_format: { type: 'json_object' }
@@ -7395,54 +7410,46 @@ function jalankanFunTimer(durasi) {
 async function submitKuisKelas() {
   clearInterval(kuisFunTimer);
   const soal = kuisKelasData.soal;
-  let benar = 0;
-  let totalPoin = 0;
-  const detailJawaban = [];
-
-  soal.forEach((q, i) => {
-    const pilihan = kuisJawaban[i];
-    const isBenar = pilihan !== undefined && q.opsi[pilihan] === q.jawaban;
-    const poinDapat = isBenar ? (q.poin || 100) : 0;
-    if (isBenar) { benar++; totalPoin += poinDapat; }
-    detailJawaban.push({
-      soal_id: q.id,
-      jawaban_user: pilihan !== undefined ? q.opsi[pilihan] : null,
-      benar: isBenar,
-      poin_dapat: poinDapat
-    });
-  });
-
-  const pct = Math.round((benar / soal.length) * 100);
   const durasi_detik = Math.round((Date.now() - (kuisStartTime || Date.now())) / 1000);
 
-  // Kirim hasil ke backend (skor = persentase 0-100 agar konsisten di dashboard guru)
+  // Kirim jawaban murid ke server — validasi & scoring dilakukan server-side
+  const jawabanKirim = soal.map((q, i) => ({
+    soal_id: q.id,
+    jawaban_user: kuisJawaban[i] !== undefined ? q.opsi[kuisJawaban[i]] : null
+  }));
+
+  let skor = 0, benar = 0, totalPoin = 0, total_soal = soal.length;
+
   try {
     const simpan = await api('POST', '/quiz/hasil', {
       quiz_id: kuisKelasData.id,
-      skor: pct,
-      jawaban: detailJawaban
+      jawaban: jawabanKirim,
+      durasi_detik
     });
-    if (!simpan.success) {
+    if (simpan.success) {
+      skor       = simpan.skor       ?? 0;
+      benar      = simpan.benar      ?? 0;
+      total_soal = simpan.total_soal ?? soal.length;
+      totalPoin  = simpan.totalPoin  ?? 0;
+    } else {
       console.warn('Gagal simpan hasil:', simpan.pesan);
-      // Retry sekali jika gagal
-      await api('POST', '/quiz/hasil', { quiz_id: kuisKelasData.id, skor: pct, jawaban: detailJawaban });
     }
   } catch(e) {
     console.warn('Gagal simpan hasil (network):', e);
   }
 
-  const emoji = pct >= 80 ? '🎉' : pct >= 60 ? '😊' : pct >= 40 ? '😅' : '💪';
-  const judul = pct >= 80 ? 'Luar Biasa!' : pct >= 60 ? 'Bagus!' : pct >= 40 ? 'Terus Semangat!' : 'Jangan Menyerah!';
-  const stars = pct >= 80 ? '⭐⭐⭐' : pct >= 60 ? '⭐⭐' : '⭐';
+  const emoji = skor >= 80 ? '🎉' : skor >= 60 ? '😊' : skor >= 40 ? '😅' : '💪';
+  const judul = skor >= 80 ? 'Luar Biasa!' : skor >= 60 ? 'Bagus!' : skor >= 40 ? 'Terus Semangat!' : 'Jangan Menyerah!';
+  const stars = skor >= 80 ? '⭐⭐⭐' : skor >= 60 ? '⭐⭐' : '⭐';
 
   document.getElementById('hasil-emoji').textContent = emoji;
   document.getElementById('hasil-stars').textContent = stars;
   document.getElementById('hasil-judul').textContent = judul;
   document.getElementById('hasil-skor').textContent = totalPoin;
-  document.getElementById('hasil-sub').textContent = `poin · ${benar} dari ${soal.length} benar (${pct}%)`;
+  document.getElementById('hasil-sub').textContent = `poin · ${benar} dari ${total_soal} benar (${skor}%)`;
   document.getElementById('hasil-stats').innerHTML = `
     <div style="background:#F8F9FA;border-radius:14px;padding:16px;text-align:center"><div style="font-family:'Fredoka One',cursive;font-size:28px;color:var(--green)">${benar}</div><div style="font-size:12px;color:var(--muted);font-weight:700">Benar</div></div>
-    <div style="background:#F8F9FA;border-radius:14px;padding:16px;text-align:center"><div style="font-family:'Fredoka One',cursive;font-size:28px;color:var(--red)">${soal.length - benar}</div><div style="font-size:12px;color:var(--muted);font-weight:700">Salah</div></div>
+    <div style="background:#F8F9FA;border-radius:14px;padding:16px;text-align:center"><div style="font-family:'Fredoka One',cursive;font-size:28px;color:var(--red)">${total_soal - benar}</div><div style="font-size:12px;color:var(--muted);font-weight:700">Salah</div></div>
     <div style="background:#FFF3E8;border-radius:14px;padding:16px;text-align:center"><div style="font-family:'Fredoka One',cursive;font-size:28px;color:var(--orange)">${totalPoin}</div><div style="font-size:12px;color:var(--muted);font-weight:700">Poin</div></div>
   `;
   showPage('page-kuis-hasil');

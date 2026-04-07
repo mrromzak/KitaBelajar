@@ -72,7 +72,7 @@ async function dashboardMurid(req, res) {
       supabase.from('users').select('nama, avatar, xp, level').eq('id', muridId).single(),
       supabase.from('kelas_murid').select('kelas:kelas_id(id, nama, tahun_ajar, guru:guru_id(nama))').eq('murid_id', muridId),
       supabase.from('quiz').select('id, judul, mapel, durasi').eq('status', 'aktif').order('created_at', { ascending: false }).limit(5),
-      supabase.from('hasil_quiz').select('skor, selesai_at, quiz:quiz_id(judul, mapel)').eq('murid_id', muridId).order('selesai_at', { ascending: false }).limit(5),
+      supabase.from('hasil_quiz').select('skor, created_at, quiz:quiz_id(judul, mapel)').eq('murid_id', muridId).order('created_at', { ascending: false }).limit(5),
       supabase.from('progres_materi').select('materi:materi_id(mapel), selesai').eq('murid_id', muridId),
       supabase.from('notifikasi').select('id', { count: 'exact', head: true }).eq('user_id', muridId).eq('dibaca', false)
     ]);
@@ -168,9 +168,9 @@ router.get('/penilaian', authMiddleware, async (req, res) => {
     // Ambil semua hasil quiz
     const { data: hasilList } = await supabase
       .from('hasil_quiz')
-      .select('quiz_id, murid_id, skor, waktu_selesai, murid:murid_id(id, nama, avatar)')
+      .select('quiz_id, murid_id, skor, created_at, murid:murid_id(id, nama, avatar)')
       .in('quiz_id', quizIds)
-      .order('waktu_selesai', { ascending: false });
+      .order('created_at', { ascending: false });
 
     // Susun per quiz
     const quizResult = quizList.map(q => {
@@ -189,7 +189,7 @@ router.get('/penilaian', authMiddleware, async (req, res) => {
           nama: h.murid?.nama || 'Murid',
           avatar: h.murid?.avatar || '🦁',
           skor: h.skor,
-          waktu_selesai: h.waktu_selesai
+          waktu_selesai: h.created_at
         }))
       };
     });
