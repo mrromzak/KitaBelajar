@@ -72,7 +72,7 @@ async function dashboardMurid(req, res) {
       supabase.from('users').select('nama, avatar, xp, level').eq('id', muridId).single(),
       supabase.from('kelas_murid').select('kelas:kelas_id(id, nama, tahun_ajar, guru:guru_id(nama))').eq('murid_id', muridId),
       supabase.from('quiz').select('id, judul, mapel, durasi').eq('status', 'aktif').order('created_at', { ascending: false }).limit(5),
-      supabase.from('hasil_quiz').select('skor, created_at, quiz:quiz_id(judul, mapel)').eq('murid_id', muridId).order('created_at', { ascending: false }).limit(5),
+      supabase.from('hasil_quiz').select('skor, selesai_at, quiz:quiz_id(judul, mapel)').eq('murid_id', muridId).order('selesai_at', { ascending: false }).limit(5),
       supabase.from('progres_materi').select('materi:materi_id(mapel), selesai').eq('murid_id', muridId),
       supabase.from('notifikasi').select('id', { count: 'exact', head: true }).eq('user_id', muridId).eq('dibaca', false)
     ]);
@@ -166,11 +166,23 @@ router.get('/penilaian', authMiddleware, async (req, res) => {
     const kelasMap = Object.fromEntries((kelasList || []).map(k => [k.id, k]));
 
     // Ambil semua hasil quiz
-    const { data: hasilList } = await supabase
+    const { data: hasilList, error: hasilErr } = await supabase
       .from('hasil_quiz')
-      .select('quiz_id, murid_id, skor, created_at, murid:murid_id(id, nama, avatar)')
+      .select('quiz_id, murid_id, skor, benar, total_soal, selesai_at, murid:murid_id(id, nama, avatar)')
       .in('quiz_id', quizIds)
-      .order('created_at', { ascending: false });
+      .order('selesai_at', { ascending: false });
+    if (hasilErr) console.error('hasil_quiz fetch error:', hasilErr.message);
+
+    // Ambil daftar murid per kelas (untuk info belum mengerjakan)
+    const { data: kelasMuridList } = kelasIds.length > 0
+      ? await supabase.from('kelas_murid').select('kelas_id, murid_id, users:murid_id(id, nama, avatar)').in('kelas_id', kelasIds)
+      : { data: [] };
+    // Map: kelas_id -> array of murid
+    const kelasMuridMap = {};
+    (kelasMuridList || []).forEach(km => {
+      if (!kelasMuridMap[km.kelas_id]) kelasMuridMap[km.kelas_id] = [];
+      if (km.users) kelasMuridMap[km.kelas_id].push({ id: km.murid_id, nama: km.users.nama || 'Murid', avatar: km.users.avatar || '🦁' });
+    });
 
     // Susun per quiz
     const quizResult = quizList.map(q => {
@@ -178,10 +190,18 @@ router.get('/penilaian', authMiddleware, async (req, res) => {
       const totalSkor = hasilQuiz.reduce((s, h) => s + (h.skor || 0), 0);
       const rataRata = hasilQuiz.length > 0 ? Math.round(totalSkor / hasilQuiz.length) : null;
       const kelas = q.kelas_id ? kelasMap[q.kelas_id] : null;
+
+      // Murid yang sudah mengerjakan
+      const sudahIds = new Set(hasilQuiz.map(h => h.murid_id));
+      // Murid yang belum mengerjakan (hanya jika quiz terikat kelas)
+      const allMuridKelas = q.kelas_id ? (kelasMuridMap[q.kelas_id] || []) : [];
+      const belumMengerjakan = allMuridKelas.filter(m => !sudahIds.has(m.id));
+
       return {
         ...q,
         kelas_nama: kelas?.nama || 'Semua Kelas',
         kelas_mapel: kelas?.mapel || q.mapel || '',
+        total_murid: allMuridKelas.length,
         total_pengerjaan: hasilQuiz.length,
         rata_rata: rataRata,
         hasil: hasilQuiz.map(h => ({
@@ -189,8 +209,11 @@ router.get('/penilaian', authMiddleware, async (req, res) => {
           nama: h.murid?.nama || 'Murid',
           avatar: h.murid?.avatar || '🦁',
           skor: h.skor,
-          waktu_selesai: h.created_at
-        }))
+          benar: h.benar,
+          total_soal: h.total_soal,
+          waktu_selesai: h.selesai_at
+        })),
+        belum_mengerjakan: belumMengerjakan
       };
     });
 

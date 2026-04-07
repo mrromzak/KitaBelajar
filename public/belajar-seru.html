@@ -3992,56 +3992,92 @@ async function loadGuruDashboard() {
 
 function renderQuizPenilaianCard(q) {
   const tipeLabel = q.tipe === 'pr' ? '📝 PR' : '🎮 Fun Quiz';
-  const tipeColor = q.tipe === 'pr' ? '#8B5CF6' : '#FF6B35';
   const headerGrad = q.tipe === 'pr'
     ? 'linear-gradient(135deg,#7C3AED,#A78BFA)'
     : 'linear-gradient(135deg,#4D96FF,#6AADFF)';
   const deadlineInfo = q.deadline
     ? `<div style="font-size:11px;color:rgba(255,255,255,0.8)">⏰ Deadline: ${new Date(q.deadline).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</div>`
     : '';
+  const totalMurid = q.total_murid || 0;
+  const sudah = q.total_pengerjaan || 0;
+  const progressPct = totalMurid > 0 ? Math.round((sudah / totalMurid) * 100) : 0;
+  const belum = q.belum_mengerjakan || [];
+
   return `
     <div style="margin-bottom:16px;border:2px solid #eee;border-radius:16px;overflow:hidden">
-      <div style="background:${headerGrad};padding:14px 18px;display:flex;align-items:center;justify-content:space-between">
-        <div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-            <span style="background:rgba(255,255,255,0.25);color:white;font-size:10px;font-weight:800;padding:2px 8px;border-radius:50px">${tipeLabel}</span>
+      <div style="background:${headerGrad};padding:14px 18px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span style="background:rgba(255,255,255,0.25);color:white;font-size:10px;font-weight:800;padding:2px 8px;border-radius:50px">${tipeLabel}</span>
+            </div>
+            <div style="font-weight:800;font-size:15px;color:white;margin-bottom:2px">${q.judul}</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.8)">${q.mapel}</div>
+            ${deadlineInfo}
           </div>
-          <div style="font-weight:800;font-size:15px;color:white">${q.judul}</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.8)">${q.mapel} · ${q.total_pengerjaan} murid mengerjakan</div>
-          ${deadlineInfo}
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:26px;font-weight:900;color:white;line-height:1">${q.rata_rata !== null ? q.rata_rata : '–'}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.8);margin-bottom:6px">Rata-rata</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.9);font-weight:700">${sudah}${totalMurid > 0 ? '/' + totalMurid : ''} murid</div>
+          </div>
         </div>
-        <div style="text-align:right">
-          <div style="font-size:22px;font-weight:900;color:white">${q.rata_rata !== null ? q.rata_rata : '–'}</div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.8)">Rata-rata</div>
-        </div>
+        ${totalMurid > 0 ? `
+        <div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.75);font-weight:700;margin-bottom:4px">
+            <span>Progress pengerjaan</span><span>${progressPct}%</span>
+          </div>
+          <div style="background:rgba(255,255,255,0.2);border-radius:50px;height:6px;overflow:hidden">
+            <div style="height:100%;width:${progressPct}%;background:white;border-radius:50px;transition:width 0.4s"></div>
+          </div>
+        </div>` : ''}
       </div>
       ${q.hasil.length > 0 ? `
       <div style="padding:12px 18px">
+        <div style="font-size:11px;font-weight:800;color:var(--green);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">✅ Sudah Mengerjakan (${sudah})</div>
         <table style="width:100%;border-collapse:collapse;font-size:13px">
           <thead>
             <tr style="color:var(--muted);border-bottom:1px solid #eee">
-              <th style="text-align:left;padding:8px 0;font-weight:700">Murid</th>
-              <th style="text-align:center;padding:8px 0;font-weight:700">Skor</th>
-              <th style="text-align:right;padding:8px 0;font-weight:700">Waktu</th>
+              <th style="text-align:left;padding:6px 0;font-weight:700">Murid</th>
+              <th style="text-align:center;padding:6px 0;font-weight:700">Skor</th>
+              <th style="text-align:center;padding:6px 0;font-weight:700">Benar</th>
+              <th style="text-align:right;padding:6px 0;font-weight:700">Waktu</th>
             </tr>
           </thead>
           <tbody>
             ${q.hasil.map(h => `
               <tr style="border-bottom:1px solid #f5f5f5">
-                <td style="padding:8px 0">
+                <td style="padding:7px 0">
                   <span style="margin-right:6px">${h.avatar}</span>
                   <span style="font-weight:700">${h.nama}</span>
                 </td>
-                <td style="text-align:center;padding:8px 0">
-                  <span style="background:${h.skor >= 80 ? 'var(--green)' : h.skor >= 60 ? 'var(--yellow)' : 'var(--red)'};color:white;padding:3px 12px;border-radius:50px;font-weight:800;font-size:13px">${h.skor}</span>
+                <td style="text-align:center;padding:7px 0">
+                  <span style="background:${h.skor >= 80 ? 'var(--green)' : h.skor >= 60 ? '#E6A817' : 'var(--red)'};color:white;padding:3px 10px;border-radius:50px;font-weight:800;font-size:13px">${h.skor}</span>
                 </td>
-                <td style="text-align:right;padding:8px 0;color:var(--muted);font-size:12px">
-                  ${h.waktu_selesai ? new Date(h.waktu_selesai).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'}) : '–'}
+                <td style="text-align:center;padding:7px 0;color:var(--muted);font-size:12px;font-weight:700">
+                  ${h.benar != null && h.total_soal ? h.benar + '/' + h.total_soal : '–'}
+                </td>
+                <td style="text-align:right;padding:7px 0;color:var(--muted);font-size:12px">
+                  ${h.waktu_selesai ? new Date(h.waktu_selesai).toLocaleDateString('id-ID', {day:'numeric',month:'short'}) + ' ' + new Date(h.waktu_selesai).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}) : '–'}
                 </td>
               </tr>`).join('')}
           </tbody>
         </table>
-      </div>` : `<div style="padding:14px 18px;color:var(--muted);font-size:13px">Belum ada murid yang mengerjakan.</div>`}
+        ${belum.length > 0 ? `
+        <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #eee">
+          <div style="font-size:11px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">⏳ Belum Mengerjakan (${belum.length})</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            ${belum.map(m => `<span style="background:#FFF0F0;color:var(--red);border-radius:50px;padding:4px 12px;font-size:12px;font-weight:700">${m.avatar} ${m.nama}</span>`).join('')}
+          </div>
+        </div>` : (totalMurid > 0 ? `<div style="margin-top:10px;padding:8px 12px;background:#F0FFF4;border-radius:10px;font-size:13px;font-weight:700;color:var(--green)">✅ Semua murid sudah mengerjakan!</div>` : '')}
+      </div>` : `
+      <div style="padding:14px 18px">
+        <div style="color:var(--muted);font-size:13px;margin-bottom:${belum.length > 0 ? '10px' : '0'}">Belum ada murid yang mengerjakan.</div>
+        ${belum.length > 0 ? `
+        <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">⏳ Belum Mengerjakan (${belum.length})</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${belum.map(m => `<span style="background:#F5F5F5;color:var(--muted);border-radius:50px;padding:4px 12px;font-size:12px;font-weight:700">${m.avatar} ${m.nama}</span>`).join('')}
+        </div>` : ''}
+      </div>`}
     </div>`;
 }
 
