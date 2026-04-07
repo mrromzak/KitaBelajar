@@ -6232,8 +6232,7 @@ async function mulaiStage(stageIdx) {
           },{
             role: 'user',
             content: `Buat ${QK_SOAL_PER_STAGE} soal pilihan ganda tingkat ${tingkat} dari materi ini:\n\n${kontenMateri}\n\nFormat: {"soal":[{"pertanyaan":"...","emoji":"📚","opsi":["A","B","C","D"],"jawaban":"teks jawaban persis sama dengan opsi","poin":${50*(stageIdx+1)}}]}`
-          }],
-          response_format: { type: 'json_object' }
+          }]
         })
       });
 
@@ -6854,8 +6853,7 @@ Format JSON wajib:
   {"jenis":"pilihan_ganda","pertanyaan":"...?","emoji":"📝","opsi":["A...","B...","C...","D..."],"jawaban":"teks SAMA PERSIS dengan salah satu opsi","poin":100},
   {"jenis":"benar_salah","pertanyaan":"Pernyataan faktual...","emoji":"✅","opsi":["Benar","Salah"],"jawaban":"Benar","poin":75}
 ]}`
-            }],
-            response_format: { type: 'json_object' }
+            }]
           })
         });
 
@@ -6875,7 +6873,7 @@ Format JSON wajib:
         let teks = resData.choices?.[0]?.message?.content || '{}';
         let batchSoal;
         try {
-          // response_format json_object → parse langsung, ambil field "soal"
+          // Parse output AI → ambil field "soal"
           const parsed = JSON.parse(teks);
           // Dukung berbagai bentuk: {soal:[...]}, {questions:[...]}, atau langsung array
           batchSoal = parsed.soal || parsed.questions || parsed.data || (Array.isArray(parsed) ? parsed : []);
