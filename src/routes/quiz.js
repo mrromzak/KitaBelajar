@@ -56,7 +56,7 @@ router.get('/', authMiddleware, async (req, res) => {
     let query = supabase
       .from('quiz')
       .select(`
-        id, judul, deskripsi, mapel, durasi, tipe, deadline, status, created_at, kelas_id,
+        id, judul, deskripsi, mapel, durasi, tipe, deadline, status, created_at, kelas_id, tipe_submission,
         quiz_soal(count)
       `)
       .eq('status', 'aktif')
