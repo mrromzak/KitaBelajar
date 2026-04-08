@@ -33,6 +33,25 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY
 );
 
+// Auto-buat bucket "submissions" saat module dimuat (aman jika sudah ada)
+supabase.storage.createBucket('submissions', { public: true })
+  .then(({ error }) => {
+    if (error && !error.message?.includes('already exists') && !error.message?.includes('Duplicate')) {
+      console.warn('[storage] Bucket submissions:', error.message);
+    } else {
+      console.log('[storage] Bucket submissions siap.');
+    }
+  })
+  .catch(() => {});
+
+// Cek tabel tugas_submission ada (ingatkan jika migration belum dijalankan)
+supabase.from('tugas_submission').select('id', { count: 'exact', head: true })
+  .then(({ error }) => {
+    if (error) console.warn('[migration] Tabel tugas_submission belum ada! Jalankan migration_submission.sql di Supabase SQL Editor.');
+    else console.log('[migration] Tabel tugas_submission siap.');
+  })
+  .catch(() => {});
+
 // ── Middleware auth (ambil dari server.js milikmu jika berbeda) ──
 const jwt = require('jsonwebtoken');
 function authMiddleware(req, res, next) {
@@ -398,10 +417,13 @@ router.post('/:id/submission', authMiddleware, (req, res, next) => {
     } else if (tipe === 'file' || tipe === 'gambar') {
       if (!req.file) return res.status(400).json({ success: false, pesan: 'File tidak ditemukan.' });
       const ext  = req.file.originalname.split('.').pop().toLowerCase();
-      const path = `submissions/${quiz_id}/${murid_id}_${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('submissions').upload(path, req.file.buffer, { contentType: req.file.mimetype, upsert: false });
-      if (upErr) throw upErr;
-      const { data: urlData } = supabase.storage.from('submissions').getPublicUrl(path);
+      const filePath = `${quiz_id}/${murid_id}_${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('submissions').upload(filePath, req.file.buffer, { contentType: req.file.mimetype, upsert: false });
+      if (upErr) {
+        console.error('[submission upload]', upErr.message);
+        return res.status(500).json({ success: false, pesan: 'Gagal mengupload file. Coba lagi.' });
+      }
+      const { data: urlData } = supabase.storage.from('submissions').getPublicUrl(filePath);
       file_url  = urlData.publicUrl;
       file_nama = req.file.originalname;
       file_size = req.file.size;
