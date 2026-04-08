@@ -88,7 +88,7 @@ function sendParentCredentialsEmail({ to, namaMurid, parentEmail, parentPassword
   return sendBrevoEmail({
     to,
     subject: 'Akun Orangtua KitaBelajar — Pantau Aktivitas Belajar Anak',
-    text: `Halo! Akun orangtua untuk memantau ${namaMurid} sudah dibuat. Email: ${parentEmail} | Password: ${parentPassword} | Login di: ${appUrl}`,
+    text: `Halo! Akun orangtua untuk memantau ${namaMurid} sudah dibuat.\n\nKredensial Login:\nEmail: ${parentEmail}\nPassword: ${parentPassword}\n\nCara Login:\n1. Buka browser di HP atau laptop\n2. Kunjungi: ${appUrl}\n3. Pilih tab "Murid" di halaman login\n4. Masukkan email dan password di atas, lalu klik Login\n5. Selesai! Pantau perkembangan belajar ${namaMurid} kapan saja.\n\nSimpan kredensial ini dengan aman.`,
     html: `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#fff8f5;font-family:Nunito,Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
@@ -112,6 +112,51 @@ function sendParentCredentialsEmail({ to, namaMurid, parentEmail, parentPassword
             <div style="font-size:11px;color:#aaa;font-weight:700;text-transform:uppercase;letter-spacing:1px">Password</div>
             <div style="font-size:20px;font-weight:900;letter-spacing:4px;color:#333;font-family:'Courier New',monospace">${parentPassword}</div>
           </div>
+        </div>
+        <div style="background:#f0f7ff;border:1.5px solid #4A90D9;border-radius:16px;padding:20px;margin-bottom:20px;">
+          <div style="font-size:13px;color:#1a5fa8;font-weight:800;margin-bottom:14px;">📋 Cara Login — Ikuti Langkah Berikut:</div>
+          <table cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+              <td style="vertical-align:top;padding-bottom:10px;">
+                <span style="display:inline-block;background:#FF6B35;color:white;font-weight:900;font-size:12px;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px;flex-shrink:0;">1</span>
+              </td>
+              <td style="padding-left:10px;padding-bottom:10px;font-size:13px;color:#444;">
+                Buka browser (Chrome / Firefox / Safari) di HP atau laptop kamu.
+              </td>
+            </tr>
+            <tr>
+              <td style="vertical-align:top;padding-bottom:10px;">
+                <span style="display:inline-block;background:#FF6B35;color:white;font-weight:900;font-size:12px;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px;">2</span>
+              </td>
+              <td style="padding-left:10px;padding-bottom:10px;font-size:13px;color:#444;">
+                Kunjungi: <a href="${appUrl}" style="color:#FF6B35;font-weight:700;">${appUrl}</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="vertical-align:top;padding-bottom:10px;">
+                <span style="display:inline-block;background:#FF6B35;color:white;font-weight:900;font-size:12px;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px;">3</span>
+              </td>
+              <td style="padding-left:10px;padding-bottom:10px;font-size:13px;color:#444;">
+                Di halaman login, pilih tab <strong>"Murid"</strong> (akun orangtua login melalui tab ini).
+              </td>
+            </tr>
+            <tr>
+              <td style="vertical-align:top;padding-bottom:10px;">
+                <span style="display:inline-block;background:#FF6B35;color:white;font-weight:900;font-size:12px;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px;">4</span>
+              </td>
+              <td style="padding-left:10px;padding-bottom:10px;font-size:13px;color:#444;">
+                Masukkan <strong>Email</strong> dan <strong>Password</strong> yang tertera di atas, lalu klik <strong>Login</strong>.
+              </td>
+            </tr>
+            <tr>
+              <td style="vertical-align:top;">
+                <span style="display:inline-block;background:#22c55e;color:white;font-weight:900;font-size:12px;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px;">✓</span>
+              </td>
+              <td style="padding-left:10px;font-size:13px;color:#444;">
+                Selesai! Kamu bisa memantau perkembangan belajar <strong>${namaMurid}</strong> kapan saja.
+              </td>
+            </tr>
+          </table>
         </div>
         <a href="${appUrl}" style="display:block;text-align:center;background:linear-gradient(135deg,#FF6B35,#ff9a6c);color:white;padding:14px;border-radius:50px;text-decoration:none;font-weight:800;font-size:15px;margin-bottom:16px;">🚀 Login Sekarang</a>
         <div style="background:#FFF3E8;border-left:4px solid #FF6B35;border-radius:8px;padding:12px;font-size:12px;color:#856404;">

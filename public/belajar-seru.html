@@ -6876,31 +6876,34 @@ async function submitBuatKuis() {
     const mapel = currentKelas?.mapel || document.getElementById('kuis-ai-mapel')?.value || 'Umum';
     let semuaSoalIds = [...soalBankIds];
 
-    // Simpan soal AI ke bank soal dulu, lalu ambil ID-nya
-    if (soalAITerpilih.length > 0) {
-      toast(`💾 Menyimpan ${soalAITerpilih.length} soal AI ke bank soal...`);
-      for (const s of soalAITerpilih) {
-        try {
-          const jenisSoal = s.jenis === 'benar_salah' ? 'benar_salah' : 'pilihan_ganda';
-          const opsiSoal = jenisSoal === 'benar_salah' ? ['Benar', 'Salah'] : s.opsi;
-          const r = await api('POST', '/soal', {
-            pertanyaan: s.pertanyaan,
-            emoji: s.emoji || '❓',
-            mapel,
-            jenis: jenisSoal,
-            opsi: JSON.stringify(opsiSoal),
-            jawaban: s.jawaban,
-            poin: s.poin || 100,
-            tingkat: document.getElementById('kuis-ai-tingkat')?.value || 'sedang'
-          });
-          if (r.success && r.data?.id) semuaSoalIds.push(r.data.id);
-        } catch(e) {}
+    // Jika submission murni, skip proses soal sama sekali
+    if (!pakaiSubmission) {
+      // Simpan soal AI ke bank soal dulu, lalu ambil ID-nya
+      if (soalAITerpilih.length > 0) {
+        toast(`💾 Menyimpan ${soalAITerpilih.length} soal AI ke bank soal...`);
+        for (const s of soalAITerpilih) {
+          try {
+            const jenisSoal = s.jenis === 'benar_salah' ? 'benar_salah' : 'pilihan_ganda';
+            const opsiSoal = jenisSoal === 'benar_salah' ? ['Benar', 'Salah'] : s.opsi;
+            const r = await api('POST', '/soal', {
+              pertanyaan: s.pertanyaan,
+              emoji: s.emoji || '❓',
+              mapel,
+              jenis: jenisSoal,
+              opsi: JSON.stringify(opsiSoal),
+              jawaban: s.jawaban,
+              poin: s.poin || 100,
+              tingkat: document.getElementById('kuis-ai-tingkat')?.value || 'sedang'
+            });
+            if (r.success && r.data?.id) semuaSoalIds.push(r.data.id);
+          } catch(e) {}
+        }
       }
-    }
 
-    if (semuaSoalIds.length === 0) {
-      toast('Gagal mendapatkan ID soal. Coba lagi!', 'error');
-      showLoading(false); return;
+      if (semuaSoalIds.length === 0) {
+        toast('Gagal mendapatkan ID soal. Coba lagi!', 'error');
+        showLoading(false); return;
+      }
     }
 
     const data = await api('POST', '/quiz', {
