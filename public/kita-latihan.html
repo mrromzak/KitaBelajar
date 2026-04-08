@@ -103,6 +103,31 @@
     .subj-count{font-size:11px;background:rgba(0,0,0,.2);border-radius:50px;padding:3px 12px;display:inline-block;font-weight:800}
 
     /* ─────────────────────────────────────
+       KELAS VIEW
+    ───────────────────────────────────── */
+    .kelas-question{text-align:center;margin-bottom:28px}
+    .kelas-question .kq-icon{font-size:64px;display:block;margin-bottom:10px;animation:rocketFly 2.5s ease-in-out infinite}
+    .kelas-question .kq-ttl{font-family:var(--ff-heading);font-size:28px;color:#1a1a2e;margin-bottom:6px}
+    .kelas-question .kq-sub{font-size:14px;color:#888;font-weight:700}
+    .kelas-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:520px;margin:0 auto}
+    .kelas-card{border-radius:22px;padding:26px 12px 20px;text-align:center;cursor:pointer;border:none;font-family:var(--ff-body);color:#fff;transition:transform .22s,box-shadow .22s;box-shadow:0 6px 24px rgba(0,0,0,.18);position:relative;overflow:hidden;animation:popIn .35s ease both}
+    .kelas-card::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.18) 0%,transparent 60%);pointer-events:none}
+    .kelas-card:hover{transform:translateY(-8px) scale(1.04);box-shadow:0 18px 40px rgba(0,0,0,.25)}
+    .kelas-card:active{transform:scale(.96)}
+    .kelas-num{font-family:var(--ff-heading);font-size:54px;display:block;margin-bottom:2px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.2))}
+    .kelas-lbl{font-size:12px;font-weight:900;opacity:.9;text-transform:uppercase;letter-spacing:.5px}
+    .kelas-soal-count{font-size:11px;background:rgba(0,0,0,.2);border-radius:50px;padding:3px 12px;display:inline-block;font-weight:800;margin-top:8px}
+
+    /* Essay input */
+    .essay-wrap{grid-column:1/-1;display:flex;flex-direction:column;gap:10px}
+    .essay-input{width:100%;min-height:110px;border-radius:14px;border:2px solid #FFD0B0;padding:14px;font-family:var(--ff-body);font-size:15px;resize:vertical;outline:none;transition:border-color .2s;background:#FFFDF9;color:#1a1a2e;font-weight:600}
+    .essay-input:focus{border-color:#FF6B35}
+    .essay-input:disabled{background:#F5F5F5;color:#999}
+    .btn-essay-submit{width:100%;background:linear-gradient(135deg,#11998e,#38ef7d);color:#fff;border:none;border-radius:18px;padding:15px;font-family:var(--ff-body);font-weight:900;font-size:16px;cursor:pointer;transition:all .2s;box-shadow:0 5px 20px rgba(17,153,142,.3);letter-spacing:.3px}
+    .btn-essay-submit:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(17,153,142,.4)}
+    .btn-essay-submit:disabled{opacity:.5;cursor:default;transform:none}
+
+    /* ─────────────────────────────────────
        QUIZ VIEW
     ───────────────────────────────────── */
     .quiz-wrap{max-width:620px;margin:0 auto}
@@ -314,6 +339,27 @@
 </div>
 
 <!-- ══════════════════════════════
+     VIEW: KELAS SELECTION
+══════════════════════════════ -->
+<div class="view" id="view-kelas">
+  <div class="page-wrap">
+    <div class="page-head">
+      <button class="btn-back" onclick="showView('subjects')">← Kembali</button>
+      <div class="page-title-block">
+        <div class="page-ttl" id="kelas-page-ttl">Pilih Kelas</div>
+        <div class="page-sub2" id="kelas-page-sub">Soal akan disesuaikan dengan kelasmu!</div>
+      </div>
+    </div>
+    <div class="kelas-question">
+      <span class="kq-icon" id="kelas-mapel-icon">📚</span>
+      <div class="kq-ttl">Kamu kelas berapa?</div>
+      <div class="kq-sub" id="kelas-mapel-name">Pilih kelasmu agar soal pas!</div>
+    </div>
+    <div class="kelas-grid" id="kelas-grid"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
      VIEW: QUIZ
 ══════════════════════════════ -->
 <div class="view" id="view-quiz">
@@ -374,7 +420,7 @@
       </div>
       <div class="res-btn-row">
         <button class="res-btn rb-retry" onclick="ulangLatihan()">🔄 Ulangi</button>
-        <button class="res-btn rb-mapel" onclick="showView('subjects')">📚 Mapel Lain</button>
+        <button class="res-btn rb-mapel" onclick="showView('subjects')">📚 Ganti Mapel</button>
         <button class="res-btn rb-home" onclick="goHome()">🏠 Beranda</button>
       </div>
     </div>
@@ -485,6 +531,53 @@ const BANK = {
       {q:'Indonesia saat ini terdiri dari berapa provinsi?', opts:['34','36','38','40'], ans:'38', e:'🇮🇩'},
       {q:'Peta berskala 1:500.000 artinya 1 cm di peta = ... km nyata', opts:['5 km','50 km','500 km','5000 km'], ans:'5 km', e:'🗺️'},
     ]},
+    'Biologi': {icon:'🧬', bg:'linear-gradient(135deg,#27ae60,#2ecc71)',
+      soal:[
+        {q:'Sel tumbuhan memiliki ... yang tidak ada di sel hewan', opts:['Inti sel','Dinding sel','Sitoplasma','Membran sel'], ans:'Dinding sel', e:'🌿'},
+        {q:'Fotosintesis menghasilkan...', opts:['CO₂ dan H₂O','O₂ dan glukosa','N₂ dan H₂O','CO₂ dan O₂'], ans:'O₂ dan glukosa', e:'🌱'},
+      ],
+      kelas: {
+        '1': [
+          // Kelas 7 — Ekologi & Klasifikasi
+          {q:'Organisme yang dapat membuat makanannya sendiri disebut...', opts:['Konsumen','Produsen','Dekomposer','Omnivora'], ans:'Produsen', e:'🌱'},
+          {q:'Ilmu yang mempelajari hubungan makhluk hidup dengan lingkungannya adalah...', opts:['Biologi','Ekologi','Zoologi','Botanik'], ans:'Ekologi', e:'🌿'},
+          {q:'Makhluk hidup yang memakan tumbuhan dan hewan disebut...', opts:['Herbivora','Karnivora','Omnivora','Dekomposer'], ans:'Omnivora', e:'🍽️'},
+          {q:'Urutan taksonomi dari yang terbesar ke terkecil adalah...', opts:['Kingdom-Filum-Kelas-Ordo-Famili-Genus-Spesies','Spesies-Genus-Famili-Ordo-Kelas-Filum-Kingdom','Kingdom-Kelas-Filum-Ordo-Famili-Genus-Spesies','Filum-Kingdom-Kelas-Ordo-Genus-Famili-Spesies'], ans:'Kingdom-Filum-Kelas-Ordo-Famili-Genus-Spesies', e:'📊'},
+          {q:'Nama ilmiah manusia adalah...', opts:['Homo erectus','Homo sapiens','Pan troglodytes','Gorilla gorilla'], ans:'Homo sapiens', e:'🧑'},
+          {q:'Pencemaran air dapat disebabkan oleh...', opts:['Penanaman pohon','Pembuatan taman','Limbah industri pabrik','Penggunaan energi surya'], ans:'Limbah industri pabrik', e:'🏭'},
+          {q:'Rantai makanan yang benar adalah...', opts:['Rumput→Katak→Ular→Belalang','Rumput→Belalang→Katak→Ular','Belalang→Rumput→Katak→Ular','Ular→Katak→Belalang→Rumput'], ans:'Rumput→Belalang→Katak→Ular', e:'🐍'},
+          {q:'Simbiosis mutualisme terjadi ketika...', opts:['Satu pihak untung, satu rugi','Satu pihak untung, satu tidak terpengaruh','Keduanya untung','Keduanya rugi'], ans:'Keduanya untung', e:'🤝'},
+          {q:'Tumbuhan lumut termasuk dalam kingdom...', opts:['Fungi','Animalia','Plantae','Monera'], ans:'Plantae', e:'🌿'},
+          {q:'Gas yang dihasilkan tumbuhan saat fotosintesis adalah...', opts:['CO₂','N₂','O₂','H₂'], ans:'O₂', e:'🌿'},
+        ],
+        '2': [
+          // Kelas 8 — Sistem Organ
+          {q:'Otot yang bekerja di luar kesadaran kita disebut otot...', opts:['Lurik','Rangka','Polos','Jantung'], ans:'Polos', e:'💪'},
+          {q:'Bagian tulang yang berfungsi melindungi organ dalam tubuh seperti jantung adalah...', opts:['Tulang pipa','Tulang pipih','Tulang pendek','Tulang tidak beraturan'], ans:'Tulang pipih', e:'🦴'},
+          {q:'Sistem pencernaan pada manusia dimulai dari...', opts:['Lambung','Kerongkongan','Mulut','Usus halus'], ans:'Mulut', e:'👄'},
+          {q:'Enzim ptialin di mulut berfungsi mencerna...', opts:['Protein','Lemak','Karbohidrat','Vitamin'], ans:'Karbohidrat', e:'🍚'},
+          {q:'Pembuluh darah yang membawa darah dari jantung ke seluruh tubuh adalah...', opts:['Vena','Kapiler','Arteri','Limfa'], ans:'Arteri', e:'❤️'},
+          {q:'Fungsi hemoglobin dalam darah adalah...', opts:['Membekukan darah','Melawan penyakit','Mengangkut oksigen','Mencerna lemak'], ans:'Mengangkut oksigen', e:'🩸'},
+          {q:'Organ pernapasan yang letaknya paling dalam adalah...', opts:['Hidung','Faring','Trakea','Alveolus'], ans:'Alveolus', e:'🫁'},
+          {q:'Bagian ginjal tempat penyaringan darah adalah...', opts:['Pelvis ginjal','Medula','Korteks','Ureter'], ans:'Korteks', e:'🫘'},
+          {q:'Kulit adalah alat ekskresi yang mengeluarkan...', opts:['Urea saja','Keringat (air, garam, urea)','CO₂','Empedu'], ans:'Keringat (air, garam, urea)', e:'💧'},
+          {q:'Tulang rawan pada bayi lama-kelamaan akan berubah menjadi...', opts:['Tulang keras','Lemak','Otot','Ligamen'], ans:'Tulang keras', e:'🦴'},
+        ],
+        '3': [
+          // Kelas 9 — Pewarisan Sifat & Bioteknologi
+          {q:'Sifat yang tampak pada individu disebut...', opts:['Genotipe','Fenotipe','Alel','Gen'], ans:'Fenotipe', e:'🧬'},
+          {q:'Simbol genotipe untuk individu homozigot dominan adalah...', opts:['Aa','AA','aa','aA'], ans:'AA', e:'🧬'},
+          {q:'Pada persilangan Aa × Aa, perbandingan fenotipe keturunannya adalah...', opts:['1:1','3:1','2:1','1:2:1'], ans:'3:1', e:'🧬'},
+          {q:'Buta warna merupakan contoh sifat yang terpaut kromosom...', opts:['Autosom','Y','X','Mitokondria'], ans:'X', e:'👁️'},
+          {q:'Reproduksi vegetatif alami pada tumbuhan contohnya adalah...', opts:['Okulasi','Cangkok','Rizoma/rimpang','Stek'], ans:'Rizoma/rimpang', e:'🌿'},
+          {q:'Fermentasi pada pembuatan tempe menggunakan jamur...', opts:['Saccharomyces','Rhizopus','Aspergillus','Penicillium'], ans:'Rhizopus', e:'🍄'},
+          {q:'Kloning adalah teknik perkembangbiakan yang menghasilkan individu...', opts:['Genetiknya berbeda','Genetiknya identik dengan induk','Lebih unggul dari induk','Hasil perpaduan 2 induk'], ans:'Genetiknya identik dengan induk', e:'🔬'},
+          {q:'Berikut yang termasuk bioteknologi konvensional adalah...', opts:['Rekayasa genetika','Antibodi monoklonal','Pembuatan yoghurt','Tanaman transgenik'], ans:'Pembuatan yoghurt', e:'🧫'},
+          {q:'Mutasi yang terjadi akibat paparan sinar UV adalah mutasi...', opts:['Buatan','Alami','Kromosom','Gen spontan'], ans:'Buatan', e:'☢️'},
+          {q:'Tujuan bioteknologi di bidang pertanian adalah...', opts:['Menciptakan virus baru','Menghasilkan tanaman tahan hama','Memperbanyak bakteri','Mengurangi produksi pangan'], ans:'Menghasilkan tanaman tahan hama', e:'🌾'},
+        ],
+      }
+    },
     'Bahasa Indonesia': {icon:'📖', bg:'linear-gradient(135deg,#FF6B35,#FF9A6C)', soal:[
       {q:'Majas yang membandingkan dua hal tanpa kata pembanding adalah...', opts:['Simile','Metafora','Personifikasi','Hiperbola'], ans:'Metafora', e:'📝'},
       {q:'Kalimat pasif dari "Ani membeli buku" adalah...', opts:['Buku dibeli Ani','Buku membeli Ani','Ani terbeli buku','Buku terbeli'], ans:'Buku dibeli Ani', e:'📚'},
@@ -534,18 +627,60 @@ const BANK = {
       {q:'Unsur paling banyak di kerak bumi adalah...', opts:['Si','Al','Fe','O'], ans:'O', e:'🌍'},
       {q:'Katalis berfungsi untuk...', opts:['Menambah reaktan','Mempercepat reaksi tanpa ikut bereaksi','Mengurangi produk','Mengubah suhu'], ans:'Mempercepat reaksi tanpa ikut bereaksi', e:'⚗️'},
     ]},
-    'Biologi': {icon:'🌿', bg:'linear-gradient(135deg,#11998e,#4CAF50)', soal:[
-      {q:'DNA berada di dalam...', opts:['Ribosom','Mitokondria','Inti sel','Membran sel'], ans:'Inti sel', e:'🧬'},
-      {q:'Proses transkripsi menghasilkan...', opts:['DNA baru','mRNA','Protein','Ribosom'], ans:'mRNA', e:'🔬'},
-      {q:'Enzim pencernaan protein di lambung adalah...', opts:['Amilase','Lipase','Pepsin','Katalase'], ans:'Pepsin', e:'🍖'},
-      {q:'Pewarisan sifat dari induk ke keturunan terjadi melalui...', opts:['Lingkungan','Gen','Makanan','Hormon'], ans:'Gen', e:'🧬'},
-      {q:'Pembelahan sel yang menghasilkan 4 sel dengan n kromosom adalah...', opts:['Mitosis','Meiosis','Fertilisasi','Regenerasi'], ans:'Meiosis', e:'🔬'},
-      {q:'Hormon yang mengatur kadar gula darah adalah...', opts:['Adrenalin','Insulin','Tiroksin','Estrogen'], ans:'Insulin', e:'💊'},
-      {q:'Fungsi utama mitokondria adalah...', opts:['Sintesis protein','Produksi energi (ATP)','Penyimpanan genetik','Transportasi zat'], ans:'Produksi energi (ATP)', e:'⚡'},
-      {q:'Evolusi organisme dikemukakan oleh...', opts:['Mendel','Darwin','Pasteur','Watson'], ans:'Darwin', e:'🦎'},
-      {q:'Ekosistem terdiri dari...', opts:['Produsen saja','Konsumen saja','Makhluk hidup dan lingkungannya','Hewan dan tumbuhan saja'], ans:'Makhluk hidup dan lingkungannya', e:'🌍'},
-      {q:'Peredaran darah kecil bertujuan untuk...', opts:['Mengedarkan O₂ ke seluruh tubuh','Membersihkan darah di paru-paru','Memompa darah ke otak','Membawa nutrisi ke otot'], ans:'Membersihkan darah di paru-paru', e:'❤️'},
-    ]},
+    'Biologi': {icon:'🧬', bg:'linear-gradient(135deg,#11998e,#4CAF50)',
+      soal:[
+        {q:'DNA berada di dalam...', opts:['Ribosom','Mitokondria','Inti sel','Membran sel'], ans:'Inti sel', e:'🧬'},
+        {q:'Proses transkripsi menghasilkan...', opts:['DNA baru','mRNA','Protein','Ribosom'], ans:'mRNA', e:'🔬'},
+        {q:'Enzim pencernaan protein di lambung adalah...', opts:['Amilase','Lipase','Pepsin','Katalase'], ans:'Pepsin', e:'🍖'},
+      ],
+      kelas: {
+        '1': [
+          // Kelas 10 — Ruang Lingkup & Sel
+          {q:'Cabang biologi yang mempelajari virus disebut...', opts:['Bakteriologi','Virologi','Mikologi','Parasitologi'], ans:'Virologi', e:'🦠'},
+          {q:'Tingkatan organisasi kehidupan dari terkecil ke terbesar yang benar adalah...', opts:['Sel→Organ→Jaringan→Sistem organ','Sel→Jaringan→Organ→Sistem organ','Jaringan→Sel→Organ→Sistem organ','Organ→Sel→Jaringan→Sistem organ'], ans:'Sel→Jaringan→Organ→Sistem organ', e:'🔬'},
+          {q:'Organel sel yang berfungsi sebagai tempat sintesis protein adalah...', opts:['Mitokondria','Ribosom','Vakuola','Plastida'], ans:'Ribosom', e:'⚙️'},
+          {q:'Perbedaan sel prokariotik dan eukariotik terletak pada...', opts:['Ukuran sel','Ada/tidaknya membran inti','Jenis lipid membran','Jumlah kromosom'], ans:'Ada/tidaknya membran inti', e:'🔬'},
+          {q:'Proses masuknya air dari larutan encer ke larutan pekat melalui membran semipermeabel disebut...', opts:['Difusi','Osmosis','Transpor aktif','Eksositosis'], ans:'Osmosis', e:'💧'},
+          {q:'Kingdom Fungi berbeda dari Plantae karena fungi...', opts:['Memiliki klorofil','Tidak bisa bergerak','Tidak memiliki klorofil','Memiliki akar'], ans:'Tidak memiliki klorofil', e:'🍄'},
+          {q:'Virus yang menyerang bakteri disebut...', opts:['Parasit','Bakteriofag','Retrovirus','Viroid'], ans:'Bakteriofag', e:'🦠'},
+          {q:'Sel yang tidak memiliki dinding sel adalah...', opts:['Sel tumbuhan','Sel bakteri','Sel hewan','Sel jamur'], ans:'Sel hewan', e:'🐾'},
+          {q:'Membran sel tersusun dari...', opts:['Protein saja','Lipid bilayer dan protein','Karbohidrat dan lemak','Selulosa dan protein'], ans:'Lipid bilayer dan protein', e:'🔬'},
+          {q:'Mikroskop yang menggunakan cahaya tampak disebut mikroskop...', opts:['Elektron','Cahaya/optik','Fase kontras','Polarisasi'], ans:'Cahaya/optik', e:'🔭'},
+          {q:'Jelaskan perbedaan antara sel hewan dan sel tumbuhan!', tipe:'essay', ans:'Sel tumbuhan memiliki dinding sel (tersusun dari selulosa), kloroplas (tempat fotosintesis), dan vakuola besar permanen. Sel hewan tidak memiliki ketiganya, namun memiliki sentriol yang tidak dimiliki sel tumbuhan.', e:'✏️'},
+          {q:'Apa yang dimaksud dengan ekosistem dan sebutkan komponen penyusunnya!', tipe:'essay', ans:'Ekosistem adalah suatu sistem ekologi yang terbentuk dari hubungan timbal balik antara makhluk hidup dengan lingkungannya. Komponen penyusunnya: (1) Biotik: produsen, konsumen, dekomposer; (2) Abiotik: cahaya, air, udara, tanah, suhu, dll.', e:'✏️'},
+        ],
+        '2': [
+          // Kelas 11 — Sistem Organ Manusia
+          {q:'Enzim yang terdapat di dalam lambung untuk mencerna protein adalah...', opts:['Amilase','Lipase','Pepsin','Tripsin'], ans:'Pepsin', e:'🍖'},
+          {q:'Pertukaran gas O₂ dan CO₂ di paru-paru terjadi di...', opts:['Bronkus','Trakea','Alveolus','Bronkiolus'], ans:'Alveolus', e:'🫁'},
+          {q:'Hormon yang dihasilkan pankreas untuk menurunkan kadar gula darah adalah...', opts:['Glukagon','Insulin','Tiroksin','Adrenalin'], ans:'Insulin', e:'💊'},
+          {q:'Bagian jantung yang memompa darah ke seluruh tubuh adalah...', opts:['Atrium kanan','Atrium kiri','Ventrikel kanan','Ventrikel kiri'], ans:'Ventrikel kiri', e:'❤️'},
+          {q:'Peredaran darah besar dimulai dari...', opts:['Paru-paru','Ventrikel kiri','Ventrikel kanan','Atrium kiri'], ans:'Ventrikel kiri', e:'🩸'},
+          {q:'Urin terbentuk melalui tiga tahap di ginjal, urutannya adalah...', opts:['Reabsorpsi→Filtrasi→Augmentasi','Filtrasi→Reabsorpsi→Augmentasi','Augmentasi→Filtrasi→Reabsorpsi','Filtrasi→Augmentasi→Reabsorpsi'], ans:'Filtrasi→Reabsorpsi→Augmentasi', e:'🫘'},
+          {q:'Sinapsis adalah...', opts:['Badan sel saraf','Celah antara dua neuron','Selubung mielin','Akson terminal'], ans:'Celah antara dua neuron', e:'⚡'},
+          {q:'Hormon esterogen pada wanita dihasilkan oleh...', opts:['Kelenjar adrenal','Ovarium','Uterus','Hipofisis'], ans:'Ovarium', e:'🩺'},
+          {q:'Sel darah yang berperan dalam pembekuan darah adalah...', opts:['Eritrosit','Leukosit','Trombosit','Plasma'], ans:'Trombosit', e:'🩸'},
+          {q:'Gerak refleks berbeda dengan gerak biasa karena gerak refleks...', opts:['Dikontrol otak','Tidak melalui otak','Lebih lambat','Melalui sumsum tulang belakang saja'], ans:'Tidak melalui otak', e:'⚡'},
+          {q:'Jelaskan mekanisme peredaran darah kecil (pulmonal) pada manusia!', tipe:'essay', ans:'Peredaran darah kecil dimulai dari ventrikel kanan → arteri pulmonalis → paru-paru (terjadi pertukaran CO₂ dan O₂ di alveolus) → vena pulmonalis → atrium kiri. Fungsinya untuk mengoksigenasi darah.', e:'✏️'},
+          {q:'Sebutkan dan jelaskan fungsi organ-organ dalam sistem ekskresi manusia!', tipe:'essay', ans:'(1) Ginjal: menyaring darah, menghasilkan urin; (2) Hati: merombak sel darah merah tua, menghasilkan empedu; (3) Paru-paru: mengeluarkan CO₂ dan uap air; (4) Kulit: mengeluarkan keringat (air, garam, urea).', e:'✏️'},
+        ],
+        '3': [
+          // Kelas 12 — Genetika & Evolusi & Bioteknologi
+          {q:'Pembelahan sel yang menghasilkan 4 sel anak dengan setengah jumlah kromosom induk adalah...', opts:['Mitosis','Meiosis','Amitosis','Binary fission'], ans:'Meiosis', e:'🔬'},
+          {q:'Genotipe Aa × Aa menghasilkan perbandingan fenotipe...', opts:['3:1','1:2:1','1:1','2:1:1'], ans:'3:1', e:'🧬'},
+          {q:'DNA terdiri dari basa nitrogen purin dan pirimidin. Yang termasuk purin adalah...', opts:['Timin dan Sitosin','Adenin dan Guanin','Urasil dan Timin','Adenin dan Sitosin'], ans:'Adenin dan Guanin', e:'🧬'},
+          {q:'Mutasi gen yang mengakibatkan perubahan satu basa nitrogen disebut...', opts:['Delesi','Insersi','Substitusi','Duplikasi'], ans:'Substitusi', e:'🔬'},
+          {q:'Teori evolusi Darwin didasarkan pada konsep...', opts:['Pewarisan sifat yang didapat','Seleksi alam dan variasi','Mutasi gen','Rekombinasi gen'], ans:'Seleksi alam dan variasi', e:'🦎'},
+          {q:'Bioteknologi konvensional yang digunakan untuk membuat tempe adalah...', opts:['Rekayasa genetika','Fermentasi dengan jamur Rhizopus','Kloning','PCR'], ans:'Fermentasi dengan jamur Rhizopus', e:'🧫'},
+          {q:'Pada persilangan monohibrid, perbandingan fenotipe F2 adalah...', opts:['1:1','2:1','3:1','1:2:1'], ans:'3:1', e:'🧬'},
+          {q:'Teknik PCR (Polymerase Chain Reaction) digunakan untuk...', opts:['Memotong DNA','Memperbanyak fragmen DNA','Menyisipkan gen','Mengidentifikasi protein'], ans:'Memperbanyak fragmen DNA', e:'🔬'},
+          {q:'Hukum Mendel II (Hukum Asortasi Bebas) menyatakan bahwa...', opts:['Gen selalu berpasangan','Pasangan gen berpisah saat pembentukan gamet','Dua pasang gen berpisah secara bebas dan independen','Gen dominan selalu menutupi gen resesif'], ans:'Dua pasang gen berpisah secara bebas dan independen', e:'🧬'},
+          {q:'Organisme transgenik adalah organisme yang...', opts:['Mengalami mutasi alami','Memiliki gen dari organisme lain','Bereproduksi secara vegetatif','Hasil dari kloning'], ans:'Memiliki gen dari organisme lain', e:'🧫'},
+          {q:'Jelaskan perbedaan antara mitosis dan meiosis beserta fungsinya!', tipe:'essay', ans:'Mitosis: pembelahan sel yang menghasilkan 2 sel anak dengan jumlah kromosom sama dengan induk (2n), terjadi pada sel somatik, berfungsi untuk pertumbuhan dan regenerasi. Meiosis: pembelahan sel yang menghasilkan 4 sel anak dengan jumlah kromosom setengah induk (n), terjadi di gonad, berfungsi untuk reproduksi seksual (pembentukan gamet).', e:'✏️'},
+          {q:'Apa yang dimaksud teori seleksi alam Darwin dan bagaimana mekanismenya?', tipe:'essay', ans:'Seleksi alam adalah proses di mana individu dengan sifat yang lebih sesuai dengan lingkungan memiliki peluang bertahan hidup dan bereproduksi lebih besar. Mekanisme: variasi dalam populasi → persaingan → individu yang beradaptasi bertahan → mewariskan sifat → perubahan populasi dari generasi ke generasi.', e:'✏️'},
+        ],
+      }
+    },
     'Bahasa Inggris': {icon:'🌍', bg:'linear-gradient(135deg,#0099F7,#5B86E5)', soal:[
       {q:'Conditional type 2 yang benar adalah...', opts:['If I am rich, I will buy it','If I were rich, I would buy it','If I had been rich, I would have bought','If I rich, I buy it'], ans:'If I were rich, I would buy it', e:'💬'},
       {q:'"Despite the rain, we went out." Arti "despite" adalah...', opts:['Karena','Meskipun','Tetapi','Sehingga'], ans:'Meskipun', e:'🌧️'},
@@ -589,6 +724,7 @@ const currentUser = (() => { try { return JSON.parse(localStorage.getItem('user'
 
 let currentLevel = '';
 let currentMapel = '';
+let currentKelas = '';
 let soalList = [], currentIdx = 0, jawabanUser = [];
 let score = 0, benarCount = 0, timerInterval = null, timerSisa = 30;
 let sessionStart = 0, totalSesiDone = 0, sessionXP = 0;
@@ -625,7 +761,11 @@ function loadLocalStats() {
 function updateLevelCounts() {
   ['SD','SMP','SMA'].forEach(lv => {
     const mapels = Object.keys(BANK[lv] || {}).length;
-    const soalTotal = Object.values(BANK[lv] || {}).reduce((s,m)=>s+m.soal.length,0);
+    const soalTotal = Object.values(BANK[lv] || {}).reduce((s, m) => {
+      if (m.soal) return s + m.soal.length;
+      if (m.kelas) return s + Object.values(m.kelas).reduce((a,arr)=>a+arr.length,0);
+      return s;
+    }, 0);
     document.getElementById('count-' + lv.toLowerCase()).textContent = `${mapels} Mapel · ${soalTotal} Soal`;
   });
 }
@@ -656,24 +796,94 @@ function pilihLevel(lv) {
   const mapels = BANK[lv] || {};
   const grid = document.getElementById('subj-grid');
   grid.innerHTML = Object.entries(mapels).map(([name, cfg], i) => {
-    return `<div class="subj-card" style="background:${cfg.bg};animation-delay:${i*0.05}s" onclick="mulaiLatihan('${esc(name)}')">
+    const totalSoal = cfg.soal ? cfg.soal.length : Object.values(cfg.kelas||{}).reduce((s,a)=>s+a.length,0);
+    return `<div class="subj-card" style="background:${cfg.bg};animation-delay:${i*0.05}s" onclick="pilihMapel('${esc(name)}')">
       <span class="subj-ico">${cfg.icon}</span>
       <div class="subj-name">${name}</div>
-      <div class="subj-count">${cfg.soal.length} soal</div>
+      <div class="subj-count">${totalSoal} soal</div>
     </div>`;
   }).join('');
   showView('subjects');
 }
 
 // ═══════════════════════════════════════════════════════
+//  KELAS SELECTION
+// ═══════════════════════════════════════════════════════
+function pilihMapel(mapel) {
+  currentMapel = mapel;
+  const info = LEVEL_INFO[currentLevel];
+  const bankMapel = BANK[currentLevel]?.[mapel] || {};
+  const kelasCount = currentLevel === 'SD' ? 6 : 3;
+
+  document.getElementById('kelas-page-ttl').innerHTML =
+    `${bankMapel.icon || '📚'} ${mapel} <span class="lv-pill ${info.pillClass}">${info.emoji} ${info.label}</span>`;
+  document.getElementById('kelas-page-sub').textContent = 'Soal akan disesuaikan dengan kelasmu!';
+  document.getElementById('kelas-mapel-icon').textContent = bankMapel.icon || '📚';
+  document.getElementById('kelas-mapel-name').textContent = `${mapel} — pilih kelasmu agar soal pas!`;
+
+  const KELAS_COLORS = [
+    'linear-gradient(145deg,#FF6B35,#FF9A6C)',
+    'linear-gradient(145deg,#4776E6,#8E54E9)',
+    'linear-gradient(145deg,#11998e,#38ef7d)',
+    'linear-gradient(145deg,#f7971e,#ffd200)',
+    'linear-gradient(145deg,#FF0080,#FF6B35)',
+    'linear-gradient(145deg,#6C5CE7,#A855F7)',
+  ];
+
+  const grid = document.getElementById('kelas-grid');
+  grid.innerHTML = Array.from({length: kelasCount}, (_, i) => {
+    const k = i + 1;
+    // Count soal for this kelas
+    let count = 0;
+    if (bankMapel.kelas?.[String(k)]) {
+      count = bankMapel.kelas[String(k)].length;
+    } else if (bankMapel.soal) {
+      count = bankMapel.soal.length;
+    }
+    return `<div class="kelas-card" style="background:${KELAS_COLORS[i]};animation-delay:${i*0.07}s" onclick="pilihKelas(${k})">
+      <span class="kelas-num">${k}</span>
+      <div class="kelas-lbl">Kelas ${k}</div>
+      <div class="kelas-soal-count">${count} soal</div>
+    </div>`;
+  }).join('');
+
+  showView('kelas');
+}
+
+function pilihKelas(k) {
+  currentKelas = String(k);
+  mulaiLatihan(currentMapel, currentKelas);
+}
+
+// ═══════════════════════════════════════════════════════
 //  QUIZ
 // ═══════════════════════════════════════════════════════
-function mulaiLatihan(mapel) {
+function mulaiLatihan(mapel, kelas) {
   currentMapel = mapel;
+  if (kelas !== undefined) currentKelas = String(kelas);
   const bankMapel = BANK[currentLevel]?.[mapel];
   if (!bankMapel) return;
 
-  soalList = shuffle([...bankMapel.soal]).slice(0, 10);
+  // Get kelas-specific soal or fallback to shared soal
+  let allSoal;
+  if (bankMapel.kelas && currentKelas && bankMapel.kelas[currentKelas]) {
+    allSoal = bankMapel.kelas[currentKelas];
+  } else {
+    allSoal = bankMapel.soal || [];
+  }
+
+  // Separate PG and essay
+  const pgSoal = allSoal.filter(s => !s.tipe || s.tipe === 'pg');
+  const essaySoal = allSoal.filter(s => s.tipe === 'essay');
+
+  // Mix: up to 7 PG + up to 3 essay, max 10 total
+  const picked = [
+    ...shuffle([...pgSoal]).slice(0, essaySoal.length > 0 ? 7 : 10),
+    ...shuffle([...essaySoal]).slice(0, 3),
+  ];
+  soalList = shuffle(picked).slice(0, 10);
+  if (soalList.length === 0) soalList = shuffle([...allSoal]).slice(0, 10);
+
   currentIdx = 0; score = 0; benarCount = 0; jawabanUser = []; sessionXP = 0;
   sessionStart = Date.now();
 
@@ -698,23 +908,34 @@ function tampilSoal() {
   metaEl.style.background = info.color;
 
   // Question
-  document.getElementById('q-emoji').textContent = s.e || '❓';
+  document.getElementById('q-emoji').textContent = s.e || (s.tipe === 'essay' ? '✏️' : '❓');
   document.getElementById('q-text').textContent = s.q;
 
-  // Options
-  const shuffledOpts = s.opts.map((o,i)=>({o,i})); // keep A/B/C/D fixed — no shuffle of opts
-  document.getElementById('options-grid').innerHTML = s.opts.map((opt, i) =>
-    `<button class="opt-btn ${OPT_CLASSES[i]}" onclick="pilihJawaban(this,'${esc(opt)}')">
-      <span class="opt-letter">${OPT_LETTERS[i]}</span>${opt}
-    </button>`
-  ).join('');
+  // Options — essay vs PG
+  if (s.tipe === 'essay') {
+    document.getElementById('options-grid').innerHTML =
+      `<div class="essay-wrap">
+         <textarea class="essay-input" id="essay-input" placeholder="Tulis jawabanmu di sini..."></textarea>
+         <button class="btn-essay-submit" id="btn-essay-submit" onclick="submitEssay()">✏️ Kirim Jawaban</button>
+       </div>`;
+    // No timer for essay
+    stopTimer();
+    document.getElementById('q-timer').textContent = '∞';
+    document.getElementById('timer-ring').style.strokeDashoffset = 0;
+    document.getElementById('timer-ring').style.stroke = '#11998e';
+  } else {
+    document.getElementById('options-grid').innerHTML = s.opts.map((opt, i) =>
+      `<button class="opt-btn ${OPT_CLASSES[i]}" onclick="pilihJawaban(this,'${esc(opt)}')">
+        <span class="opt-letter">${OPT_LETTERS[i]}</span>${opt}
+      </button>`
+    ).join('');
+    // Timer
+    mulaiTimer(TIMER_MAX);
+  }
 
   // Reset feedback/next
   document.getElementById('feedback').style.display = 'none';
   document.getElementById('btn-next').style.display = 'none';
-
-  // Timer
-  mulaiTimer(TIMER_MAX);
 }
 
 function mulaiTimer(detik) {
@@ -806,10 +1027,30 @@ function nextQuestion() {
   tampilSoal();
 }
 
+function submitEssay() {
+  const s = soalList[currentIdx];
+  const input = document.getElementById('essay-input');
+  const jawaban = input ? input.value.trim() : '';
+  stopTimer();
+
+  if (input) input.disabled = true;
+  const submitBtn = document.getElementById('btn-essay-submit');
+  if (submitBtn) submitBtn.disabled = true;
+
+  // Essay: give points, show model answer
+  benarCount++;
+  const gained = s.poin || 80;
+  score += gained; sessionXP += gained;
+  jawabanUser.push({soal: s, jawaban: jawaban || '(tidak diisi)', benar: true, essay: true});
+  document.getElementById('q-score').textContent = `⭐ ${score} XP`;
+
+  tampilFeedback(true, `📖 Jawaban Referensi: ${s.ans}`);
+}
+
 function konfirmasiKeluar() {
   if (confirm('Keluar dari latihan? Progress akan hilang.')) {
     stopTimer();
-    showView('subjects');
+    showView('kelas');
   }
 }
 
@@ -851,10 +1092,13 @@ function tampilHasil() {
 
   document.getElementById('review-list').innerHTML = jawabanUser.map((j,i) => `
     <div class="review-item ${j.benar ? 'ri-ok' : 'ri-ng'}">
-      <div class="ri-q">${i+1}. ${j.soal.q}</div>
+      <div class="ri-q">${i+1}. ${j.soal.tipe === 'essay' ? '✏️ [Essay] ' : ''}${j.soal.q}</div>
       <div class="ri-ans">
-        <span style="color:${j.benar ? '#00C851' : '#FF4040'}">${j.benar ? '✅' : '❌'} Jawabanmu: ${j.jawaban || '(waktu habis)'}</span>
-        ${!j.benar ? `<span style="color:#00C851">· Benar: ${j.soal.ans}</span>` : ''}
+        ${j.essay
+          ? `<span style="color:#11998e">✏️ Jawabanmu: ${j.jawaban}</span><br><span style="color:#555">📖 Ref: ${j.soal.ans}</span>`
+          : `<span style="color:${j.benar ? '#00C851' : '#FF4040'}">${j.benar ? '✅' : '❌'} Jawabanmu: ${j.jawaban || '(waktu habis)'}</span>
+             ${!j.benar ? `<span style="color:#00C851">· Benar: ${j.soal.ans}</span>` : ''}`
+        }
       </div>
     </div>`).join('');
 
@@ -862,7 +1106,7 @@ function tampilHasil() {
   loadLocalStats();
 }
 
-function ulangLatihan() { mulaiLatihan(currentMapel); }
+function ulangLatihan() { mulaiLatihan(currentMapel, currentKelas); }
 
 // ═══════════════════════════════════════════════════════
 //  UTILS
