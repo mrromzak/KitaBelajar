@@ -1020,10 +1020,6 @@
       <label>Tahun Ajaran</label>
       <input type="text" id="bk-tahun" placeholder="contoh: 2024/2025" value="2024/2025">
     </div>
-    <div class="form-group">
-      <label>Kode Akses <span style="color:var(--muted);font-weight:400">(opsional, dikosongkan = otomatis)</span></label>
-      <input type="text" id="bk-kode" placeholder="contoh: KELAS4A" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
-    </div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModal('modal-buat-kelas')">Batal</button>
       <button class="btn-submit" onclick="submitBuatKelas()">🏫 Buat Kelas</button>
@@ -3908,17 +3904,14 @@ async function submitBuatKelas() {
   const nama = document.getElementById('bk-nama').value.trim();
   const mapel = document.getElementById('bk-mapel').value;
   const tahun = document.getElementById('bk-tahun').value.trim() || '2024/2025';
-  let kode = document.getElementById('bk-kode').value.trim().toUpperCase();
   if (!nama) { toast('Nama kelas harus diisi!', 'error'); return; }
-  if (!kode) kode = nama.replace(/\s+/g,'').substring(0,8).toUpperCase() + Math.floor(Math.random()*100);
   showLoading(true);
   try {
-    const data = await api('POST', '/kelas', { nama, mapel, tahun_ajar: tahun, kode_akses: kode });
+    const data = await api('POST', '/kelas', { nama, mapel, tahun_ajar: tahun });
     if (data.success) {
-      toast(`Kelas "${nama}" berhasil dibuat! 🎉`, 'success');
+      toast(`Kelas "${nama}" berhasil dibuat! Kode: ${data.data?.kode_akses || ''} 🎉`, 'success');
       closeModal('modal-buat-kelas');
       document.getElementById('bk-nama').value = '';
-      document.getElementById('bk-kode').value = '';
       loadGuruDashboard();
     } else {
       toast(data.pesan || 'Gagal membuat kelas', 'error');
@@ -4000,6 +3993,7 @@ async function loadGuruDashboard() {
   renderGuruMapelPanel();
   populateBuatKelasMapel();
   loadGuruSoalPreview();
+  loadPenilaian();
 }
 
 function renderQuizPenilaianCard(q) {

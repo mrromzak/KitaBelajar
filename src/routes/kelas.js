@@ -13,8 +13,18 @@ router.post('/', authMiddleware, guruOnly, async (req, res) => {
       return res.status(400).json({ success: false, pesan: 'Nama kelas dan tahun ajaran wajib diisi.' });
 
     const id = uuidv4();
-    const kode_akses = (req.body.kode_akses || '').trim().toUpperCase() || Math.random().toString(36).substring(2, 8).toUpperCase();
     const safeMapel = (mapel || '').trim();
+
+    // Generate kode unik 6 karakter (huruf kapital + angka), cek duplikat ke DB
+    const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // hapus karakter ambigu (I,O,0,1)
+    let kode_akses;
+    let attempts = 0;
+    do {
+      kode_akses = Array.from({ length: 6 }, () => CHARS[Math.floor(Math.random() * CHARS.length)]).join('');
+      const { data: existing } = await supabase.from('kelas').select('id').eq('kode_akses', kode_akses).maybeSingle();
+      if (!existing) break;
+      attempts++;
+    } while (attempts < 10);
 
     const { error } = await supabase.from('kelas').insert({ id, nama, tahun_ajar, mapel: safeMapel, guru_id: req.user.id, kode_akses });
     if (error) throw error;
