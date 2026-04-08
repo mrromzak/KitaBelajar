@@ -322,7 +322,7 @@
 //  CONFIG
 // ─────────────────────────────────────────────
 const API = '/api';
-const token = localStorage.getItem('token');
+const token = localStorage.getItem('kb_token') || localStorage.getItem('token');
 const currentUser = (() => { try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch { return {}; } })();
 
 const SUBJECT_CONFIG = {
