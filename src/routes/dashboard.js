@@ -165,14 +165,15 @@ router.get('/penilaian', authMiddleware, async (req, res) => {
 
     // Ambil semua quiz milik guru (bisa difilter per kelas)
     let quizQuery = supabase
-      .from('quiz').select('id, judul, mapel, kelas_id, tipe, deadline, created_at')
+      .from('quiz').select('id, judul, mapel, kelas_id, tipe, deadline, created_at, tipe_submission')
       .eq('guru_id', guruId).order('created_at', { ascending: false });
     if (kelas_id) quizQuery = quizQuery.eq('kelas_id', kelas_id);
 
     const { data: quizList } = await quizQuery;
     if (!quizList || quizList.length === 0) return res.json({ success: true, data: [], by_kelas: [] });
 
-    const quizIds = quizList.map(q => q.id);
+    const submissionQuizIds = quizList.filter(q => q.tipe_submission).map(q => q.id);
+    const regularQuizIds = quizList.filter(q => !q.tipe_submission).map(q => q.id);
 
     // Ambil info kelas untuk label
     const kelasIds = [...new Set(quizList.map(q => q.kelas_id).filter(Boolean))];
@@ -181,36 +182,72 @@ router.get('/penilaian', authMiddleware, async (req, res) => {
       : { data: [] };
     const kelasMap = Object.fromEntries((kelasList || []).map(k => [k.id, k]));
 
-    // Ambil semua hasil quiz
-    const { data: hasilList, error: hasilErr } = await supabase
-      .from('hasil_quiz')
-      .select('quiz_id, murid_id, skor, benar, total_soal, selesai_at, murid:murid_id(id, nama, avatar)')
-      .in('quiz_id', quizIds)
-      .order('selesai_at', { ascending: false });
-    if (hasilErr) console.error('hasil_quiz fetch error:', hasilErr.message);
+    // Ambil hasil quiz (soal biasa) + submission (tugas) secara paralel
+    const [hasilRes, submissionRes, kelasMuridRes] = await Promise.all([
+      regularQuizIds.length > 0
+        ? supabase.from('hasil_quiz').select('quiz_id, murid_id, skor, benar, total_soal, selesai_at, murid:murid_id(id, nama, avatar)').in('quiz_id', regularQuizIds).order('selesai_at', { ascending: false })
+        : { data: [] },
+      submissionQuizIds.length > 0
+        ? supabase.from('tugas_submission').select('quiz_id, murid_id, nilai, submitted_at, murid:murid_id(id, nama, avatar)').in('quiz_id', submissionQuizIds).order('submitted_at', { ascending: false })
+        : { data: [] },
+      kelasIds.length > 0
+        ? supabase.from('kelas_murid').select('kelas_id, murid_id, users:murid_id(id, nama, avatar)').in('kelas_id', kelasIds)
+        : { data: [] }
+    ]);
 
-    // Ambil daftar murid per kelas (untuk info belum mengerjakan)
-    const { data: kelasMuridList } = kelasIds.length > 0
-      ? await supabase.from('kelas_murid').select('kelas_id, murid_id, users:murid_id(id, nama, avatar)').in('kelas_id', kelasIds)
-      : { data: [] };
+    const hasilList = hasilRes.data || [];
+    const submissionList = submissionRes.data || [];
+
     // Map: kelas_id -> array of murid
     const kelasMuridMap = {};
-    (kelasMuridList || []).forEach(km => {
+    (kelasMuridRes.data || []).forEach(km => {
       if (!kelasMuridMap[km.kelas_id]) kelasMuridMap[km.kelas_id] = [];
       if (km.users) kelasMuridMap[km.kelas_id].push({ id: km.murid_id, nama: km.users.nama || 'Murid', avatar: km.users.avatar || '🦁' });
     });
 
     // Susun per quiz
     const quizResult = quizList.map(q => {
-      const hasilQuiz = (hasilList || []).filter(h => h.quiz_id === q.id);
-      const totalSkor = hasilQuiz.reduce((s, h) => s + (h.skor || 0), 0);
-      const rataRata = hasilQuiz.length > 0 ? Math.round(totalSkor / hasilQuiz.length) : null;
+      const isSubmission = !!q.tipe_submission;
       const kelas = q.kelas_id ? kelasMap[q.kelas_id] : null;
-
-      // Murid yang sudah mengerjakan
-      const sudahIds = new Set(hasilQuiz.map(h => h.murid_id));
-      // Murid yang belum mengerjakan (hanya jika quiz terikat kelas)
       const allMuridKelas = q.kelas_id ? (kelasMuridMap[q.kelas_id] || []) : [];
+
+      let hasilFormatted, sudahIds, rataRata;
+
+      if (isSubmission) {
+        // Tugas submission — ambil dari tugas_submission
+        const subs = submissionList.filter(s => s.quiz_id === q.id);
+        sudahIds = new Set(subs.map(s => s.murid_id));
+        const nilaiTerkumpul = subs.filter(s => s.nilai != null).map(s => s.nilai);
+        rataRata = nilaiTerkumpul.length > 0 ? Math.round(nilaiTerkumpul.reduce((a, b) => a + b, 0) / nilaiTerkumpul.length) : null;
+        hasilFormatted = subs.map(s => ({
+          murid_id: s.murid_id,
+          nama: s.murid?.nama || 'Murid',
+          avatar: s.murid?.avatar || '🦁',
+          skor: s.nilai,          // gunakan nilai sebagai skor
+          benar: null,
+          total_soal: null,
+          waktu_selesai: s.submitted_at,
+          is_submission: true,
+          dinilai: s.nilai != null
+        }));
+      } else {
+        // Kuis soal biasa — ambil dari hasil_quiz
+        const hasilQuiz = hasilList.filter(h => h.quiz_id === q.id);
+        sudahIds = new Set(hasilQuiz.map(h => h.murid_id));
+        const totalSkor = hasilQuiz.reduce((s, h) => s + (h.skor || 0), 0);
+        rataRata = hasilQuiz.length > 0 ? Math.round(totalSkor / hasilQuiz.length) : null;
+        hasilFormatted = hasilQuiz.map(h => ({
+          murid_id: h.murid_id,
+          nama: h.murid?.nama || 'Murid',
+          avatar: h.murid?.avatar || '🦁',
+          skor: h.skor,
+          benar: h.benar,
+          total_soal: h.total_soal,
+          waktu_selesai: h.selesai_at,
+          is_submission: false
+        }));
+      }
+
       const belumMengerjakan = allMuridKelas.filter(m => !sudahIds.has(m.id));
 
       return {
@@ -218,17 +255,9 @@ router.get('/penilaian', authMiddleware, async (req, res) => {
         kelas_nama: kelas?.nama || 'Semua Kelas',
         kelas_mapel: kelas?.mapel || q.mapel || '',
         total_murid: allMuridKelas.length,
-        total_pengerjaan: hasilQuiz.length,
+        total_pengerjaan: sudahIds.size,
         rata_rata: rataRata,
-        hasil: hasilQuiz.map(h => ({
-          murid_id: h.murid_id,
-          nama: h.murid?.nama || 'Murid',
-          avatar: h.murid?.avatar || '🦁',
-          skor: h.skor,
-          benar: h.benar,
-          total_soal: h.total_soal,
-          waktu_selesai: h.selesai_at
-        })),
+        hasil: hasilFormatted,
         belum_mengerjakan: belumMengerjakan
       };
     });

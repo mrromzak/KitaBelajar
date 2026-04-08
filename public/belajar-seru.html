@@ -301,6 +301,7 @@
       <div class="game-card gc2" onclick="bukaZepQuizMurid()" style="background:linear-gradient(135deg,#7b2ff7,#a64cff)"><div class="game-icon">🎯</div><h4>Zep Quiz</h4><p>Main bareng teman!</p></div>
       <div class="game-card gc3" onclick="window.open('zep-world.html','_blank')" style="background:linear-gradient(135deg,#1a6b3a,#2ecc71)"><div class="game-icon">🌍</div><h4>Belajar World</h4><p>Jelajahi dunia belajar!</p></div>
       <div class="game-card gc4" onclick="loadLeaderboardPage()"><div class="game-icon">🏆</div><h4>Leaderboard</h4><p>Peringkat kelasmu</p></div>
+      <div class="game-card" onclick="window.location.href='kita-latihan.html'" style="background:linear-gradient(135deg,#6C3CE1,#FF6B35);grid-column:span 2"><div class="game-icon">🚀</div><h4>Kita Latihan!</h4><p>Soal SD · SMP · SMA — pilih mapel & level, latihan sepuasnya!</p></div>
     </div>
   </div>
 </div>
@@ -4225,14 +4226,14 @@ function renderQuizPenilaianCard(q) {
       </div>
       ${q.hasil.length > 0 ? `
       <div style="padding:12px 18px">
-        <div style="font-size:11px;font-weight:800;color:var(--green);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">✅ Sudah Mengerjakan (${sudah})</div>
+        <div style="font-size:11px;font-weight:800;color:var(--green);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">✅ Sudah ${q.tipe_submission ? 'Mengumpulkan' : 'Mengerjakan'} (${sudah})</div>
         <table style="width:100%;border-collapse:collapse;font-size:13px">
           <thead>
             <tr style="color:var(--muted);border-bottom:1px solid #eee">
               <th style="text-align:left;padding:6px 0;font-weight:700">Murid</th>
-              <th style="text-align:center;padding:6px 0;font-weight:700">Skor</th>
-              <th style="text-align:center;padding:6px 0;font-weight:700">Benar</th>
-              <th style="text-align:right;padding:6px 0;font-weight:700">Waktu</th>
+              <th style="text-align:center;padding:6px 0;font-weight:700">${q.tipe_submission ? 'Nilai' : 'Skor'}</th>
+              ${!q.tipe_submission ? `<th style="text-align:center;padding:6px 0;font-weight:700">Benar</th>` : ''}
+              <th style="text-align:right;padding:6px 0;font-weight:700">${q.tipe_submission ? 'Dikumpulkan' : 'Waktu'}</th>
             </tr>
           </thead>
           <tbody>
@@ -4243,11 +4244,11 @@ function renderQuizPenilaianCard(q) {
                   <span style="font-weight:700">${h.nama}</span>
                 </td>
                 <td style="text-align:center;padding:7px 0">
-                  <span style="background:${h.skor >= 80 ? 'var(--green)' : h.skor >= 60 ? '#E6A817' : 'var(--red)'};color:white;padding:3px 10px;border-radius:50px;font-weight:800;font-size:13px">${h.skor}</span>
+                  ${h.skor != null
+                    ? `<span style="background:${h.skor >= 80 ? 'var(--green)' : h.skor >= 60 ? '#E6A817' : 'var(--red)'};color:white;padding:3px 10px;border-radius:50px;font-weight:800;font-size:13px">${h.skor}</span>`
+                    : `<span style="background:#F5F5F5;color:var(--muted);padding:3px 10px;border-radius:50px;font-weight:700;font-size:12px">Belum dinilai</span>`}
                 </td>
-                <td style="text-align:center;padding:7px 0;color:var(--muted);font-size:12px;font-weight:700">
-                  ${h.benar != null && h.total_soal ? h.benar + '/' + h.total_soal : '–'}
-                </td>
+                ${!q.tipe_submission ? `<td style="text-align:center;padding:7px 0;color:var(--muted);font-size:12px;font-weight:700">${h.benar != null && h.total_soal ? h.benar + '/' + h.total_soal : '–'}</td>` : ''}
                 <td style="text-align:right;padding:7px 0;color:var(--muted);font-size:12px">
                   ${h.waktu_selesai ? new Date(h.waktu_selesai).toLocaleDateString('id-ID', {day:'numeric',month:'short'}) + ' ' + new Date(h.waktu_selesai).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}) : '–'}
                 </td>
@@ -4256,16 +4257,16 @@ function renderQuizPenilaianCard(q) {
         </table>
         ${belum.length > 0 ? `
         <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #eee">
-          <div style="font-size:11px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">⏳ Belum Mengerjakan (${belum.length})</div>
+          <div style="font-size:11px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">⏳ Belum ${q.tipe_submission ? 'Mengumpulkan' : 'Mengerjakan'} (${belum.length})</div>
           <div style="display:flex;flex-wrap:wrap;gap:6px">
             ${belum.map(m => `<span style="background:#FFF0F0;color:var(--red);border-radius:50px;padding:4px 12px;font-size:12px;font-weight:700">${m.avatar} ${m.nama}</span>`).join('')}
           </div>
-        </div>` : (totalMurid > 0 ? `<div style="margin-top:10px;padding:8px 12px;background:#F0FFF4;border-radius:10px;font-size:13px;font-weight:700;color:var(--green)">✅ Semua murid sudah mengerjakan!</div>` : '')}
+        </div>` : (totalMurid > 0 ? `<div style="margin-top:10px;padding:8px 12px;background:#F0FFF4;border-radius:10px;font-size:13px;font-weight:700;color:var(--green)">✅ Semua murid sudah ${q.tipe_submission ? 'mengumpulkan' : 'mengerjakan'}!</div>` : '')}
       </div>` : `
       <div style="padding:14px 18px">
-        <div style="color:var(--muted);font-size:13px;margin-bottom:${belum.length > 0 ? '10px' : '0'}">Belum ada murid yang mengerjakan.</div>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:${belum.length > 0 ? '10px' : '0'}">Belum ada murid yang ${q.tipe_submission ? 'mengumpulkan' : 'mengerjakan'}.</div>
         ${belum.length > 0 ? `
-        <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">⏳ Belum Mengerjakan (${belum.length})</div>
+        <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">⏳ Belum ${q.tipe_submission ? 'Mengumpulkan' : 'Mengerjakan'} (${belum.length})</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
           ${belum.map(m => `<span style="background:#F5F5F5;color:var(--muted);border-radius:50px;padding:4px 12px;font-size:12px;font-weight:700">${m.avatar} ${m.nama}</span>`).join('')}
         </div>` : ''}

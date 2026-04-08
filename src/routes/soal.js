@@ -127,6 +127,54 @@ router.delete('/:id', authMiddleware, guruOnly, async (req, res) => {
 });
 
 // =====================================================
+// GET /api/soal/latihan — Soal latihan untuk murid (filter mapel+tingkat)
+// =====================================================
+router.get('/latihan', authMiddleware, async (req, res) => {
+  try {
+    const { mapel, tingkat, limit = 15 } = req.query;
+    let query = supabase
+      .from('soal')
+      .select('id, pertanyaan, emoji, mapel, jenis, opsi, poin, tingkat')
+      .eq('jenis', 'pilihan_ganda');
+    if (mapel) query = query.eq('mapel', mapel);
+    if (tingkat) query = query.eq('tingkat', tingkat);
+    query = query.order('created_at', { ascending: false }).limit(parseInt(limit));
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const soal = (data || []).map(s => ({
+      ...s,
+      opsi: typeof s.opsi === 'string' ? JSON.parse(s.opsi || '[]') : (s.opsi || [])
+    })).filter(s => s.opsi?.length >= 2);
+
+    res.json({ success: true, soal, total: soal.length });
+  } catch (err) {
+    console.error('[GET /soal/latihan]', err.message);
+    res.status(500).json({ success: false, pesan: 'Gagal memuat soal latihan.' });
+  }
+});
+
+// =====================================================
+// GET /api/soal/latihan/mapel — Daftar mapel tersedia di bank soal
+// =====================================================
+router.get('/latihan/mapel', authMiddleware, async (req, res) => {
+  try {
+    const { tingkat } = req.query;
+    let query = supabase.from('soal').select('mapel, tingkat').eq('jenis', 'pilihan_ganda');
+    if (tingkat) query = query.eq('tingkat', tingkat);
+    const { data } = await query;
+    const counts = {};
+    (data || []).forEach(s => { counts[s.mapel] = (counts[s.mapel] || 0) + 1; });
+    const result = Object.entries(counts).map(([mapel, total]) => ({ mapel, total }))
+      .sort((a, b) => b.total - a.total);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    res.status(500).json({ success: false, pesan: 'Gagal memuat daftar mapel.' });
+  }
+});
+
+// =====================================================
 // GET /api/soal/quiz – Ambil soal untuk dimainkan murid
 // =====================================================
 router.get('/quiz', authMiddleware, async (req, res) => {

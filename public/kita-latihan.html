@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kita Latihan! 🚀 — KitaBelajar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --purple: #6C3CE1; --purple2: #9B59F5; --purple-light: #EDE9FE;
+      --orange: #FF6B35; --orange2: #FF9A6C;
+      --gold: #F59E0B; --gold2: #FCD34D;
+      --green: #10B981; --red: #EF4444; --blue: #3B82F6;
+      --text: #1E1B4B; --muted: #6B7280;
+      --bg: #F5F3FF; --white: #FFFFFF;
+      --shadow: 0 8px 32px rgba(108,60,225,0.13);
+      --shadow-sm: 0 2px 12px rgba(108,60,225,0.10);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;min-height:100vh}
+
+    /* ── PARTICLES ── */
+    #particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden}
+    .particle{position:absolute;border-radius:50%;opacity:0.15;animation:float linear infinite}
+    @keyframes float{0%{transform:translateY(100vh) rotate(0deg)}100%{transform:translateY(-100px) rotate(360deg)}}
+
+    /* ── NAVBAR ── */
+    .navbar{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.85);backdrop-filter:blur(12px);border-bottom:1.5px solid rgba(108,60,225,0.1);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow-sm)}
+    .nav-logo{display:flex;align-items:center;gap:8px;font-family:'Fredoka One',cursive;font-size:20px;color:var(--purple);text-decoration:none}
+    .nav-logo span{font-size:22px}
+    .nav-back{display:flex;align-items:center;gap:6px;background:var(--purple-light);color:var(--purple);border:none;border-radius:50px;padding:7px 16px;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer;transition:all .2s}
+    .nav-back:hover{background:var(--purple);color:#fff;transform:translateX(-2px)}
+    .nav-xp{display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#78350F;border-radius:50px;padding:6px 14px;font-weight:800;font-size:13px}
+
+    /* ── VIEWS ── */
+    .view{display:none;position:relative;z-index:1;min-height:calc(100vh - 60px);padding:24px 20px 60px}
+    .view.active{display:block}
+
+    /* ── HERO ── */
+    .hero{text-align:center;padding:40px 0 32px;max-width:600px;margin:0 auto}
+    .hero-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--purple),var(--purple2));color:#fff;border-radius:50px;padding:6px 16px;font-size:12px;font-weight:800;letter-spacing:.5px;margin-bottom:16px;animation:bounceIn .6s ease}
+    .hero-title{font-family:'Fredoka One',cursive;font-size:clamp(32px,6vw,54px);line-height:1.15;margin-bottom:12px;background:linear-gradient(135deg,var(--purple),var(--orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:slideUp .5s ease .1s both}
+    .hero-sub{font-size:15px;color:var(--muted);font-weight:700;animation:slideUp .5s ease .2s both;margin-bottom:32px}
+    .rocket-wrap{font-size:80px;display:block;margin-bottom:8px;animation:rocketBounce 2s ease-in-out infinite}
+    @keyframes rocketBounce{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-16px) rotate(5deg)}}
+    @keyframes bounceIn{0%{transform:scale(0.5);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+    @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes popIn{0%{transform:scale(0);opacity:0}80%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+    @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+    @keyframes starPop{0%{transform:scale(0) rotate(-30deg);opacity:0}60%{transform:scale(1.3) rotate(5deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+
+    /* ── LEVEL CARDS ── */
+    .level-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;max-width:700px;margin:0 auto}
+    .level-card{border-radius:24px;padding:28px 20px;text-align:center;cursor:pointer;border:none;font-family:'Nunito',sans-serif;color:#fff;transition:transform .25s,box-shadow .25s;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+    .level-card::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(255,255,255,.15) 0%,transparent 70%);animation:shimmer 3s linear infinite;background-size:200% 100%}
+    .level-card:hover,.level-card:focus{transform:translateY(-6px) scale(1.02);box-shadow:0 16px 40px rgba(0,0,0,.2);outline:none}
+    .level-card:active{transform:scale(0.97)}
+    .level-card .lv-icon{font-size:52px;display:block;margin-bottom:12px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.2));transition:transform .3s}
+    .level-card:hover .lv-icon{transform:scale(1.15) rotate(5deg)}
+    .level-card .lv-name{font-family:'Fredoka One',cursive;font-size:26px;margin-bottom:4px}
+    .level-card .lv-desc{font-size:12px;opacity:.85;font-weight:700}
+    .level-card .lv-count{display:inline-block;background:rgba(255,255,255,.25);border-radius:50px;padding:3px 12px;font-size:12px;font-weight:800;margin-top:10px}
+    .lv-sd{background:linear-gradient(135deg,#10B981,#34D399)}
+    .lv-smp{background:linear-gradient(135deg,#3B82F6,#60A5FA)}
+    .lv-sma{background:linear-gradient(135deg,var(--purple),var(--purple2))}
+
+    /* ── SECTION TITLE ── */
+    .section-header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+    .section-back{background:var(--purple-light);color:var(--purple);border:none;border-radius:50%;width:38px;height:38px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+    .section-back:hover{background:var(--purple);color:#fff;transform:scale(1.1)}
+    .section-title{font-family:'Fredoka One',cursive;font-size:22px;color:var(--text)}
+    .section-badge{font-size:12px;font-weight:800;padding:4px 12px;border-radius:50px;margin-left:auto}
+
+    /* ── SUBJECT GRID ── */
+    .subject-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;max-width:800px;margin:0 auto}
+    .subj-card{border-radius:20px;padding:20px 14px;text-align:center;cursor:pointer;border:none;font-family:'Nunito',sans-serif;color:#fff;transition:transform .22s,box-shadow .22s;position:relative;overflow:hidden;box-shadow:var(--shadow-sm);animation:popIn .4s ease both}
+    .subj-card:hover{transform:translateY(-5px) scale(1.03);box-shadow:0 14px 36px rgba(0,0,0,.18);outline:none}
+    .subj-card:active{transform:scale(0.96)}
+    .subj-icon{font-size:38px;display:block;margin-bottom:10px;transition:transform .3s;filter:drop-shadow(0 3px 6px rgba(0,0,0,.2))}
+    .subj-card:hover .subj-icon{transform:scale(1.2) rotate(-5deg)}
+    .subj-name{font-weight:900;font-size:13px;line-height:1.3;margin-bottom:6px}
+    .subj-total{font-size:11px;opacity:.8;font-weight:700;background:rgba(255,255,255,.2);border-radius:50px;padding:2px 10px;display:inline-block}
+    .empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
+    .empty-state .e-icon{font-size:60px;margin-bottom:16px}
+    .empty-state p{font-size:15px;font-weight:700}
+    .empty-state small{font-size:13px;color:#9CA3AF}
+
+    /* ── QUIZ SCREEN ── */
+    .quiz-wrap{max-width:640px;margin:0 auto}
+    .quiz-topbar{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+    .q-progress-wrap{flex:1;height:10px;background:#E5E7EB;border-radius:50px;overflow:hidden}
+    .q-progress-bar{height:100%;background:linear-gradient(90deg,var(--purple),var(--orange));border-radius:50px;transition:width .4s ease}
+    .q-counter{font-family:'Fredoka One',cursive;font-size:15px;color:var(--muted);white-space:nowrap}
+    .q-timer{display:flex;align-items:center;gap:4px;background:linear-gradient(135deg,var(--orange),var(--orange2));color:#fff;border-radius:50px;padding:5px 14px;font-weight:900;font-size:14px;min-width:60px;justify-content:center}
+    .q-timer.urgent{animation:pulse .6s ease infinite;background:linear-gradient(135deg,var(--red),#F87171)}
+    .quiz-card{background:#fff;border-radius:24px;padding:28px;box-shadow:var(--shadow);margin-bottom:16px;animation:slideUp .35s ease}
+    .quiz-mapel{display:inline-flex;align-items:center;gap:6px;background:var(--purple-light);color:var(--purple);border-radius:50px;padding:4px 14px;font-size:12px;font-weight:800;margin-bottom:14px}
+    .quiz-emoji{font-size:40px;display:block;margin-bottom:10px}
+    .quiz-question{font-size:17px;font-weight:800;line-height:1.55;color:var(--text)}
+    .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+    .option-btn{border-radius:16px;padding:14px 16px;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;cursor:pointer;border:2.5px solid #E5E7EB;background:#fff;color:var(--text);text-align:left;display:flex;align-items:flex-start;gap:10px;transition:all .18s;line-height:1.4}
+    .option-btn:hover:not(:disabled){border-color:var(--purple);background:var(--purple-light);color:var(--purple);transform:translateY(-2px);box-shadow:var(--shadow-sm)}
+    .option-btn .opt-letter{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;border-radius:50%;background:var(--purple-light);color:var(--purple);font-size:12px;font-weight:900;flex-shrink:0;transition:all .18s}
+    .option-btn:hover:not(:disabled) .opt-letter{background:var(--purple);color:#fff}
+    .option-btn.correct{border-color:var(--green)!important;background:#ECFDF5!important;color:var(--green)!important;animation:bounceIn .3s ease}
+    .option-btn.correct .opt-letter{background:var(--green)!important;color:#fff!important}
+    .option-btn.wrong{border-color:var(--red)!important;background:#FEF2F2!important;color:var(--red)!important;animation:shake .3s ease}
+    .option-btn.wrong .opt-letter{background:var(--red)!important;color:#fff!important}
+    .option-btn:disabled{cursor:default}
+    .feedback-bar{border-radius:14px;padding:12px 16px;font-weight:800;font-size:14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;animation:slideUp .25s ease}
+    .fb-correct{background:#ECFDF5;color:var(--green);border:2px solid #6EE7B7}
+    .fb-wrong{background:#FEF2F2;color:var(--red);border:2px solid #FCA5A5}
+    .next-btn{width:100%;background:linear-gradient(135deg,var(--purple),var(--purple2));color:#fff;border:none;border-radius:16px;padding:16px;font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;cursor:pointer;transition:all .2s;display:none}
+    .next-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(108,60,225,.35)}
+    .score-pill{background:linear-gradient(135deg,var(--purple),var(--orange));color:#fff;border-radius:50px;padding:5px 16px;font-weight:900;font-size:14px}
+
+    /* ── RESULT SCREEN ── */
+    .result-wrap{max-width:500px;margin:0 auto;text-align:center;padding:20px 0}
+    .result-card{background:#fff;border-radius:28px;padding:36px 28px;box-shadow:var(--shadow);margin-bottom:20px;position:relative;overflow:hidden}
+    .result-card::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:linear-gradient(90deg,var(--purple),var(--orange),var(--gold))}
+    .result-emoji{font-size:72px;display:block;margin-bottom:8px;animation:rocketBounce 2s infinite}
+    .result-title{font-family:'Fredoka One',cursive;font-size:30px;margin-bottom:8px}
+    .result-score-wrap{margin:20px 0}
+    .result-score{font-family:'Fredoka One',cursive;font-size:72px;background:linear-gradient(135deg,var(--purple),var(--orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;display:inline-block}
+    .result-score-sub{font-size:13px;color:var(--muted);font-weight:700;margin-top:4px}
+    .stars-row{display:flex;justify-content:center;gap:8px;margin:16px 0;font-size:44px}
+    .star-item{display:inline-block;animation:starPop .4s ease both}
+    .star-item:nth-child(2){animation-delay:.15s}
+    .star-item:nth-child(3){animation-delay:.3s}
+    .xp-badge{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#78350F;border-radius:50px;padding:10px 24px;font-weight:900;font-size:16px;margin:12px auto;animation:bounceIn .5s ease .4s both}
+    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+    .stat-box{background:var(--bg);border-radius:14px;padding:14px 8px;text-align:center}
+    .stat-num{font-family:'Fredoka One',cursive;font-size:24px;color:var(--purple)}
+    .stat-lbl{font-size:11px;color:var(--muted);font-weight:700;margin-top:2px}
+    .result-btns{display:flex;gap:12px;margin-top:20px}
+    .btn-primary{flex:1;background:linear-gradient(135deg,var(--purple),var(--purple2));color:#fff;border:none;border-radius:16px;padding:15px;font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;cursor:pointer;transition:all .2s}
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(108,60,225,.35)}
+    .btn-secondary{flex:1;background:var(--purple-light);color:var(--purple);border:none;border-radius:16px;padding:15px;font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;cursor:pointer;transition:all .2s}
+    .btn-secondary:hover{background:var(--purple);color:#fff}
+    .review-list{text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:10px;max-height:300px;overflow-y:auto}
+    .review-item{background:#fff;border-radius:14px;padding:14px;border:2px solid #E5E7EB;font-size:13px}
+    .review-item.r-correct{border-color:#6EE7B7}
+    .review-item.r-wrong{border-color:#FCA5A5}
+    .review-q{font-weight:700;margin-bottom:6px;color:var(--text)}
+    .review-ans{display:flex;gap:8px;font-size:12px;font-weight:700}
+
+    /* ── LOADING ── */
+    .loading-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px}
+    .spinner{width:48px;height:48px;border:5px solid var(--purple-light);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ── CONFETTI ── */
+    .confetti-piece{position:fixed;width:10px;height:10px;border-radius:2px;pointer-events:none;z-index:9999;animation:confettiFall linear forwards}
+    @keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+
+    /* ── UTILS ── */
+    .hidden{display:none!important}
+    @media(max-width:480px){
+      .level-grid{grid-template-columns:1fr 1fr;gap:10px}
+      .level-card{padding:20px 14px}
+      .level-card .lv-icon{font-size:38px}
+      .level-card .lv-name{font-size:20px}
+      .options-grid{grid-template-columns:1fr}
+      .result-btns{flex-direction:column}
+    }
+  </style>
+</head>
+<body>
+
+<!-- Particles -->
+<div id="particles"></div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a class="nav-logo" href="belajar-seru.html">
+    <span>🌈</span> KitaBelajar
+  </a>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="nav-xp" id="nav-xp-badge">⭐ 0 XP</div>
+    <button class="nav-back" onclick="showView('home')">🏠 Beranda</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+  VIEW: HOME — Pilih Level
+════════════════════════════════════════════ -->
+<div class="view active" id="view-home">
+  <div class="hero">
+    <div class="hero-badge">🚀 KITA LATIHAN SEKARANG!</div>
+    <span class="rocket-wrap">🚀</span>
+    <h1 class="hero-title">Belajar Seru,<br>Naik Level Terus!</h1>
+    <p class="hero-sub">Pilih jenjangmu dan mulai petualangan belajar hari ini ✨</p>
+  </div>
+
+  <div class="level-grid">
+    <button class="level-card lv-sd" onclick="pilihLevel('mudah','SD')">
+      <span class="lv-icon">🌱</span>
+      <div class="lv-name">SD</div>
+      <div class="lv-desc">Sekolah Dasar</div>
+      <span class="lv-count" id="count-mudah">Memuat...</span>
+    </button>
+    <button class="level-card lv-smp" onclick="pilihLevel('sedang','SMP')">
+      <span class="lv-icon">🎓</span>
+      <div class="lv-name">SMP</div>
+      <div class="lv-desc">Sekolah Menengah Pertama</div>
+      <span class="lv-count" id="count-sedang">Memuat...</span>
+    </button>
+    <button class="level-card lv-sma" onclick="pilihLevel('sulit','SMA')">
+      <span class="lv-icon">🔥</span>
+      <div class="lv-name">SMA</div>
+      <div class="lv-desc">Sekolah Menengah Atas</div>
+      <span class="lv-count" id="count-sulit">Memuat...</span>
+    </button>
+  </div>
+
+  <!-- Streak & Info -->
+  <div style="max-width:700px;margin:28px auto 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+    <div style="background:#fff;border-radius:20px;padding:18px;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:12px">
+      <span style="font-size:32px">🔥</span>
+      <div><div style="font-family:'Fredoka One',cursive;font-size:20px;color:var(--orange)" id="streak-num">0</div><div style="font-size:12px;color:var(--muted);font-weight:700">Streak Hari Ini</div></div>
+    </div>
+    <div style="background:#fff;border-radius:20px;padding:18px;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:12px">
+      <span style="font-size:32px">⭐</span>
+      <div><div style="font-family:'Fredoka One',cursive;font-size:20px;color:var(--gold)" id="total-xp-home">0</div><div style="font-size:12px;color:var(--muted);font-weight:700">Total XP Kamu</div></div>
+    </div>
+    <div style="background:#fff;border-radius:20px;padding:18px;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:12px">
+      <span style="font-size:32px">🏆</span>
+      <div><div style="font-family:'Fredoka One',cursive;font-size:20px;color:var(--purple)" id="sesi-done">0</div><div style="font-size:12px;color:var(--muted);font-weight:700">Sesi Latihan</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  VIEW: SUBJECTS — Pilih Mapel
+════════════════════════════════════════════ -->
+<div class="view" id="view-subjects">
+  <div style="max-width:800px;margin:0 auto">
+    <div class="section-header">
+      <button class="section-back" onclick="showView('home')">←</button>
+      <div>
+        <div class="section-title" id="subj-level-title">Pilih Mata Pelajaran</div>
+        <div style="font-size:12px;color:var(--muted);font-weight:700" id="subj-level-sub">Pilih mapel yang ingin kamu latih</div>
+      </div>
+    </div>
+    <div id="subj-loading" class="loading-wrap"><div class="spinner"></div><p style="color:var(--muted);font-weight:700">Memuat mata pelajaran...</p></div>
+    <div id="subj-grid" class="subject-grid hidden"></div>
+    <div id="subj-empty" class="empty-state hidden">
+      <div class="e-icon">📭</div>
+      <p>Belum ada soal untuk jenjang ini</p>
+      <small>Minta gurumu menambahkan soal latihan yuk!</small>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  VIEW: QUIZ — Kerjakan Soal
+════════════════════════════════════════════ -->
+<div class="view" id="view-quiz">
+  <div class="quiz-wrap">
+    <!-- Top bar -->
+    <div class="quiz-topbar">
+      <button class="section-back" onclick="konfirmasiKeluar()" title="Keluar">✕</button>
+      <div class="q-progress-wrap"><div class="q-progress-bar" id="q-progress" style="width:0%"></div></div>
+      <div class="q-counter" id="q-counter">1/10</div>
+      <div class="q-timer" id="q-timer">⏱ 30</div>
+      <div class="score-pill" id="q-score">⭐ 0</div>
+    </div>
+    <!-- Question card -->
+    <div class="quiz-card" id="quiz-card">
+      <div class="quiz-mapel" id="q-mapel">📚 Mapel</div>
+      <span class="quiz-emoji" id="q-emoji">❓</span>
+      <div class="quiz-question" id="q-question">Memuat soal...</div>
+    </div>
+    <!-- Options -->
+    <div class="options-grid" id="options-grid"></div>
+    <!-- Feedback -->
+    <div id="feedback-bar" class="hidden"></div>
+    <!-- Next -->
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">
+      Lanjut <span id="next-label">→</span>
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  VIEW: RESULT
+════════════════════════════════════════════ -->
+<div class="view" id="view-result">
+  <div class="result-wrap">
+    <div class="result-card">
+      <span class="result-emoji" id="res-emoji">🎉</span>
+      <div class="result-title" id="res-title">Luar Biasa!</div>
+      <div class="stars-row" id="res-stars"></div>
+      <div class="result-score-wrap">
+        <div class="result-score" id="res-score">0</div>
+        <div class="result-score-sub">SKOR AKHIR</div>
+      </div>
+      <div class="xp-badge" id="res-xp">⭐ +0 XP didapat!</div>
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-num" id="res-benar">0</div><div class="stat-lbl">✅ Benar</div></div>
+        <div class="stat-box"><div class="stat-num" id="res-salah">0</div><div class="stat-lbl">❌ Salah</div></div>
+        <div class="stat-box"><div class="stat-num" id="res-waktu">0s</div><div class="stat-lbl">⏱ Waktu</div></div>
+      </div>
+      <div class="result-btns">
+        <button class="btn-secondary" onclick="ulangLatihan()">🔄 Ulangi</button>
+        <button class="btn-primary" onclick="showView('home')">🏠 Beranda</button>
+      </div>
+    </div>
+    <!-- Review -->
+    <div id="review-section" style="max-width:500px;margin:0 auto">
+      <div style="font-family:'Fredoka One',cursive;font-size:18px;color:var(--text);margin-bottom:12px">📝 Review Jawaban</div>
+      <div class="review-list" id="review-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  CONFIG
+// ─────────────────────────────────────────────
+const API = '/api';
+const token = localStorage.getItem('token');
+const currentUser = (() => { try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch { return {}; } })();
+
+const SUBJECT_CONFIG = {
+  'Matematika':      { icon:'🔢', bg:'linear-gradient(135deg,#667eea,#764ba2)' },
+  'IPA':             { icon:'🔬', bg:'linear-gradient(135deg,#11998e,#38ef7d)' },
+  'Fisika':          { icon:'⚛️',  bg:'linear-gradient(135deg,#4D96FF,#818CF8)' },
+  'Kimia':           { icon:'🧪', bg:'linear-gradient(135deg,#f093fb,#f5576c)' },
+  'Biologi':         { icon:'🌿', bg:'linear-gradient(135deg,#11998e,#4CAF50)' },
+  'Bahasa Indonesia':{ icon:'📖', bg:'linear-gradient(135deg,#FF6B35,#FF9A6C)' },
+  'Bahasa Inggris':  { icon:'🌍', bg:'linear-gradient(135deg,#0099F7,#5B86E5)' },
+  'IPS':             { icon:'🗺️', bg:'linear-gradient(135deg,#f7971e,#ffd200)' },
+  'Sejarah':         { icon:'🏛️', bg:'linear-gradient(135deg,#c94b4b,#8B0000)' },
+  'Geografi':        { icon:'🌏', bg:'linear-gradient(135deg,#1CB5E0,#000851)' },
+  'Ekonomi':         { icon:'💰', bg:'linear-gradient(135deg,#F9A825,#F57F17)' },
+  'Sosiologi':       { icon:'👥', bg:'linear-gradient(135deg,#ee9ca7,#C850C0)' },
+  'PKn':             { icon:'🇮🇩', bg:'linear-gradient(135deg,#DC143C,#8B0000)' },
+  'Agama':           { icon:'📿', bg:'linear-gradient(135deg,#a8edea,#2193b0)' },
+};
+const DEFAULT_SUBJ = { icon:'📚', bg:'linear-gradient(135deg,#6C3CE1,#9B59F5)' };
+
+// ─────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────
+let currentLevel = '', currentLevelLabel = '';
+let currentMapel = '';
+let soalList = [], currentIdx = 0, jawabanUser = [];
+let score = 0, benarCount = 0, timerInterval = null, timerSisa = 30;
+let sessionStart = 0, totalSesiDone = 0, sessionXP = 0;
+
+// ─────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────
+(function init() {
+  if (!token) { window.location.href = 'belajar-seru.html'; return; }
+  buatParticles();
+  updateXPBadge();
+  loadLevelCounts();
+  loadLocalStats();
+})();
+
+function updateXPBadge() {
+  const xp = currentUser?.xp || 0;
+  document.getElementById('nav-xp-badge').textContent = `⭐ ${xp.toLocaleString('id-ID')} XP`;
+  document.getElementById('total-xp-home').textContent = xp.toLocaleString('id-ID');
+}
+
+function loadLocalStats() {
+  const done = parseInt(localStorage.getItem('kl_sesi') || '0');
+  totalSesiDone = done;
+  document.getElementById('sesi-done').textContent = done;
+  const streak = localStorage.getItem('kl_streak_date') === today()
+    ? parseInt(localStorage.getItem('kl_streak') || '0') : 0;
+  document.getElementById('streak-num').textContent = streak;
+}
+
+function today() { return new Date().toISOString().split('T')[0]; }
+
+async function loadLevelCounts() {
+  const levels = ['mudah','sedang','sulit'];
+  for (const lv of levels) {
+    try {
+      const res = await fetch(`${API}/soal/latihan/mapel?tingkat=${lv}`, { headers:{ Authorization:`Bearer ${token}` } });
+      const d = await res.json();
+      const total = (d.data || []).reduce((s, m) => s + m.total, 0);
+      document.getElementById(`count-${lv}`).textContent = `${total} soal tersedia`;
+    } catch { document.getElementById(`count-${lv}`).textContent = '–'; }
+  }
+}
+
+// ─────────────────────────────────────────────
+//  VIEWS
+// ─────────────────────────────────────────────
+function showView(name) {
+  stopTimer();
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name)?.classList.add('active');
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+// ─────────────────────────────────────────────
+//  LEVEL → SUBJECTS
+// ─────────────────────────────────────────────
+async function pilihLevel(tingkat, label) {
+  currentLevel = tingkat; currentLevelLabel = label;
+  document.getElementById('subj-level-title').textContent = `Mata Pelajaran — ${label}`;
+  document.getElementById('subj-level-sub').textContent =
+    tingkat === 'mudah' ? '🌱 Jenjang SD · Pilih pelajaran favoritmu' :
+    tingkat === 'sedang' ? '🎓 Jenjang SMP · Tantang dirimu!' : '🔥 Jenjang SMA · Level tertinggi!';
+  showView('subjects');
+  document.getElementById('subj-loading').classList.remove('hidden');
+  document.getElementById('subj-grid').classList.add('hidden');
+  document.getElementById('subj-empty').classList.add('hidden');
+  try {
+    const res = await fetch(`${API}/soal/latihan/mapel?tingkat=${tingkat}`, { headers:{ Authorization:`Bearer ${token}` } });
+    const d = await res.json();
+    document.getElementById('subj-loading').classList.add('hidden');
+    const mapelList = d.data || [];
+    if (mapelList.length === 0) { document.getElementById('subj-empty').classList.remove('hidden'); return; }
+    const grid = document.getElementById('subj-grid');
+    grid.innerHTML = mapelList.map((m, i) => {
+      const cfg = SUBJECT_CONFIG[m.mapel] || DEFAULT_SUBJ;
+      return `<button class="subj-card" style="background:${cfg.bg};animation-delay:${i * 0.05}s"
+        onclick="mulaiLatihan('${m.mapel.replace(/'/g,"\\'")}')">
+        <span class="subj-icon">${cfg.icon}</span>
+        <div class="subj-name">${m.mapel}</div>
+        <span class="subj-total">${m.total} soal</span>
+      </button>`;
+    }).join('');
+    grid.classList.remove('hidden');
+  } catch {
+    document.getElementById('subj-loading').classList.add('hidden');
+    document.getElementById('subj-empty').classList.remove('hidden');
+  }
+}
+
+// ─────────────────────────────────────────────
+//  LATIHAN QUIZ
+// ─────────────────────────────────────────────
+async function mulaiLatihan(mapel) {
+  currentMapel = mapel;
+  showView('quiz');
+  document.getElementById('quiz-card').innerHTML = `<div class="loading-wrap"><div class="spinner"></div><p style="color:var(--muted);font-weight:700">Memuat soal ${mapel}...</p></div>`;
+  document.getElementById('options-grid').innerHTML = '';
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('feedback-bar').classList.add('hidden');
+  try {
+    const res = await fetch(`${API}/soal/latihan?mapel=${encodeURIComponent(mapel)}&tingkat=${currentLevel}&limit=10`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const d = await res.json();
+    soalList = shuffle(d.soal || []);
+    if (soalList.length === 0) {
+      document.getElementById('quiz-card').innerHTML = `<div class="empty-state"><div class="e-icon">📭</div><p>Belum ada soal untuk ${mapel}</p><small>Minta guru menambahkan soal dulu ya!</small></div>`;
+      return;
+    }
+    currentIdx = 0; score = 0; benarCount = 0; jawabanUser = []; sessionXP = 0;
+    sessionStart = Date.now();
+    tampilSoal();
+  } catch {
+    document.getElementById('quiz-card').innerHTML = `<div class="empty-state"><div class="e-icon">⚠️</div><p>Gagal memuat soal</p><small>Periksa koneksi internetmu</small></div>`;
+  }
+}
+
+function tampilSoal() {
+  const s = soalList[currentIdx];
+  const total = soalList.length;
+  // Progress
+  const pct = (currentIdx / total) * 100;
+  document.getElementById('q-progress').style.width = pct + '%';
+  document.getElementById('q-counter').textContent = `${currentIdx + 1}/${total}`;
+  document.getElementById('q-score').textContent = `⭐ ${score}`;
+  // Card
+  document.getElementById('quiz-card').innerHTML = `
+    <div class="quiz-mapel">${(SUBJECT_CONFIG[s.mapel] || DEFAULT_SUBJ).icon} ${s.mapel} · ${currentLevelLabel}</div>
+    <span class="quiz-emoji">${s.emoji || '❓'}</span>
+    <div class="quiz-question">${s.pertanyaan}</div>`;
+  // Options
+  const letters = ['A','B','C','D'];
+  const opts = Array.isArray(s.opsi) ? s.opsi : JSON.parse(s.opsi || '[]');
+  document.getElementById('options-grid').innerHTML = opts.map((o, i) =>
+    `<button class="option-btn" onclick="pilihJawaban(this,'${escStr(o)}')">
+      <span class="opt-letter">${letters[i]}</span> ${o}
+    </button>`).join('');
+  document.getElementById('feedback-bar').classList.add('hidden');
+  document.getElementById('next-btn').style.display = 'none';
+  // Timer
+  mulaiTimer(30);
+}
+
+function mulaiTimer(detik) {
+  stopTimer(); timerSisa = detik;
+  const el = document.getElementById('q-timer');
+  el.classList.remove('urgent');
+  updateTimerUI(el);
+  timerInterval = setInterval(() => {
+    timerSisa--;
+    updateTimerUI(el);
+    if (timerSisa <= 8) el.classList.add('urgent');
+    if (timerSisa <= 0) { stopTimer(); handleTimeout(); }
+  }, 1000);
+}
+function stopTimer() { clearInterval(timerInterval); }
+function updateTimerUI(el) { el.textContent = `⏱ ${timerSisa}`; }
+
+function handleTimeout() {
+  const s = soalList[currentIdx];
+  jawabanUser.push({ soal:s, jawaban:null, benar:false });
+  document.querySelectorAll('.option-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent.trim().includes(s.jawaban)) b.classList.add('correct');
+  });
+  tampilFeedback(false, '⏰ Waktu habis! Jawaban benar: ' + s.jawaban);
+}
+
+function pilihJawaban(btn, jawaban) {
+  stopTimer();
+  const s = soalList[currentIdx];
+  const benar = jawaban.trim() === (s.jawaban || '').trim();
+  document.querySelectorAll('.option-btn').forEach(b => {
+    b.disabled = true;
+    const bJawaban = b.textContent.replace(/^[A-D]\s*/,'').trim();
+    if (bJawaban === (s.jawaban||'').trim()) b.classList.add('correct');
+  });
+  if (!benar) btn.classList.add('wrong');
+  jawabanUser.push({ soal:s, jawaban, benar });
+  if (benar) {
+    benarCount++;
+    const xpDapat = s.poin || 100;
+    const timeBonus = Math.floor(timerSisa * 2);
+    const gain = xpDapat + timeBonus;
+    score += gain; sessionXP += gain;
+    tampilFeedback(true, `✅ Benar! +${gain} XP (bonus waktu: +${timeBonus})`);
+  } else {
+    tampilFeedback(false, `❌ Jawaban benar: "${s.jawaban}"`);
+  }
+  document.getElementById('q-score').textContent = `⭐ ${score}`;
+}
+
+function tampilFeedback(benar, pesan) {
+  const fb = document.getElementById('feedback-bar');
+  fb.className = `feedback-bar ${benar ? 'fb-correct' : 'fb-wrong'}`;
+  fb.textContent = pesan;
+  fb.classList.remove('hidden');
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'block';
+  const isLast = currentIdx >= soalList.length - 1;
+  document.getElementById('next-label').textContent = isLast ? '🏁 Lihat Hasil' : '→';
+  nextBtn.textContent = isLast ? '🏁 Lihat Hasil' : `Lanjut →`;
+}
+
+function nextQuestion() {
+  currentIdx++;
+  if (currentIdx >= soalList.length) {
+    tampilHasil(); return;
+  }
+  tampilSoal();
+}
+
+function konfirmasiKeluar() {
+  if (confirm('Keluar dari latihan? Progress akan hilang.')) {
+    stopTimer(); showView('subjects');
+  }
+}
+
+// ─────────────────────────────────────────────
+//  RESULT
+// ─────────────────────────────────────────────
+function tampilHasil() {
+  stopTimer();
+  const totalSoal = soalList.length;
+  const salah = totalSoal - benarCount;
+  const pct = Math.round((benarCount / totalSoal) * 100);
+  const waktuDetik = Math.round((Date.now() - sessionStart) / 1000);
+
+  // Update local stats
+  totalSesiDone++;
+  localStorage.setItem('kl_sesi', totalSesiDone);
+  const strDate = localStorage.getItem('kl_streak_date');
+  const streak = strDate === today() ? parseInt(localStorage.getItem('kl_streak')||'0') + 1 : 1;
+  localStorage.setItem('kl_streak', streak);
+  localStorage.setItem('kl_streak_date', today());
+
+  showView('result');
+
+  // Stars
+  const stars = pct >= 90 ? 3 : pct >= 60 ? 2 : 1;
+  const emoji = pct >= 90 ? '🏆' : pct >= 60 ? '🎉' : '💪';
+  const title = pct >= 90 ? 'Luar Biasa! Sempurna!' : pct >= 60 ? 'Kerja Bagus!' : 'Terus Semangat!';
+
+  document.getElementById('res-emoji').textContent = emoji;
+  document.getElementById('res-title').textContent = title;
+  document.getElementById('res-score').textContent = score;
+  document.getElementById('res-xp').textContent = `⭐ +${sessionXP} XP didapat!`;
+  document.getElementById('res-benar').textContent = benarCount;
+  document.getElementById('res-salah').textContent = salah;
+  document.getElementById('res-waktu').textContent = waktuDetik + 's';
+  document.getElementById('res-stars').innerHTML =
+    Array.from({length:3}, (_,i) => `<span class="star-item">${i < stars ? '⭐' : '☆'}</span>`).join('');
+
+  // Review
+  document.getElementById('review-list').innerHTML = jawabanUser.map((j, i) => `
+    <div class="review-item ${j.benar ? 'r-correct' : 'r-wrong'}">
+      <div class="review-q">${i+1}. ${j.soal.pertanyaan}</div>
+      <div class="review-ans">
+        <span style="color:${j.benar ? 'var(--green)' : 'var(--red)'}">${j.benar ? '✅' : '❌'} Kamu: ${j.jawaban || 'Waktu habis'}</span>
+        ${!j.benar ? `<span style="color:var(--green)">· Benar: ${j.soal.jawaban}</span>` : ''}
+      </div>
+    </div>`).join('');
+
+  if (pct >= 70) confetti();
+}
+
+function ulangLatihan() { mulaiLatihan(currentMapel); }
+
+// ─────────────────────────────────────────────
+//  UTILS
+// ─────────────────────────────────────────────
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function escStr(s) { return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+
+function buatParticles() {
+  const container = document.getElementById('particles');
+  const colors = ['#6C3CE1','#FF6B35','#F59E0B','#10B981','#3B82F6','#EC4899'];
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 24 + 8;
+    p.style.cssText = `width:${size}px;height:${size}px;background:${colors[i%colors.length]};left:${Math.random()*100}%;animation-duration:${Math.random()*12+8}s;animation-delay:${Math.random()*8}s`;
+    container.appendChild(p);
+  }
+}
+
+function confetti() {
+  const colors = ['#6C3CE1','#FF6B35','#F59E0B','#10B981','#EC4899','#3B82F6'];
+  for (let i = 0; i < 60; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      const size = Math.random() * 10 + 6;
+      el.style.cssText = `left:${Math.random()*100}%;top:-20px;width:${size}px;height:${size}px;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:${Math.random()>0.5?'50%':'2px'};animation-duration:${Math.random()*2+1.5}s;animation-delay:0s`;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }, i * 40);
+  }
+}
+</script>
+</body>
+</html>
