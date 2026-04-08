@@ -6321,8 +6321,8 @@ function renderKuisCard(q, isGuru) {
   const isSubmission = !!q.tipe_submission;
 
   if (isGuru) {
-    actionHtml = `<div style="display:flex;gap:6px">
-      ${isSubmission ? `<button class="btn-icon btn-edit" onclick="lihatSubmissionGuru('${q.id}','${(q.judul||'').replace(/'/g,"\\'")}') " title="Lihat Submission">📋</button>` : ''}
+    actionHtml = `<div style="display:flex;gap:6px;align-items:center">
+      ${isSubmission ? `<button onclick="lihatSubmissionGuru('${q.id}','${(q.judul||'').replace(/'/g,"\\'")}','${q.kelas_id||''}')" style="background:#EEF5FF;color:var(--blue);border:none;border-radius:10px;padding:7px 14px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap">📋 Lihat Submission</button>` : ''}
       <button class="btn-icon btn-delete" onclick="hapusKuis('${q.id}','${(q.judul||'').replace(/'/g,"\\'")}') " title="Hapus">🗑️</button>
     </div>`;
   } else if (isSubmission) {
@@ -7101,43 +7101,88 @@ async function submitTugas() {
 // ============================================================
 //  LIHAT SUBMISSION (GURU)
 // ============================================================
-async function lihatSubmissionGuru(quizId, judul) {
+async function lihatSubmissionGuru(quizId, judul, kelasId) {
   document.getElementById('sub-lihat-judul').textContent = '📋 ' + judul;
-  document.getElementById('sub-lihat-list').innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat...</div>';
+  const listEl = document.getElementById('sub-lihat-list');
+  listEl.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat...</div>';
   openModal('modal-lihat-submission');
   try {
-    const res = await api('GET', `/quiz/${quizId}/submissions`);
-    if (!res.success) { document.getElementById('sub-lihat-list').innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px">Gagal memuat.</div>'; return; }
-    if (!res.data || res.data.length === 0) {
-      document.getElementById('sub-lihat-list').innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px"><div style="font-size:40px;margin-bottom:10px">📭</div>Belum ada murid yang mengumpulkan.</div>';
-      return;
-    }
+    // Ambil submissions & daftar murid di kelas secara paralel
+    const [res, kelasRes] = await Promise.all([
+      api('GET', `/quiz/${quizId}/submissions`),
+      kelasId ? api('GET', `/kelas/${kelasId}`) : Promise.resolve(null)
+    ]);
+
+    if (!res.success) { listEl.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px">Gagal memuat.</div>'; return; }
+
+    const submissions = res.data || [];
+    const semuaMurid = kelasRes?.data?.murid || [];
+    const sudahIds = new Set(submissions.map(s => s.murid_id || s.murid?.id));
+    const belumMurid = semuaMurid.filter(m => !sudahIds.has(m.id));
+
     const tipeIcon = { file:'📄', gambar:'🖼️', link:'🔗', teks:'✏️' };
-    document.getElementById('sub-lihat-list').innerHTML = res.data.map(s => `
-      <div style="border:2px solid #eee;border-radius:14px;overflow:hidden">
+
+    // Ringkasan
+    const ringkasan = `<div style="display:flex;gap:10px;margin-bottom:16px">
+      <div style="flex:1;background:#F0FFF4;border-radius:12px;padding:12px;text-align:center">
+        <div style="font-size:24px;font-weight:900;color:var(--green)">${submissions.length}</div>
+        <div style="font-size:12px;color:var(--muted);font-weight:700">Sudah Mengumpulkan</div>
+      </div>
+      <div style="flex:1;background:#FFF5F5;border-radius:12px;padding:12px;text-align:center">
+        <div style="font-size:24px;font-weight:900;color:var(--red)">${belumMurid.length}</div>
+        <div style="font-size:12px;color:var(--muted);font-weight:700">Belum Mengumpulkan</div>
+      </div>
+    </div>`;
+
+    // Daftar yang sudah
+    const sudahHtml = submissions.length === 0
+      ? `<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">📭 Belum ada murid yang mengumpulkan.</div>`
+      : submissions.map(s => `
+      <div style="border:2px solid #eee;border-radius:14px;overflow:hidden;margin-bottom:10px">
         <div style="padding:12px 14px;display:flex;align-items:center;gap:10px;background:#F8F9FA">
           <span style="font-size:22px">${s.murid?.avatar || '🦁'}</span>
           <div style="flex:1">
             <div style="font-weight:800;font-size:14px">${s.murid?.nama || 'Murid'}</div>
-            <div style="font-size:11px;color:var(--muted)">${tipeIcon[s.tipe]||'📤'} ${s.tipe} · ${new Date(s.submitted_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})} ${new Date(s.submitted_at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</div>
+            <div style="font-size:11px;color:var(--muted)">${tipeIcon[s.tipe]||'📤'} ${s.tipe} · ${new Date(s.submitted_at).toLocaleDateString('id-ID',{day:'numeric',month:'short'})} ${new Date(s.submitted_at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</div>
           </div>
-          ${s.nilai != null ? `<span style="background:${s.nilai>=80?'var(--green)':s.nilai>=60?'var(--orange)':'var(--red)'};color:white;padding:4px 12px;border-radius:50px;font-weight:800;font-size:13px">${s.nilai}</span>` : ''}
+          ${s.nilai != null ? `<span style="background:${s.nilai>=80?'var(--green)':s.nilai>=60?'var(--orange)':'var(--red)'};color:white;padding:4px 12px;border-radius:50px;font-weight:800;font-size:13px">${s.nilai}</span>` : '<span style="font-size:11px;color:var(--muted);font-weight:700">Belum dinilai</span>'}
         </div>
         <div style="padding:12px 14px">
-          ${s.tipe === 'teks' ? `<div style="font-size:13px;line-height:1.7;color:var(--text);background:#F8F9FA;border-radius:8px;padding:10px">${(s.konten||'').replace(/\n/g,'<br>')}</div>` : ''}
-          ${s.tipe === 'link' ? `<a href="${s.konten}" target="_blank" rel="noopener" style="color:var(--blue);font-weight:700;font-size:13px;word-break:break-all">${s.konten}</a>` : ''}
-          ${s.tipe === 'file' ? `<a href="${s.file_url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:#EEF5FF;color:var(--blue);border-radius:8px;padding:8px 14px;font-weight:800;font-size:13px;text-decoration:none">📄 ${s.file_nama || 'Unduh File'}</a>` : ''}
-          ${s.tipe === 'gambar' ? `<img src="${s.file_url}" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid #eee;cursor:pointer" onclick="window.open('${s.file_url}','_blank')">` : ''}
-          ${s.catatan ? `<div style="margin-top:8px;font-size:12px;color:var(--muted);font-style:italic">"${s.catatan}"</div>` : ''}
-          ${s.feedback ? `<div style="margin-top:8px;background:#F0FFF4;border-radius:8px;padding:8px 12px;font-size:12px;color:var(--green);font-weight:700">💬 ${s.feedback}</div>` : ''}
-          <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
-            <input type="number" min="0" max="100" placeholder="Nilai (0-100)" id="nilai-${s.id}" value="${s.nilai??''}" style="width:110px;padding:8px 10px;border:2px solid #eee;border-radius:8px;font-family:Nunito,sans-serif;font-size:13px;outline:none">
-            <input type="text" placeholder="Feedback..." id="feedback-${s.id}" value="${s.feedback||''}" style="flex:1;padding:8px 10px;border:2px solid #eee;border-radius:8px;font-family:Nunito,sans-serif;font-size:13px;outline:none">
-            <button onclick="simpanNilaiSubmission('${quizId}','${s.id}')" style="background:var(--blue);color:white;border:none;padding:8px 16px;border-radius:8px;font-family:Nunito,sans-serif;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap">💾 Simpan</button>
+          ${s.tipe === 'teks' ? `<div style="font-size:13px;line-height:1.7;color:var(--text);background:#F8F9FA;border-radius:8px;padding:10px;margin-bottom:10px">${(s.konten||'').replace(/\n/g,'<br>')}</div>` : ''}
+          ${s.tipe === 'link' ? `<a href="${s.konten}" target="_blank" rel="noopener" style="display:inline-block;margin-bottom:10px;color:var(--blue);font-weight:700;font-size:13px;word-break:break-all">${s.konten}</a>` : ''}
+          ${s.tipe === 'file' ? `<a href="${s.file_url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:#EEF5FF;color:var(--blue);border-radius:8px;padding:8px 14px;font-weight:800;font-size:13px;text-decoration:none;margin-bottom:10px">📄 ${s.file_nama || 'Unduh File'} <span style="font-size:11px;font-weight:600;opacity:0.7">(${s.file_size ? (s.file_size/1024).toFixed(0)+'KB' : ''})</span></a>` : ''}
+          ${s.tipe === 'gambar' ? `<img src="${s.file_url}" style="max-width:100%;max-height:220px;border-radius:8px;border:1px solid #eee;cursor:pointer;display:block;margin-bottom:10px" onclick="window.open('${s.file_url}','_blank')" title="Klik untuk buka penuh">` : ''}
+          ${s.catatan ? `<div style="margin-bottom:8px;font-size:12px;color:var(--muted);font-style:italic;background:#F8F9FA;border-radius:8px;padding:8px 10px">💬 "${s.catatan}"</div>` : ''}
+          ${s.feedback ? `<div style="margin-bottom:8px;background:#F0FFF4;border-radius:8px;padding:8px 12px;font-size:12px;color:var(--green);font-weight:700">✅ Feedback: ${s.feedback}</div>` : ''}
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="number" min="0" max="100" placeholder="Nilai 0-100" id="nilai-${s.id}" value="${s.nilai??''}" style="width:100px;padding:7px 10px;border:2px solid #eee;border-radius:8px;font-family:Nunito,sans-serif;font-size:13px;outline:none">
+            <input type="text" placeholder="Tulis feedback..." id="feedback-${s.id}" value="${s.feedback||''}" style="flex:1;padding:7px 10px;border:2px solid #eee;border-radius:8px;font-family:Nunito,sans-serif;font-size:13px;outline:none">
+            <button onclick="simpanNilaiSubmission('${quizId}','${s.id}')" style="background:var(--blue);color:white;border:none;padding:7px 14px;border-radius:8px;font-family:Nunito,sans-serif;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap">💾 Simpan</button>
           </div>
         </div>
       </div>`).join('');
-  } catch(e) { document.getElementById('sub-lihat-list').innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px">Gagal memuat submission.</div>'; }
+
+    // Daftar yang belum
+    const belumHtml = belumMurid.length > 0
+      ? `<div style="margin-top:16px">
+          <div style="font-weight:800;font-size:13px;color:var(--red);margin-bottom:8px">⏳ Belum Mengumpulkan (${belumMurid.length})</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            ${belumMurid.map(m => `
+              <div style="display:flex;align-items:center;gap:10px;background:#FFF5F5;border-radius:10px;padding:10px 12px">
+                <span style="font-size:18px">${m.avatar || '🦁'}</span>
+                <span style="font-weight:700;font-size:13px">${m.nama}</span>
+                <span style="margin-left:auto;font-size:11px;color:var(--red);font-weight:700">Belum</span>
+              </div>`).join('')}
+          </div>
+        </div>` : '';
+
+    listEl.innerHTML = ringkasan +
+      `<div style="font-weight:800;font-size:13px;color:var(--green);margin-bottom:8px">✅ Sudah Mengumpulkan (${submissions.length})</div>` +
+      sudahHtml + belumHtml;
+
+  } catch(e) {
+    listEl.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px">Gagal memuat submission.</div>';
+  }
 }
 
 async function simpanNilaiSubmission(quizId, subId) {
