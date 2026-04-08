@@ -2555,9 +2555,12 @@ async function loadAktivitasAnak(muridId, namaMurid) {
   try {
     const data = await api('GET', `/orangtua/aktivitas/${muridId}`);
     if (!data.success) throw new Error(data.pesan);
-    const { murid, kelas, hasil_quiz, materi_selesai, total_materi_selesai } = data.data;
+    const { murid, kelas, hasil_quiz, tugas_submission, materi_selesai, total_materi_selesai } = data.data;
     const rataQuiz = hasil_quiz.length > 0
       ? Math.round(hasil_quiz.reduce((s, h) => s + (h.skor || 0), 0) / hasil_quiz.length)
+      : null;
+    const rataTugas = (tugas_submission || []).filter(t => t.nilai != null).length > 0
+      ? Math.round((tugas_submission || []).filter(t => t.nilai != null).reduce((s,t) => s + t.nilai, 0) / (tugas_submission || []).filter(t => t.nilai != null).length)
       : null;
 
     el.innerHTML = `
@@ -2576,18 +2579,22 @@ async function loadAktivitasAnak(muridId, namaMurid) {
       </div>
 
       <!-- Statistik Ringkas -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
         <div style="background:white;border-radius:14px;padding:16px;text-align:center;box-shadow:var(--shadow)">
           <div style="font-size:28px;font-weight:900;color:var(--blue)">${kelas.length}</div>
           <div style="font-size:12px;color:var(--muted);font-weight:700">Kelas</div>
         </div>
         <div style="background:white;border-radius:14px;padding:16px;text-align:center;box-shadow:var(--shadow)">
           <div style="font-size:28px;font-weight:900;color:var(--orange)">${hasil_quiz.length}</div>
-          <div style="font-size:12px;color:var(--muted);font-weight:700">Quiz Dikerjakan</div>
+          <div style="font-size:12px;color:var(--muted);font-weight:700">Quiz</div>
         </div>
         <div style="background:white;border-radius:14px;padding:16px;text-align:center;box-shadow:var(--shadow)">
-          <div style="font-size:28px;font-weight:900;color:var(--green)">${rataQuiz !== null ? rataQuiz : '–'}</div>
-          <div style="font-size:12px;color:var(--muted);font-weight:700">Rata-rata Nilai</div>
+          <div style="font-size:28px;font-weight:900;color:#7C3AED">${(tugas_submission||[]).length}</div>
+          <div style="font-size:12px;color:var(--muted);font-weight:700">Tugas</div>
+        </div>
+        <div style="background:white;border-radius:14px;padding:16px;text-align:center;box-shadow:var(--shadow)">
+          <div style="font-size:28px;font-weight:900;color:var(--green)">${rataQuiz !== null ? rataQuiz : rataTugas !== null ? rataTugas : '–'}</div>
+          <div style="font-size:12px;color:var(--muted);font-weight:700">Rata-rata</div>
         </div>
       </div>
 
@@ -2629,6 +2636,41 @@ async function loadAktivitasAnak(muridId, namaMurid) {
                     ${h.selesai_at ? new Date(h.selesai_at).toLocaleDateString('id-ID',{day:'numeric',month:'short'}) : '–'}
                   </td>
                 </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>` : ''}
+
+      <!-- Tugas Submission -->
+      ${(tugas_submission||[]).length > 0 ? `
+        <div style="background:white;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow)">
+          <div style="font-weight:800;font-size:15px;margin-bottom:12px">📋 Tugas yang Dikumpulkan</div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead><tr style="color:var(--muted);border-bottom:1px solid #eee">
+              <th style="text-align:left;padding:8px 0;font-weight:700">Tugas</th>
+              <th style="text-align:center;padding:8px 0;font-weight:700">Tipe</th>
+              <th style="text-align:center;padding:8px 0;font-weight:700">Nilai</th>
+              <th style="text-align:right;padding:8px 0;font-weight:700">Dikumpulkan</th>
+            </tr></thead>
+            <tbody>
+              ${(tugas_submission||[]).map(t => {
+                const tipeIcon = {'file':'📄','gambar':'🖼️','link':'🔗','teks':'✏️','semua':'📤'}[t.tipe] || '📤';
+                const nilaiColor = t.nilai == null ? 'var(--muted)' : t.nilai >= 80 ? 'var(--green)' : t.nilai >= 60 ? 'var(--yellow)' : 'var(--red)';
+                return `<tr style="border-bottom:1px solid #f5f5f5">
+                  <td style="padding:8px 0">
+                    <div style="font-weight:700">${t.quiz?.judul || '–'}</div>
+                    <div style="font-size:11px;color:var(--muted)">${t.quiz?.mapel || ''}</div>
+                  </td>
+                  <td style="text-align:center;padding:8px 0">${tipeIcon}</td>
+                  <td style="text-align:center;padding:8px 0">
+                    ${t.nilai != null
+                      ? `<span style="background:${nilaiColor};color:white;padding:3px 12px;border-radius:50px;font-weight:800">${t.nilai}</span>`
+                      : `<span style="color:var(--muted);font-size:12px;font-weight:700">Belum dinilai</span>`}
+                  </td>
+                  <td style="text-align:right;padding:8px 0;color:var(--muted);font-size:12px">
+                    ${t.submitted_at ? new Date(t.submitted_at).toLocaleDateString('id-ID',{day:'numeric',month:'short'}) : '–'}
+                  </td>
+                </tr>`;
+              }).join('')}
             </tbody>
           </table>
         </div>` : ''}

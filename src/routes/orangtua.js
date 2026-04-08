@@ -74,6 +74,14 @@ router.get('/aktivitas/:murid_id', authMiddleware, orangtuaOnly, async (req, res
       return true;
     }).slice(0, 10);
 
+    // Ambil tugas submission yang dikumpulkan
+    const { data: tugasSubmission } = await supabase
+      .from('tugas_submission')
+      .select('quiz_id, nilai, submitted_at, tipe, konten, catatan, quiz:quiz_id(judul, mapel, deadline, tipe_submission)')
+      .eq('murid_id', murid_id)
+      .order('submitted_at', { ascending: false })
+      .limit(10);
+
     // Ambil materi yang sudah diselesaikan
     const { data: progresMateri, count: totalSelesai } = await supabase
       .from('progres_materi')
@@ -93,6 +101,7 @@ router.get('/aktivitas/:murid_id', authMiddleware, orangtuaOnly, async (req, res
         murid: { ...murid, rank: (rankCount || 0) + 1 },
         kelas: kelasList?.map(k => k.kelas).filter(Boolean) || [],
         hasil_quiz: hasilQuiz || [],
+        tugas_submission: tugasSubmission || [],
         materi_selesai: progresMateri?.map(p => ({ ...p.materi, updated_at: p.updated_at })) || [],
         total_materi_selesai: totalSelesai || 0
       }
