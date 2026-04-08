@@ -21,21 +21,36 @@ async function dashboardGuru(req, res) {
       { count: totalMurid },
       { count: totalMateri },
       { count: totalSoal },
-      { count: totalQuiz },
+      { data: quizList },
       { data: topMurid },
-      { data: materiTerbaru },
-      { data: quizTerbaru }
+      { data: materiTerbaru }
     ] = await Promise.all([
       kelasIds.length > 0
         ? supabase.from('kelas_murid').select('murid_id', { count: 'exact', head: true }).in('kelas_id', kelasIds)
         : Promise.resolve({ count: 0 }),
       supabase.from('materi').select('id', { count: 'exact', head: true }).eq('guru_id', guruId),
       supabase.from('soal').select('id', { count: 'exact', head: true }).eq('guru_id', guruId),
-      supabase.from('quiz').select('id', { count: 'exact', head: true }).eq('guru_id', guruId),
+      supabase.from('quiz').select('id, judul, mapel').eq('guru_id', guruId).order('created_at', { ascending: false }),
       supabase.from('users').select('nama, avatar, xp, level').eq('role', 'murid').order('xp', { ascending: false }).limit(5),
-      supabase.from('materi').select('id, judul, mapel, jenis, status, views, created_at').eq('guru_id', guruId).order('created_at', { ascending: false }).limit(5),
-      supabase.from('quiz').select('id, judul, mapel').eq('guru_id', guruId).order('created_at', { ascending: false }).limit(3)
+      supabase.from('materi').select('id, judul, mapel, jenis, status, views, created_at').eq('guru_id', guruId).order('created_at', { ascending: false }).limit(5)
     ]);
+
+    const totalQuiz = quizList?.length || 0;
+    const quizTerbaru = (quizList || []).slice(0, 3);
+    const allQuizIds = (quizList || []).map(q => q.id);
+
+    // Rata-rata nilai: skor semua murid di semua quiz guru ini
+    let rataRataNilai = null;
+    if (allQuizIds.length > 0) {
+      const { data: hasilSemua } = await supabase
+        .from('hasil_quiz')
+        .select('skor')
+        .in('quiz_id', allQuizIds);
+      const skorList = (hasilSemua || []).filter(h => typeof h.skor === 'number');
+      if (skorList.length > 0) {
+        rataRataNilai = Math.round(skorList.reduce((s, h) => s + h.skor, 0) / skorList.length);
+      }
+    }
 
     res.json({
       success: true, role: 'guru',
@@ -44,8 +59,9 @@ async function dashboardGuru(req, res) {
           total_murid: totalMurid || 0,
           total_materi: totalMateri || 0,
           total_soal: totalSoal || 0,
-          total_quiz: totalQuiz || 0,
-          total_kelas: kelasIds.length
+          total_quiz: totalQuiz,
+          total_kelas: kelasIds.length,
+          rata_rata_nilai: rataRataNilai
         },
         top_murid: topMurid || [],
         materi_terbaru: materiTerbaru || [],

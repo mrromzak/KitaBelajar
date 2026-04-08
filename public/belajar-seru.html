@@ -852,6 +852,38 @@
       <input type="datetime-local" id="kuis-deadline" style="width:100%;padding:12px 14px;border:2px solid #E8E8E8;border-radius:12px;font-family:Nunito,sans-serif;font-size:14px;outline:none">
       <div style="font-size:12px;color:var(--muted);margin-top:4px">Murid tidak bisa mengerjakan setelah tenggat ini</div>
     </div>
+
+    <!-- Submission section (hanya untuk PR) -->
+    <div id="kuis-submission-wrap" style="display:none">
+      <div style="background:#F0F4FF;border-radius:14px;padding:14px;margin-bottom:4px">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:800;font-size:14px">
+          <input type="checkbox" id="kuis-pakai-submission" onchange="toggleSubmissionSection(this.checked)" style="width:18px;height:18px;cursor:pointer">
+          <span>📤 Aktifkan Submission Tugas</span>
+        </label>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;margin-left:28px">Murid bisa mengumpulkan file, link, gambar, atau teks sebagai jawaban tugas</div>
+      </div>
+      <div id="kuis-submission-detail" style="display:none;margin-top:10px;padding:14px;border:2px solid #C5D5FF;border-radius:14px;background:white">
+        <div style="font-size:13px;font-weight:800;color:var(--blue);margin-bottom:10px">Izinkan tipe submission:</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <label onclick="selectSubmissionTipe('file')" id="sub-tipe-file" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:2px solid #eee;border-radius:10px;cursor:pointer;transition:all 0.2s;font-weight:700;font-size:13px">
+            <span style="font-size:20px">📄</span> File / PDF
+          </label>
+          <label onclick="selectSubmissionTipe('gambar')" id="sub-tipe-gambar" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:2px solid #eee;border-radius:10px;cursor:pointer;transition:all 0.2s;font-weight:700;font-size:13px">
+            <span style="font-size:20px">🖼️</span> Foto/Gambar
+          </label>
+          <label onclick="selectSubmissionTipe('link')" id="sub-tipe-link" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:2px solid #eee;border-radius:10px;cursor:pointer;transition:all 0.2s;font-weight:700;font-size:13px">
+            <span style="font-size:20px">🔗</span> Link/URL
+          </label>
+          <label onclick="selectSubmissionTipe('teks')" id="sub-tipe-teks" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:2px solid #eee;border-radius:10px;cursor:pointer;transition:all 0.2s;font-weight:700;font-size:13px">
+            <span style="font-size:20px">✏️</span> Teks/Esai
+          </label>
+        </div>
+        <div style="margin-top:10px;padding:8px 12px;background:#FFF8E1;border-radius:8px;font-size:12px;color:#E6A817;font-weight:600">
+          💡 Pilih satu jenis, atau <span style="cursor:pointer;text-decoration:underline;font-weight:800" onclick="selectSubmissionTipe('semua')">izinkan semua jenis</span>
+        </div>
+        <input type="hidden" id="kuis-submission-tipe" value="">
+      </div>
+    </div>
     <div class="form-group" id="kuis-durasi-wrap">
       <label>Durasi per Soal (detik)</label>
       <input type="number" id="kuis-durasi" value="15" min="5" max="120">
@@ -1001,6 +1033,96 @@
       </button>
     </div>
     <button class="btn-cancel" style="margin-top:16px;width:100%" onclick="closeModal('modal-google-role')">Batal</button>
+  </div>
+</div>
+
+<!-- Modal Submission Tugas (Murid) -->
+<div class="modal-overlay" id="modal-submission">
+  <div class="modal" style="max-width:480px;max-height:90vh;overflow-y:auto">
+    <h3 id="sub-modal-judul">📤 Kumpulkan Tugas</h3>
+    <div id="sub-modal-deskripsi" style="background:#F8F9FA;border-radius:12px;padding:12px 14px;font-size:13px;color:var(--text);line-height:1.6;margin-bottom:16px;display:none"></div>
+    <div id="sub-modal-deadline" style="font-size:12px;font-weight:700;margin-bottom:16px"></div>
+
+    <!-- Pilih tipe submission jika guru set 'semua' -->
+    <div id="sub-pilih-tipe" style="display:none;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:800;color:var(--muted);margin-bottom:8px">Pilih cara pengumpulan:</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="sub-tipe-pilihan"></div>
+    </div>
+
+    <!-- Form Teks -->
+    <div id="sub-form-teks" style="display:none">
+      <div class="form-group">
+        <label>Jawaban / Esai</label>
+        <textarea id="sub-konten-teks" rows="6" placeholder="Tulis jawabanmu di sini..." style="width:100%;padding:12px 14px;border:2px solid #E8E8E8;border-radius:12px;font-family:Nunito,sans-serif;font-size:14px;outline:none;resize:vertical;box-sizing:border-box"></textarea>
+      </div>
+    </div>
+
+    <!-- Form Link -->
+    <div id="sub-form-link" style="display:none">
+      <div class="form-group">
+        <label>URL / Link</label>
+        <input type="url" id="sub-konten-link" placeholder="https://..." style="width:100%;padding:12px 14px;border:2px solid #E8E8E8;border-radius:12px;font-family:Nunito,sans-serif;font-size:14px;outline:none">
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">Contoh: Google Drive, YouTube, GitHub, dll.</div>
+      </div>
+    </div>
+
+    <!-- Form File -->
+    <div id="sub-form-file" style="display:none">
+      <div class="form-group">
+        <label>Upload File (PDF/DOC, max 10MB)</label>
+        <div id="sub-dropzone-file" onclick="document.getElementById('sub-input-file').click()" style="border:2.5px dashed #C5D5FF;border-radius:14px;padding:28px;text-align:center;cursor:pointer;transition:all 0.2s;background:#F8FBFF">
+          <div style="font-size:36px;margin-bottom:8px">📄</div>
+          <div style="font-weight:800;font-size:14px;color:var(--blue)">Klik untuk pilih file</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">PDF, DOC, DOCX (max 10MB)</div>
+        </div>
+        <input type="file" id="sub-input-file" accept=".pdf,.doc,.docx" style="display:none" onchange="previewSubFile(this,'file')">
+        <div id="sub-preview-file" style="display:none;margin-top:10px;padding:10px 14px;background:#EEF5FF;border-radius:10px;display:flex;align-items:center;gap:10px">
+          <span style="font-size:24px">📄</span>
+          <div style="flex:1">
+            <div id="sub-preview-file-nama" style="font-weight:800;font-size:13px"></div>
+            <div id="sub-preview-file-size" style="font-size:11px;color:var(--muted)"></div>
+          </div>
+          <button onclick="hapusSubFile('file')" style="background:#FFF0F0;border:none;color:var(--red);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12px;font-weight:700">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Gambar -->
+    <div id="sub-form-gambar" style="display:none">
+      <div class="form-group">
+        <label>Upload Foto/Gambar (max 10MB)</label>
+        <div id="sub-dropzone-gambar" onclick="document.getElementById('sub-input-gambar').click()" style="border:2.5px dashed #C5D5FF;border-radius:14px;padding:28px;text-align:center;cursor:pointer;transition:all 0.2s;background:#F8FBFF">
+          <div style="font-size:36px;margin-bottom:8px">🖼️</div>
+          <div style="font-weight:800;font-size:14px;color:var(--blue)">Klik untuk pilih gambar</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">JPG, PNG, WebP, GIF (max 10MB)</div>
+        </div>
+        <input type="file" id="sub-input-gambar" accept="image/*" style="display:none" onchange="previewSubFile(this,'gambar')">
+        <div id="sub-preview-gambar" style="display:none;margin-top:10px;text-align:center">
+          <img id="sub-preview-gambar-img" style="max-width:100%;max-height:220px;border-radius:12px;border:2px solid #eee">
+          <button onclick="hapusSubFile('gambar')" style="display:block;margin:8px auto 0;background:#FFF0F0;border:none;color:var(--red);border-radius:8px;padding:6px 16px;cursor:pointer;font-size:12px;font-weight:700">✕ Hapus gambar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Catatan tambahan -->
+    <div class="form-group" id="sub-catatan-wrap">
+      <label>Catatan <span style="color:var(--muted);font-weight:400">(opsional)</span></label>
+      <input type="text" id="sub-catatan" placeholder="Catatan untuk guru..." style="width:100%;padding:10px 14px;border:2px solid #E8E8E8;border-radius:10px;font-family:Nunito,sans-serif;font-size:13px;outline:none">
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modal-submission')">Batal</button>
+      <button class="btn-submit" id="sub-submit-btn" onclick="submitTugas()">📤 Kumpulkan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Lihat Submission (Guru) -->
+<div class="modal-overlay" id="modal-lihat-submission">
+  <div class="modal" style="max-width:560px;max-height:90vh;overflow-y:auto">
+    <h3 id="sub-lihat-judul">📋 Submission Tugas</h3>
+    <div id="sub-lihat-list" style="display:flex;flex-direction:column;gap:12px;margin-top:12px"></div>
+    <button class="btn-cancel" style="width:100%;margin-top:16px" onclick="closeModal('modal-lihat-submission')">Tutup</button>
   </div>
 </div>
 
@@ -3041,19 +3163,49 @@ function scrollChatToBottom() {
 
 async function editPesanKelas(msgId) {
   const bubble = document.getElementById('msg-bubble-' + msgId);
-  if (!bubble) return;
-  const currentText = bubble.textContent.replace(/ ✏️$/, '');
-  const newText = prompt('Edit pesan:', currentText);
-  if (!newText || newText.trim() === currentText.trim()) return;
-  try {
-    const data = await api('PUT', `/kelas/${kelasChatKelasId}/chat/${msgId}`, { isi: newText.trim() });
-    if (data.success) {
-      bubble.textContent = newText.trim() + ' ✏️';
-      socket.emit('kelas:edit_pesan', { kelasId: kelasChatKelasId, msgId, isi: newText.trim() });
-    }
-  } catch(e) {
-    toast('Gagal mengedit pesan', 'error');
-  }
+  if (!bubble || bubble.querySelector('textarea')) return;
+  const originalHTML = bubble.innerHTML;
+  const currentText = bubble.textContent.replace(/\s*✏️\s*$/, '').trim();
+
+  const restore = () => { bubble.innerHTML = originalHTML; bubble.style.padding = ''; };
+
+  bubble.style.padding = '8px';
+  bubble.innerHTML = '';
+
+  const ta = document.createElement('textarea');
+  ta.value = currentText;
+  ta.style.cssText = 'width:100%;box-sizing:border-box;border:none;border-radius:8px;padding:6px 8px;font-family:Nunito,sans-serif;font-size:14px;font-weight:600;resize:none;min-height:56px;background:rgba(255,255,255,0.15);color:inherit;outline:none';
+
+  const btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:6px;margin-top:4px';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = '✓ Simpan';
+  saveBtn.style.cssText = 'background:rgba(255,255,255,0.9);color:var(--blue);border:none;border-radius:8px;padding:4px 12px;font-size:12px;cursor:pointer;font-family:Nunito,sans-serif;font-weight:800';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = '✕ Batal';
+  cancelBtn.style.cssText = 'background:rgba(255,255,255,0.2);color:inherit;border:none;border-radius:8px;padding:4px 12px;font-size:12px;cursor:pointer;font-family:Nunito,sans-serif;font-weight:800';
+
+  cancelBtn.onclick = restore;
+  saveBtn.onclick = async () => {
+    const newText = ta.value.trim();
+    if (!newText) return;
+    if (newText === currentText) { restore(); return; }
+    saveBtn.disabled = true; saveBtn.textContent = '...';
+    try {
+      const data = await api('PUT', `/kelas/${kelasChatKelasId}/chat/${msgId}`, { isi: newText });
+      if (data.success) {
+        bubble.innerHTML = escapeHtml(newText) + ' ✏️';
+        bubble.style.padding = '';
+        socket.emit('kelas:edit_pesan', { kelasId: kelasChatKelasId, msgId, isi: newText });
+      } else { toast('Gagal mengedit pesan', 'error'); restore(); }
+    } catch(e) { toast('Gagal mengedit pesan', 'error'); restore(); }
+  };
+
+  btnRow.appendChild(saveBtn); btnRow.appendChild(cancelBtn);
+  bubble.appendChild(ta); bubble.appendChild(btnRow);
+  ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
 }
 
 async function hapusPesanKelas(msgId) {
@@ -3738,27 +3890,60 @@ function appendPrivateMessage(p, isSelf) {
 async function editPesanPrivat(msgId, btn) {
   const div = btn.closest('[data-msg-id]');
   const bubble = div?.querySelector('.pc-msg-bubble');
-  if (!bubble) return;
-  const isiLama = bubble.textContent.replace(' (diedit)', '').trim();
-  const baru = prompt('Edit pesan:', isiLama);
-  if (!baru || baru.trim() === isiLama) return;
-  try {
-    const data = await api('PUT', `/chat/private/msg/${msgId}`, { isi: baru.trim() });
-    if (data.success) {
-      bubble.innerHTML = escapeHtml(baru.trim()) + '<span style="font-size:10px;opacity:0.7;font-style:italic"> (diedit)</span>';
-    }
-  } catch(e) { toast('Gagal edit pesan', 'error'); }
+  if (!bubble || bubble.querySelector('textarea')) return;
+  const originalHTML = bubble.innerHTML;
+  const currentText = bubble.textContent.replace(/\s*\(diedit\)\s*$/, '').trim();
+
+  const restore = () => { bubble.innerHTML = originalHTML; };
+
+  bubble.innerHTML = '';
+
+  const ta = document.createElement('textarea');
+  ta.value = currentText;
+  ta.style.cssText = 'width:100%;box-sizing:border-box;border:none;border-radius:8px;padding:6px 8px;font-family:Nunito,sans-serif;font-size:14px;font-weight:600;resize:none;min-height:56px;background:rgba(255,255,255,0.15);color:white;outline:none';
+
+  const btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:6px;margin-top:4px';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = '✓ Simpan';
+  saveBtn.style.cssText = 'background:rgba(255,255,255,0.9);color:var(--blue);border:none;border-radius:8px;padding:4px 12px;font-size:12px;cursor:pointer;font-family:Nunito,sans-serif;font-weight:800';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = '✕ Batal';
+  cancelBtn.style.cssText = 'background:rgba(255,255,255,0.2);color:white;border:none;border-radius:8px;padding:4px 12px;font-size:12px;cursor:pointer;font-family:Nunito,sans-serif;font-weight:800';
+
+  cancelBtn.onclick = restore;
+  saveBtn.onclick = async () => {
+    const newText = ta.value.trim();
+    if (!newText) return;
+    if (newText === currentText) { restore(); return; }
+    saveBtn.disabled = true; saveBtn.textContent = '...';
+    try {
+      const data = await api('PUT', `/chat/private/msg/${msgId}`, { isi: newText });
+      if (data.success) {
+        bubble.innerHTML = escapeHtml(newText) + '<span style="font-size:10px;opacity:0.7;font-style:italic"> (diedit)</span>';
+      } else { toast('Gagal edit pesan', 'error'); restore(); }
+    } catch(e) { toast('Gagal edit pesan', 'error'); restore(); }
+  };
+
+  btnRow.appendChild(saveBtn); btnRow.appendChild(cancelBtn);
+  bubble.appendChild(ta); bubble.appendChild(btnRow);
+  ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
 }
 
 async function hapusPesanPrivat(msgId, btn) {
-  if (!confirm('Hapus pesan ini?')) return;
-  try {
-    const data = await api('DELETE', `/chat/private/msg/${msgId}`);
-    if (data.success) {
-      const div = btn.closest('[data-msg-id]');
-      if (div) div.remove();
-    }
-  } catch(e) { toast('Gagal hapus pesan', 'error'); }
+  document.getElementById('btn-hapus-pesan-ok').onclick = async () => {
+    closeModal('modal-hapus-pesan');
+    try {
+      const data = await api('DELETE', `/chat/private/msg/${msgId}`);
+      if (data.success) {
+        const div = btn.closest('[data-msg-id]');
+        if (div) div.remove();
+      }
+    } catch(e) { toast('Gagal hapus pesan', 'error'); }
+  };
+  openModal('modal-hapus-pesan');
 }
 
 function scrollPrivateChatToBottom() {
@@ -3974,6 +4159,7 @@ async function loadGuruDashboard() {
       document.getElementById('stat-murid').textContent = s.total_murid ?? '–';
       document.getElementById('stat-materi').textContent = s.total_materi ?? '–';
       document.getElementById('stat-soal').textContent = s.total_soal ?? '–';
+      document.getElementById('stat-nilai').textContent = s.rata_rata_nilai != null ? s.rata_rata_nilai + '%' : '–%';
       document.getElementById('guru-info').textContent = `${s.total_murid || 0} murid aktif · ${s.total_materi || 0} materi`;
     }
 
@@ -6069,16 +6255,21 @@ async function loadKelasKuis(kelasId) {
     const data = await api('GET', `/quiz?kelas_id=${kelasId}`);
     allKuisData = data.quiz || data.data || [];
 
-    // Cek status pengerjaan murid
+    // Cek status pengerjaan / submission murid — semua paralel
     if (!isGuru) {
-      for (const q of allKuisData) {
+      await Promise.all(allKuisData.map(async q => {
         try {
-          const cek = await api('GET', `/quiz/hasil/cek?quiz_id=${q.id}`);
-          q.sudah_dikerjakan = cek.sudah || false;
-          q.skor_terakhir = cek.hasil?.skor || 0;
+          if (q.tipe_submission) {
+            const cek = await api('GET', `/quiz/${q.id}/submission/cek`);
+            q.sudah_dikerjakan = cek.sudah || false;
+            q.nilai_submission = cek.submission?.nilai ?? null;
+          } else {
+            const cek = await api('GET', `/quiz/hasil/cek?quiz_id=${q.id}`);
+            q.sudah_dikerjakan = cek.sudah || false;
+            q.skor_terakhir = cek.hasil?.skor || 0;
+          }
         } catch(e) { q.sudah_dikerjakan = false; }
-      }
-      // Tampilkan deadline alert di dashboard
+      }));
       tampilDeadlineAlert(allKuisData);
     }
 
@@ -6127,10 +6318,25 @@ function renderKuisCard(q, isGuru) {
   const deadlineLewat = !isFun && q.deadline && new Date(q.deadline) < new Date();
 
   let actionHtml = '';
+  const isSubmission = !!q.tipe_submission;
+
   if (isGuru) {
     actionHtml = `<div style="display:flex;gap:6px">
+      ${isSubmission ? `<button class="btn-icon btn-edit" onclick="lihatSubmissionGuru('${q.id}','${(q.judul||'').replace(/'/g,"\\'")}') " title="Lihat Submission">📋</button>` : ''}
       <button class="btn-icon btn-delete" onclick="hapusKuis('${q.id}','${(q.judul||'').replace(/'/g,"\\'")}') " title="Hapus">🗑️</button>
     </div>`;
+  } else if (isSubmission) {
+    if (sudahDikerjakan) {
+      const nilai = q.nilai_submission;
+      actionHtml = `<div class="qsc-done-badge" style="flex-direction:column;align-items:flex-end;gap:2px">
+        <span>✅ Sudah dikumpulkan</span>
+        ${nilai != null ? `<span style="font-size:14px;font-weight:900;color:${nilai>=80?'var(--green)':nilai>=60?'var(--orange)':'var(--red)'}">${nilai}<span style="font-size:11px;font-weight:700"> / 100</span></span>` : '<span style="font-size:11px;color:var(--muted)">Menunggu penilaian...</span>'}
+      </div>`;
+    } else if (deadlineLewat) {
+      actionHtml = `<div class="qsc-deadline deadline-over">⛔ Tenggat terlewat</div>`;
+    } else {
+      actionHtml = `<button class="qsc-play-btn" style="background:var(--blue);color:white" onclick="bukaFormSubmission('${q.id}')">📤 Kumpulkan</button>`;
+    }
   } else if (sudahDikerjakan) {
     const nilaiColor = q.skor_terakhir >= 80 ? 'var(--green)' : q.skor_terakhir >= 60 ? 'var(--orange)' : 'var(--red)';
     actionHtml = `<div class="qsc-done-badge" style="flex-direction:column;align-items:flex-end;gap:2px">
@@ -6161,11 +6367,11 @@ function renderKuisCard(q, isGuru) {
     </div>
     <div class="qsc-body">
       <div class="qsc-stats">
-        <div class="qsc-stat">
-          <div class="qsc-stat-num">${q.total_soal || q.jumlah_soal || '?'}</div>
-          <div class="qsc-stat-label">Soal</div>
-        </div>
-        ${isFun ? `<div class="qsc-stat"><div class="qsc-stat-num">${q.durasi || 15}s</div><div class="qsc-stat-label">Per soal</div></div>` : ''}
+        ${isSubmission
+          ? `<div class="qsc-stat" style="background:#EEF5FF"><div class="qsc-stat-num" style="font-size:16px">${{'file':'📄','gambar':'🖼️','link':'🔗','teks':'✏️','semua':'📤'}[q.tipe_submission]||'📤'}</div><div class="qsc-stat-label">Submission</div></div>`
+          : `<div class="qsc-stat"><div class="qsc-stat-num">${q.total_soal || q.jumlah_soal || '?'}</div><div class="qsc-stat-label">Soal</div></div>`
+        }
+        ${isFun && !isSubmission ? `<div class="qsc-stat"><div class="qsc-stat-num">${q.durasi || 15}s</div><div class="qsc-stat-label">Per soal</div></div>` : ''}
       </div>
       <div style="display:flex;align-items:center;gap:10px">
         ${deadlineHtml}
@@ -6192,6 +6398,29 @@ function switchTipeKuis(tipe) {
   });
   document.getElementById('kuis-deadline-wrap').style.display = tipe === 'pr' ? 'block' : 'none';
   document.getElementById('kuis-durasi-wrap').style.display = tipe === 'fun' ? 'block' : 'none';
+  document.getElementById('kuis-submission-wrap').style.display = tipe === 'pr' ? 'block' : 'none';
+  if (tipe === 'fun') {
+    document.getElementById('kuis-pakai-submission').checked = false;
+    document.getElementById('kuis-submission-detail').style.display = 'none';
+  }
+}
+
+let _selectedSubmissionTipe = '';
+
+function toggleSubmissionSection(checked) {
+  document.getElementById('kuis-submission-detail').style.display = checked ? 'block' : 'none';
+  if (!checked) { _selectedSubmissionTipe = ''; document.getElementById('kuis-submission-tipe').value = ''; }
+}
+
+function selectSubmissionTipe(tipe) {
+  _selectedSubmissionTipe = tipe;
+  document.getElementById('kuis-submission-tipe').value = tipe;
+  ['file','gambar','link','teks'].forEach(t => {
+    const el = document.getElementById('sub-tipe-' + t);
+    if (!el) return;
+    el.style.border = t === tipe || tipe === 'semua' ? '2px solid var(--blue)' : '2px solid #eee';
+    el.style.background = t === tipe || tipe === 'semua' ? '#EEF5FF' : 'white';
+  });
 }
 
 let kuisSoalTabAktif = 'bank';
@@ -6448,6 +6677,10 @@ async function openBuatKuis() {
   document.getElementById('kuis-deadline').value = '';
   document.getElementById('kuis-durasi').value = '15';
   document.getElementById('kuis-pilih-semua').checked = false;
+  document.getElementById('kuis-pakai-submission').checked = false;
+  document.getElementById('kuis-submission-detail').style.display = 'none';
+  document.getElementById('kuis-submission-tipe').value = '';
+  _selectedSubmissionTipe = '';
   document.getElementById('kuis-ai-topik').value = '';
   document.getElementById('kuis-ai-result').style.display = 'none';
   document.getElementById('kuis-total-label').textContent = '';
@@ -6629,9 +6862,14 @@ async function submitBuatKuis() {
 
   const totalSoal = soalBankIds.length + soalAITerpilih.length;
 
+  const pakaiSubmission = document.getElementById('kuis-pakai-submission')?.checked || false;
+  const tipeSubmission = pakaiSubmission ? (document.getElementById('kuis-submission-tipe')?.value || '') : null;
+
   if (!judul) { toast('Judul kuis harus diisi!', 'error'); return; }
-  if (totalSoal === 0) { toast('Pilih minimal 1 soal dari bank atau generate dengan AI!', 'error'); return; }
   if (currentTipeKuis === 'pr' && !deadline) { toast('Tenggat waktu harus diisi untuk Tugas/PR!', 'error'); return; }
+  if (pakaiSubmission && !tipeSubmission) { toast('Pilih tipe submission terlebih dahulu!', 'error'); return; }
+  // Soal wajib hanya jika BUKAN tugas submission murni
+  if (!pakaiSubmission && totalSoal === 0) { toast('Pilih minimal 1 soal dari bank atau generate dengan AI!', 'error'); return; }
 
   showLoading(true);
   try {
@@ -6674,7 +6912,8 @@ async function submitBuatKuis() {
       tipe: currentTipeKuis,
       deadline: deadline || null,
       status: 'aktif',
-      soal_ids: semuaSoalIds
+      soal_ids: semuaSoalIds.length > 0 ? semuaSoalIds : undefined,
+      tipe_submission: tipeSubmission || null
     });
 
     if (!data.success) { toast(data.pesan || 'Gagal membuat kuis', 'error'); showLoading(false); return; }
@@ -6707,6 +6946,206 @@ async function hapusKuis(id, judul) {
     }
   } catch(e) { toast('Tidak bisa terhubung ke server', 'error'); }
   showLoading(false);
+}
+
+// ============================================================
+//  SUBMISSION TUGAS (MURID)
+// ============================================================
+let _subQuizData = null;
+let _subTipeAktif = '';
+let _subFileObj = null;
+
+async function bukaFormSubmission(quizId) {
+  showLoading(true);
+  try {
+    const [quizRes, cekRes] = await Promise.all([
+      api('GET', `/quiz/${quizId}`),
+      api('GET', `/quiz/${quizId}/submission/cek`)
+    ]);
+    if (!quizRes.success) { toast('Gagal memuat tugas', 'error'); showLoading(false); return; }
+    const q = quizRes.quiz;
+
+    if (cekRes.sudah) {
+      const sub = cekRes.submission;
+      toast(`Kamu sudah mengumpulkan tugas ini${sub.nilai != null ? ' — Nilai: ' + sub.nilai + '/100' : ''}`, 'info');
+      showLoading(false); return;
+    }
+
+    _subQuizData = q;
+    _subTipeAktif = '';
+    _subFileObj = null;
+
+    document.getElementById('sub-modal-judul').textContent = '📤 ' + q.judul;
+    const deskEl = document.getElementById('sub-modal-deskripsi');
+    if (q.deskripsi) { deskEl.textContent = q.deskripsi; deskEl.style.display = 'block'; }
+    else deskEl.style.display = 'none';
+
+    if (q.deadline) {
+      const dl = new Date(q.deadline);
+      const diff = dl - new Date();
+      const dlEl = document.getElementById('sub-modal-deadline');
+      dlEl.innerHTML = diff > 0
+        ? `<span style="color:${diff < 86400000 ? 'var(--red)' : 'var(--orange)'}">⏰ Tenggat: ${dl.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})} ${dl.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</span>`
+        : `<span style="color:var(--red)">⛔ Tenggat sudah lewat</span>`;
+    } else document.getElementById('sub-modal-deadline').innerHTML = '';
+
+    // Reset semua form
+    ['teks','link','file','gambar'].forEach(t => {
+      document.getElementById(`sub-form-${t}`).style.display = 'none';
+    });
+    document.getElementById('sub-catatan').value = '';
+    hapusSubFile('file'); hapusSubFile('gambar');
+    if (document.getElementById('sub-konten-teks')) document.getElementById('sub-konten-teks').value = '';
+    if (document.getElementById('sub-konten-link')) document.getElementById('sub-konten-link').value = '';
+
+    const tipe = q.tipe_submission;
+    const pilihWrap = document.getElementById('sub-pilih-tipe');
+    if (tipe === 'semua') {
+      pilihWrap.style.display = 'block';
+      document.getElementById('sub-tipe-pilihan').innerHTML = [
+        { tipe:'file', label:'📄 File / PDF' },
+        { tipe:'gambar', label:'🖼️ Foto/Gambar' },
+        { tipe:'link', label:'🔗 Link/URL' },
+        { tipe:'teks', label:'✏️ Teks/Esai' }
+      ].map(o => `<button onclick="pilihTipeSubmission('${o.tipe}')" id="sub-pilih-${o.tipe}" style="padding:10px;border:2px solid #eee;border-radius:10px;background:white;cursor:pointer;font-family:Nunito,sans-serif;font-weight:700;font-size:13px;transition:all 0.2s">${o.label}</button>`).join('');
+    } else {
+      pilihWrap.style.display = 'none';
+      pilihTipeSubmission(tipe);
+    }
+  } catch(e) { toast('Tidak bisa terhubung ke server', 'error'); }
+  showLoading(false);
+  openModal('modal-submission');
+}
+
+function pilihTipeSubmission(tipe) {
+  _subTipeAktif = tipe;
+  ['file','gambar','link','teks'].forEach(t => {
+    document.getElementById(`sub-form-${t}`).style.display = t === tipe ? 'block' : 'none';
+    const btn = document.getElementById('sub-pilih-' + t);
+    if (btn) { btn.style.border = t === tipe ? '2px solid var(--blue)' : '2px solid #eee'; btn.style.background = t === tipe ? '#EEF5FF' : 'white'; }
+  });
+}
+
+function previewSubFile(input, tipe) {
+  const file = input.files[0];
+  if (!file) return;
+  _subFileObj = file;
+  if (tipe === 'gambar') {
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('sub-preview-gambar-img').src = e.target.result;
+      document.getElementById('sub-preview-gambar').style.display = 'block';
+      document.getElementById('sub-dropzone-gambar').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    document.getElementById('sub-preview-file-nama').textContent = file.name;
+    document.getElementById('sub-preview-file-size').textContent = (file.size / 1024).toFixed(1) + ' KB';
+    document.getElementById('sub-preview-file').style.display = 'flex';
+    document.getElementById('sub-dropzone-file').style.display = 'none';
+  }
+}
+
+function hapusSubFile(tipe) {
+  _subFileObj = null;
+  if (tipe === 'gambar') {
+    document.getElementById('sub-preview-gambar').style.display = 'none';
+    document.getElementById('sub-dropzone-gambar').style.display = 'block';
+    const inp = document.getElementById('sub-input-gambar'); if (inp) inp.value = '';
+  } else {
+    document.getElementById('sub-preview-file').style.display = 'none';
+    document.getElementById('sub-dropzone-file').style.display = 'block';
+    const inp = document.getElementById('sub-input-file'); if (inp) inp.value = '';
+  }
+}
+
+async function submitTugas() {
+  if (!_subQuizData || !_subTipeAktif) { toast('Pilih tipe submission dulu!', 'error'); return; }
+  const catatan = document.getElementById('sub-catatan').value.trim();
+  const btn = document.getElementById('sub-submit-btn');
+  btn.disabled = true; btn.textContent = '⏳ Mengirim...';
+  try {
+    let res;
+    if (_subTipeAktif === 'teks') {
+      const konten = document.getElementById('sub-konten-teks').value.trim();
+      if (!konten) { toast('Isi teks tidak boleh kosong!', 'error'); return; }
+      res = await api('POST', `/quiz/${_subQuizData.id}/submission`, { tipe: 'teks', konten, catatan });
+    } else if (_subTipeAktif === 'link') {
+      const konten = document.getElementById('sub-konten-link').value.trim();
+      if (!konten || !konten.startsWith('http')) { toast('Masukkan URL yang valid!', 'error'); return; }
+      res = await api('POST', `/quiz/${_subQuizData.id}/submission`, { tipe: 'link', konten, catatan });
+    } else {
+      if (!_subFileObj) { toast('Pilih file terlebih dahulu!', 'error'); return; }
+      const fd = new FormData();
+      fd.append('file', _subFileObj);
+      fd.append('tipe', _subTipeAktif);
+      if (catatan) fd.append('catatan', catatan);
+      const token = localStorage.getItem('kb_token') || token;
+      const r = await fetch('/api/quiz/' + _subQuizData.id + '/submission', { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: fd });
+      res = await r.json();
+    }
+    if (res.success) {
+      toast('✅ Tugas berhasil dikumpulkan!', 'success');
+      closeModal('modal-submission');
+      loadKelasKuis(currentKelas?.id);
+    } else {
+      toast(res.pesan || 'Gagal mengumpulkan tugas', 'error');
+    }
+  } catch(e) { toast('Gagal terhubung ke server', 'error'); }
+  finally { btn.disabled = false; btn.textContent = '📤 Kumpulkan'; }
+}
+
+// ============================================================
+//  LIHAT SUBMISSION (GURU)
+// ============================================================
+async function lihatSubmissionGuru(quizId, judul) {
+  document.getElementById('sub-lihat-judul').textContent = '📋 ' + judul;
+  document.getElementById('sub-lihat-list').innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat...</div>';
+  openModal('modal-lihat-submission');
+  try {
+    const res = await api('GET', `/quiz/${quizId}/submissions`);
+    if (!res.success) { document.getElementById('sub-lihat-list').innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px">Gagal memuat.</div>'; return; }
+    if (!res.data || res.data.length === 0) {
+      document.getElementById('sub-lihat-list').innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px"><div style="font-size:40px;margin-bottom:10px">📭</div>Belum ada murid yang mengumpulkan.</div>';
+      return;
+    }
+    const tipeIcon = { file:'📄', gambar:'🖼️', link:'🔗', teks:'✏️' };
+    document.getElementById('sub-lihat-list').innerHTML = res.data.map(s => `
+      <div style="border:2px solid #eee;border-radius:14px;overflow:hidden">
+        <div style="padding:12px 14px;display:flex;align-items:center;gap:10px;background:#F8F9FA">
+          <span style="font-size:22px">${s.murid?.avatar || '🦁'}</span>
+          <div style="flex:1">
+            <div style="font-weight:800;font-size:14px">${s.murid?.nama || 'Murid'}</div>
+            <div style="font-size:11px;color:var(--muted)">${tipeIcon[s.tipe]||'📤'} ${s.tipe} · ${new Date(s.submitted_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})} ${new Date(s.submitted_at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</div>
+          </div>
+          ${s.nilai != null ? `<span style="background:${s.nilai>=80?'var(--green)':s.nilai>=60?'var(--orange)':'var(--red)'};color:white;padding:4px 12px;border-radius:50px;font-weight:800;font-size:13px">${s.nilai}</span>` : ''}
+        </div>
+        <div style="padding:12px 14px">
+          ${s.tipe === 'teks' ? `<div style="font-size:13px;line-height:1.7;color:var(--text);background:#F8F9FA;border-radius:8px;padding:10px">${(s.konten||'').replace(/\n/g,'<br>')}</div>` : ''}
+          ${s.tipe === 'link' ? `<a href="${s.konten}" target="_blank" rel="noopener" style="color:var(--blue);font-weight:700;font-size:13px;word-break:break-all">${s.konten}</a>` : ''}
+          ${s.tipe === 'file' ? `<a href="${s.file_url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:#EEF5FF;color:var(--blue);border-radius:8px;padding:8px 14px;font-weight:800;font-size:13px;text-decoration:none">📄 ${s.file_nama || 'Unduh File'}</a>` : ''}
+          ${s.tipe === 'gambar' ? `<img src="${s.file_url}" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid #eee;cursor:pointer" onclick="window.open('${s.file_url}','_blank')">` : ''}
+          ${s.catatan ? `<div style="margin-top:8px;font-size:12px;color:var(--muted);font-style:italic">"${s.catatan}"</div>` : ''}
+          ${s.feedback ? `<div style="margin-top:8px;background:#F0FFF4;border-radius:8px;padding:8px 12px;font-size:12px;color:var(--green);font-weight:700">💬 ${s.feedback}</div>` : ''}
+          <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+            <input type="number" min="0" max="100" placeholder="Nilai (0-100)" id="nilai-${s.id}" value="${s.nilai??''}" style="width:110px;padding:8px 10px;border:2px solid #eee;border-radius:8px;font-family:Nunito,sans-serif;font-size:13px;outline:none">
+            <input type="text" placeholder="Feedback..." id="feedback-${s.id}" value="${s.feedback||''}" style="flex:1;padding:8px 10px;border:2px solid #eee;border-radius:8px;font-family:Nunito,sans-serif;font-size:13px;outline:none">
+            <button onclick="simpanNilaiSubmission('${quizId}','${s.id}')" style="background:var(--blue);color:white;border:none;padding:8px 16px;border-radius:8px;font-family:Nunito,sans-serif;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap">💾 Simpan</button>
+          </div>
+        </div>
+      </div>`).join('');
+  } catch(e) { document.getElementById('sub-lihat-list').innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px">Gagal memuat submission.</div>'; }
+}
+
+async function simpanNilaiSubmission(quizId, subId) {
+  const nilai = document.getElementById('nilai-' + subId)?.value;
+  const feedback = document.getElementById('feedback-' + subId)?.value || '';
+  if (nilai === '' || nilai == null) { toast('Isi nilai dulu!', 'error'); return; }
+  try {
+    const res = await api('PUT', `/quiz/${quizId}/submissions/${subId}/nilai`, { nilai: parseInt(nilai), feedback });
+    if (res.success) toast('✅ Nilai disimpan!', 'success');
+    else toast(res.pesan || 'Gagal simpan nilai', 'error');
+  } catch(e) { toast('Gagal terhubung', 'error'); }
 }
 
 // ============================================================
@@ -7451,7 +7890,7 @@ function zepReset() {
   <div class="modal" style="max-width:360px;text-align:center">
     <div style="font-size:48px;margin-bottom:12px">🗑️</div>
     <h3 style="margin-bottom:8px">Hapus Pesan?</h3>
-    <p style="font-size:14px;color:var(--muted);margin-bottom:20px;font-weight:600">Pesan akan dihapus untuk semua orang di kelas ini.</p>
+    <p id="hapus-pesan-desc" style="font-size:14px;color:var(--muted);margin-bottom:20px;font-weight:600">Pesan ini akan dihapus permanen.</p>
     <div style="display:flex;gap:10px">
       <button class="btn-cancel" style="flex:1;padding:13px" onclick="closeModal('modal-hapus-pesan')">Batal</button>
       <button id="btn-hapus-pesan-ok" style="flex:1;padding:13px;background:var(--red);color:white;border:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">🗑️ Ya, Hapus!</button>

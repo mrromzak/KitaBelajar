@@ -9,7 +9,24 @@
 const express = require('express');
 const router  = express.Router();
 const { createClient } = require('@supabase/supabase-js');
+const { v4: uuidv4 } = require('uuid');
+const multer = require('multer');
 const { decrypt } = require('../utils/crypto');
+
+// Multer untuk submission file (10MB max)
+const uploadSubmission = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = [
+      'application/pdf',
+      'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    cb(null, allowed.includes(file.mimetype));
+  }
+});
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -106,7 +123,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // ============================================================
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { judul, deskripsi, mapel, kelas_id, durasi, tipe, deadline, status, soal_ids } = req.body;
+    const { judul, deskripsi, mapel, kelas_id, durasi, tipe, deadline, status, soal_ids, tipe_submission } = req.body;
     if (!judul) return res.status(400).json({ success: false, pesan: 'Judul wajib diisi' });
 
     const guru_id = req.user.id || req.user.userId;
@@ -123,7 +140,8 @@ router.post('/', authMiddleware, async (req, res) => {
         durasi: durasi || 15,
         tipe: tipe || 'fun',
         deadline: deadline || null,
-        status: status || 'aktif'
+        status: status || 'aktif',
+        tipe_submission: tipe_submission || null
       })
       .select()
       .single();
@@ -330,6 +348,153 @@ router.get('/hasil/cek', authMiddleware, async (req, res) => {
   } catch(e) {
     console.error('[GET /quiz/hasil/cek catch]', e.message);
     return res.json({ success: true, sudah: false, hasil: null });
+  }
+});
+
+// ============================================================
+//  POST /api/quiz/:id/submission — murid kumpulkan tugas
+//  Tipe: teks/link → JSON body. tipe: file/gambar → multipart
+// ============================================================
+router.post('/:id/submission', authMiddleware, (req, res, next) => {
+  const ct = req.headers['content-type'] || '';
+  if (ct.includes('multipart/form-data')) {
+    uploadSubmission.single('file')(req, res, next);
+  } else {
+    next();
+  }
+}, async (req, res) => {
+  try {
+    const quiz_id  = req.params.id;
+    const murid_id = req.user.id || req.user.userId;
+
+    // Cek quiz ada & punya tipe_submission
+    const { data: quiz } = await supabase.from('quiz').select('id, judul, tipe_submission, deadline, kelas_id').eq('id', quiz_id).single();
+    if (!quiz) return res.status(404).json({ success: false, pesan: 'Kuis tidak ditemukan.' });
+    if (!quiz.tipe_submission) return res.status(400).json({ success: false, pesan: 'Kuis ini tidak menerima submission.' });
+    if (quiz.deadline && new Date(quiz.deadline) < new Date()) return res.status(400).json({ success: false, pesan: 'Tenggat waktu sudah lewat.' });
+
+    // Cek sudah submit sebelumnya
+    const { data: existing } = await supabase.from('tugas_submission').select('id').eq('quiz_id', quiz_id).eq('murid_id', murid_id).maybeSingle();
+    if (existing) return res.status(400).json({ success: false, pesan: 'Kamu sudah mengumpulkan tugas ini.' });
+
+    const tipe    = req.body.tipe;  // 'file', 'link', 'gambar', 'teks'
+    const catatan = req.body.catatan || null;
+
+    if (!['file', 'link', 'gambar', 'teks'].includes(tipe)) {
+      return res.status(400).json({ success: false, pesan: 'Tipe submission tidak valid.' });
+    }
+
+    let konten   = null;
+    let file_url = null;
+    let file_nama = null;
+    let file_size = null;
+
+    if (tipe === 'teks') {
+      konten = (req.body.konten || '').trim();
+      if (!konten) return res.status(400).json({ success: false, pesan: 'Isi teks tidak boleh kosong.' });
+    } else if (tipe === 'link') {
+      konten = (req.body.konten || '').trim();
+      if (!konten || !konten.startsWith('http')) return res.status(400).json({ success: false, pesan: 'URL link tidak valid.' });
+    } else if (tipe === 'file' || tipe === 'gambar') {
+      if (!req.file) return res.status(400).json({ success: false, pesan: 'File tidak ditemukan.' });
+      const ext  = req.file.originalname.split('.').pop().toLowerCase();
+      const path = `submissions/${quiz_id}/${murid_id}_${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('submissions').upload(path, req.file.buffer, { contentType: req.file.mimetype, upsert: false });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabase.storage.from('submissions').getPublicUrl(path);
+      file_url  = urlData.publicUrl;
+      file_nama = req.file.originalname;
+      file_size = req.file.size;
+    }
+
+    const { data: sub, error } = await supabase.from('tugas_submission').insert({
+      quiz_id, murid_id, tipe, konten, file_url, file_nama, file_size, catatan
+    }).select().single();
+    if (error) throw error;
+
+    // Notif ke guru
+    if (quiz.kelas_id) {
+      const { data: kelas } = await supabase.from('kelas').select('guru_id').eq('id', quiz.kelas_id).single();
+      if (kelas?.guru_id) {
+        await supabase.from('notifikasi').insert({
+          id: uuidv4(), user_id: kelas.guru_id,
+          judul: '📤 Submission Tugas Baru',
+          pesan: `Ada murid yang mengumpulkan tugas "${quiz.judul}"`
+        });
+        const io = req.app.get('io');
+        if (io) io.to('user:' + kelas.guru_id).emit('notif:baru', { tipe: 'submission', judul: '📤 Submission Tugas Baru', pesan: `Ada murid yang mengumpulkan tugas "${quiz.judul}"`, created_at: new Date().toISOString() });
+      }
+    }
+
+    res.json({ success: true, pesan: 'Tugas berhasil dikumpulkan!', data: sub });
+  } catch(e) {
+    console.error('[POST /quiz/:id/submission]', e.message);
+    res.status(500).json({ success: false, pesan: 'Gagal mengumpulkan tugas.' });
+  }
+});
+
+// ============================================================
+//  GET /api/quiz/:id/submissions — guru lihat semua submission
+// ============================================================
+router.get('/:id/submissions', authMiddleware, async (req, res) => {
+  try {
+    const quiz_id = req.params.id;
+    const { data: quiz } = await supabase.from('quiz').select('guru_id, judul, tipe_submission').eq('id', quiz_id).single();
+    if (!quiz) return res.status(404).json({ success: false, pesan: 'Kuis tidak ditemukan.' });
+    if (quiz.guru_id !== (req.user.id || req.user.userId)) return res.status(403).json({ success: false, pesan: 'Bukan milik kamu.' });
+
+    const { data, error } = await supabase
+      .from('tugas_submission')
+      .select('*, murid:murid_id(id, nama, avatar)')
+      .eq('quiz_id', quiz_id)
+      .order('submitted_at', { ascending: false });
+    if (error) throw error;
+
+    res.json({ success: true, data: data || [] });
+  } catch(e) {
+    console.error('[GET /quiz/:id/submissions]', e.message);
+    res.status(500).json({ success: false, pesan: 'Gagal memuat submission.' });
+  }
+});
+
+// ============================================================
+//  PUT /api/quiz/:id/submissions/:sub_id/nilai — guru beri nilai
+// ============================================================
+router.put('/:id/submissions/:sub_id/nilai', authMiddleware, async (req, res) => {
+  try {
+    const { nilai, feedback } = req.body;
+    if (nilai == null || nilai < 0 || nilai > 100) return res.status(400).json({ success: false, pesan: 'Nilai harus 0-100.' });
+
+    const { data: quiz } = await supabase.from('quiz').select('guru_id').eq('id', req.params.id).single();
+    if (!quiz || quiz.guru_id !== (req.user.id || req.user.userId)) return res.status(403).json({ success: false, pesan: 'Tidak diizinkan.' });
+
+    const { data: sub } = await supabase.from('tugas_submission').update({ nilai: parseInt(nilai), feedback: feedback || null, dinilai_at: new Date().toISOString() }).eq('id', req.params.sub_id).select('murid_id').single();
+
+    // Notif ke murid
+    if (sub?.murid_id) {
+      const { data: qz } = await supabase.from('quiz').select('judul').eq('id', req.params.id).single();
+      await supabase.from('notifikasi').insert({ id: uuidv4(), user_id: sub.murid_id, judul: '📊 Tugas Dinilai', pesan: `Tugasmu "${qz?.judul}" sudah dinilai: ${nilai}/100` });
+      const io = req.app.get('io');
+      if (io) io.to('user:' + sub.murid_id).emit('notif:baru', { tipe: 'nilai', judul: '📊 Tugas Dinilai', pesan: `Tugasmu "${qz?.judul}" sudah dinilai: ${nilai}/100`, created_at: new Date().toISOString() });
+    }
+
+    res.json({ success: true, pesan: 'Nilai berhasil disimpan.' });
+  } catch(e) {
+    console.error('[PUT submission/nilai]', e.message);
+    res.status(500).json({ success: false, pesan: 'Gagal menyimpan nilai.' });
+  }
+});
+
+// ============================================================
+//  GET /api/quiz/:id/submission/cek — murid cek status submission
+// ============================================================
+router.get('/:id/submission/cek', authMiddleware, async (req, res) => {
+  try {
+    const murid_id = req.user.id || req.user.userId;
+    const { data } = await supabase.from('tugas_submission').select('id, tipe, submitted_at, nilai, feedback').eq('quiz_id', req.params.id).eq('murid_id', murid_id).maybeSingle();
+    res.json({ success: true, sudah: !!data, submission: data || null });
+  } catch(e) {
+    res.json({ success: true, sudah: false, submission: null });
   }
 });
 

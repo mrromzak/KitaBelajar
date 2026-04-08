@@ -59,13 +59,20 @@ router.get('/aktivitas/:murid_id', authMiddleware, orangtuaOnly, async (req, res
       .select('kelas:kelas_id(id, nama, mapel, tahun_ajar, guru:guru_id(nama))')
       .eq('murid_id', murid_id);
 
-    // Ambil hasil quiz terbaru (10 terakhir)
-    const { data: hasilQuiz } = await supabase
+    // Ambil hasil quiz (ambil lebih banyak lalu dedup per quiz_id, simpan yang terbaru)
+    const { data: hasilQuizRaw } = await supabase
       .from('hasil_quiz')
-      .select('skor, benar, total_soal, selesai_at, quiz:quiz_id(judul, mapel, tipe)')
+      .select('quiz_id, skor, benar, total_soal, selesai_at, quiz:quiz_id(judul, mapel, tipe)')
       .eq('murid_id', murid_id)
       .order('selesai_at', { ascending: false })
-      .limit(10);
+      .limit(100);
+    // Dedup: satu entri per quiz_id (sudah diurutkan desc, jadi yang pertama = terbaru)
+    const seen = new Set();
+    const hasilQuiz = (hasilQuizRaw || []).filter(h => {
+      if (seen.has(h.quiz_id)) return false;
+      seen.add(h.quiz_id);
+      return true;
+    }).slice(0, 10);
 
     // Ambil materi yang sudah diselesaikan
     const { data: progresMateri, count: totalSelesai } = await supabase
