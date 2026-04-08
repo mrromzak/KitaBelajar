@@ -6347,8 +6347,10 @@ function renderKuisCard(q, isGuru) {
   const iconBg = isFun ? 'linear-gradient(135deg,#FF6B35,#FF8C42)' : 'linear-gradient(135deg,#4D96FF,#6AADFF)';
   const tglBuat = new Date(q.created_at).toLocaleDateString('id-ID', { day:'numeric', month:'long' });
 
+  const sudahDikerjakan = q.sudah_dikerjakan || false;
+
   let deadlineHtml = '';
-  if (!isFun && q.deadline) {
+  if (!isFun && q.deadline && !sudahDikerjakan) {
     const dl = new Date(q.deadline);
     const now = new Date();
     const diff = dl - now;
@@ -6356,8 +6358,6 @@ function renderKuisCard(q, isGuru) {
     const label = diff < 0 ? '⛔ Tenggat terlewat' : diff < 3600000 ? `⏰ ${Math.floor(diff/60000)} menit lagi` : diff < 86400000 ? `⚠️ ${Math.floor(diff/3600000)} jam lagi` : `📅 ${dl.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})} ${dl.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}`;
     deadlineHtml = `<div class="qsc-deadline ${cls}">${label}</div>`;
   }
-
-  const sudahDikerjakan = q.sudah_dikerjakan || false;
   const deadlineLewat = !isFun && q.deadline && new Date(q.deadline) < new Date();
 
   let actionHtml = '';
