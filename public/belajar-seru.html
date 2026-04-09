@@ -78,6 +78,13 @@
 .gchat-typing span:nth-child(2){animation-delay:.2s}
 .gchat-typing span:nth-child(3){animation-delay:.4s}
 @keyframes gchat-bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+.gchat-attach{width:36px;height:36px;border-radius:50%;background:#F4F4F4;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background .2s;align-self:center}
+.gchat-attach:hover{background:#E8E0FF}
+.gchat-attach:hover svg{fill:#7b2ff7}
+.gchat-file-chip{display:flex;align-items:center;gap:6px;background:#F0EDFF;border:1.5px solid #C4B5FD;border-radius:10px;padding:5px 10px;font-size:12px;font-weight:700;color:#5B21B6;max-width:220px}
+.gchat-file-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.gchat-file-chip button{background:none;border:none;cursor:pointer;color:#9CA3AF;font-size:14px;line-height:1;padding:0;flex-shrink:0}
+.gchat-file-chip button:hover{color:#EF4444}
 .gchat-footer{padding:12px 14px;border-top:1px solid #F0F0F0;display:flex;gap:8px}
 .gchat-input{flex:1;border:2px solid #E8E8E8;border-radius:50px;padding:9px 16px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;outline:none;transition:border-color .2s;background:#FAFAFA}
 .gchat-input:focus{border-color:#7b2ff7;background:#fff}
@@ -510,7 +517,12 @@
       <div class="gchat-bubble">Halo, Bu/Pak Guru! 👋 Saya siap membantu mencari <strong>artikel</strong>, <strong>link video</strong>, <strong>ide materi</strong>, atau apa pun yang dibutuhkan untuk mengajar. Silakan tanya!</div>
     </div>
   </div>
+  <div id="gchat-file-preview" style="display:none;padding:8px 14px 0;gap:8px;align-items:center;flex-wrap:wrap"></div>
   <div class="gchat-footer">
+    <label class="gchat-attach" title="Lampirkan file (PDF / Gambar)">
+      <input type="file" id="gchat-file-input" accept=".pdf,image/png,image/jpeg,image/webp" style="display:none" onchange="guruChatPilihFile(this)">
+      <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:#7A7A7A"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
+    </label>
     <input class="gchat-input" id="gchat-input" type="text" placeholder="Tanya apa saja..." onkeydown="if(event.key==='Enter')kirimGuruChat()">
     <button class="gchat-send" onclick="kirimGuruChat()">
       <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
@@ -8551,6 +8563,52 @@ function guruChatChip(text) {
   kirimGuruChat();
 }
 
+// ── File attachment ──
+let guruChatFile = null; // { type: 'pdf'|'image', name, content (text or base64), mime }
+
+async function guruChatPilihFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 15 * 1024 * 1024) { toast('File terlalu besar! Maks 15MB', 'error'); return; }
+
+  const previewEl = document.getElementById('gchat-file-preview');
+  previewEl.innerHTML = '<span style="font-size:12px;color:#9CA3AF">Memuat file...</span>';
+  previewEl.style.display = 'flex';
+
+  try {
+    if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+      const teks = await bacaPDF(file);
+      guruChatFile = { type: 'pdf', name: file.name, content: teks };
+    } else if (file.type.startsWith('image/')) {
+      const b64 = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = e => res(e.target.result);
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+      guruChatFile = { type: 'image', name: file.name, content: b64, mime: file.type };
+    } else {
+      toast('Format tidak didukung. Gunakan PDF atau gambar.', 'error');
+      previewEl.style.display = 'none';
+      return;
+    }
+    const icon = guruChatFile.type === 'pdf' ? '📄' : '🖼️';
+    previewEl.innerHTML = `<div class="gchat-file-chip">${icon} <span>${file.name}</span><button onclick="guruChatHapusFile()" title="Hapus">✕</button></div>`;
+  } catch(e) {
+    toast('Gagal memuat file: ' + e.message, 'error');
+    previewEl.style.display = 'none';
+    guruChatFile = null;
+  }
+  input.value = '';
+}
+
+function guruChatHapusFile() {
+  guruChatFile = null;
+  const el = document.getElementById('gchat-file-preview');
+  el.style.display = 'none';
+  el.innerHTML = '';
+}
+
 function gchatAddMsg(role, html) {
   const wrap = document.getElementById('gchat-messages');
   const div = document.createElement('div');
@@ -8580,42 +8638,85 @@ function gchatHideTyping() {
   if (el) el.remove();
 }
 
+function gchatFormatReply(reply) {
+  return reply
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:#7b2ff7;font-weight:700;word-break:break-all;">$1</a>')
+    .replace(/(?<!\()(https?:\/\/[^\s<)"]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:#7b2ff7;font-weight:700;word-break:break-all;">$1</a>')
+    .replace(/\n/g, '<br>');
+}
+
 async function kirimGuruChat() {
   const input = document.getElementById('gchat-input');
   const text = input.value.trim();
-  if (!text) return;
+  const fileSnap = guruChatFile;
+  if (!text && !fileSnap) return;
   input.value = '';
 
-  const escaped = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  gchatAddMsg('user', escaped);
-  guruChatHistory.push({ role: 'user', content: text });
+  // Tampilkan pesan user
+  const userLabel = fileSnap
+    ? `${fileSnap.type === 'pdf' ? '📄' : '🖼️'} <em style="font-size:12px;opacity:.8">${fileSnap.name}</em>${text ? '<br>' + text.replace(/</g,'&lt;') : ''}`
+    : text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  gchatAddMsg('user', userLabel);
+
+  // Hapus preview file setelah kirim
+  if (fileSnap) guruChatHapusFile();
 
   gchatShowTyping();
 
   try {
-    const messages = [
-      { role: 'system', content: GURU_SYSTEM_PROMPT },
-      ...guruChatHistory.slice(-10)
-    ];
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('kb_token') },
-      body: JSON.stringify({ messages, max_tokens: 1024 })
-    });
-    const data = await res.json();
+    let reply;
+
+    if (fileSnap && fileSnap.type === 'image') {
+      // ── Gambar: pakai Groq vision model langsung ──
+      const userMsg = text || 'Tolong analisis dan deskripsikan gambar ini. Jika berupa desain atau infografis, berikan rekomendasi perbaikan.';
+      const visionRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_API_KEY_MATERI },
+        body: JSON.stringify({
+          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+          max_tokens: 1024,
+          messages: [
+            { role: 'system', content: GURU_SYSTEM_PROMPT },
+            { role: 'user', content: [
+              { type: 'text', text: userMsg },
+              { type: 'image_url', image_url: { url: fileSnap.content } }
+            ]}
+          ]
+        })
+      });
+      const vData = await visionRes.json();
+      reply = vData?.choices?.[0]?.message?.content || 'Maaf, tidak bisa menganalisis gambar.';
+      guruChatHistory.push({ role: 'user', content: userMsg });
+      guruChatHistory.push({ role: 'assistant', content: reply });
+
+    } else {
+      // ── Teks / PDF ──
+      let userContent = text || 'Tolong rangkum isi dokumen ini.';
+      if (fileSnap && fileSnap.type === 'pdf') {
+        const maxChar = 6000;
+        const potongan = fileSnap.content.length > maxChar ? fileSnap.content.slice(0, maxChar) + '\n...(terpotong)' : fileSnap.content;
+        userContent = `[File PDF: ${fileSnap.name}]\n\n${potongan}\n\n---\n${userContent}`;
+      }
+      guruChatHistory.push({ role: 'user', content: userContent });
+
+      const messages = [
+        { role: 'system', content: GURU_SYSTEM_PROMPT },
+        ...guruChatHistory.slice(-10)
+      ];
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('kb_token') },
+        body: JSON.stringify({ messages, max_tokens: 1500 })
+      });
+      const data = await res.json();
+      reply = data?.data?.choices?.[0]?.message?.content || data?.choices?.[0]?.message?.content || data?.message || 'Maaf, saya tidak bisa merespons saat ini.';
+      guruChatHistory.push({ role: 'assistant', content: reply });
+    }
+
     gchatHideTyping();
-
-    const reply = data?.data?.choices?.[0]?.message?.content || data?.choices?.[0]?.message?.content || data?.message || 'Maaf, saya tidak bisa merespons saat ini.';
-    guruChatHistory.push({ role: 'assistant', content: reply });
-
-    // Format: markdown links, bold, italic, plain URLs, newline
-    const formatted = reply
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:#7b2ff7;font-weight:700;word-break:break-all;">$1</a>')
-      .replace(/(?<!\()(https?:\/\/[^\s<)"]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:#7b2ff7;font-weight:700;word-break:break-all;">$1</a>')
-      .replace(/\n/g, '<br>');
-    gchatAddMsg('bot', formatted);
+    gchatAddMsg('bot', gchatFormatReply(reply));
   } catch(e) {
     gchatHideTyping();
     gchatAddMsg('bot', '❌ Gagal terhubung ke AI. Coba lagi sebentar.');
