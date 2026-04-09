@@ -440,6 +440,42 @@
       <div id="guru-mapel-list"></div>
     </div>
   </div>
+
+  <!-- ===== GURU AI CHATBOT ===== -->
+  <button class="guru-chatbot-fab" onclick="toggleGuruChat()" title="Asisten AI Guru" id="guru-chat-fab">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm0 14H5.17L4 17.17V4h16v12z"/><circle cx="8.5" cy="11" r="1.5"/><circle cx="12" cy="11" r="1.5"/><circle cx="15.5" cy="11" r="1.5"/></svg>
+    <span class="fab-badge" id="guru-chat-badge"></span>
+  </button>
+
+  <div class="guru-chatbot-panel" id="guru-chatbot-panel">
+    <div class="gchat-header">
+      <div class="gchat-header-icon">🤖</div>
+      <div class="gchat-header-info">
+        <strong>Asisten AI Guru</strong>
+        <span>Bantu cari artikel, video, & ide mengajar</span>
+      </div>
+      <button class="gchat-close" onclick="toggleGuruChat()">✕</button>
+    </div>
+    <div class="gchat-chips">
+      <button class="gchat-chip" onclick="guruChatChip('Carikan artikel tentang metode pembelajaran aktif')">📰 Artikel Mengajar</button>
+      <button class="gchat-chip" onclick="guruChatChip('Rekomendasikan video YouTube untuk materi matematika kelas 12')">▶️ Video YouTube</button>
+      <button class="gchat-chip" onclick="guruChatChip('Berikan contoh soal kreatif untuk murid SMA')">✏️ Ide Soal</button>
+      <button class="gchat-chip" onclick="guruChatChip('Bagaimana cara membuat RPP yang menarik?')">📋 Buat RPP</button>
+      <button class="gchat-chip" onclick="guruChatChip('Tips motivasi murid yang malas belajar')">💡 Tips Motivasi</button>
+    </div>
+    <div class="gchat-messages" id="gchat-messages">
+      <div class="gchat-msg bot">
+        <div class="gchat-avatar">🤖</div>
+        <div class="gchat-bubble">Halo, Bu/Pak Guru! 👋 Saya siap membantu mencari <strong>artikel</strong>, <strong>link video</strong>, <strong>ide materi</strong>, atau apa pun yang dibutuhkan untuk mengajar. Silakan tanya!</div>
+      </div>
+    </div>
+    <div class="gchat-footer">
+      <input class="gchat-input" id="gchat-input" type="text" placeholder="Tanya apa saja..." onkeydown="if(event.key==='Enter')kirimGuruChat()">
+      <button class="gchat-send" onclick="kirimGuruChat()">
+        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- ========== KITA QUIZ: MURID JOIN ========== -->
@@ -8411,6 +8447,104 @@ async function loadErrorLog(filter) {
       </div>`).join('');
   } catch(e) {
     el.innerHTML = '<div style="padding:24px;color:var(--red)">Gagal memuat error log.</div>';
+  }
+}
+
+// ===== GURU AI CHATBOT =====
+let guruChatOpen = false;
+let guruChatHistory = [];
+const GURU_SYSTEM_PROMPT = `Kamu adalah asisten AI khusus untuk guru Indonesia bernama "Asisten Guru". Tugasmu membantu guru dalam:
+- Mencari artikel dan referensi untuk bahan ajar (berikan judul artikel yang relevan dan sumber/website terpercaya)
+- Merekomendasikan video YouTube edukatif (berikan judul video dan channel yang bisa dicari)
+- Memberikan ide soal, kuis, dan aktivitas pembelajaran kreatif
+- Membantu membuat RPP, silabus, dan rencana pembelajaran
+- Memberikan tips motivasi siswa dan manajemen kelas
+- Menjelaskan konsep materi pelajaran dengan cara yang mudah diajarkan
+Gunakan bahasa Indonesia yang ramah dan profesional. Jika ada link/URL, tulis dengan format yang jelas.
+Saat merekomendasikan video YouTube, tulis: "Cari di YouTube: [judul video] oleh [channel]".
+Saat merekomendasikan artikel, tulis sumber website yang terpercaya (Kemendikbud, jurnal, dll).`;
+
+function toggleGuruChat() {
+  const panel = document.getElementById('guru-chatbot-panel');
+  guruChatOpen = !guruChatOpen;
+  panel.classList.toggle('open', guruChatOpen);
+  if (guruChatOpen) {
+    setTimeout(() => document.getElementById('gchat-input').focus(), 300);
+    document.getElementById('guru-chat-badge').style.opacity = '0';
+  }
+}
+
+function guruChatChip(text) {
+  document.getElementById('gchat-input').value = text;
+  kirimGuruChat();
+}
+
+function gchatAddMsg(role, html) {
+  const wrap = document.getElementById('gchat-messages');
+  const div = document.createElement('div');
+  div.className = `gchat-msg ${role}`;
+  if (role === 'bot') {
+    div.innerHTML = `<div class="gchat-avatar">🤖</div><div class="gchat-bubble">${html}</div>`;
+  } else {
+    div.innerHTML = `<div class="gchat-bubble">${html}</div>`;
+  }
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+  return div;
+}
+
+function gchatShowTyping() {
+  const wrap = document.getElementById('gchat-messages');
+  const div = document.createElement('div');
+  div.className = 'gchat-msg bot';
+  div.id = 'gchat-typing-indicator';
+  div.innerHTML = `<div class="gchat-avatar">🤖</div><div class="gchat-typing"><span></span><span></span><span></span></div>`;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function gchatHideTyping() {
+  const el = document.getElementById('gchat-typing-indicator');
+  if (el) el.remove();
+}
+
+async function kirimGuruChat() {
+  const input = document.getElementById('gchat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  const escaped = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  gchatAddMsg('user', escaped);
+  guruChatHistory.push({ role: 'user', content: text });
+
+  gchatShowTyping();
+
+  try {
+    const messages = [
+      { role: 'system', content: GURU_SYSTEM_PROMPT },
+      ...guruChatHistory.slice(-10)
+    ];
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('kb_token') },
+      body: JSON.stringify({ messages, max_tokens: 1024 })
+    });
+    const data = await res.json();
+    gchatHideTyping();
+
+    const reply = data?.choices?.[0]?.message?.content || data?.message || 'Maaf, saya tidak bisa merespons saat ini.';
+    guruChatHistory.push({ role: 'assistant', content: reply });
+
+    // Format: bold, newline, link-style
+    const formatted = reply
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/\n/g, '<br>');
+    gchatAddMsg('bot', formatted);
+  } catch(e) {
+    gchatHideTyping();
+    gchatAddMsg('bot', '❌ Gagal terhubung ke AI. Coba lagi sebentar.');
   }
 }
 </script>
