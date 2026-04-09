@@ -621,21 +621,23 @@
   position: fixed;
   bottom: 28px;
   right: 28px;
-  width: 56px;
-  height: 56px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7b2ff7, #4D96FF);
+  background: white;
   border: none;
   cursor: pointer;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 24px rgba(123,47,247,0.4);
+  box-shadow: 0 6px 28px rgba(0,0,0,0.18);
   transition: all 0.25s;
-  z-index: 999;
+  z-index: 9999;
+  padding: 0;
+  overflow: hidden;
 }
-.guru-chatbot-fab:hover { transform: scale(1.1); box-shadow: 0 10px 32px rgba(123,47,247,0.5); }
-.guru-chatbot-fab svg { width: 26px; height: 26px; fill: white; }
+.guru-chatbot-fab.visible { display: flex; }
+.guru-chatbot-fab:hover { transform: scale(1.1); box-shadow: 0 10px 36px rgba(0,0,0,0.25); }
 .guru-chatbot-fab .fab-badge {
   position: absolute;
   top: -3px; right: -3px;
@@ -652,16 +654,16 @@
 }
 .guru-chatbot-panel {
   position: fixed;
-  bottom: 96px;
+  bottom: 100px;
   right: 28px;
   width: 370px;
   max-height: 580px;
   background: white;
   border-radius: 24px;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.18);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.22);
   display: flex;
   flex-direction: column;
-  z-index: 998;
+  z-index: 9998;
   transform: scale(0.85) translateY(30px);
   transform-origin: bottom right;
   opacity: 0;
@@ -734,7 +736,7 @@
 }
 .gchat-msg.bot .gchat-bubble { background: #F4F0FF; color: #2D2D2D; border-bottom-left-radius: 4px; }
 .gchat-msg.user .gchat-bubble { background: linear-gradient(135deg, #7b2ff7, #4D96FF); color: white; border-bottom-right-radius: 4px; }
-.gchat-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg,#7b2ff7,#4D96FF); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.gchat-avatar { width: 28px; height: 28px; border-radius: 50%; background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
 .gchat-typing { display: flex; gap: 4px; align-items: center; padding: 10px 14px; background: #F4F0FF; border-radius: 16px; border-bottom-left-radius: 4px; width: fit-content; }
 .gchat-typing span { width: 7px; height: 7px; background: #9B6DFF; border-radius: 50%; animation: gchat-bounce 1.2s infinite; }
 .gchat-typing span:nth-child(2) { animation-delay: 0.2s; }

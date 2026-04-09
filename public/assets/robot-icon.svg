@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <!-- Speech bubble background -->
+  <path d="M10 8 Q10 2 16 2 H104 Q110 2 110 8 V72 Q110 78 104 78 H36 L18 98 L22 78 H16 Q10 78 10 72 Z" fill="#D8DCE3"/>
+  <!-- Robot face dome -->
+  <path d="M22 38 Q22 18 60 18 Q98 18 98 38 V74 Q98 80 92 80 H28 Q22 80 22 74 Z" fill="#3D4A5C"/>
+  <!-- Antennas -->
+  <line x1="44" y1="18" x2="44" y2="6" stroke="#3D4A5C" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="44" cy="4" r="5" fill="#3D4A5C"/>
+  <line x1="76" y1="18" x2="76" y2="6" stroke="#3D4A5C" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="76" cy="4" r="5" fill="#3D4A5C"/>
+  <!-- Eyes -->
+  <circle cx="44" cy="46" r="9" fill="#29B6F6"/>
+  <circle cx="76" cy="46" r="9" fill="#29B6F6"/>
+  <!-- Smile -->
+  <path d="M38 62 Q60 78 82 62" stroke="white" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <path d="M38 62 Q60 80 82 62 Q60 90 38 62 Z" fill="white"/>
+  <path d="M46 70 Q60 80 74 70 Q60 90 46 70 Z" fill="#29B6F6"/>
+</svg>

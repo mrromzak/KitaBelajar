@@ -441,40 +441,41 @@
     </div>
   </div>
 
-  <!-- ===== GURU AI CHATBOT ===== -->
-  <button class="guru-chatbot-fab" onclick="toggleGuruChat()" title="Asisten AI Guru" id="guru-chat-fab">
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm0 14H5.17L4 17.17V4h16v12z"/><circle cx="8.5" cy="11" r="1.5"/><circle cx="12" cy="11" r="1.5"/><circle cx="15.5" cy="11" r="1.5"/></svg>
-    <span class="fab-badge" id="guru-chat-badge"></span>
-  </button>
+</div>
 
-  <div class="guru-chatbot-panel" id="guru-chatbot-panel">
-    <div class="gchat-header">
-      <div class="gchat-header-icon">🤖</div>
-      <div class="gchat-header-info">
-        <strong>Asisten AI Guru</strong>
-        <span>Bantu cari artikel, video, & ide mengajar</span>
-      </div>
-      <button class="gchat-close" onclick="toggleGuruChat()">✕</button>
+<!-- ===== GURU AI CHATBOT (body-level, always fixed) ===== -->
+<button class="guru-chatbot-fab" onclick="toggleGuruChat()" title="Asisten AI Guru" id="guru-chat-fab">
+  <img src="/assets/robot-icon.svg" alt="AI" style="width:34px;height:34px;display:block">
+  <span class="fab-badge" id="guru-chat-badge"></span>
+</button>
+
+<div class="guru-chatbot-panel" id="guru-chatbot-panel">
+  <div class="gchat-header">
+    <div class="gchat-header-icon"><img src="/assets/robot-icon.svg" alt="AI" style="width:36px;height:36px;display:block"></div>
+    <div class="gchat-header-info">
+      <strong>Asisten AI Guru</strong>
+      <span>Bantu cari artikel, video, & ide mengajar</span>
     </div>
-    <div class="gchat-chips">
-      <button class="gchat-chip" onclick="guruChatChip('Carikan artikel tentang metode pembelajaran aktif')">📰 Artikel Mengajar</button>
-      <button class="gchat-chip" onclick="guruChatChip('Rekomendasikan video YouTube untuk materi matematika kelas 12')">▶️ Video YouTube</button>
-      <button class="gchat-chip" onclick="guruChatChip('Berikan contoh soal kreatif untuk murid SMA')">✏️ Ide Soal</button>
-      <button class="gchat-chip" onclick="guruChatChip('Bagaimana cara membuat RPP yang menarik?')">📋 Buat RPP</button>
-      <button class="gchat-chip" onclick="guruChatChip('Tips motivasi murid yang malas belajar')">💡 Tips Motivasi</button>
+    <button class="gchat-close" onclick="toggleGuruChat()">✕</button>
+  </div>
+  <div class="gchat-chips">
+    <button class="gchat-chip" onclick="guruChatChip('Carikan artikel tentang metode pembelajaran aktif')">📰 Artikel Mengajar</button>
+    <button class="gchat-chip" onclick="guruChatChip('Rekomendasikan video YouTube untuk materi matematika kelas 12')">▶️ Video YouTube</button>
+    <button class="gchat-chip" onclick="guruChatChip('Berikan contoh soal kreatif untuk murid SMA')">✏️ Ide Soal</button>
+    <button class="gchat-chip" onclick="guruChatChip('Bagaimana cara membuat RPP yang menarik?')">📋 Buat RPP</button>
+    <button class="gchat-chip" onclick="guruChatChip('Tips motivasi murid yang malas belajar')">💡 Tips Motivasi</button>
+  </div>
+  <div class="gchat-messages" id="gchat-messages">
+    <div class="gchat-msg bot">
+      <div class="gchat-avatar"><img src="/assets/robot-icon.svg" alt="AI" style="width:28px;height:28px;border-radius:50%;background:white"></div>
+      <div class="gchat-bubble">Halo, Bu/Pak Guru! 👋 Saya siap membantu mencari <strong>artikel</strong>, <strong>link video</strong>, <strong>ide materi</strong>, atau apa pun yang dibutuhkan untuk mengajar. Silakan tanya!</div>
     </div>
-    <div class="gchat-messages" id="gchat-messages">
-      <div class="gchat-msg bot">
-        <div class="gchat-avatar">🤖</div>
-        <div class="gchat-bubble">Halo, Bu/Pak Guru! 👋 Saya siap membantu mencari <strong>artikel</strong>, <strong>link video</strong>, <strong>ide materi</strong>, atau apa pun yang dibutuhkan untuk mengajar. Silakan tanya!</div>
-      </div>
-    </div>
-    <div class="gchat-footer">
-      <input class="gchat-input" id="gchat-input" type="text" placeholder="Tanya apa saja..." onkeydown="if(event.key==='Enter')kirimGuruChat()">
-      <button class="gchat-send" onclick="kirimGuruChat()">
-        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-      </button>
-    </div>
+  </div>
+  <div class="gchat-footer">
+    <input class="gchat-input" id="gchat-input" type="text" placeholder="Tanya apa saja..." onkeydown="if(event.key==='Enter')kirimGuruChat()">
+    <button class="gchat-send" onclick="kirimGuruChat()">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
   </div>
 </div>
 
@@ -8453,6 +8454,24 @@ async function loadErrorLog(filter) {
 // ===== GURU AI CHATBOT =====
 let guruChatOpen = false;
 let guruChatHistory = [];
+
+function updateGuruChatFabVisibility() {
+  const fab = document.getElementById('guru-chat-fab');
+  if (!fab) return;
+  const guruPage = document.getElementById('page-guru');
+  if (guruPage && guruPage.classList.contains('active')) {
+    fab.classList.add('visible');
+  } else {
+    fab.classList.remove('visible');
+    // Auto-close if navigated away
+    if (guruChatOpen) {
+      guruChatOpen = false;
+      const panel = document.getElementById('guru-chatbot-panel');
+      if (panel) panel.classList.remove('open');
+    }
+  }
+}
+
 const GURU_SYSTEM_PROMPT = `Kamu adalah asisten AI khusus untuk guru Indonesia bernama "Asisten Guru". Tugasmu membantu guru dalam:
 - Mencari artikel dan referensi untuk bahan ajar (berikan judul artikel yang relevan dan sumber/website terpercaya)
 - Merekomendasikan video YouTube edukatif (berikan judul video dan channel yang bisa dicari)
@@ -8474,6 +8493,18 @@ function toggleGuruChat() {
   }
 }
 
+// Override showPage to manage FAB visibility
+document.addEventListener('DOMContentLoaded', () => {
+  const origShowPage = window.showPage;
+  if (origShowPage) {
+    window.showPage = function(pageId) {
+      origShowPage(pageId);
+      setTimeout(updateGuruChatFabVisibility, 50);
+    };
+  }
+  updateGuruChatFabVisibility();
+});
+
 function guruChatChip(text) {
   document.getElementById('gchat-input').value = text;
   kirimGuruChat();
@@ -8484,7 +8515,7 @@ function gchatAddMsg(role, html) {
   const div = document.createElement('div');
   div.className = `gchat-msg ${role}`;
   if (role === 'bot') {
-    div.innerHTML = `<div class="gchat-avatar">🤖</div><div class="gchat-bubble">${html}</div>`;
+    div.innerHTML = `<div class="gchat-avatar"><img src="/assets/robot-icon.svg" style="width:28px;height:28px"></div><div class="gchat-bubble">${html}</div>`;
   } else {
     div.innerHTML = `<div class="gchat-bubble">${html}</div>`;
   }
