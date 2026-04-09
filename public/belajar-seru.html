@@ -603,26 +603,36 @@
 <!-- ========== QUIZ KILAT — DUOLINGO STYLE ========== -->
 
 <!-- Halaman: Pilih Kategori (dari kelas murid) -->
-<div class="page" id="page-quiz-map">
-  <nav class="navbar" style="background:linear-gradient(135deg,#FF6B35,#FF8C42);border-bottom:none">
-    <div class="logo" style="color:white"><span>⚡</span> Quiz Kilat</div>
-    <div class="nav-links">
-      <button class="nav-btn back" onclick="showPage('page-murid')" style="color:white;border-color:rgba(255,255,255,0.4)">← Kembali</button>
-    </div>
-  </nav>
+<div class="page" id="page-quiz-map" style="background:#FFF9F0;min-height:100vh">
+  <!-- Hero header -->
+  <div style="background:linear-gradient(135deg,#FF6B35 0%,#FF0080 50%,#8E54E9 100%);padding:0 0 32px;position:relative;overflow:hidden">
+    <!-- Decorative circles bg -->
+    <div style="position:absolute;top:-30px;right:-20px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,0.08)"></div>
+    <div style="position:absolute;bottom:-40px;left:-30px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.06)"></div>
+    <div style="position:absolute;top:20px;left:40%;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.07)"></div>
 
-  <!-- Streak & XP bar -->
-  <div style="background:linear-gradient(135deg,#FF6B35,#FF8C42);padding:0 24px 24px;text-align:center">
-    <div style="display:flex;justify-content:center;gap:24px;padding:12px 0">
-      <div style="background:rgba(255,255,255,0.2);border-radius:50px;padding:6px 18px;display:flex;align-items:center;gap:6px">
-        <span>🔥</span><span id="qk-streak" style="font-weight:900;color:white;font-size:15px">0</span><span style="font-size:12px;color:rgba(255,255,255,0.8)">hari</span>
+    <!-- Navbar -->
+    <nav style="display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:58px;position:relative;z-index:2">
+      <div style="font-family:'Fredoka One',cursive;font-size:20px;color:white;display:flex;align-items:center;gap:8px"><span style="font-size:22px">⚡</span> Quiz Kilat</div>
+      <button onclick="showPage('page-murid')" style="background:rgba(255,255,255,0.22);border:1.5px solid rgba(255,255,255,0.5);color:white;border-radius:50px;padding:7px 16px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer">← Kembali</button>
+    </nav>
+
+    <!-- Stats pills -->
+    <div style="display:flex;justify-content:center;gap:14px;padding:8px 20px 16px;position:relative;z-index:2">
+      <div style="background:rgba(255,255,255,0.22);backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,0.3);border-radius:50px;padding:8px 20px;display:flex;align-items:center;gap:7px">
+        <span style="font-size:18px">🔥</span><span id="qk-streak" style="font-weight:900;color:white;font-size:16px">0</span><span style="font-size:12px;color:rgba(255,255,255,0.85);font-weight:700">hari</span>
       </div>
-      <div style="background:rgba(255,255,255,0.2);border-radius:50px;padding:6px 18px;display:flex;align-items:center;gap:6px">
-        <span>⭐</span><span id="qk-xp-total" style="font-weight:900;color:white;font-size:15px">0</span><span style="font-size:12px;color:rgba(255,255,255,0.8)">XP</span>
+      <div style="background:rgba(255,255,255,0.22);backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,0.3);border-radius:50px;padding:8px 20px;display:flex;align-items:center;gap:7px">
+        <span style="font-size:18px">⭐</span><span id="qk-xp-total" style="font-weight:900;color:#FFD700;font-size:16px">0</span><span style="font-size:12px;color:rgba(255,255,255,0.85);font-weight:700">XP</span>
       </div>
     </div>
-    <div style="font-family:'Fredoka One',cursive;font-size:22px;color:white;margin-bottom:4px">Pilih Kategori!</div>
-    <div style="font-size:13px;color:rgba(255,255,255,0.8)">Soal diambil dari materi kelasmu</div>
+
+    <!-- Title -->
+    <div style="text-align:center;position:relative;z-index:2;padding:0 20px">
+      <div style="font-size:44px;margin-bottom:6px">🎯</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:28px;color:white;margin-bottom:6px;text-shadow:0 2px 12px rgba(0,0,0,0.2)">Pilih Kategori!</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.85);font-weight:700;background:rgba(0,0,0,0.15);border-radius:50px;display:inline-block;padding:5px 18px">Soal diambil dari materi kelasmu 📖</div>
+    </div>
   </div>
 
   <!-- Kategori dari kelas murid -->
@@ -635,27 +645,29 @@
 </div>
 
 <!-- Halaman: Stage Map per Kategori -->
-<div class="page" id="page-quiz-stages">
-  <nav class="navbar" style="background:linear-gradient(135deg,#4D96FF,#6AADFF);border-bottom:none">
-    <div class="logo" style="color:white" id="qk-stage-title">📚 Kategori</div>
-    <div class="nav-links">
-      <button class="nav-btn back" onclick="showPage('page-quiz-map');loadQuizKilatMap()" style="color:white;border-color:rgba(255,255,255,0.4)">← Kategori</button>
-    </div>
+<div class="page" id="page-quiz-stages" style="background:linear-gradient(180deg,#1a1a6e 0%,#2d1b69 25%,#6C3CE1 55%,#11998e 80%,#38ef7d 100%);min-height:100vh;position:relative;overflow:hidden">
+  <!-- Animated stars bg -->
+  <div id="qk-stars-bg" style="position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden"></div>
+
+  <!-- Navbar -->
+  <nav style="position:sticky;top:0;z-index:100;background:rgba(26,26,110,0.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:58px">
+    <div style="font-family:'Fredoka One',cursive;font-size:18px;color:white;display:flex;align-items:center;gap:8px" id="qk-stage-title">📚 Kategori</div>
+    <button onclick="showPage('page-quiz-map');loadQuizKilatMap()" style="background:rgba(255,255,255,0.18);border:1.5px solid rgba(255,255,255,0.4);color:white;border-radius:50px;padding:6px 16px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer">← Kategori</button>
   </nav>
 
-  <!-- Progress kategori -->
-  <div style="background:linear-gradient(135deg,#4D96FF,#6AADFF);padding:0 24px 20px">
+  <!-- Progress bar header -->
+  <div style="position:relative;z-index:1;padding:16px 24px 20px;background:rgba(0,0,0,0.2)">
     <div style="display:flex;justify-content:space-between;align-items:center;color:white;margin-bottom:8px">
-      <span style="font-size:13px;font-weight:700" id="qk-stage-progress-label">0 / 5 stage selesai</span>
-      <span style="font-size:13px;font-weight:700" id="qk-stage-xp-label">0 XP</span>
+      <span style="font-size:13px;font-weight:800;display:flex;align-items:center;gap:5px">🏆 <span id="qk-stage-progress-label">0 / 5 stage selesai</span></span>
+      <span style="font-size:13px;font-weight:800;background:rgba(255,215,0,0.25);border-radius:50px;padding:3px 12px;color:#FFD700">⭐ <span id="qk-stage-xp-label">0 XP</span></span>
     </div>
-    <div style="background:rgba(255,255,255,0.25);border-radius:50px;height:10px">
-      <div id="qk-stage-progress-bar" style="height:100%;border-radius:50px;background:white;transition:width 0.5s;width:0%"></div>
+    <div style="background:rgba(255,255,255,0.2);border-radius:50px;height:10px;overflow:hidden">
+      <div id="qk-stage-progress-bar" style="height:100%;border-radius:50px;background:linear-gradient(90deg,#FFD700,#FF6B35);transition:width 0.6s ease;width:0%;box-shadow:0 0 8px rgba(255,215,0,0.6)"></div>
     </div>
   </div>
 
-  <!-- Stage path (Duolingo-style zigzag) -->
-  <div style="max-width:380px;margin:0 auto;padding:24px 20px 80px" id="qk-stage-path"></div>
+  <!-- Stage path -->
+  <div style="position:relative;z-index:1;max-width:420px;margin:0 auto;padding:8px 20px 100px" id="qk-stage-path"></div>
 </div>
 
 <!-- Halaman: Main Quiz -->
@@ -5705,30 +5717,39 @@ async function loadQuizKilatMap() {
     // Render kategori cards
     wrap.innerHTML = `
       <div style="margin-bottom:20px">
-        <div style="font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">
-          📖 Kelasmu (${qkKategori.length} Kategori)
+        <div style="font-family:'Fredoka One',cursive;font-size:15px;color:#888;letter-spacing:.5px;margin-bottom:16px;display:flex;align-items:center;gap:6px">
+          📖 KELASMU <span style="background:linear-gradient(135deg,#FF6B35,#FF0080);color:white;border-radius:50px;padding:2px 10px;font-size:12px">${qkKategori.length} Kategori</span>
         </div>
         <div style="display:flex;flex-direction:column;gap:14px">
           ${qkKategori.map((k, i) => {
             const stagesDone = getStagesDone(k.id);
             const pct = Math.round(stagesDone / QK_STAGES_PER_KATEGORI * 100);
+            const xpEarned = QK_STAGE_XP.slice(0,stagesDone).reduce((a,b)=>a+b,0);
+            const stageLabel = stagesDone === QK_STAGES_PER_KATEGORI ? '🏆 Selesai!' : stagesDone === 0 ? '🚀 Mulai sekarang!' : `Stage ${stagesDone+1}: ${QK_STAGE_NAMES[stagesDone]}`;
             return `
             <div onclick="bukaStageMap('${k.id}')"
-              style="background:white;border-radius:20px;box-shadow:0 4px 20px rgba(0,0,0,0.08);padding:18px 20px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:16px;border:2.5px solid transparent"
-              onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='${k.color}'"
-              onmouseout="this.style.transform='';this.style.borderColor='transparent'">
-              <div style="width:56px;height:56px;border-radius:16px;background:${k.color}20;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0">
-                ${k.emoji}
-              </div>
-              <div style="flex:1;min-width:0">
-                <div style="font-weight:900;font-size:15px;margin-bottom:2px">${k.mapel}</div>
-                <div style="font-size:12px;color:var(--muted);margin-bottom:6px">📍 ${k.kelasNama}</div>
-                <div style="background:#eee;border-radius:50px;height:7px">
-                  <div style="background:${k.color};height:100%;border-radius:50px;width:${pct}%;transition:width 0.5s"></div>
+              style="background:linear-gradient(135deg,${k.color}18,${k.color}08);border-radius:24px;box-shadow:0 6px 24px rgba(0,0,0,0.09);padding:20px;cursor:pointer;transition:all 0.25s;border:2px solid ${k.color}30;position:relative;overflow:hidden"
+              onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 12px 36px rgba(0,0,0,0.14)';this.style.borderColor='${k.color}80'"
+              onmouseout="this.style.transform='';this.style.boxShadow='0 6px 24px rgba(0,0,0,0.09)';this.style.borderColor='${k.color}30'">
+              <!-- Decorative circle -->
+              <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:${k.color}15;pointer-events:none"></div>
+              <div style="display:flex;align-items:center;gap:16px">
+                <div style="width:64px;height:64px;border-radius:20px;background:linear-gradient(145deg,${k.color},${k.color}aa);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;box-shadow:0 6px 18px ${k.color}50">
+                  ${k.emoji}
                 </div>
-                <div style="font-size:11px;color:var(--muted);margin-top:4px;font-weight:700">${stagesDone}/${QK_STAGES_PER_KATEGORI} stage · ${QK_STAGE_XP.slice(0,stagesDone).reduce((a,b)=>a+b,0)} XP</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-family:'Fredoka One',cursive;font-size:18px;color:#1a1a2e;margin-bottom:2px">${k.mapel}</div>
+                  <div style="font-size:12px;color:#888;margin-bottom:8px;font-weight:700">📍 ${k.kelasNama}</div>
+                  <div style="background:rgba(0,0,0,0.08);border-radius:50px;height:8px;overflow:hidden;margin-bottom:5px">
+                    <div style="background:linear-gradient(90deg,${k.color},${k.color}cc);height:100%;border-radius:50px;width:${pct}%;transition:width 0.6s;box-shadow:0 0 6px ${k.color}60"></div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center">
+                    <span style="font-size:11px;color:${k.color};font-weight:800">${stageLabel}</span>
+                    <span style="font-size:11px;background:${k.color}20;color:${k.color};border-radius:50px;padding:2px 8px;font-weight:800">⭐ ${xpEarned} XP</span>
+                  </div>
+                </div>
+                <div style="font-size:24px;color:${k.color};font-weight:900">›</div>
               </div>
-              <div style="font-size:22px;color:${k.color}">›</div>
             </div>`;
           }).join('')}
         </div>
@@ -5799,54 +5820,123 @@ function renderStagePath() {
   const kat  = qkActiveKategori;
   const stagesDone = getStagesDone(kat.id);
 
-  // Zigzag positions: kiri-tengah-kanan
-  const positions = ['left','center','right','center','left'];
+  // Label alternates left/right each stage
+  const labelSide = ['right','left','right','left','right'];
 
-  path.innerHTML = QK_STAGES_PER_KATEGORI > 0 ? Array.from({length: QK_STAGES_PER_KATEGORI}).map((_, i) => {
+  let html = '';
+  for (let i = 0; i < QK_STAGES_PER_KATEGORI; i++) {
     const done   = i < stagesDone;
     const active = i === stagesDone;
     const locked = i > stagesDone;
-    const pos    = positions[i % positions.length];
     const color  = QK_STAGE_COLORS[i];
     const xp     = QK_STAGE_XP[i];
+    const side   = labelSide[i];
 
-    const marginMap = { left:'margin-right:auto;margin-left:20px', center:'margin:auto', right:'margin-left:auto;margin-right:20px' };
-    const margin = marginMap[pos] || 'margin:auto';
+    // Glow & style for button
+    const btnBg = done
+      ? `linear-gradient(145deg, ${color}, ${color}cc)`
+      : active
+        ? `linear-gradient(145deg, ${color}, ${color}99)`
+        : 'linear-gradient(145deg, #3a3a5c, #2a2a4c)';
+    const btnShadow = active
+      ? `0 0 0 6px ${color}40, 0 8px 32px ${color}80`
+      : done
+        ? `0 4px 18px ${color}60`
+        : '0 4px 12px rgba(0,0,0,0.3)';
+    const btnScale = active ? 'transform:scale(1.12)' : '';
+    const btnPulse = active ? 'animation:qkPulseRing 1.6s ease-in-out infinite' : '';
 
-    return `
-      <div style="display:flex;flex-direction:column;align-items:center;${margin};margin-bottom:${i<QK_STAGES_PER_KATEGORI-1?'8px':'0'};width:110px">
-        <!-- Stage button -->
-        <button onclick="${locked ? 'toast(\'Selesaikan stage sebelumnya dulu! 🔒\',\'error\')' : `mulaiStage(${i})`}"
-          style="width:90px;height:90px;border-radius:24px;border:none;cursor:${locked?'not-allowed':'pointer'};
-                 background:${done?color:active?color:'#E0E0E0'};
-                 box-shadow:${active?`0 8px 24px ${color}60`:'0 4px 12px rgba(0,0,0,0.1)'};
-                 transition:all 0.25s;position:relative;
-                 ${active?'transform:scale(1.08)':''}"
-          onmouseover="${locked?'':''}" >
-          <div style="font-size:36px;line-height:1;display:flex;align-items:center;justify-content:center;height:100%">
-            ${done ? '✅' : locked ? '🔒' : QK_STAGE_ICONS[i]}
-          </div>
-          ${active ? `<div style="position:absolute;top:-8px;right:-8px;background:#FF6B35;color:white;font-size:10px;font-weight:900;padding:3px 7px;border-radius:50px;font-family:Nunito">START</div>` : ''}
-          ${done ? `<div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);background:${color};color:white;font-size:10px;font-weight:900;padding:3px 9px;border-radius:50px;font-family:Nunito;white-space:nowrap">+${xp}XP</div>` : ''}
-        </button>
+    const labelColor = done ? color : active ? '#fff' : 'rgba(255,255,255,0.4)';
+    const subColor   = done ? 'rgba(255,255,255,0.8)' : active ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.3)';
 
-        <!-- Stage info -->
-        <div style="margin-top:16px;text-align:center">
-          <div style="font-weight:900;font-size:13px;color:${locked?'#BDBDBD':done?color:'var(--text)'}">
-            ${QK_STAGE_NAMES[i]}
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">
-            ${done?'Selesai ✓':active?`${QK_SOAL_PER_STAGE} soal`:locked?'🔒':''}
-          </div>
+    const labelBlock = `
+      <div style="min-width:110px;text-align:${side === 'right' ? 'left' : 'right'}">
+        <div style="font-family:'Fredoka One',cursive;font-size:16px;color:${labelColor};text-shadow:0 2px 8px rgba(0,0,0,0.4)">${QK_STAGE_NAMES[i]}</div>
+        <div style="font-size:11px;font-weight:800;color:${subColor};margin-top:2px">
+          ${done ? `✅ +${xp} XP` : active ? `⚡ ${QK_SOAL_PER_STAGE} soal` : '🔒 Terkunci'}
         </div>
-
-        <!-- Connector line (tidak di stage terakhir) -->
-        ${i < QK_STAGES_PER_KATEGORI-1 ? `
-        <div style="width:4px;height:40px;background:${i<stagesDone?color:'#E0E0E0'};border-radius:2px;margin-top:10px;
-                    ${i<stagesDone?`box-shadow:0 0 8px ${color}80`:''}"></div>
-        ` : ''}
       </div>`;
-  }).join('') : '';
+
+    const emptyBlock = `<div style="min-width:110px"></div>`;
+
+    // Stage row
+    html += `
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px">
+        ${side === 'left' ? labelBlock : emptyBlock}
+        <div style="position:relative;flex-shrink:0">
+          <button onclick="${locked ? "toast('Selesaikan stage sebelumnya dulu! 🔒','error')" : `mulaiStage(${i})`}"
+            style="width:96px;height:96px;border-radius:28px;border:none;
+                   cursor:${locked ? 'not-allowed' : 'pointer'};
+                   background:${btnBg};
+                   box-shadow:${btnShadow};
+                   transition:all 0.25s;position:relative;
+                   ${btnScale};${btnPulse};
+                   opacity:${locked ? '0.6' : '1'}">
+            <div style="font-size:38px;display:flex;align-items:center;justify-content:center;height:100%">
+              ${done ? QK_STAGE_ICONS[i] : locked ? '🔒' : QK_STAGE_ICONS[i]}
+            </div>
+            ${done ? `<div style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:${color};color:white;font-size:10px;font-weight:900;padding:3px 9px;border-radius:50px;font-family:Nunito;white-space:nowrap;border:2px solid rgba(255,255,255,0.4)">✓ SELESAI</div>` : ''}
+            ${active ? `<div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#FF6B35,#FF0080);color:white;font-size:10px;font-weight:900;padding:3px 10px;border-radius:50px;font-family:Nunito;white-space:nowrap;box-shadow:0 2px 8px rgba(255,107,53,0.6)">▶ MULAI</div>` : ''}
+          </button>
+        </div>
+        ${side === 'right' ? labelBlock : emptyBlock}
+      </div>`;
+
+    // Connector between stages
+    if (i < QK_STAGES_PER_KATEGORI - 1) {
+      const nextColor = QK_STAGE_COLORS[i + 1];
+      const connGrad  = done
+        ? `linear-gradient(180deg, ${color}, ${nextColor})`
+        : `linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08))`;
+      const connGlow  = done ? `box-shadow:0 0 10px ${color}80` : '';
+      const connDash  = !done && !active ? `background:repeating-linear-gradient(180deg,rgba(255,255,255,0.2) 0px,rgba(255,255,255,0.2) 8px,transparent 8px,transparent 16px)` : '';
+
+      html += `
+        <div style="display:flex;justify-content:center;padding:0 0 0 0">
+          <div style="width:7px;height:56px;border-radius:4px;
+                      ${done ? `background:${connGrad};${connGlow}` : connDash || `background:rgba(255,255,255,0.15)`};
+                      transition:all 0.4s;margin:6px 0"></div>
+        </div>`;
+    }
+  }
+
+  path.innerHTML = html;
+
+  // Inject keyframes once
+  if (!document.getElementById('qk-keyframes')) {
+    const s = document.createElement('style');
+    s.id = 'qk-keyframes';
+    s.textContent = `
+      @keyframes qkPulseRing {
+        0%,100% { box-shadow: 0 0 0 6px rgba(255,255,255,0.25), 0 8px 32px rgba(255,255,255,0.3) }
+        50%      { box-shadow: 0 0 0 14px rgba(255,255,255,0.08), 0 8px 40px rgba(255,255,255,0.5) }
+      }`;
+    document.head.appendChild(s);
+  }
+
+  // Spawn stars background
+  spawnQkStars();
+}
+
+function spawnQkStars() {
+  const bg = document.getElementById('qk-stars-bg');
+  if (!bg || bg.children.length > 0) return;
+  const chars = ['⭐','✨','💫','🌟','⚡'];
+  for (let i = 0; i < 20; i++) {
+    const el = document.createElement('div');
+    const size = Math.random() * 16 + 10;
+    el.style.cssText = `position:absolute;font-size:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;
+      opacity:${Math.random()*0.35+0.1};animation:qkFloat ${Math.random()*8+6}s ease-in-out infinite;
+      animation-delay:${Math.random()*6}s;pointer-events:none`;
+    el.textContent = chars[Math.floor(Math.random()*chars.length)];
+    bg.appendChild(el);
+  }
+  if (!document.getElementById('qk-float-kf')) {
+    const s = document.createElement('style');
+    s.id = 'qk-float-kf';
+    s.textContent = `@keyframes qkFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-18px) scale(1.1)}}`;
+    document.head.appendChild(s);
+  }
 }
 
 // ── Mulai stage tertentu ────────────────────────────────────
