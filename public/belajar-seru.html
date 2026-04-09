@@ -8524,6 +8524,7 @@ function toggleGuruChat() {
   guruChatOpen = !guruChatOpen;
   if (guruChatOpen) {
     panel.style.display = 'flex';
+    panel.style.pointerEvents = 'all';
     // animate open
     panel.style.opacity = '0';
     panel.style.transform = 'scale(0.85) translateY(20px)';
@@ -8534,6 +8535,7 @@ function toggleGuruChat() {
     });
     setTimeout(() => document.getElementById('gchat-input').focus(), 250);
   } else {
+    panel.style.pointerEvents = 'none';
     panel.style.opacity = '0';
     panel.style.transform = 'scale(0.85) translateY(20px)';
     setTimeout(() => { panel.style.display = 'none'; }, 200);
