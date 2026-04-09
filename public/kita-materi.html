@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Materi Belajar 📚 — KitaBelajar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+  <style>
+    :root{--ff-h:'Fredoka One',cursive;--ff-b:'Nunito',sans-serif;--bg:#FFF9F0;--text:#1a1a2e;--muted:#888;--orange:#FF6B35;--blue:#4776E6;--green:#11998e;--purple:#6C5CE7}
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:var(--ff-b);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+    /* BG */
+    #bg-wrap{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+    .shape{position:absolute;border-radius:50%;opacity:.1;animation:floatUp linear infinite}
+    @keyframes floatUp{0%{transform:translateY(110vh) rotate(0)}100%{transform:translateY(-120px) rotate(360deg)}}
+
+    /* NAVBAR */
+    .navbar{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.93);backdrop-filter:blur(14px);border-bottom:2px solid #FFE0B2;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:62px;box-shadow:0 2px 16px rgba(255,107,0,.08)}
+    .nav-brand{display:flex;align-items:center;gap:8px;font-family:var(--ff-h);font-size:20px;color:var(--orange)}
+    .nav-right{display:flex;align-items:center;gap:10px}
+    .btn-nav{background:linear-gradient(135deg,#FF6B35,#FF9A5C);color:#fff;border:none;border-radius:50px;padding:8px 18px;font-family:var(--ff-b);font-weight:900;font-size:13px;cursor:pointer;transition:all .2s;box-shadow:0 3px 10px rgba(255,107,53,.3)}
+    .btn-nav:hover{transform:translateY(-2px)}
+    .btn-back{background:#fff;border:2px solid #FFD0B0;color:var(--orange);border-radius:50px;padding:7px 16px;font-family:var(--ff-b);font-weight:900;font-size:13px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px}
+    .btn-back:hover{background:var(--orange);color:#fff;border-color:var(--orange)}
+
+    /* VIEWS */
+    .view{display:none;position:relative;z-index:1;padding:24px 16px 80px;min-height:calc(100vh - 62px)}
+    .view.active{display:block}
+
+    /* ── HOME ── */
+    .home-wrap{max-width:700px;margin:0 auto}
+    .hero-home{text-align:center;padding:28px 0 36px}
+    .hero-icon{font-size:80px;display:block;animation:bookBounce 2.5s ease-in-out infinite;filter:drop-shadow(0 6px 16px rgba(0,0,0,.15))}
+    @keyframes bookBounce{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-16px) rotate(5deg)}}
+    .hero-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#4776E6,#8E54E9);color:#fff;border-radius:50px;padding:6px 18px;font-size:12px;font-weight:900;letter-spacing:.8px;margin-bottom:14px}
+    .hero-h1{font-family:var(--ff-h);font-size:clamp(32px,7vw,56px);line-height:1.1;margin-bottom:10px}
+    .hero-h1 .g1{color:#1a1a2e}
+    .hero-h1 .g2{background:linear-gradient(135deg,#4776E6,#FF0080);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .hero-sub{font-size:14px;color:var(--muted);font-weight:700}
+
+    /* SEARCH */
+    .search-box{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid #FFD0B0;border-radius:50px;padding:10px 18px;margin-bottom:28px;box-shadow:0 3px 14px rgba(0,0,0,.06);transition:border-color .2s}
+    .search-box:focus-within{border-color:var(--orange)}
+    .search-box input{border:none;outline:none;flex:1;font-family:var(--ff-b);font-size:14px;font-weight:700;background:transparent;color:var(--text)}
+    .search-box input::placeholder{color:#ccc}
+    #search-results{margin-bottom:24px}
+    .search-item{background:#fff;border-radius:16px;padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;border:2px solid #F0E8FF;margin-bottom:8px;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+    .search-item:hover{border-color:var(--purple);transform:translateX(4px)}
+    .search-badge{border-radius:8px;padding:3px 10px;font-size:10px;font-weight:900;color:#fff}
+    .sb-sd{background:var(--green)}
+    .sb-smp{background:var(--blue)}
+    .sb-sma{background:#f7971e}
+
+    /* GRADE CARDS */
+    .grade-label{font-family:var(--ff-h);font-size:14px;color:#bbb;text-align:center;margin-bottom:14px;letter-spacing:.5px}
+    .grade-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
+    .grade-card{border-radius:26px;padding:32px 16px 26px;text-align:center;cursor:pointer;border:none;color:#fff;position:relative;overflow:hidden;transition:transform .22s,box-shadow .22s;box-shadow:0 8px 28px rgba(0,0,0,.2)}
+    .grade-card::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.18) 0%,transparent 60%);pointer-events:none}
+    .grade-card:hover{transform:translateY(-10px) scale(1.03);box-shadow:0 20px 48px rgba(0,0,0,.3)}
+    .grade-card:active{transform:scale(.96)}
+    .gc-icon{font-size:60px;display:block;margin-bottom:12px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.2));transition:transform .3s}
+    .grade-card:hover .gc-icon{transform:scale(1.18) rotate(8deg)}
+    .gc-badge{display:inline-block;background:rgba(255,255,255,.28);border-radius:50px;padding:4px 18px;font-family:var(--ff-h);font-size:24px;margin-bottom:6px}
+    .gc-name{font-size:11px;opacity:.85;font-weight:900;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+    .gc-count{font-size:11px;background:rgba(0,0,0,.18);border-radius:50px;padding:4px 14px;font-weight:800;display:inline-block}
+    .gc-sd{background:linear-gradient(145deg,#11998e,#38ef7d)}
+    .gc-smp{background:linear-gradient(145deg,#4776E6,#8E54E9)}
+    .gc-sma{background:linear-gradient(145deg,#f7971e,#ffd200);color:#5A3A00}
+
+    /* STATS */
+    .stats-home{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .stat-box{background:#fff;border-radius:18px;padding:16px 10px;text-align:center;box-shadow:0 3px 12px rgba(0,0,0,.07);border:2px solid #F0E8FF}
+    .stat-ico{font-size:26px;margin-bottom:5px}
+    .stat-num{font-family:var(--ff-h);font-size:24px;color:var(--purple)}
+    .stat-lbl{font-size:11px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+
+    /* ── SUBJECTS VIEW ── */
+    .page-wrap{max-width:760px;margin:0 auto}
+    .page-head{display:flex;align-items:center;gap:14px;margin-bottom:24px}
+    .page-ttl{font-family:var(--ff-h);font-size:26px;color:var(--text)}
+    .page-sub{font-size:13px;color:var(--muted);font-weight:700;margin-top:2px}
+    .lv-pill{display:inline-flex;align-items:center;gap:4px;border-radius:50px;padding:4px 14px;font-size:12px;font-weight:900;color:#fff;margin-left:6px}
+    .pill-sd{background:linear-gradient(135deg,#11998e,#38ef7d)}
+    .pill-smp{background:linear-gradient(135deg,#4776E6,#8E54E9)}
+    .pill-sma{background:linear-gradient(135deg,#f7971e,#ffd200);color:#5A3A00}
+
+    .subj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+    .subj-card{border-radius:22px;padding:26px 14px;text-align:center;cursor:pointer;border:none;color:#fff;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 18px rgba(0,0,0,.16);animation:popIn .35s ease both;position:relative;overflow:hidden}
+    .subj-card::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.15) 0%,transparent 55%);pointer-events:none}
+    .subj-card:hover{transform:translateY(-7px) scale(1.04);box-shadow:0 16px 38px rgba(0,0,0,.24)}
+    .subj-card:active{transform:scale(.95)}
+    .subj-ico{font-size:48px;display:block;margin-bottom:10px;filter:drop-shadow(0 3px 8px rgba(0,0,0,.2));transition:transform .25s}
+    .subj-card:hover .subj-ico{transform:scale(1.15) rotate(-5deg)}
+    .subj-name{font-weight:900;font-size:14px;line-height:1.3;margin-bottom:6px}
+    .subj-count{font-size:11px;background:rgba(0,0,0,.2);border-radius:50px;padding:3px 12px;display:inline-block;font-weight:800}
+
+    /* ── MATERI VIEW ── */
+    .materi-head{background:#fff;border-radius:24px;padding:22px 24px;box-shadow:0 4px 20px rgba(0,0,0,.08);margin-bottom:20px;display:flex;align-items:center;gap:16px;border:2px solid #F0E8FF}
+    .materi-head-icon{font-size:54px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.15))}
+    .materi-head-text{flex:1}
+    .materi-head-title{font-family:var(--ff-h);font-size:24px;color:var(--text);margin-bottom:4px}
+    .materi-head-sub{font-size:13px;color:var(--muted);font-weight:700}
+
+    /* Accordion */
+    .accordion{display:flex;flex-direction:column;gap:10px}
+    .acc-item{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 3px 14px rgba(0,0,0,.07);border:2px solid #F5F0FF;transition:border-color .2s}
+    .acc-item.open{border-color:var(--purple)}
+    .acc-header{display:flex;align-items:center;gap:12px;padding:16px 20px;cursor:pointer;transition:background .2s;user-select:none}
+    .acc-header:hover{background:#F9F5FF}
+    .acc-num{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--purple),#A855F7);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--ff-h);font-size:15px;flex-shrink:0}
+    .acc-title{flex:1;font-weight:900;font-size:15px;color:var(--text)}
+    .acc-arrow{font-size:18px;color:var(--purple);transition:transform .3s;flex-shrink:0}
+    .acc-item.open .acc-arrow{transform:rotate(180deg)}
+    .acc-body{display:none;padding:0 20px 20px}
+    .acc-item.open .acc-body{display:block}
+
+    /* CONTENT BLOCKS */
+    .mc-def{background:linear-gradient(135deg,#EEF2FF,#E0E7FF);border-radius:14px;padding:16px 18px;margin-bottom:12px;border-left:4px solid var(--blue)}
+    .mc-def-title{font-weight:900;font-size:12px;color:var(--blue);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+    .mc-def p{font-size:14px;font-weight:600;line-height:1.7;color:#2d3a8c}
+
+    .mc-poin{background:#F0FFF4;border-radius:14px;padding:16px 18px;margin-bottom:12px;border-left:4px solid var(--green)}
+    .mc-poin-title{font-weight:900;font-size:12px;color:var(--green);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+    .mc-poin ul{padding-left:16px;display:flex;flex-direction:column;gap:7px}
+    .mc-poin ul li{font-size:14px;font-weight:700;line-height:1.5;color:#1a3d2b}
+
+    .mc-rumus{background:linear-gradient(135deg,#FFF3E0,#FFE0B2);border-radius:14px;padding:16px 18px;margin-bottom:12px;border-left:4px solid var(--orange)}
+    .mc-rumus-title{font-weight:900;font-size:12px;color:var(--orange);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+    .mc-rumus .formula{background:rgba(255,107,53,.12);border-radius:8px;padding:10px 14px;font-family:monospace;font-size:14px;font-weight:800;color:#7A3200;margin-bottom:6px;text-align:center}
+    .mc-rumus p{font-size:13px;font-weight:700;color:#7A3200;line-height:1.5}
+
+    .mc-contoh{background:#F0FFFE;border-radius:14px;padding:16px 18px;margin-bottom:12px;border-left:4px solid #00B4D8}
+    .mc-contoh-title{font-weight:900;font-size:12px;color:#007B9A;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+    .mc-contoh p,.mc-contoh ul li{font-size:14px;font-weight:700;color:#00353F;line-height:1.6}
+    .mc-contoh ul{padding-left:16px;display:flex;flex-direction:column;gap:6px}
+
+    .mc-tips{background:linear-gradient(135deg,#FFFDE7,#FFF9C4);border-radius:14px;padding:14px 18px;margin-bottom:12px;border-left:4px solid #FFD600;font-size:14px;font-weight:700;color:#5A4000;line-height:1.6}
+    .mc-ingat{background:linear-gradient(135deg,#F3E8FF,#EDE0FF);border-radius:14px;padding:14px 18px;margin-bottom:12px;border-left:4px solid var(--purple);font-size:14px;font-weight:700;color:#3D0F7A;line-height:1.6}
+
+    /* ANIMATIONS */
+    @keyframes popIn{0%{transform:scale(0);opacity:0}80%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+    @keyframes slideUp{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+    /* MOBILE */
+    @media(max-width:520px){
+      .grade-grid{grid-template-columns:1fr;gap:12px}
+      .grade-card{padding:22px 16px}
+      .subj-grid{grid-template-columns:repeat(2,1fr)}
+      .materi-head{flex-direction:column;text-align:center}
+    }
+    @media(max-width:360px){.hero-h1{font-size:30px}}
+  </style>
+</head>
+<body>
+<div id="bg-wrap"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-brand">📚 Kita Materi!</div>
+  <div class="nav-right">
+    <button class="btn-back" id="btn-back" onclick="goBack()" style="display:none">← Kembali</button>
+    <button class="btn-nav" onclick="window.location.href='belajar-seru.html'">🏠 Beranda</button>
+  </div>
+</nav>
+
+<!-- ══════════════ VIEW: HOME ══════════════ -->
+<div class="view active" id="view-home">
+  <div class="home-wrap">
+    <div class="hero-home">
+      <div class="hero-badge">📖 MATERI BELAJAR</div>
+      <span class="hero-icon">📚</span>
+      <h1 class="hero-h1"><span class="g1">Belajar Jadi</span><br><span class="g2">Lebih Mudah!</span></h1>
+      <p class="hero-sub">Ringkasan materi SD · SMP · SMA lengkap & mudah dipahami</p>
+    </div>
+
+    <!-- Search -->
+    <div class="search-box">
+      <span style="font-size:18px">🔍</span>
+      <input type="text" id="search-input" placeholder="Cari topik... (contoh: Fotosintesis, Aljabar)" oninput="onSearch(this.value)">
+      <span id="search-clear" style="cursor:pointer;font-size:16px;color:#ccc;display:none" onclick="clearSearch()">✕</span>
+    </div>
+    <div id="search-results"></div>
+
+    <!-- Grade Cards -->
+    <div class="grade-label">— PILIH JENJANGMU —</div>
+    <div class="grade-grid">
+      <div class="grade-card gc-sd" onclick="pilihGrade('SD')">
+        <span class="gc-icon">🌱</span>
+        <div class="gc-badge">SD</div>
+        <div class="gc-name">Sekolah Dasar</div>
+        <div class="gc-count">5 Mapel</div>
+      </div>
+      <div class="grade-card gc-smp" onclick="pilihGrade('SMP')">
+        <span class="gc-icon">🎓</span>
+        <div class="gc-badge">SMP</div>
+        <div class="gc-name">Sekolah Menengah</div>
+        <div class="gc-count">6 Mapel</div>
+      </div>
+      <div class="grade-card gc-sma" onclick="pilihGrade('SMA')">
+        <span class="gc-icon">🔥</span>
+        <div class="gc-badge">SMA</div>
+        <div class="gc-name">Sekolah Atas</div>
+        <div class="gc-count">8 Mapel</div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-home">
+      <div class="stat-box"><div class="stat-ico">📖</div><div class="stat-num" id="s-topik">0</div><div class="stat-lbl">Topik</div></div>
+      <div class="stat-box"><div class="stat-ico">📚</div><div class="stat-num">19</div><div class="stat-lbl">Mata Pelajaran</div></div>
+      <div class="stat-box"><div class="stat-ico">🎓</div><div class="stat-num">3</div><div class="stat-lbl">Jenjang</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ VIEW: SUBJECTS ══════════════ -->
+<div class="view" id="view-subjects">
+  <div class="page-wrap">
+    <div class="page-head">
+      <div>
+        <div class="page-ttl" id="subj-ttl">Pilih Mata Pelajaran</div>
+        <div class="page-sub" id="subj-sub">Pilih mapel yang ingin kamu pelajari!</div>
+      </div>
+    </div>
+    <div class="subj-grid" id="subj-grid"></div>
+  </div>
+</div>
+
+<!-- ══════════════ VIEW: MATERI ══════════════ -->
+<div class="view" id="view-materi">
+  <div class="page-wrap">
+    <div class="materi-head" id="materi-head">
+      <div class="materi-head-icon" id="mh-icon">📚</div>
+      <div class="materi-head-text">
+        <div class="materi-head-title" id="mh-title">Judul Mapel</div>
+        <div class="materi-head-sub" id="mh-sub">Kelas · Topik</div>
+      </div>
+    </div>
+    <div class="accordion" id="accordion"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  DATA MATERI
+// ═══════════════════════════════════════════════════
+const MATERI = {
+
+/* ───────────────── SD ───────────────── */
+SD: {
+  'Matematika': {
+    icon:'🔢', bg:'linear-gradient(145deg,#11998e,#38ef7d)',
+    topics:[
+      { j:'Bilangan Cacah & Nilai Tempat', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Pengertian</div><p>Bilangan cacah adalah bilangan yang dimulai dari 0, 1, 2, 3, ... Nilai tempat menentukan nilai sebuah angka berdasarkan posisinya dalam suatu bilangan.</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Nilai Tempat</div><ul>
+<li>Satuan (1): angka paling kanan — contoh: 7 di angka <b>32<u>7</u></b></li>
+<li>Puluhan (10): posisi kedua dari kanan — contoh: 2 di angka <b>3<u>2</u>7</b></li>
+<li>Ratusan (100): posisi ketiga dari kanan</li>
+<li>Ribuan (1.000): posisi keempat dari kanan</li>
+</ul></div>
+<div class="mc-contoh"><div class="mc-contoh-title">💡 Contoh</div><p>Angka <b>5.234</b>: 5 = ribuan, 2 = ratusan, 3 = puluhan, 4 = satuan</p></div>
+<div class="mc-tips">💡 <b>Trik:</b> Bilangan prima terkecil adalah 2. Angka 1 BUKAN bilangan prima! Bilangan prima awal: 2, 3, 5, 7, 11, 13, 17, 19, 23...</div>` },
+
+      { j:'Operasi Hitung (+ − × ÷)', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Sifat-Sifat Operasi Hitung</div><ul>
+<li><b>Komutatif:</b> a + b = b + a dan a × b = b × a</li>
+<li><b>Asosiatif:</b> (a + b) + c = a + (b + c)</li>
+<li><b>Distributif:</b> a × (b + c) = (a × b) + (a × c)</li>
+</ul></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Urutan Operasi Hitung</div>
+<div class="formula">Kurung → Pangkat → × ÷ → + −</div>
+<p>Kerjakan operasi dalam kurung terlebih dahulu, lalu perkalian/pembagian, terakhir penjumlahan/pengurangan.</p></div>
+<div class="mc-contoh"><div class="mc-contoh-title">💡 Contoh</div><p>2 + 3 × 4 = 2 + <b>12</b> = <b>14</b> (bukan 20!)<br>(2 + 3) × 4 = <b>5</b> × 4 = <b>20</b></p></div>` },
+
+      { j:'KPK & FPB', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Pengertian</div><p><b>FPB (Faktor Persekutuan Terbesar)</b>: bilangan terbesar yang habis membagi dua bilangan.<br><b>KPK (Kelipatan Persekutuan Terkecil)</b>: bilangan terkecil yang merupakan kelipatan dari dua bilangan.</p></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Cara Mencari</div>
+<div class="formula">Faktorisasi Prima → pilih faktor</div>
+<p>FPB: pilih faktor prima yang SAMA dengan pangkat TERKECIL.<br>KPK: pilih SEMUA faktor prima dengan pangkat TERBESAR.</p></div>
+<div class="mc-contoh"><div class="mc-contoh-title">💡 Contoh: FPB & KPK dari 12 dan 18</div><p>12 = 2² × 3 | 18 = 2 × 3²<br>FPB = 2¹ × 3¹ = <b>6</b><br>KPK = 2² × 3² = <b>36</b></p></div>
+<div class="mc-tips">💡 <b>Tips FPB:</b> Dipakai saat membagi sesuatu sama rata. <b>Tips KPK:</b> Dipakai saat mencari waktu yang sama.</div>` },
+
+      { j:'Pecahan', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Jenis Pecahan</div><p>Pecahan menyatakan bagian dari keseluruhan. Ditulis sebagai <b>a/b</b> di mana a = pembilang, b = penyebut.</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Jenis-Jenis Pecahan</div><ul>
+<li><b>Pecahan biasa:</b> 1/2, 3/4, 5/7</li>
+<li><b>Pecahan campuran:</b> 1½, 2¾ (bilangan bulat + pecahan)</li>
+<li><b>Pecahan desimal:</b> 0,5 = 1/2 | 0,25 = 1/4</li>
+<li><b>Persen:</b> 50% = 50/100 = 1/2</li>
+</ul></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Operasi Pecahan</div>
+<div class="formula">a/b + c/d = (ad + bc)/bd</div>
+<div class="formula">a/b × c/d = ac/bd</div>
+<div class="formula">a/b ÷ c/d = a/b × d/c</div></div>
+<div class="mc-contoh"><div class="mc-contoh-title">💡 Contoh</div><p>1/2 + 1/3 = 3/6 + 2/6 = <b>5/6</b></p></div>` },
+
+      { j:'Bangun Datar', i:`
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Rumus Luas & Keliling</div>
+<div class="formula">Persegi: L = s² | K = 4s</div>
+<div class="formula">Persegi Panjang: L = p×l | K = 2(p+l)</div>
+<div class="formula">Segitiga: L = ½×a×t | K = a+b+c</div>
+<div class="formula">Lingkaran: L = πr² | K = 2πr</div>
+<div class="formula">Jajar Genjang: L = a×t | K = 2(a+b)</div>
+<div class="formula">Trapesium: L = ½×(a+b)×t</div></div>
+<div class="mc-tips">💡 <b>Ingat π ≈ 3,14 atau 22/7</b></div>
+<div class="mc-ingat">🧠 <b>Ingat:</b> Luas selalu persegi dari satuan (cm², m²), keliling satuan biasa (cm, m).</div>` }
+    ]
+  },
+
+  'IPA': {
+    icon:'🌿', bg:'linear-gradient(145deg,#56ab2f,#a8e063)',
+    topics:[
+      { j:'Makhluk Hidup & Ciri-Cirinya', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Pengertian</div><p>Makhluk hidup adalah semua organisme yang memiliki ciri-ciri kehidupan dan dapat melakukan proses metabolisme.</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Ciri-Ciri Makhluk Hidup (MIGRASI)</div><ul>
+<li>🍽️ <b>M</b>akan/nutrisi — membutuhkan energi</li>
+<li>📍 <b>I</b>ritabilitas — peka terhadap rangsangan</li>
+<li>🌱 <b>G</b>erak — bergerak aktif atau pasif</li>
+<li>🌬️ <b>R</b>espirasi — bernapas, mengambil O₂</li>
+<li>🔄 <b>A</b>daptasi — menyesuaikan diri</li>
+<li>💦 <b>S</b>ekresi — mengeluarkan zat sisa</li>
+<li>👶 <b>I</b>dukan/reproduksi — berkembang biak</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Klasifikasi Makhluk Hidup</div><ul>
+<li>Kingdom Monera: bakteri, ganggang biru</li>
+<li>Kingdom Protista: amoeba, paramecium</li>
+<li>Kingdom Fungi: jamur, kapang</li>
+<li>Kingdom Plantae: tumbuhan</li>
+<li>Kingdom Animalia: hewan</li>
+</ul></div>` },
+
+      { j:'Tumbuhan & Fotosintesis', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Bagian Tumbuhan & Fungsinya</div><ul>
+<li>🌿 <b>Daun:</b> fotosintesis, penguapan (transpirasi)</li>
+<li>🌾 <b>Batang:</b> penopang, mengangkut air & nutrisi</li>
+<li>🌱 <b>Akar:</b> menyerap air & mineral, menancapkan tanaman</li>
+<li>🌸 <b>Bunga:</b> alat perkembangbiakan generatif</li>
+<li>🍎 <b>Buah & Biji:</b> hasil pembuahan, penyebaran benih</li>
+</ul></div>
+<div class="mc-rumus"><div class="mc-rumus-title">🌞 Reaksi Fotosintesis</div>
+<div class="formula">6CO₂ + 6H₂O + cahaya → C₆H₁₂O₆ + 6O₂</div>
+<p>CO₂ (karbon dioksida) + H₂O (air) + cahaya matahari → Glukosa + O₂ (oksigen)</p></div>
+<div class="mc-tips">💡 Fotosintesis terjadi di <b>kloroplas</b> yang mengandung <b>klorofil</b> (zat hijau daun). Tanaman menghasilkan O₂ yang kita hirup!</div>` },
+
+      { j:'Hewan & Rantai Makanan', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Penggolongan Hewan</div><ul>
+<li>Berdasarkan makanan: Herbivora (tumbuhan), Karnivora (daging), Omnivora (keduanya)</li>
+<li>Berdasarkan penutup tubuh: berbulu, bersisik, berkulit licin, berambut</li>
+<li>Berdasarkan cara berkembang biak: vivipar (melahirkan), ovipar (bertelur), ovovivipar</li>
+</ul></div>
+<div class="mc-def"><div class="mc-def-title">📖 Rantai Makanan</div><p>Urutan proses makan dan dimakan antar makhluk hidup dalam suatu ekosistem.</p></div>
+<div class="mc-contoh"><div class="mc-contoh-title">💡 Contoh Rantai Makanan</div><p>Rumput → Belalang → Katak → Ular → Elang<br>Produsen → Konsumen I → Konsumen II → Konsumen III → Konsumen Puncak</p></div>
+<div class="mc-tips">💡 <b>Jaring makanan</b> = gabungan dari banyak rantai makanan yang saling berhubungan.</div>` },
+
+      { j:'Bumi & Tata Surya', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Lapisan Bumi</div><ul>
+<li>Kerak Bumi (Crust): lapisan terluar, tipis, tempat kita berpijak</li>
+<li>Mantel Bumi (Mantle): lapisan tebat, mengandung magma</li>
+<li>Inti Luar (Outer Core): besi & nikel cair</li>
+<li>Inti Dalam (Inner Core): besi & nikel padat, terpanas</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Planet Tata Surya (dekat → jauh dari Matahari)</div><ul>
+<li>Merkurius — Venus — Bumi — Mars (planet kebumian)</li>
+<li>Jupiter — Saturnus — Uranus — Neptunus (planet gas)</li>
+</ul></div>
+<div class="mc-tips">💡 <b>Mnemonic:</b> "Mata Vejoku Membuat Jusuf Sangat Uring-uringan Nelayan" → Merkurius, Venus, Bumi, Mars, Jupiter, Saturnus, Uranus, Neptunus.</div>` },
+
+      { j:'Cuaca & Iklim', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Perbedaan Cuaca & Iklim</div><p><b>Cuaca</b>: keadaan udara pada suatu tempat dalam waktu SINGKAT (hari ini, minggu ini).<br><b>Iklim</b>: keadaan cuaca rata-rata suatu wilayah dalam waktu LAMA (10-30 tahun).</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Unsur-Unsur Cuaca</div><ul>
+<li>☀️ Suhu udara — diukur dengan termometer</li>
+<li>💧 Kelembaban udara — diukur dengan higrometer</li>
+<li>🌬️ Kecepatan angin — diukur dengan anemometer</li>
+<li>🌧️ Curah hujan — diukur dengan ombrometer</li>
+<li>☁️ Awan & tekanan udara</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Jenis Iklim di Indonesia</div><ul>
+<li>Iklim Tropis: suhu tinggi sepanjang tahun, curah hujan banyak</li>
+<li>2 Musim: Musim Hujan (Oktober–Maret) & Musim Kemarau (April–September)</li>
+</ul></div>` }
+    ]
+  },
+
+  'IPS': {
+    icon:'🗺️', bg:'linear-gradient(145deg,#F7971E,#FFD200)',
+    topics:[
+      { j:'Kenampakan Alam Indonesia', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Kenampakan Alam Daratan</div><ul>
+<li>🏔️ <b>Gunung & Pegunungan:</b> daratan tinggi berbentuk kerucut</li>
+<li>🌾 <b>Dataran Tinggi (Plateau):</b> daerah datar yang letaknya tinggi</li>
+<li>🌿 <b>Dataran Rendah:</b> daerah datar di tepi pantai, cocok pertanian</li>
+<li>🏜️ <b>Lembah:</b> daerah rendah di antara gunung/bukit</li>
+<li>🌊 <b>Tanjung:</b> daratan yang menjorok ke laut</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Kenampakan Alam Perairan</div><ul>
+<li>🌊 Laut, Selat, Teluk, Samudra</li>
+<li>🏞️ Danau: genangan air yang dikelilingi daratan</li>
+<li>💧 Sungai: aliran air dari hulu ke hilir (muara)</li>
+<li>🌿 Rawa: daerah berair & berlumpur</li>
+</ul></div>` },
+
+      { j:'Sumber Daya Alam', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Pengertian</div><p>Sumber Daya Alam (SDA) adalah segala sesuatu dari alam yang dapat dimanfaatkan oleh manusia untuk memenuhi kebutuhan hidup.</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Jenis SDA</div><ul>
+<li>🌱 <b>Dapat diperbarui:</b> air, hutan, hewan, tanah (dapat pulih sendiri)</li>
+<li>⛽ <b>Tidak dapat diperbarui:</b> minyak bumi, gas alam, batu bara, emas, besi</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Cara Melestarikan SDA</div><ul>
+<li>Reboisasi: penanaman kembali hutan yang gundul</li>
+<li>Terasering: sistem pertanian bertingkat di bukit</li>
+<li>Menggunakan energi terbarukan (surya, angin, air)</li>
+<li>3R: Reduce (kurangi), Reuse (pakai ulang), Recycle (daur ulang)</li>
+</ul></div>` },
+
+      { j:'Kegiatan Ekonomi', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Jenis Kegiatan Ekonomi</div><ul>
+<li>🏭 <b>Produksi:</b> kegiatan membuat/menghasilkan barang/jasa</li>
+<li>🚚 <b>Distribusi:</b> kegiatan menyalurkan barang dari produsen ke konsumen</li>
+<li>🛒 <b>Konsumsi:</b> kegiatan memakai/menggunakan barang/jasa</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Jenis Usaha</div><ul>
+<li>Pertanian, Perkebunan, Peternakan, Perikanan (sektor primer)</li>
+<li>Industri & Kerajinan (sektor sekunder)</li>
+<li>Perdagangan, Pariwisata, Jasa (sektor tersier)</li>
+</ul></div>` },
+
+      { j:'Peta & Komponen-Komponennya', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Pengertian</div><p>Peta adalah gambaran permukaan bumi yang diperkecil pada bidang datar menggunakan skala tertentu.</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Komponen Peta (MASINDUL)</div><ul>
+<li>📍 <b>Judul</b> — nama peta</li>
+<li>🔢 <b>Skala</b> — perbandingan jarak peta dengan jarak nyata</li>
+<li>🧭 <b>Arah Mata Angin</b> — biasanya panah ke Utara</li>
+<li>🎨 <b>Legenda</b> — keterangan simbol & warna</li>
+<li>📏 <b>Garis Koordinat</b> — lintang & bujur</li>
+<li>🖊️ <b>Sumber & Tahun</b> — pembuat & waktu pembuatan</li>
+</ul></div>
+<div class="mc-tips">💡 <b>Warna peta:</b> Hijau = dataran rendah, Kuning = dataran tinggi, Cokelat = pegunungan, Biru = perairan, Putih = salju.</div>` }
+    ]
+  },
+
+  'Bahasa Indonesia': {
+    icon:'📝', bg:'linear-gradient(145deg,#FF6B35,#FF9A5C)',
+    topics:[
+      { j:'Teks Narasi', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Pengertian</div><p>Teks narasi adalah teks yang menceritakan suatu peristiwa atau kejadian secara berurutan berdasarkan waktu (kronologis).</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Struktur Teks Narasi</div><ul>
+<li>🎬 <b>Orientasi:</b> pengenalan tokoh, latar, waktu & tempat</li>
+<li>⚡ <b>Komplikasi:</b> munculnya masalah/konflik</li>
+<li>🔝 <b>Klimaks:</b> puncak konflik/masalah</li>
+<li>✅ <b>Resolusi:</b> penyelesaian masalah</li>
+<li>🏁 <b>Koda:</b> pesan/kesimpulan (opsional)</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Ciri-Ciri Teks Narasi</div><ul>
+<li>Menggunakan kata hubung waktu: lalu, kemudian, setelah itu, akhirnya</li>
+<li>Menggunakan kata kerja aktif</li>
+<li>Menceritakan rangkaian peristiwa nyata atau fiksi</li>
+</ul></div>` },
+
+      { j:'Teks Deskripsi', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Pengertian</div><p>Teks deskripsi adalah teks yang menggambarkan objek (orang, tempat, benda) secara detail sehingga pembaca seolah-olah melihat, mendengar, atau merasakan langsung.</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Struktur</div><ul>
+<li>📌 <b>Identifikasi:</b> pengenalan objek yang akan dideskripsikan</li>
+<li>🔍 <b>Deskripsi Bagian:</b> penggambaran rinci tiap bagian objek</li>
+<li>💭 <b>Simpulan/Kesan:</b> pendapat penulis tentang objek</li>
+</ul></div>
+<div class="mc-tips">💡 Gunakan kata sifat yang kuat: "merah menyala", "harum semerbak", "halus seperti sutra".</div>` },
+
+      { j:'Puisi', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Pengertian</div><p>Puisi adalah bentuk karya sastra yang menggunakan bahasa yang indah, padat, dan bermakna. Berbeda dari prosa, puisi mengutamakan keindahan bunyi dan pilihan kata (diksi).</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Unsur Puisi</div><ul>
+<li>🎶 <b>Rima:</b> persamaan bunyi (akhir baris/di tengah)</li>
+<li>📏 <b>Irama:</b> turun naik/panjang pendek bunyi</li>
+<li>✏️ <b>Diksi:</b> pilihan kata yang tepat & indah</li>
+<li>🖼️ <b>Imaji:</b> gambaran yang membuat pembaca seolah merasakan</li>
+<li>💬 <b>Majas:</b> gaya bahasa (metafora, simile, personifikasi)</li>
+</ul></div>
+<div class="mc-contoh"><div class="mc-contoh-title">💡 Contoh Majas</div><ul>
+<li><b>Metafora:</b> "Kamu adalah matahariku"</li>
+<li><b>Simile:</b> "Berlari seperti angin"</li>
+<li><b>Personifikasi:</b> "Angin berbisik merdu"</li>
+</ul></div>` },
+
+      { j:'Kalimat & Unsur-Unsurnya', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Unsur Kalimat (S-P-O-K)</div><ul>
+<li><b>S</b>ubjek — pelaku/yang dibicarakan</li>
+<li><b>P</b>redikat — tindakan/keadaan subjek</li>
+<li><b>O</b>bjek — yang dikenai tindakan</li>
+<li><b>K</b>eterangan — waktu, tempat, cara, tujuan</li>
+</ul></div>
+<div class="mc-contoh"><div class="mc-contoh-title">💡 Contoh</div><p>"<u>Budi</u> <b>membaca</b> <i>buku</i> <small>di perpustakaan</small>."<br>S=Budi, P=membaca, O=buku, K=di perpustakaan</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Jenis Kalimat</div><ul>
+<li>Kalimat berita (deklaratif): menyatakan informasi</li>
+<li>Kalimat tanya (interogatif): mengajukan pertanyaan</li>
+<li>Kalimat perintah (imperatif): memerintahkan sesuatu</li>
+<li>Kalimat seru (eksklamatif): mengungkapkan perasaan</li>
+</ul></div>` }
+    ]
+  },
+
+  'PKN': {
+    icon:'🇮🇩', bg:'linear-gradient(145deg,#C94B4B,#4B134F)',
+    topics:[
+      { j:'Pancasila & Makna Sila-Silanya', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Pancasila</div><p>Pancasila adalah dasar negara Indonesia yang terdiri dari 5 sila. Pancasila berasal dari bahasa Sansekerta: <b>Panca</b> (lima) + <b>Sila</b> (prinsip/dasar).</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Lima Sila Pancasila</div><ul>
+<li>1️⃣ <b>Ketuhanan Yang Maha Esa</b> — lambang: bintang</li>
+<li>2️⃣ <b>Kemanusiaan yang Adil dan Beradab</b> — lambang: rantai</li>
+<li>3️⃣ <b>Persatuan Indonesia</b> — lambang: pohon beringin</li>
+<li>4️⃣ <b>Kerakyatan yang Dipimpin oleh Hikmat Kebijaksanaan dalam Permusyawaratan/Perwakilan</b> — lambang: kepala banteng</li>
+<li>5️⃣ <b>Keadilan Sosial bagi Seluruh Rakyat Indonesia</b> — lambang: padi & kapas</li>
+</ul></div>
+<div class="mc-tips">💡 Pancasila lahir tanggal <b>1 Juni 1945</b> (Hari Lahir Pancasila) dari pidato Ir. Soekarno.</div>` },
+
+      { j:'Norma dalam Kehidupan', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Pengertian</div><p>Norma adalah aturan atau pedoman yang berlaku dalam masyarakat untuk mengatur perilaku manusia agar tercipta ketertiban.</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Jenis Norma</div><ul>
+<li>⚖️ <b>Norma Hukum:</b> aturan tertulis dari negara. Sanksi: denda/penjara</li>
+<li>🙏 <b>Norma Agama:</b> aturan dari Tuhan. Sanksi: dosa</li>
+<li>😊 <b>Norma Kesopanan:</b> aturan berperilaku. Sanksi: cemoohan sosial</li>
+<li>💭 <b>Norma Kesusilaan:</b> aturan dari hati nurani. Sanksi: rasa malu/bersalah</li>
+</ul></div>` },
+
+      { j:'Keberagaman Budaya Indonesia', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Bhinneka Tunggal Ika</div><p>Semboyan Indonesia yang berarti <b>"Berbeda-beda tetapi tetap satu jua"</b>. Meskipun berbeda suku, agama, bahasa, dan budaya, Indonesia tetap satu bangsa.</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Keberagaman Indonesia</div><ul>
+<li>🏝️ 17.508 pulau (terbanyak di dunia)</li>
+<li>👥 300+ suku bangsa</li>
+<li>🗣️ 700+ bahasa daerah</li>
+<li>🙏 6 agama resmi: Islam, Kristen, Katolik, Hindu, Buddha, Konghucu</li>
+</ul></div>
+<div class="mc-tips">💡 Keberagaman Indonesia adalah kekayaan, bukan kelemahan. Kita harus saling <b>menghormati</b> dan <b>toleransi</b>.</div>` }
+    ]
+  }
+},
+
+/* ───────────────── SMP ───────────────── */
+SMP: {
+  'Matematika': {
+    icon:'📐', bg:'linear-gradient(145deg,#4776E6,#8E54E9)',
+    topics:[
+      { j:'Aljabar & Persamaan Linear', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Pengertian</div><p>Aljabar menggunakan huruf (variabel) untuk mewakili bilangan yang belum diketahui. Persamaan linear adalah persamaan dengan pangkat tertinggi variabelnya 1.</p></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Persamaan Linear Satu Variabel</div>
+<div class="formula">ax + b = c → x = (c - b) / a</div></div>
+<div class="mc-contoh"><div class="mc-contoh-title">💡 Contoh PLSV</div><p>2x + 5 = 13<br>2x = 13 - 5 = 8<br>x = 8 ÷ 2 = <b>4</b></p></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Sistem Persamaan Linear 2 Variabel (SPLDV)</div>
+<div class="formula">ax + by = c</div>
+<div class="formula">dx + ey = f</div>
+<p>Cara menyelesaikan: Substitusi atau Eliminasi</p></div>` },
+
+      { j:'Bilangan Berpangkat & Bentuk Akar', i:`
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Sifat-Sifat Bilangan Berpangkat</div>
+<div class="formula">aᵐ × aⁿ = aᵐ⁺ⁿ</div>
+<div class="formula">aᵐ ÷ aⁿ = aᵐ⁻ⁿ</div>
+<div class="formula">(aᵐ)ⁿ = aᵐˣⁿ</div>
+<div class="formula">a⁰ = 1 (asal a ≠ 0)</div>
+<div class="formula">a⁻ⁿ = 1/aⁿ</div></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Sifat Bentuk Akar</div>
+<div class="formula">√(a×b) = √a × √b</div>
+<div class="formula">√(a/b) = √a / √b</div>
+<div class="formula">a√c ± b√c = (a±b)√c</div></div>
+<div class="mc-tips">💡 Untuk merasionalkan penyebut: kalikan dengan sekawannya.<br>Contoh: 1/√2 = √2/2</div>` },
+
+      { j:'Teorema Pythagoras', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Teorema Pythagoras</div><p>Pada segitiga siku-siku, kuadrat sisi miring (hipotenusa) sama dengan jumlah kuadrat kedua sisi tegak (kaki).</p></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Rumus</div>
+<div class="formula">a² + b² = c²</div>
+<p>c = hipotenusa (sisi miring/terpanjang)<br>a, b = kaki segitiga siku-siku</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Triple Pythagoras yang Umum</div><ul>
+<li>3, 4, 5 → 3² + 4² = 5²</li>
+<li>5, 12, 13 → 5² + 12² = 13²</li>
+<li>8, 15, 17 → 8² + 15² = 17²</li>
+<li>7, 24, 25 → 7² + 24² = 25²</li>
+</ul></div>
+<div class="mc-contoh"><div class="mc-contoh-title">💡 Contoh</div><p>Segitiga siku-siku, kaki 3 cm dan 4 cm. Hipotenusa = √(3²+4²) = √(9+16) = √25 = <b>5 cm</b></p></div>` },
+
+      { j:'Bangun Datar & Ruang', i:`
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Luas Bangun Datar</div>
+<div class="formula">Persegi: L = s²</div>
+<div class="formula">Persegi Panjang: L = p × l</div>
+<div class="formula">Segitiga: L = ½ × a × t</div>
+<div class="formula">Lingkaran: L = πr²</div>
+<div class="formula">Trapesium: L = ½(a+b) × t</div></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Volume Bangun Ruang</div>
+<div class="formula">Kubus: V = s³</div>
+<div class="formula">Balok: V = p × l × t</div>
+<div class="formula">Tabung: V = πr²t</div>
+<div class="formula">Kerucut: V = ⅓πr²t</div>
+<div class="formula">Bola: V = 4/3 πr³</div></div>
+<div class="mc-tips">💡 Volume = Luas alas × tinggi (berlaku untuk prisma & silinder)</div>` },
+
+      { j:'Statistika Dasar', i:`
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Ukuran Pemusatan Data</div>
+<div class="formula">Mean (Rata-rata) = Σx / n</div>
+<div class="formula">Median = nilai tengah data (setelah diurutkan)</div>
+<div class="formula">Modus = data yang paling sering muncul</div></div>
+<div class="mc-contoh"><div class="mc-contoh-title">💡 Contoh data: 3, 5, 7, 5, 9, 5, 8</div><p>
+Diurutkan: 3, 5, 5, <b>5</b>, 7, 8, 9<br>
+Mean = (3+5+7+5+9+5+8) / 7 = 42/7 = <b>6</b><br>
+Median = nilai ke-4 = <b>5</b><br>
+Modus = <b>5</b> (muncul 3 kali)
+</p></div>
+<div class="mc-tips">💡 Jika data genap, median = rata-rata dua nilai tengah. Jika lebih dari 1 nilai sering muncul, disebut <b>bimodal</b>.</div>` }
+    ]
+  },
+
+  'IPA': {
+    icon:'🔬', bg:'linear-gradient(145deg,#1a6b3a,#2ecc71)',
+    topics:[
+      { j:'Klasifikasi Makhluk Hidup', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Taksonomi</div><p>Ilmu yang mempelajari pengelompokan makhluk hidup. Dikembangkan oleh <b>Carl Linnaeus</b>.</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Urutan Taksonomi (King Philip Came Over For Great Soup)</div><ul>
+<li>Kingdom (Kerajaan)</li>
+<li>Phylum / Divisi</li>
+<li>Class (Kelas)</li>
+<li>Order (Ordo)</li>
+<li>Family (Famili)</li>
+<li>Genus</li>
+<li>Species (Spesies)</li>
+</ul></div>
+<div class="mc-tips">💡 Semakin ke bawah tingkatan, semakin banyak persamaan antar makhluk hidup. Nama ilmiah menggunakan <b>binomial nomenclature</b>: Genus + spesies (miring/garis bawah).<br>Contoh: <i>Homo sapiens</i> (manusia)</div>` },
+
+      { j:'Sel — Unit Terkecil Kehidupan', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Pengertian</div><p>Sel adalah unit struktural dan fungsional terkecil dari makhluk hidup. Pertama ditemukan oleh <b>Robert Hooke</b> (1665).</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Perbedaan Sel Hewan & Tumbuhan</div><ul>
+<li>Sel tumbuhan punya: dinding sel, kloroplas, vakuola besar</li>
+<li>Sel hewan punya: sentriol, vakuola kecil, tidak punya dinding sel</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Organel Penting & Fungsinya</div><ul>
+<li>🧠 <b>Nukleus:</b> pusat kendali sel, mengandung DNA</li>
+<li>⚡ <b>Mitokondria:</b> "pembangkit listrik" — menghasilkan energi (ATP)</li>
+<li>🌿 <b>Kloroplas:</b> tempat fotosintesis (sel tumbuhan)</li>
+<li>🏭 <b>Ribosom:</b> tempat sintesis protein</li>
+<li>📦 <b>Vakuola:</b> menyimpan air, nutrisi, & zat sisa</li>
+</ul></div>` },
+
+      { j:'Hukum Newton (Gerak & Gaya)', i:`
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Hukum Newton</div>
+<div class="formula">Newton I: ΣF = 0 → benda tetap diam/bergerak lurus beraturan</div>
+<div class="formula">Newton II: F = m × a</div>
+<div class="formula">Newton III: F aksi = −F reaksi</div></div>
+<div class="mc-contoh"><div class="mc-contoh-title">💡 Penerapan</div><ul>
+<li><b>Hukum I:</b> Penumpang terdorong saat bus berhenti mendadak</li>
+<li><b>Hukum II:</b> Mobil berat lebih sulit digas → a = F/m</li>
+<li><b>Hukum III:</b> Roket meluncur ke atas karena gas menyembur ke bawah</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Rumus Turunan</div><ul>
+<li>Berat: W = m × g (g = 10 m/s² di bumi)</li>
+<li>Tekanan: P = F / A</li>
+<li>Usaha: W = F × s</li>
+</ul></div>` },
+
+      { j:'Zat & Perubahannya', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Wujud Zat</div><ul>
+<li>💎 <b>Padat:</b> bentuk & volume tetap, partikel rapat & teratur</li>
+<li>💧 <b>Cair:</b> volume tetap, bentuk mengikuti wadah</li>
+<li>💨 <b>Gas:</b> bentuk & volume mengikuti wadah, partikel sangat renggang</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Perubahan Fisika vs Kimia</div><ul>
+<li>⚡ <b>Perubahan Fisika:</b> tidak menghasilkan zat baru (es mencair, kertas dipotong)</li>
+<li>🔥 <b>Perubahan Kimia:</b> menghasilkan zat baru (kayu dibakar, besi berkarat)</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Ciri Perubahan Kimia</div><ul>
+<li>Terbentuk gas, endapan, perubahan warna, perubahan suhu, perubahan bau</li>
+</ul></div>` },
+
+      { j:'Sistem Organ Manusia', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Sistem Pencernaan</div><ul>
+<li>Mulut → Kerongkongan → Lambung → Usus Halus → Usus Besar → Rektum → Anus</li>
+<li>Enzim: amilase (mulut), pepsin (lambung), lipase, protease (usus halus)</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Sistem Peredaran Darah</div><ul>
+<li>Jantung memompa darah ke seluruh tubuh (kanan → paru-paru, kiri → tubuh)</li>
+<li>Arteri: membawa darah dari jantung | Vena: membawa darah ke jantung</li>
+<li>Golongan darah ABO: A, B, AB, O. Golongan O = donor universal</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Sistem Pernapasan</div><ul>
+<li>Hidung → Tenggorokan → Bronkus → Paru-paru (alveolus)</li>
+<li>Pertukaran gas O₂ dan CO₂ terjadi di <b>alveolus</b></li>
+</ul></div>` }
+    ]
+  },
+
+  'IPS': {
+    icon:'🌍', bg:'linear-gradient(145deg,#F7971E,#FFD200)',
+    topics:[
+      { j:'Kerajaan Hindu-Buddha di Indonesia', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Kerajaan Hindu</div><ul>
+<li>🏛️ <b>Kutai</b> (Kalimantan, abad 4): kerajaan Hindu tertua di Indonesia. Raja Mulawarman.</li>
+<li>🏛️ <b>Tarumanegara</b> (Jawa Barat, abad 5): Raja Purnawarman. Bukti: Prasasti Tugu.</li>
+<li>🏛️ <b>Majapahit</b> (Jawa Timur, 1293-1527): kerajaan terbesar. Raja Hayam Wuruk, Patih Gajah Mada (Sumpah Palapa).</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Kerajaan Buddha</div><ul>
+<li>🏛️ <b>Sriwijaya</b> (Sumatera, abad 7-13): kerajaan maritim terbesar. Pusat perdagangan & agama Buddha. Pelabuhan Palembang.</li>
+<li>🏛️ <b>Mataram Kuno</b>: membangun Candi Borobudur (Buddha) & Prambanan (Hindu)</li>
+</ul></div>` },
+
+      { j:'Kerajaan Islam & Masuknya Islam', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Masuknya Islam ke Indonesia</div><p>Islam masuk ke Indonesia melalui perdagangan pada abad ke-7 M, berkembang pesat pada abad ke-13. Dibawa oleh pedagang Arab, Persia, dan Gujarat.</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Penyebar Islam (Wali Songo)</div><ul>
+<li>Sunan Gresik, Sunan Ampel, Sunan Bonang, Sunan Drajat</li>
+<li>Sunan Kalijaga, Sunan Kudus, Sunan Muria, Sunan Gunung Jati, Sunan Giri</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Kerajaan Islam Besar</div><ul>
+<li>Samudra Pasai (Aceh) — kerajaan Islam pertama di Indonesia</li>
+<li>Demak — kerajaan Islam pertama di Jawa. Sultan Fattah.</li>
+<li>Mataram Islam — Sultan Agung (1613-1645)</li>
+<li>Gowa-Tallo (Sulawesi), Ternate-Tidore (Maluku)</li>
+</ul></div>` },
+
+      { j:'Kolonialisme Belanda (VOC & Hindia Belanda)', i:`
+<div class="mc-def"><div class="mc-def-title">📖 VOC</div><p><b>VOC</b> (Vereenigde Oost-Indische Compagnie) adalah perusahaan dagang Belanda yang berdiri 1602. VOC mendapat hak istimewa (oktroi) dari pemerintah Belanda untuk memonopoli perdagangan di Asia.</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Kebijakan Penjajahan</div><ul>
+<li><b>Tanam Paksa (Cultuurstelsel)</b> 1830: petani wajib menanam 1/5 lahan untuk pemerintah Belanda. Diperkenalkan Van den Bosch.</li>
+<li><b>Kerja Rodi:</b> kerja paksa membangun jalan, benteng, dll.</li>
+<li><b>Politik Etis</b> 1901: irigasi, emigrasi, edukasi (sebagai "balas budi")</li>
+</ul></div>
+<div class="mc-tips">💡 VOC bangkrut 1799 karena korupsi. Selanjutnya Indonesia dikuasai langsung pemerintah Belanda (Hindia Belanda).</div>` }
+    ]
+  },
+
+  'Bahasa Indonesia': {
+    icon:'✍️', bg:'linear-gradient(145deg,#FF416C,#FF4B2B)',
+    topics:[
+      { j:'Teks Eksposisi', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Pengertian</div><p>Teks eksposisi adalah teks yang berisi pendapat/argumentasi penulis tentang suatu topik, disertai fakta dan data untuk mendukung argumen.</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Struktur Teks Eksposisi</div><ul>
+<li>📢 <b>Tesis:</b> pernyataan pendapat/gagasan utama penulis</li>
+<li>📝 <b>Argumen:</b> alasan/bukti yang mendukung tesis</li>
+<li>✅ <b>Penegasan ulang:</b> kesimpulan dan penegasan kembali tesis</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Ciri Kebahasaan</div><ul>
+<li>Kata hubung argumentasi: karena, sebab, sehingga, dengan demikian</li>
+<li>Kata kerja mental: berpendapat, merasa, menganggap</li>
+<li>Menggunakan data & fakta</li>
+</ul></div>` },
+
+      { j:'Teks Prosedur', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Pengertian</div><p>Teks prosedur adalah teks yang berisi langkah-langkah atau cara melakukan suatu kegiatan secara berurutan agar tujuan tercapai.</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Struktur</div><ul>
+<li>🎯 <b>Tujuan:</b> hal yang akan dicapai</li>
+<li>📋 <b>Bahan/Alat:</b> apa yang dibutuhkan (jika ada)</li>
+<li>📝 <b>Langkah-langkah:</b> urutan cara melakukan</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Ciri Kebahasaan</div><ul>
+<li>Kalimat perintah (imperatif): tambahkan, masukkan, aduk</li>
+<li>Kata hubung urutan: pertama, kemudian, lalu, selanjutnya, terakhir</li>
+<li>Kalimat saran: sebaiknya, hindari, jangan</li>
+</ul></div>` }
+    ]
+  },
+
+  'Bahasa Inggris': {
+    icon:'🇬🇧', bg:'linear-gradient(145deg,#1e3c72,#2a5298)',
+    topics:[
+      { j:'Tenses Dasar', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Simple Present Tense</div><ul>
+<li>Untuk kebiasaan, fakta, kebenaran umum</li>
+<li>Rumus: S + V1 (s/es untuk she/he/it)</li>
+<li>Contoh: "She <b>reads</b> every day."</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Simple Past Tense</div><ul>
+<li>Untuk kejadian yang sudah selesai di masa lalu</li>
+<li>Rumus: S + V2</li>
+<li>Contoh: "They <b>watched</b> a movie yesterday."</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Present Continuous Tense</div><ul>
+<li>Untuk kejadian yang sedang berlangsung sekarang</li>
+<li>Rumus: S + is/am/are + V-ing</li>
+<li>Contoh: "I <b>am studying</b> right now."</li>
+</ul></div>
+<div class="mc-tips">💡 <b>Signal words:</b> now, at the moment (continuous) | yesterday, last, ago (past) | always, usually, every day (present)</div>` },
+
+      { j:'Asking & Giving Opinion', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Expressions — Meminta Pendapat</div><ul>
+<li>"What do you think about...?"</li>
+<li>"What is your opinion on...?"</li>
+<li>"How do you feel about...?"</li>
+<li>"Do you agree that...?"</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Expressions — Memberikan Pendapat</div><ul>
+<li>Setuju: "I agree...", "I think that's right", "In my opinion..."</li>
+<li>Tidak setuju: "I disagree...", "I don't think so", "Actually, I believe..."</li>
+<li>Ragu: "I'm not sure...", "It depends...", "Maybe..."</li>
+</ul></div>` }
+    ]
+  },
+
+  'PKN': {
+    icon:'⚖️', bg:'linear-gradient(145deg,#8B1A1A,#D44000)',
+    topics:[
+      { j:'UUD 1945 & Sistem Pemerintahan', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Struktur UUD 1945</div><ul>
+<li>Pembukaan (Preambul) — memuat Pancasila & tujuan negara</li>
+<li>Batang Tubuh — 37 pasal (sebelum amandemen), sekarang 73 pasal</li>
+<li>Penjelasan (sudah dihapus setelah amandemen)</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Lembaga Negara</div><ul>
+<li>🏛️ MPR: majelis permusyawaratan rakyat</li>
+<li>🏛️ DPR + DPD: legislatif (membuat UU)</li>
+<li>🏛️ Presiden + Wakil: eksekutif (menjalankan pemerintahan)</li>
+<li>⚖️ MA, MK, KY: yudikatif (mengadili & mengawasi)</li>
+<li>🔍 BPK: memeriksa keuangan negara</li>
+</ul></div>` },
+
+      { j:'Hak Asasi Manusia (HAM)', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Pengertian HAM</div><p>Hak Asasi Manusia adalah hak dasar yang dimiliki setiap manusia sejak lahir, bersifat universal, tidak dapat dicabut, dan tidak bergantung pada hukum negara manapun.</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Jenis HAM</div><ul>
+<li>Hak hidup & keamanan pribadi</li>
+<li>Hak kebebasan berpikir, beragama, berpendapat</li>
+<li>Hak mendapat pendidikan & pekerjaan</li>
+<li>Hak tidak disiksa/diperlakukan kejam</li>
+</ul></div>
+<div class="mc-ingat">🧠 HAM diakui internasional melalui <b>DUHAM</b> (Deklarasi Universal Hak Asasi Manusia) yang ditetapkan PBB pada 10 Desember 1948.</div>` }
+    ]
+  }
+},
+
+/* ───────────────── SMA ───────────────── */
+SMA: {
+  'Matematika': {
+    icon:'∑', bg:'linear-gradient(145deg,#4776E6,#8E54E9)',
+    topics:[
+      { j:'Fungsi & Jenisnya', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Pengertian</div><p>Fungsi adalah relasi yang menghubungkan setiap anggota domain dengan tepat satu anggota kodomain.</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Jenis Fungsi</div><ul>
+<li><b>Injektif (satu-satu):</b> setiap elemen kodomain dipetakan maksimal 1 domain</li>
+<li><b>Surjektif (onto):</b> setiap elemen kodomain punya paling sedikit 1 domain</li>
+<li><b>Bijektif:</b> injektif + surjektif (korespondensi satu-satu)</li>
+</ul></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Komposisi & Invers Fungsi</div>
+<div class="formula">(f∘g)(x) = f(g(x))</div>
+<div class="formula">Jika y = f(x), maka f⁻¹(y) = x</div>
+<p>Cara mencari f⁻¹: tukar x dan y, lalu selesaikan y sebagai fungsi x.</p></div>` },
+
+      { j:'Trigonometri', i:`
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Definisi Dasar (di segitiga siku-siku)</div>
+<div class="formula">sin θ = depan/miring</div>
+<div class="formula">cos θ = samping/miring</div>
+<div class="formula">tan θ = depan/samping = sin/cos</div></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Nilai Trigonometri Sudut Istimewa</div><ul>
+<li>sin 0°=0, sin 30°=½, sin 45°=½√2, sin 60°=½√3, sin 90°=1</li>
+<li>cos 0°=1, cos 30°=½√3, cos 45°=½√2, cos 60°=½, cos 90°=0</li>
+</ul></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Identitas Trigonometri Penting</div>
+<div class="formula">sin²θ + cos²θ = 1</div>
+<div class="formula">1 + tan²θ = sec²θ</div>
+<div class="formula">sin(A+B) = sinA cosB + cosA sinB</div>
+<div class="formula">cos(A+B) = cosA cosB − sinA sinB</div></div>` },
+
+      { j:'Limit & Turunan', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Konsep Limit</div><p>Limit menyatakan nilai yang didekati fungsi ketika variabel mendekati suatu nilai tertentu.</p></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Aturan Turunan</div>
+<div class="formula">f(x) = xⁿ → f'(x) = nxⁿ⁻¹</div>
+<div class="formula">(f + g)' = f' + g'</div>
+<div class="formula">(f × g)' = f'g + fg'</div>
+<div class="formula">(f/g)' = (f'g − fg') / g²</div>
+<div class="formula">Rantai: (f∘g)' = f'(g(x)) × g'(x)</div></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Aplikasi Turunan</div><ul>
+<li>Gradien garis singgung kurva y = f(x) di titik (a, f(a)) adalah f'(a)</li>
+<li>Titik stasioner: f'(x) = 0 → cek f''(x) untuk max/min</li>
+<li>f''(x) &lt; 0 → titik maksimum | f''(x) > 0 → titik minimum</li>
+</ul></div>` },
+
+      { j:'Integral', i:`
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Integral Tak Tentu</div>
+<div class="formula">∫xⁿ dx = xⁿ⁺¹/(n+1) + C (n ≠ -1)</div>
+<div class="formula">∫a dx = ax + C</div>
+<div class="formula">∫(f+g) dx = ∫f dx + ∫g dx</div></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Integral Tertentu (Teorema Fundamental)</div>
+<div class="formula">∫[a→b] f(x) dx = F(b) − F(a)</div>
+<p>di mana F'(x) = f(x)</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Aplikasi Integral</div><ul>
+<li>Luas daerah antara kurva f(x) & sumbu-x: L = ∫|f(x)|dx</li>
+<li>Luas antara 2 kurva: L = ∫[a→b](f(x)−g(x))dx (f ≥ g)</li>
+<li>Volume benda putar (cakram): V = π∫[a→b][f(x)]²dx</li>
+</ul></div>` }
+    ]
+  },
+
+  'Fisika': {
+    icon:'⚡', bg:'linear-gradient(145deg,#F7971E,#FFD200)',
+    topics:[
+      { j:'Gerak Lurus (GLB & GLBB)', i:`
+<div class="mc-rumus"><div class="mc-rumus-title">📐 GLB (Gerak Lurus Beraturan)</div>
+<div class="formula">v = konstan → s = v × t</div>
+<p>Kecepatan tetap, percepatan = 0</p></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 GLBB (Gerak Lurus Berubah Beraturan)</div>
+<div class="formula">v = v₀ + a·t</div>
+<div class="formula">s = v₀t + ½at²</div>
+<div class="formula">v² = v₀² + 2as</div></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Gerak Jatuh Bebas (GJB)</div><ul>
+<li>Benda jatuh tanpa kecepatan awal, a = g = 10 m/s²</li>
+<li>h = ½gt² | v = gt | v² = 2gh</li>
+</ul></div>
+<div class="mc-tips">💡 Pada GLBB, grafik v-t berupa garis lurus. Kemiringan = percepatan. Luas di bawah grafik v-t = jarak tempuh.</div>` },
+
+      { j:'Usaha, Energi & Daya', i:`
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Usaha & Energi</div>
+<div class="formula">W = F·s·cos θ (Joule)</div>
+<div class="formula">Ek = ½mv²</div>
+<div class="formula">Ep = mgh</div>
+<div class="formula">Em = Ek + Ep = konstan (tanpa gesekan)</div>
+<div class="formula">P = W/t (Watt)</div></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Hukum Kekekalan Energi Mekanik</div><ul>
+<li>Jika tidak ada gaya luar (gesekan), total energi mekanik tetap</li>
+<li>Ek₁ + Ep₁ = Ek₂ + Ep₂</li>
+<li>½mv₁² + mgh₁ = ½mv₂² + mgh₂</li>
+</ul></div>` },
+
+      { j:'Listrik Statis & Hukum Coulomb', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Muatan Listrik</div><p>Ada 2 jenis muatan: positif (+) dan negatif (−). Muatan sejenis tolak-menolak, muatan berbeda tarik-menarik.</p></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Hukum Coulomb</div>
+<div class="formula">F = k·q₁·q₂/r²</div>
+<p>k = 9×10⁹ Nm²/C² | q = muatan (Coulomb) | r = jarak</p></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Listrik Dinamis (Hukum Ohm)</div>
+<div class="formula">V = I × R</div>
+<div class="formula">P = V × I = I²R = V²/R</div>
+<div class="formula">Seri: R = R₁+R₂+... | Paralel: 1/R = 1/R₁+1/R₂+...</div></div>` },
+
+      { j:'Gelombang & Bunyi', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Jenis Gelombang</div><ul>
+<li><b>Transversal:</b> arah getar ⊥ arah rambat (cahaya, tali)</li>
+<li><b>Longitudinal:</b> arah getar // arah rambat (bunyi)</li>
+</ul></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Persamaan Gelombang</div>
+<div class="formula">v = λ × f</div>
+<div class="formula">T = 1/f</div>
+<div class="formula">f = 1/T</div>
+<p>v = cepat rambat (m/s) | λ = panjang gelombang (m) | f = frekuensi (Hz) | T = periode (s)</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Bunyi</div><ul>
+<li>Kecepatan bunyi di udara ≈ 340 m/s</li>
+<li>Infrasonik: f &lt; 20 Hz | Audiosonik: 20–20.000 Hz | Ultrasonik: f > 20.000 Hz</li>
+</ul></div>` }
+    ]
+  },
+
+  'Kimia': {
+    icon:'⚗️', bg:'linear-gradient(145deg,#11998e,#38ef7d)',
+    topics:[
+      { j:'Struktur Atom & Konfigurasi Elektron', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Model Atom</div><ul>
+<li>Dalton: atom = bola padat tidak bisa dibagi</li>
+<li>Thomson: "roti kismis" — elektron tersebar di muatan positif</li>
+<li>Rutherford: inti kecil bermuatan positif, elektron mengitari inti</li>
+<li>Bohr: elektron bergerak pada lintasan/kulit tertentu</li>
+<li>Mekanika Kuantum (Modern): elektron ada dalam orbital (awan elektron)</li>
+</ul></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Notasi Atom</div>
+<div class="formula">ᴬᶻX → A=nomor massa, Z=nomor atom</div>
+<p>Proton = Z | Neutron = A−Z | Elektron = Z (atom netral)</p></div>
+<div class="mc-tips">💡 Konfigurasi elektron: 2, 8, 8, 18, ... (isi kulit K, L, M, N secara berurutan)</div>` },
+
+      { j:'Sistem Periodik Unsur', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Periode & Golongan</div><ul>
+<li><b>Periode</b> = jumlah kulit elektron (baris horizontal)</li>
+<li><b>Golongan</b> = jumlah elektron valensi (kolom vertikal)</li>
+<li>Golongan IA-VIIA: golongan utama | Golongan IB-VIIB,VIII: transisi</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Sifat Periodik</div><ul>
+<li>⬇️ Jari-jari atom: membesar ke bawah & ke kiri</li>
+<li>⬆️ Energi ionisasi: membesar ke atas & ke kanan</li>
+<li>⬆️ Keelektronegatifan: membesar ke atas & ke kanan (F tertinggi)</li>
+<li>⬆️ Afinitas elektron: membesar ke atas & ke kanan</li>
+</ul></div>` },
+
+      { j:'Ikatan Kimia', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Jenis Ikatan</div><ul>
+<li>⚡ <b>Ikatan Ion:</b> transfer elektron dari logam ke nonlogam. Contoh: NaCl</li>
+<li>🔗 <b>Ikatan Kovalen:</b> pemakaian bersama elektron antara nonlogam. Contoh: H₂O, CO₂</li>
+<li>🔗 <b>Kovalen Koordinasi:</b> pasangan elektron dari satu atom. Contoh: NH₄⁺</li>
+<li>🏗️ <b>Ikatan Logam:</b> elektron bebas di antara kation logam. Contoh: Fe, Cu</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Aturan Oktet</div><ul>
+<li>Atom cenderung memiliki 8 elektron di kulit terluar (kecuali H=2)</li>
+<li>Atom dengan valensi 1-3: cenderung melepas elektron → membentuk kation</li>
+<li>Atom dengan valensi 5-7: cenderung menangkap elektron → membentuk anion</li>
+</ul></div>` },
+
+      { j:'Asam, Basa & pH', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Teori Asam-Basa</div><ul>
+<li>Arrhenius: asam menghasilkan H⁺, basa menghasilkan OH⁻ dalam air</li>
+<li>Brønsted-Lowry: asam = donor H⁺, basa = akseptor H⁺</li>
+<li>Lewis: asam = akseptor pasangan e⁻, basa = donor pasangan e⁻</li>
+</ul></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 pH & Kekuatan Asam-Basa</div>
+<div class="formula">pH = −log[H⁺]</div>
+<div class="formula">pOH = −log[OH⁻]</div>
+<div class="formula">pH + pOH = 14</div>
+<div class="formula">Asam kuat: pH &lt; 7 | Netral: pH = 7 | Basa kuat: pH > 7</div></div>
+<div class="mc-tips">💡 Indikator alami: kunyit (kuning di asam, merah di basa), kubis ungu, bunga sepatu.</div>` }
+    ]
+  },
+
+  'Biologi': {
+    icon:'🧬', bg:'linear-gradient(145deg,#56ab2f,#a8e063)',
+    topics:[
+      { j:'Metabolisme (Fotosintesis & Respirasi)', i:`
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Fotosintesis</div>
+<div class="formula">6CO₂ + 6H₂O + cahaya → C₆H₁₂O₆ + 6O₂</div>
+<p>Tahap: <b>Reaksi Terang</b> (di grana, butuh cahaya) → <b>Siklus Calvin</b> (di stroma, tidak butuh cahaya langsung)</p></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Respirasi Aerob</div>
+<div class="formula">C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + 38 ATP</div>
+<p>Tahap: <b>Glikolisis</b> (sitoplasma) → <b>Siklus Krebs</b> (matriks mitokondria) → <b>Transpor Elektron</b> (membran dalam mitokondria)</p></div>
+<div class="mc-ingat">🧠 Respirasi MENGGUNAKAN glukosa untuk menghasilkan energi. Fotosintesis MEMBUAT glukosa menggunakan energi cahaya.</div>` },
+
+      { j:'Genetika & Hereditas', i:`
+<div class="mc-def"><div class="mc-def-title">📖 DNA & Gen</div><p>DNA (Asam Deoksiribonukleat) adalah molekul yang membawa informasi genetik. Tersusun dari nukleotida (basa nitrogen, gula deoksiribosa, fosfat). Basa: Adenin-Timin, Guanin-Sitosin.</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Hukum Mendel</div><ul>
+<li><b>Hukum I (Segregasi):</b> pasangan alel berpisah saat pembentukan gamet</li>
+<li><b>Hukum II (Asortasi Bebas):</b> gen pada kromosom berbeda diwariskan secara bebas</li>
+</ul></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Rasio Persilangan Monohibrid</div>
+<div class="formula">F2 perbandingan genotip: 1 AA : 2 Aa : 1 aa</div>
+<div class="formula">F2 perbandingan fenotip: 3 (dominan) : 1 (resesif)</div></div>` },
+
+      { j:'Ekosistem & Aliran Energi', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Komponen Ekosistem</div><p>Ekosistem = komunitas makhluk hidup (biotik) + lingkungan tak hidup (abiotik) yang saling berinteraksi.</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Tingkat Trofik</div><ul>
+<li>🌿 Produsen (tumbuhan) → mengubah energi matahari jadi biomassa</li>
+<li>🐛 Konsumen I (herbivora) → memakan produsen</li>
+<li>🐸 Konsumen II (karnivora) → memakan konsumen I</li>
+<li>🦅 Konsumen III (puncak) → pemangsa tertinggi</li>
+<li>🍄 Detritivor & Dekomposer → mengurai sisa organisme</li>
+</ul></div>
+<div class="mc-tips">💡 Aturan 10%: setiap naik tingkat trofik, hanya 10% energi yang diteruskan. Sisanya untuk metabolisme & panas.</div>` }
+    ]
+  },
+
+  'Sejarah': {
+    icon:'🏛️', bg:'linear-gradient(145deg,#C94B4B,#4B134F)',
+    topics:[
+      { j:'Masa Praaksara Indonesia', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Pengertian</div><p>Masa Praaksara adalah masa sebelum manusia mengenal tulisan. Di Indonesia berlangsung hingga abad ke-5 M (ditemukannya prasasti Yupa).</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Pembagian Berdasarkan Zaman</div><ul>
+<li>🪨 <b>Zaman Batu:</b> Paleolitikum, Mesolitikum, Neolitikum, Megalitikum</li>
+<li>🔴 <b>Zaman Logam:</b> Tembaga → Perunggu → Besi (Indonesia langsung ke perunggu)</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Jenis Manusia Purba di Indonesia</div><ul>
+<li>Meganthropus Paleojavanicus (paling tua, ditemukan von Koenigswald)</li>
+<li>Pithecanthropus Erectus (manusia kera berjalan tegak, Trinil, Dubois 1891)</li>
+<li>Homo Soloensis & Homo Wajakensis (sudah mirip manusia modern)</li>
+</ul></div>` },
+
+      { j:'Pergerakan Nasional & Sumpah Pemuda', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Tonggak Pergerakan Nasional</div><ul>
+<li>📅 <b>1908:</b> Budi Utomo (20 Mei = Hari Kebangkitan Nasional). Pendiri: dr. Wahidin Sudirohusodo & dr. Soetomo</li>
+<li>📅 <b>1912:</b> Sarekat Islam (SI), Indische Partij (IP)</li>
+<li>📅 <b>1927:</b> Partai Nasional Indonesia (PNI), pendiri Soekarno</li>
+<li>📅 <b>28 Oktober 1928:</b> Sumpah Pemuda (Kongres Pemuda II)</li>
+</ul></div>
+<div class="mc-ingat">🧠 Isi Sumpah Pemuda:<br>1. Kami bertumpah darah satu, tanah Indonesia<br>2. Kami berbangsa satu, bangsa Indonesia<br>3. Kami menjunjung bahasa persatuan, bahasa Indonesia</div>` },
+
+      { j:'Proklamasi Kemerdekaan 1945', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Kronologi Proklamasi</div><ul>
+<li>📅 <b>6 & 9 Agustus 1945:</b> Bom atom dijatuhkan di Hiroshima & Nagasaki</li>
+<li>📅 <b>15 Agustus 1945:</b> Jepang menyerah. Golongan muda mendesak proklamasi segera.</li>
+<li>📅 <b>16 Agustus 1945 (Peristiwa Rengasdengklok):</b> Soekarno-Hatta "diculik" ke Rengasdengklok</li>
+<li>📅 <b>17 Agustus 1945:</b> Proklamasi dibacakan Soekarno-Hatta di Jalan Pegangsaan Timur 56, Jakarta pukul 10.00</li>
+<li>📅 <b>18 Agustus 1945:</b> PPKI menetapkan UUD 1945, memilih Soekarno-Hatta sebagai Presiden-Wapres</li>
+</ul></div>
+<div class="mc-tips">💡 Naskah proklamasi diketik oleh Sayuti Melik, ditandatangani Soekarno-Hatta atas nama bangsa Indonesia.</div>` }
+    ]
+  },
+
+  'Ekonomi': {
+    icon:'💰', bg:'linear-gradient(145deg,#f7971e,#ffd200)',
+    topics:[
+      { j:'Konsep Dasar Ekonomi', i:`
+<div class="mc-def"><div class="mc-def-title">📖 Ilmu Ekonomi</div><p>Ilmu ekonomi mempelajari perilaku manusia dalam memenuhi kebutuhan yang tidak terbatas dengan sumber daya yang terbatas (kelangkaan/scarcity).</p></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Konsep Penting</div><ul>
+<li>🔴 <b>Kelangkaan:</b> keterbatasan sumber daya vs. keinginan tak terbatas</li>
+<li>🤔 <b>Biaya Peluang (Opportunity Cost):</b> nilai alternatif terbaik yang dikorbankan</li>
+<li>📊 <b>Skala Prioritas:</b> mendahulukan kebutuhan yang lebih penting</li>
+<li>💲 <b>Motif Ekonomi:</b> alasan melakukan kegiatan ekonomi (profit, sosial, psikologis)</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Sistem Ekonomi</div><ul>
+<li>Liberal/Pasar: mekanisme pasar bebas. Contoh: AS</li>
+<li>Komando/Terpusat: negara mengendalikan ekonomi. Contoh: Korea Utara</li>
+<li>Campuran: gabungan pasar + intervensi negara. Contoh: Indonesia</li>
+</ul></div>` },
+
+      { j:'Permintaan & Penawaran', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Hukum Permintaan & Penawaran</div><ul>
+<li>📉 <b>Permintaan:</b> jika harga naik → permintaan turun (ceteris paribus)</li>
+<li>📈 <b>Penawaran:</b> jika harga naik → penawaran naik (ceteris paribus)</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Faktor yang Mempengaruhi Permintaan</div><ul>
+<li>Harga barang itu sendiri</li>
+<li>Harga barang substitusi & komplementer</li>
+<li>Pendapatan konsumen</li>
+<li>Selera & ekspektasi</li>
+</ul></div>
+<div class="mc-def"><div class="mc-def-title">📖 Keseimbangan Pasar</div><p>Titik keseimbangan (equilibrium) terjadi saat jumlah yang diminta = jumlah yang ditawarkan, menghasilkan harga & kuantitas keseimbangan.</p></div>` },
+
+      { j:'Uang & Perbankan', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Fungsi Uang</div><ul>
+<li>Alat tukar (medium of exchange)</li>
+<li>Satuan hitung (unit of account)</li>
+<li>Alat penyimpan nilai (store of value)</li>
+<li>Alat pembayaran yang sah</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Bank Sentral (Bank Indonesia)</div><ul>
+<li>Menerbitkan uang rupiah</li>
+<li>Menjaga kestabilan nilai rupiah</li>
+<li>Mengatur kebijakan moneter (suku bunga)</li>
+<li>Mengawasi sistem perbankan</li>
+</ul></div>
+<div class="mc-tips">💡 Kebijakan moneter ekspansif (menambah jumlah uang beredar) → mendorong pertumbuhan ekonomi tapi bisa inflasi.</div>` }
+    ]
+  },
+
+  'Geografi': {
+    icon:'🌏', bg:'linear-gradient(145deg,#1a6b3a,#2ecc71)',
+    topics:[
+      { j:'Peta & Penginderaan Jauh', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Jenis Peta</div><ul>
+<li>Berdasarkan skala: Kadaster (&lt;1:5.000), Besar (1:5.000–1:250.000), Sedang, Kecil, Geografi (>1:1.000.000)</li>
+<li>Berdasarkan isi: Peta umum (topografi) & Peta tematik (khusus)</li>
+</ul></div>
+<div class="mc-rumus"><div class="mc-rumus-title">📐 Skala Peta</div>
+<div class="formula">Jarak Sesungguhnya = Jarak Peta / Skala</div>
+<div class="formula">Skala = Jarak Peta / Jarak Sesungguhnya</div></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Penginderaan Jauh (Inderaja)</div><ul>
+<li>Menggunakan sensor di satelit/pesawat untuk merekam permukaan bumi</li>
+<li>Manfaat: pemetaan, bencana alam, pertanian, pertambangan</li>
+<li>SIG (Sistem Informasi Geografis): mengolah & menganalisis data spasial (geospasial)</li>
+</ul></div>` },
+
+      { j:'Atmosfer & Iklim', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Lapisan Atmosfer (bawah → atas)</div><ul>
+<li>🌫️ <b>Troposfer</b> (0–12 km): tempat cuaca terjadi, suhu menurun ke atas</li>
+<li>☀️ <b>Stratosfer</b> (12–50 km): lapisan ozon (O₃) menyerap UV</li>
+<li>🌡️ <b>Mesosfer</b> (50–80 km): meteor terbakar di sini</li>
+<li>🔆 <b>Termosfer</b> (80–500 km): aurora, ISS mengorbit</li>
+<li>🌌 <b>Eksosfer</b> (>500 km): batas atmosfer & luar angkasa</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Klasifikasi Iklim Köppen</div><ul>
+<li>A (Tropis): curah hujan tinggi, suhu >18°C setiap bulan</li>
+<li>B (Kering): curah hujan sangat rendah</li>
+<li>C (Sedang): musim panas & dingin yang jelas</li>
+<li>D (Kontinental): salju di musim dingin</li>
+<li>E (Kutub): suhu sangat rendah sepanjang tahun</li>
+</ul></div>` },
+
+      { j:'Litosfer & Gempa Bumi', i:`
+<div class="mc-poin"><div class="mc-poin-title">✅ Tenaga Geologi</div><ul>
+<li>🌋 <b>Tenaga Endogen:</b> berasal dari dalam bumi (tektonisme, vulkanisme, seisme)</li>
+<li>💨 <b>Tenaga Eksogen:</b> berasal dari luar bumi (pelapukan, erosi, sedimentasi)</li>
+</ul></div>
+<div class="mc-poin"><div class="mc-poin-title">✅ Jenis Gempa Bumi</div><ul>
+<li>Gempa Tektonik: pergeseran lempeng bumi (paling merusak)</li>
+<li>Gempa Vulkanik: aktivitas gunung berapi</li>
+<li>Gempa Runtuhan: runtuhnya rongga di dalam bumi</li>
+</ul></div>
+<div class="mc-tips">💡 Indonesia berada di "Ring of Fire" (Cincin Api Pasifik) — pertemuan lempeng Indo-Australia, Eurasia, dan Pasifik → sering terjadi gempa & erupsi vulkanik.</div>` }
+    ]
+  }
+}
+};
+
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+let currentGrade = null;
+let currentSubj = null;
+const GRADE_INFO = {
+  SD:  { label:'Sekolah Dasar',     pillClass:'pill-sd',  emoji:'🌱' },
+  SMP: { label:'Sekolah Menengah',  pillClass:'pill-smp', emoji:'🎓' },
+  SMA: { label:'Sekolah Atas',      pillClass:'pill-sma', emoji:'🔥' }
+};
+
+// ═══════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const el = document.getElementById('view-' + name);
+  if (el) { el.classList.add('active'); window.scrollTo({top:0, behavior:'smooth'}); }
+  document.getElementById('btn-back').style.display = name === 'home' ? 'none' : '';
+}
+
+function goBack() {
+  if (currentSubj) { currentSubj = null; showView('subjects'); }
+  else if (currentGrade) { currentGrade = null; showView('home'); }
+  else { showView('home'); }
+}
+
+function pilihGrade(grade) {
+  currentGrade = grade;
+  currentSubj = null;
+  const info = GRADE_INFO[grade];
+  document.getElementById('subj-ttl').innerHTML =
+    `Mata Pelajaran <span class="lv-pill ${info.pillClass}">${info.emoji} ${grade}</span>`;
+  document.getElementById('subj-sub').textContent = 'Pilih mapel yang ingin kamu pelajari!';
+
+  const mapels = MATERI[grade] || {};
+  const grid = document.getElementById('subj-grid');
+  grid.innerHTML = Object.entries(mapels).map(([name, cfg], i) => `
+    <div class="subj-card" style="background:${cfg.bg};animation-delay:${i*.06}s" onclick="pilihMapel('${name.replace(/'/g,"\\'")}')">
+      <span class="subj-ico">${cfg.icon}</span>
+      <div class="subj-name">${name}</div>
+      <div class="subj-count">${cfg.topics.length} topik</div>
+    </div>`).join('');
+  showView('subjects');
+}
+
+function pilihMapel(mapel) {
+  currentSubj = mapel;
+  const cfg = MATERI[currentGrade][mapel];
+  const info = GRADE_INFO[currentGrade];
+
+  document.getElementById('mh-icon').textContent = cfg.icon;
+  document.getElementById('mh-title').innerHTML =
+    `${mapel} <span class="lv-pill ${info.pillClass}" style="font-size:11px">${info.emoji} ${currentGrade}</span>`;
+  document.getElementById('mh-sub').textContent =
+    `${cfg.topics.length} topik materi tersedia`;
+
+  const acc = document.getElementById('accordion');
+  acc.innerHTML = cfg.topics.map((t, i) => `
+    <div class="acc-item" id="acc-${i}">
+      <div class="acc-header" onclick="toggleAcc(${i})">
+        <div class="acc-num">${i+1}</div>
+        <div class="acc-title">${t.j}</div>
+        <div class="acc-arrow">⌄</div>
+      </div>
+      <div class="acc-body">${t.i}</div>
+    </div>`).join('');
+
+  showView('materi');
+}
+
+function toggleAcc(idx) {
+  const item = document.getElementById('acc-' + idx);
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.acc-item').forEach(el => el.classList.remove('open'));
+  if (!wasOpen) item.classList.add('open');
+}
+
+// ═══════════════════════════════════════════════════
+//  SEARCH
+// ═══════════════════════════════════════════════════
+function onSearch(q) {
+  const res = document.getElementById('search-results');
+  const clear = document.getElementById('search-clear');
+  q = q.trim().toLowerCase();
+  clear.style.display = q ? '' : 'none';
+  if (!q) { res.innerHTML = ''; return; }
+
+  const hits = [];
+  Object.entries(MATERI).forEach(([grade, subjects]) => {
+    Object.entries(subjects).forEach(([mapel, cfg]) => {
+      cfg.topics.forEach(t => {
+        if (t.j.toLowerCase().includes(q) || mapel.toLowerCase().includes(q)) {
+          hits.push({ grade, mapel, icon: cfg.icon, bg: cfg.bg, topik: t.j, tidx: cfg.topics.indexOf(t) });
+        }
+      });
+    });
+  });
+
+  if (!hits.length) {
+    res.innerHTML = `<div style="text-align:center;color:var(--muted);font-size:13px;padding:12px">Tidak ditemukan. Coba kata kunci lain 🔍</div>`;
+    return;
+  }
+  res.innerHTML = hits.slice(0,8).map(h => `
+    <div class="search-item" onclick="bukaTopik('${h.grade}','${h.mapel.replace(/'/g,"\\'")}',${h.tidx})">
+      <span style="font-size:26px">${h.icon}</span>
+      <div style="flex:1">
+        <div style="font-weight:900;font-size:14px;color:var(--text)">${h.topik}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${h.mapel} · ${h.grade}</div>
+      </div>
+      <span class="search-badge sb-${h.grade.toLowerCase()}">${h.grade}</span>
+    </div>`).join('');
+}
+
+function clearSearch() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-results').innerHTML = '';
+  document.getElementById('search-clear').style.display = 'none';
+}
+
+function bukaTopik(grade, mapel, tidx) {
+  clearSearch();
+  pilihGrade(grade);
+  pilihMapel(mapel);
+  // Tunggu render, lalu buka accordion
+  setTimeout(() => {
+    toggleAcc(tidx);
+    const el = document.getElementById('acc-' + tidx);
+    if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+  }, 100);
+}
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+(function init() {
+  // Hitung total topik
+  let total = 0;
+  Object.values(MATERI).forEach(g => Object.values(g).forEach(m => total += m.topics.length));
+  document.getElementById('s-topik').textContent = total;
+  // Defer BG shapes
+  requestAnimationFrame(() => setTimeout(buatShapes, 0));
+})();
+
+function buatShapes() {
+  const wrap = document.getElementById('bg-wrap');
+  const colors = ['#4776E6','#8E54E9','#11998e','#F7971E','#FF6B35','#FFD200'];
+  for (let i = 0; i < 12; i++) {
+    const d = document.createElement('div');
+    d.className = 'shape';
+    const s = Math.random()*28+10;
+    d.style.cssText = `width:${s}px;height:${s}px;background:${colors[i%6]};left:${Math.random()*100}%;animation-duration:${Math.random()*14+10}s;animation-delay:${Math.random()*10}s`;
+    wrap.appendChild(d);
+  }
+}
+</script>
+</body>
+</html>
