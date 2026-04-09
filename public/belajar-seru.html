@@ -3187,7 +3187,7 @@ function appendChatMessage(p) {
     </span>` : '';
   div.innerHTML = `
     ${!isSelf ? `<div style="font-size:11px;color:var(--muted);font-weight:700;padding:0 8px">${pengirim.avatar || '🦁'} ${pengirim.nama}${isGuru ? ' 👩‍🏫' : ''}</div>` : ''}
-    <div id="msg-bubble-${msgId}" style="max-width:75%;padding:10px 14px;border-radius:${isSelf ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isSelf ? 'var(--orange)' : 'white'};color:${isSelf ? 'white' : 'var(--text)'};font-size:14px;font-weight:600;border:${isSelf ? 'none' : '1.5px solid #E8E8E8'};word-break:break-word">${escapeHtml(p.isi)}</div>
+    <div id="msg-bubble-${msgId}" data-isi="${escapeHtml(p.isi)}" style="max-width:75%;padding:10px 14px;border-radius:${isSelf ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isSelf ? 'var(--orange)' : 'white'};color:${isSelf ? 'white' : 'var(--text)'};font-size:14px;font-weight:600;border:${isSelf ? 'none' : '1.5px solid #E8E8E8'};word-break:break-word">${escapeHtml(p.isi)}</div>
     <div style="display:flex;align-items:center;gap:6px;padding:0 8px">
       <span style="font-size:10px;color:var(--muted)">${waktu}</span>
       ${actionBtns}
@@ -3208,9 +3208,10 @@ async function editPesanKelas(msgId) {
   const bubble = document.getElementById('msg-bubble-' + msgId);
   if (!bubble || bubble.querySelector('textarea')) return;
   const originalHTML = bubble.innerHTML;
-  const currentText = bubble.textContent.replace(/\s*✏️\s*$/, '').trim();
+  const originalIsi = bubble.dataset.isi || '';
+  const currentText = originalIsi || bubble.textContent.replace(/\s*[\u270F\uFE0F]+\s*$/, '').trim();
 
-  const restore = () => { bubble.innerHTML = originalHTML; bubble.style.padding = ''; };
+  const restore = () => { bubble.innerHTML = originalHTML; bubble.dataset.isi = originalIsi; bubble.style.padding = ''; };
 
   bubble.style.padding = '8px';
   bubble.innerHTML = '';
@@ -3239,7 +3240,8 @@ async function editPesanKelas(msgId) {
     try {
       const data = await api('PUT', `/kelas/${kelasChatKelasId}/chat/${msgId}`, { isi: newText });
       if (data.success) {
-        bubble.innerHTML = escapeHtml(newText) + ' ✏️';
+        bubble.dataset.isi = newText;
+        bubble.innerHTML = escapeHtml(newText) + ' <span style="font-size:11px;opacity:0.7">✏️</span>';
         bubble.style.padding = '';
         socket.emit('kelas:edit_pesan', { kelasId: kelasChatKelasId, msgId, isi: newText });
       } else { toast('Gagal mengedit pesan', 'error'); restore(); }
@@ -3335,7 +3337,10 @@ socket.on('kelas:pesan_baru', (pesan) => {
 
 socket.on('kelas:pesan_diedit', ({ msgId, isi }) => {
   const bubble = document.getElementById('msg-bubble-' + msgId);
-  if (bubble) bubble.textContent = isi + ' ✏️';
+  if (!bubble) return;
+  if (bubble.querySelector('textarea')) return; // jangan timpa textarea yang sedang terbuka
+  bubble.dataset.isi = isi;
+  bubble.innerHTML = escapeHtml(isi) + ' <span style="font-size:11px;opacity:0.7">✏️</span>';
 });
 
 socket.on('kelas:pesan_dihapus', ({ msgId }) => {
