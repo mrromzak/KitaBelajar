@@ -8608,10 +8608,12 @@ async function kirimGuruChat() {
     const reply = data?.data?.choices?.[0]?.message?.content || data?.choices?.[0]?.message?.content || data?.message || 'Maaf, saya tidak bisa merespons saat ini.';
     guruChatHistory.push({ role: 'assistant', content: reply });
 
-    // Format: bold, newline, link-style
+    // Format: markdown links, bold, italic, plain URLs, newline
     const formatted = reply
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:#7b2ff7;font-weight:700;word-break:break-all;">$1</a>')
+      .replace(/(?<!\()(https?:\/\/[^\s<)"]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:#7b2ff7;font-weight:700;word-break:break-all;">$1</a>')
       .replace(/\n/g, '<br>');
     gchatAddMsg('bot', formatted);
   } catch(e) {
