@@ -204,7 +204,8 @@
   .maskot-img { width: 320px; height: 320px; object-fit: contain; }
 
   /* ===== SPEECH BUBBLES ===== */
-  .maskot-wrap { position: relative; display: inline-block; padding: 40px 80px 10px; }
+  /* background: var(--bg) atasi checkered pada Android saat transparent PNG */
+  .maskot-wrap { position: relative; display: inline-block; padding: 40px 80px 10px; background: var(--bg); }
   .hero-bubble {
     position: absolute; background: #fff; border-radius: 18px;
     padding: 8px 14px; font-size: 13px; font-weight: 800; white-space: nowrap;
@@ -804,4 +805,36 @@
 @media (max-width: 480px) {
   .guru-chatbot-panel { width: calc(100vw - 32px); right: 16px; bottom: 88px; }
   .guru-chatbot-fab { right: 16px; bottom: 20px; }
+}
+
+/* ===== MOBILE RESPONSIVE (max 640px) ===== */
+@media (max-width: 640px) {
+  /* Navbar */
+  .navbar { padding: 6px 14px; }
+  .logo { font-size: 18px; gap: 6px; }
+  .logo-maskot { width: 42px !important; height: 42px !important; }
+  .nav-btn { padding: 8px 12px; font-size: 12px; }
+
+  /* Hero */
+  .hero { padding: 24px 16px 20px; }
+  .hero p { font-size: 14px; margin-bottom: 20px; }
+  .hero-maskot { margin: 12px 0; }
+
+  /* Maskot tengah lebih kecil */
+  .maskot-img { width: 200px !important; height: 200px !important; }
+  .maskot-wrap { padding: 32px 52px 8px; }
+
+  /* Speech bubbles: perkecil & sesuaikan posisi */
+  .hero-bubble { font-size: 11px; padding: 6px 10px; border-radius: 12px; }
+  .bubble-1 { left: -4px; top: 4px; }
+  .bubble-2 { right: -4px; top: 10px; }
+  .bubble-3 { left: -4px; bottom: 48px; }
+
+  /* Tombol: susun vertikal, lebar penuh */
+  .hero-buttons { flex-direction: column; align-items: center; gap: 10px; margin-top: 16px; }
+  .btn-big { width: 100%; max-width: 280px; justify-content: center; padding: 14px 24px; font-size: 15px; }
+
+  /* Feature cards */
+  .features { padding: 16px 14px 40px; gap: 12px; }
+  .feature-card { padding: 20px 16px; }
 }
