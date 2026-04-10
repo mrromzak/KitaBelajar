@@ -45,8 +45,28 @@
     window._logError = kirimError; // expose untuk manual logging jika perlu
   })();
 </script>
+<script>
+// Hapus background putih dari PNG menggunakan canvas — harus di head agar siap saat img onload
+function hapusBgPutih(img) {
+  img.onload = null; // cegah infinite loop
+  try {
+    var c = document.createElement('canvas');
+    var w = img.naturalWidth || img.width || 320;
+    var h = img.naturalHeight || img.height || 320;
+    c.width = w; c.height = h;
+    var ctx = c.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    var d = ctx.getImageData(0, 0, w, h);
+    for (var i = 0; i < d.data.length; i += 4) {
+      if (d.data[i] > 230 && d.data[i+1] > 230 && d.data[i+2] > 230) d.data[i+3] = 0;
+    }
+    ctx.putImageData(d, 0, 0);
+    img.src = c.toDataURL('image/png');
+  } catch(e) {}
+}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/belajar-seru.css?v=10">
+<link rel="stylesheet" href="/css/belajar-seru.css?v=11">
 <style>
 /* ===== GURU AI CHATBOT ===== */
 .guru-chatbot-fab{position:fixed!important;bottom:28px;right:28px;width:60px;height:60px;border-radius:50%;background:#fff;border:none;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 6px 28px rgba(0,0,0,0.18);transition:all .25s;z-index:9999;padding:0;overflow:hidden}
@@ -2086,21 +2106,6 @@ function toggleMateri(postId, btn) {
     el.appendChild(fade);
     btn.textContent = '📖 Baca Selengkapnya';
   }
-}
-
-function hapusBgPutih(img) {
-  try {
-    const c = document.createElement('canvas');
-    c.width = img.naturalWidth; c.height = img.naturalHeight;
-    const ctx = c.getContext('2d');
-    ctx.drawImage(img, 0, 0);
-    const d = ctx.getImageData(0, 0, c.width, c.height);
-    for (let i = 0; i < d.data.length; i += 4) {
-      if (d.data[i] > 230 && d.data[i+1] > 230 && d.data[i+2] > 230) d.data[i+3] = 0;
-    }
-    ctx.putImageData(d, 0, 0);
-    img.src = c.toDataURL('image/png');
-  } catch(e) {}
 }
 
 function showPage(id) {

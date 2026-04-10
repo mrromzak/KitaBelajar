@@ -160,7 +160,7 @@
 
   /* ===== NAVBAR ===== */
   .navbar {
-    background: white; padding: 14px 28px;
+    background: white; padding: 6px 28px;
     display: flex; align-items: center; justify-content: space-between;
     border-bottom: 3px solid var(--yellow);
     position: sticky; top: 0; z-index: 100;
