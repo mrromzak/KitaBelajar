@@ -197,11 +197,34 @@
   .shape:nth-child(4) { width: 100px; height: 100px; background: var(--blue); bottom: -10px; right: 10%; animation-delay: 1.5s; }
   @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-16px); } }
 
-  /* Hero layout: semua tengah, maskot di atas teks */
+  /* Hero layout: teks dulu, maskot di bawah */
   .hero-inner { display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; z-index: 1; }
   .hero-text { width: 100%; }
-  .hero-maskot { margin-bottom: 16px; }
-  .maskot-img { width: 300px; height: 300px; object-fit: contain; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.10)); }
+  .hero-maskot { margin-top: 24px; }
+  .maskot-img { width: 280px; height: 280px; object-fit: contain; mix-blend-mode: multiply; }
+
+  /* ===== SPEECH BUBBLES ===== */
+  .maskot-wrap { position: relative; display: inline-block; padding: 40px 80px 10px; }
+  .hero-bubble {
+    position: absolute; background: #fff; border-radius: 18px;
+    padding: 8px 14px; font-size: 13px; font-weight: 800; white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12); pointer-events: none;
+  }
+  .hero-bubble::after {
+    content: ''; position: absolute; bottom: -8px; left: 18px;
+    width: 0; height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+  }
+  .bubble-1 { top: 0px; left: 0px; background: #FFF3CD; color: #B45309; animation: bub1 2.8s ease-in-out infinite; }
+  .bubble-1::after { border-top: 9px solid #FFF3CD; }
+  .bubble-2 { top: 10px; right: 0px; background: #DBEAFE; color: #1D4ED8; animation: bub2 2.8s ease-in-out infinite 1s; }
+  .bubble-2::after { left: auto; right: 18px; border-top: 9px solid #DBEAFE; }
+  .bubble-3 { bottom: 60px; left: -10px; background: #D1FAE5; color: #065F46; animation: bub3 2.8s ease-in-out infinite 1.8s; }
+  .bubble-3::after { bottom: auto; top: -8px; left: 18px; border-top: none; border-bottom: 9px solid #D1FAE5; }
+  @keyframes bub1 { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
+  @keyframes bub2 { 0%,100% { transform: translateY(0) rotate(1deg); } 50% { transform: translateY(-12px) rotate(-1deg); } }
+  @keyframes bub3 { 0%,100% { transform: translateY(0) rotate(2deg); } 50% { transform: translateY(-8px) rotate(-2deg); } }
 
   .hero-badge { display: inline-block; background: var(--yellow); color: var(--orange); font-weight: 800; font-size: 13px; padding: 6px 18px; border-radius: 50px; margin-bottom: 20px; }
   .hero h1 { font-family: 'Fredoka One', cursive; font-size: clamp(32px, 5vw, 56px); line-height: 1.15; margin-bottom: 16px; }
