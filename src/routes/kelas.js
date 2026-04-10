@@ -73,19 +73,19 @@ router.get('/', authMiddleware, async (req, res) => {
 // GET /api/kelas/:id — Detail kelas + murid
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
-    const { data: kelas } = await supabase
-      .from('kelas').select('*, guru:guru_id(nama)').eq('id', req.params.id).single();
+    const [
+      { data: kelas },
+      { data: muridList },
+      { count: totalMateri }
+    ] = await Promise.all([
+      supabase.from('kelas').select('*, guru:guru_id(nama)').eq('id', req.params.id).single(),
+      supabase.from('kelas_murid').select('murid:murid_id(id, nama, avatar, xp, level)').eq('kelas_id', req.params.id),
+      supabase.from('materi').select('id', { count: 'exact', head: true }).eq('kelas_id', req.params.id)
+    ]);
+
     if (!kelas) return res.status(404).json({ success: false, pesan: 'Kelas tidak ditemukan.' });
 
-    const { data: muridList } = await supabase
-      .from('kelas_murid')
-      .select('murid:murid_id(id, nama, avatar, xp, level)')
-      .eq('kelas_id', req.params.id);
-
     const murid = muridList?.map(m => m.murid) || [];
-    const { count: totalMateri } = await supabase
-      .from('materi').select('id', { count: 'exact', head: true })
-      .eq('kelas_id', req.params.id);
     res.json({ success: true, data: { ...kelas, murid, total_murid: murid.length, total_materi: totalMateri || 0 } });
   } catch (err) {
     console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });

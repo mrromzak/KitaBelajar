@@ -2893,6 +2893,7 @@ async function loadMuridKelas() {
 }
 
 function renderMuridKelas(list) {
+  window._kelasList = list;
   const grid = document.getElementById('murid-kelas-grid');
   if (!grid) return;
   if (list.length > 0) {
@@ -2997,16 +2998,9 @@ let currentKelas = null;
 async function openKelas(kelasId, colorIdx) {
   showLoading(true);
   try {
-    // Coba dapatkan detail kelas
-    let k = null;
-    try {
-      const data = await api('GET', `/kelas/${kelasId}`);
-      k = data.kelas || data.data || data;
-      if (!k || !k.nama) throw new Error('no data');
-    } catch(e) {
-      // Fallback: pakai data dari grid card yang sudah di-render
-      k = { id: kelasId, nama: 'Kelas', mapel: '', guru_nama: '–', kode_akses: '–', total_materi: 0, total_murid: 0 };
-    }
+    // Pakai data card yang sudah ada sebagai tampilan awal
+    const cached = (window._kelasList || []).find(x => x.id === kelasId);
+    let k = cached || { id: kelasId, nama: 'Kelas', mapel: '', guru_nama: '–', kode_akses: '–', total_materi: 0, total_murid: 0 };
     currentKelas = { ...k, id: kelasId, colorIdx: colorIdx || 0 };
 
     const colorClass = KELAS_COLORS[(colorIdx || 0) % KELAS_COLORS.length];
@@ -3067,7 +3061,22 @@ async function openKelas(kelasId, colorIdx) {
 
     showPage('page-kelas');
     switchKelasTab('materi');
-    // Muat semua tab secara paralel — tidak ada yang blocking
+    showLoading(false);
+
+    // Muat detail + semua tab secara paralel — tidak ada yang blocking
+    api('GET', `/kelas/${kelasId}`).then(data => {
+      const detail = data.kelas || data.data || data;
+      if (detail && detail.nama) {
+        currentKelas = { ...detail, id: kelasId, colorIdx: colorIdx || 0 };
+        // Update sidebar info dengan data lengkap
+        document.getElementById('kelas-code-display').textContent = detail.kode_akses || '–';
+        document.getElementById('kelas-info-sidebar').innerHTML = `
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted);font-weight:600">Mapel</span><span style="font-weight:700">${detail.mapel || '–'}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted);font-weight:600">Total Materi</span><span style="font-weight:700">${detail.total_materi || 0}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted);font-weight:600">Murid</span><span style="font-weight:700">${detail.total_murid || 0} orang</span></div>
+        `;
+      }
+    }).catch(() => {});
     loadKelasStream(kelasId);
     loadKelasKuis(kelasId);
     loadKelasChatHistory(kelasId);
@@ -3108,9 +3117,9 @@ async function openKelas(kelasId, colorIdx) {
       } catch(e) { localStorage.removeItem('kb_meeting_' + kelasId); }
     }
   } catch(e) {
+    showLoading(false);
     toast('Gagal membuka kelas', 'error');
   }
-  showLoading(false);
 }
 
 async function loadKelasStream(kelasId) {
@@ -4341,6 +4350,7 @@ async function loadGuruDashboard() {
 
     const grid = document.getElementById('guru-kelas-grid');
     const list = kelasData.kelas || kelasData.data || kelasData.list || dashData.kelas || [];
+    window._kelasList = list;
     if (list.length > 0) {
       grid.innerHTML = list.map((k, i) => renderKelasCard(k, i, 'guru')).join('');
     } else {
