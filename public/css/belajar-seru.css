@@ -204,8 +204,7 @@
   .maskot-img { width: 320px; height: 320px; object-fit: contain; }
 
   /* ===== SPEECH BUBBLES ===== */
-  /* background: var(--bg) atasi checkered pada Android saat transparent PNG */
-  .maskot-wrap { position: relative; display: inline-block; padding: 40px 80px 10px; background: var(--bg); }
+  .maskot-wrap { position: relative; display: inline-block; padding: 40px 80px 10px; }
   .hero-bubble {
     position: absolute; background: #fff; border-radius: 18px;
     padding: 8px 14px; font-size: 13px; font-weight: 800; white-space: nowrap;
