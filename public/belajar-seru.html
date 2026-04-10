@@ -105,7 +105,10 @@
 <!-- ========== LANDING ========== -->
 <div class="page active" id="page-landing">
   <nav class="navbar">
-    <div class="logo"><span>🌈</span> KitaBelajar</div>
+    <div class="logo">
+      <img src="/assets/maskot.png" alt="maskot" class="logo-maskot">
+      KitaBelajar
+    </div>
     <div class="nav-links">
       <button class="nav-btn guru" onclick="showLogin('guru')">👨‍🏫 Masuk sebagai Guru</button>
       <button class="nav-btn murid" onclick="showLogin('murid')">🎒 Masuk sebagai Murid</button>
@@ -116,12 +119,19 @@
       <div class="shape"></div><div class="shape"></div>
       <div class="shape"></div><div class="shape"></div>
     </div>
-    <div class="hero-badge">✨ Platform Belajar Yang Menyenangkan</div>
-    <h1>Belajar Jadi <em>Super Seru</em> & Menyenangkan!</h1>
-    <p>Materi lengkap, soal latihan, dan games seru yang bikin kamu semangat belajar setiap hari!</p>
-    <div class="hero-buttons">
-      <button class="btn-big btn-murid" onclick="showLogin('murid')">🎒 Ayo Belajar!</button>
-      <button class="btn-big btn-guru" onclick="showLogin('guru')">👨‍🏫 Portal Guru</button>
+    <div class="hero-inner">
+      <div class="hero-text">
+        <div class="hero-badge">✨ Platform Belajar Yang Menyenangkan</div>
+        <h1>Belajar Jadi <em>Super Seru</em> & Menyenangkan!</h1>
+        <p>Materi lengkap, soal latihan, dan games seru yang bikin kamu semangat belajar setiap hari!</p>
+        <div class="hero-buttons">
+          <button class="btn-big btn-murid" onclick="showLogin('murid')">🎒 Ayo Belajar!</button>
+          <button class="btn-big btn-guru" onclick="showLogin('guru')">👨‍🏫 Portal Guru</button>
+        </div>
+      </div>
+      <div class="hero-maskot">
+        <img src="/assets/maskot.png" alt="Maskot KitaBelajar" class="maskot-img">
+      </div>
     </div>
   </div>
   <div class="features">
@@ -176,7 +186,7 @@
 <!-- ========== LUPA SANDI ========== -->
 <div class="page" id="page-forgot">
   <nav class="navbar">
-    <div class="logo"><span>🌈</span> KitaBelajar</div>
+    <div class="logo"><img src="/assets/maskot.png" alt="maskot" class="logo-maskot"> KitaBelajar</div>
     <div class="nav-links">
       <button class="nav-btn back" onclick="showPage('page-login')">← Kembali</button>
     </div>
@@ -232,7 +242,7 @@
 <!-- ========== RESET SANDI (via link lama — tetap untuk kompatibilitas) ========== -->
 <div class="page" id="page-reset">
   <nav class="navbar">
-    <div class="logo"><span>🌈</span> KitaBelajar</div>
+    <div class="logo"><img src="/assets/maskot.png" alt="maskot" class="logo-maskot"> KitaBelajar</div>
   </nav>
   <div class="login-wrap">
     <div class="login-card">
@@ -254,7 +264,7 @@
 <!-- ========== REGISTER ========== -->
 <div class="page" id="page-register">
   <nav class="navbar">
-    <div class="logo"><span>🌈</span> KitaBelajar</div>
+    <div class="logo"><img src="/assets/maskot.png" alt="maskot" class="logo-maskot"> KitaBelajar</div>
     <div class="nav-links">
       <button class="nav-btn back" onclick="showPage('page-login')">← Kembali</button>
     </div>
@@ -300,7 +310,7 @@
 <!-- ========== DASHBOARD MURID ========== -->
 <div class="page" id="page-murid">
   <nav class="navbar">
-    <div class="logo"><span>🌈</span> KitaBelajar</div>
+    <div class="logo"><img src="/assets/maskot.png" alt="maskot" class="logo-maskot"> KitaBelajar</div>
     <div class="nav-links">
       <button onclick="bukaProfileMurid()" style="display:flex;align-items:center;gap:8px;background:none;border:2px solid #eee;padding:7px 14px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background='#F8F9FA'" onmouseout="this.style.background='none'">
         <span id="murid-nav-avatar">🦁</span>
@@ -381,7 +391,7 @@
 <!-- ========== DASHBOARD ORANGTUA ========== -->
 <div class="page" id="page-orangtua">
   <nav class="navbar">
-    <div class="logo"><span>🌈</span> KitaBelajar</div>
+    <div class="logo"><img src="/assets/maskot.png" alt="maskot" class="logo-maskot"> KitaBelajar</div>
     <div class="nav-links">
       <span style="font-size:13px;font-weight:700;color:var(--muted)" id="ot-nav-name">Orangtua</span>
       <button class="nav-btn back" onclick="doLogout()">← Keluar</button>
@@ -404,7 +414,7 @@
 <!-- ========== DETAIL AKTIVITAS ANAK (ORANGTUA) ========== -->
 <div class="page" id="page-orangtua-detail">
   <nav class="navbar">
-    <div class="logo"><span>🌈</span> KitaBelajar</div>
+    <div class="logo"><img src="/assets/maskot.png" alt="maskot" class="logo-maskot"> KitaBelajar</div>
     <div class="nav-links">
       <button class="nav-btn back" onclick="showPage('page-orangtua');loadOrangtuaDashboard()">← Kembali</button>
     </div>
@@ -418,7 +428,7 @@
 
 <div class="page" id="page-guru">
   <nav class="navbar">
-    <div class="logo"><span>🌈</span> KitaBelajar</div>
+    <div class="logo"><img src="/assets/maskot.png" alt="maskot" class="logo-maskot"> KitaBelajar</div>
     <div class="nav-links">
       <button onclick="bukaProfileGuru()" style="display:flex;align-items:center;gap:8px;background:none;border:2px solid #eee;padding:7px 14px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background='#F8F9FA'" onmouseout="this.style.background='none'">
         <span id="guru-nav-avatar">👩‍🏫</span>
@@ -8281,7 +8291,7 @@ function zepReset() {
 <!-- ========== PROFILE & SETTINGS MURID ========== -->
 <div class="page" id="page-profile-murid">
   <nav class="navbar">
-    <div class="logo"><span>🌈</span> KitaBelajar</div>
+    <div class="logo"><img src="/assets/maskot.png" alt="maskot" class="logo-maskot"> KitaBelajar</div>
     <div class="nav-links">
       <button class="nav-btn back" onclick="showPage('page-murid')">← Kembali</button>
     </div>
@@ -8353,7 +8363,7 @@ function zepReset() {
 <!-- ========== PROFILE & SETTINGS GURU ========== -->
 <div class="page" id="page-profile-guru">
   <nav class="navbar">
-    <div class="logo"><span>🌈</span> KitaBelajar</div>
+    <div class="logo"><img src="/assets/maskot.png" alt="maskot" class="logo-maskot"> KitaBelajar</div>
     <div class="nav-links">
       <button class="nav-btn back" onclick="showPage('page-guru')">← Kembali</button>
     </div>
@@ -8442,7 +8452,7 @@ function zepReset() {
 <!-- ========== ERROR LOG ADMIN (hanya guru) ========== -->
 <div class="page" id="page-error-log">
   <nav class="navbar">
-    <div class="logo"><span>🌈</span> KitaBelajar</div>
+    <div class="logo"><img src="/assets/maskot.png" alt="maskot" class="logo-maskot"> KitaBelajar</div>
     <div class="nav-links">
       <button class="nav-btn back" onclick="loadGuruDashboard()">← Kembali</button>
     </div>
@@ -8655,9 +8665,14 @@ function gchatFormatReply(reply) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
   return safe
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    // URL tetap tampil sebagai teks biasa (tidak dijadikan link agar tidak bisa diklik)
+    // Bold: **teks**
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // Bullet point: baris yang diawali "* " atau "- " → ubah ke karakter •
+    // (harus sebelum italic agar * bullet tidak dianggap italic)
+    .replace(/(^|\n)\* /g, '$1• ')
+    .replace(/(^|\n)- /g, '$1• ')
+    // Italic: hanya pasangan * yang mengapit teks tanpa spasi di ujungnya
+    .replace(/\*(\S[^*]*?\S|\S)\*/g, '<em>$1</em>')
     .replace(/\n/g, '<br>');
 }
 

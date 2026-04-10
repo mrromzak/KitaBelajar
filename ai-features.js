@@ -915,10 +915,13 @@ function escapeHtml(str) {
 function renderAIText(teks) {
   // Escape HTML dulu agar AI tidak bisa inject tag apapun
   let safe = escapeHtml(teks);
-  // Render markdown sederhana: **bold**, *italic*, newline -> <br>
   safe = safe
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    // Bullet point: baris yang diawali "* " atau "- " → ubah ke •
+    .replace(/(^|\n)\* /g, '$1• ')
+    .replace(/(^|\n)- /g, '$1• ')
+    // Italic: hanya pasangan * yang mengapit teks tanpa spasi di ujungnya
+    .replace(/\*(\S[^*]*?\S|\S)\*/g, '<em>$1</em>')
     .replace(/\n/g, '<br>');
   return safe;
 }
