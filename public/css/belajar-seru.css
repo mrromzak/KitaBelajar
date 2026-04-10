@@ -201,16 +201,7 @@
   .hero-inner { display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; z-index: 1; }
   .hero-text { width: 100%; }
   .hero-maskot { margin: 20px 0; }
-  .maskot-img { width: 320px; height: 320px; object-fit: contain; transform-origin: bottom center; animation: maskot-wave 2.4s ease-in-out infinite; }
-  @keyframes maskot-wave {
-    0%,  100% { transform: rotate(0deg)   translateY(0); }
-    8%         { transform: rotate(-10deg) translateY(-4px); }
-    16%        { transform: rotate(10deg)  translateY(-6px); }
-    24%        { transform: rotate(-8deg)  translateY(-4px); }
-    32%        { transform: rotate(8deg)   translateY(-6px); }
-    40%        { transform: rotate(-6deg)  translateY(-2px); }
-    48%        { transform: rotate(0deg)   translateY(0); }
-  }
+  .maskot-img { width: 320px; height: 320px; object-fit: contain; }
 
   /* ===== SPEECH BUBBLES ===== */
   .maskot-wrap { position: relative; display: inline-block; padding: 40px 80px 10px; }
