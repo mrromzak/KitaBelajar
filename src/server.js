@@ -84,12 +84,12 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(antiJudolMiddleware);        // Blokir konten judol di body
 
-// Static files: CSS/JS di-cache browser 1 hari, HTML tidak di-cache
+// Static files: assets berat (gambar/font) di-cache 7 hari, CSS/JS/HTML no-cache
 app.use(express.static(path.join(__dirname, '../public'), {
   setHeaders(res, filePath) {
-    if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
-      res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 hari
-    } else if (filePath.endsWith('.html')) {
+    if (/\.(png|jpg|jpeg|gif|svg|webp|woff2?|ttf)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=604800'); // 7 hari
+    } else {
       res.setHeader('Cache-Control', 'no-cache');
     }
   }
