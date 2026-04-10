@@ -41,7 +41,7 @@ router.get('/', authMiddleware, async (req, res) => {
     let query;
     if (req.user.role === 'guru') {
       const { data } = await supabase.from('kelas').select('*').eq('guru_id', req.user.id).order('created_at', { ascending: false });
-      query = data;
+      query = data || [];
     } else {
       const { data } = await supabase
         .from('kelas_murid')
@@ -49,6 +49,21 @@ router.get('/', authMiddleware, async (req, res) => {
         .eq('murid_id', req.user.id);
       query = data?.map(d => d.kelas) || [];
     }
+
+    // Hitung total_materi per kelas secara batch
+    if (query.length > 0) {
+      const kelasIds = query.map(k => k.id);
+      const { data: materiRows } = await supabase
+        .from('materi')
+        .select('kelas_id')
+        .in('kelas_id', kelasIds);
+      const materiCount = {};
+      for (const m of (materiRows || [])) {
+        materiCount[m.kelas_id] = (materiCount[m.kelas_id] || 0) + 1;
+      }
+      query = query.map(k => ({ ...k, total_materi: materiCount[k.id] || 0 }));
+    }
+
     res.json({ success: true, data: query });
   } catch (err) {
     console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });

@@ -387,6 +387,7 @@ async function kirimChatAI() {
 Nama kamu adalah "Kiki" 🤖. Selalu gunakan bahasa Indonesia yang sederhana dan mudah dipahami.
 Gunakan emoji secukupnya agar terasa fun. Berikan penjelasan yang singkat, jelas, dan pakai contoh nyata.
 Kalau ada soal matematika, tunjukkan langkah-langkahnya. Semangati murid jika mereka kesulitan.
+PENTING: Jangan pernah menyertakan URL, link, atau alamat situs web dalam jawabanmu.
 User saat ini: ${window.currentUser?.nama || 'Murid'}`,
       chatMuridHistory.slice(-10)
     );
@@ -428,6 +429,7 @@ async function kirimChatGuru() {
       `Kamu adalah konsultan pendidikan AI untuk guru SD/SMP di Indonesia.
 Nama kamu adalah "Prof. Kiki" 👩‍🏫. Berikan saran yang praktis, berbasis penelitian pendidikan,
 dan mudah diterapkan di kelas. Gunakan bahasa Indonesia yang profesional namun hangat.
+PENTING: Jangan pernah menyertakan URL, link, atau alamat situs web dalam jawabanmu. Jika ingin merujuk sumber, sebutkan nama buku atau nama jurnal saja tanpa URL.
 Guru saat ini: ${window.currentUser?.nama || 'Guru'}`,
       chatGuruHistory.slice(-10)
     );
@@ -902,14 +904,34 @@ function patchKoreksiEssay() {
 // ============================================================
 //  CHAT HELPERS
 // ============================================================
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function renderAIText(teks) {
+  // Escape HTML dulu agar AI tidak bisa inject tag apapun
+  let safe = escapeHtml(teks);
+  // Render markdown sederhana: **bold**, *italic*, newline -> <br>
+  safe = safe
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>');
+  return safe;
+}
+
 function tambahPesanChat(containerId, role, pesan, avatar) {
   const el = document.getElementById(containerId);
   if (!el) return;
   const div = document.createElement('div');
   div.className = `ai-msg ${role}`;
+  const konten = role === 'ai' ? renderAIText(pesan) : escapeHtml(pesan).replace(/\n/g, '<br>');
   div.innerHTML = `
     <div class="ai-avatar ${role === 'ai' ? 'ai-side' : ''}">${avatar}</div>
-    <div class="ai-bubble">${pesan.replace(/\n/g, '<br>')}</div>
+    <div class="ai-bubble">${konten}</div>
   `;
   el.appendChild(div);
   el.scrollTop = el.scrollHeight;
