@@ -46,7 +46,7 @@
   })();
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/belajar-seru.css?v=17">
+<link rel="stylesheet" href="/css/belajar-seru.css?v=18">
 <style>
 /* ===== GURU AI CHATBOT ===== */
 .guru-chatbot-fab{position:fixed!important;bottom:28px;right:28px;width:60px;height:60px;border-radius:50%;background:#fff;border:none;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 6px 28px rgba(0,0,0,0.18);transition:all .25s;z-index:9999;padding:0;overflow:hidden}
@@ -2593,7 +2593,7 @@ async function simpanProfilGuru() {
       currentUser.nama = nama;
       localStorage.setItem('kb_user', JSON.stringify(currentUser));
       document.getElementById('pg-nama-display').textContent = nama;
-      document.getElementById('guru-nav-name').textContent   = nama;
+      document.getElementById('guru-nav-name').textContent   = nama.split(' ')[0];
       document.getElementById('guru-greeting').textContent   = `Selamat Datang, ${nama}! ${currentUser.avatar || '👩‍🏫'}`;
       document.getElementById('guru-banner-avatar').textContent = currentUser.avatar || '👩‍🏫';
       toast('Profil berhasil diperbarui! ✅', 'success');
@@ -4345,7 +4345,7 @@ async function loadGuruDashboard() {
   const btnLog = document.getElementById('btn-error-log');
   if (btnLog) btnLog.style.display = DEV_EMAILS.includes(currentUser.email) ? 'inline-block' : 'none';
 
-  document.getElementById('guru-nav-name').textContent = currentUser.nama;
+  document.getElementById('guru-nav-name').textContent = currentUser.nama.split(' ')[0];
   document.getElementById('guru-nav-avatar').textContent = currentUser.avatar || '👩‍🏫';
   document.getElementById('guru-greeting').textContent = `Selamat Datang, ${currentUser.nama}! ${currentUser.avatar || '👩‍🏫'}`;
   document.getElementById('guru-banner-avatar').textContent = currentUser.avatar || '👩‍🏫';

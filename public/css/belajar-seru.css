@@ -839,8 +839,8 @@
 
   /* Navbar mobile: hemat ruang maksimal */
   .navbar { flex-wrap: nowrap; overflow: visible; padding: 6px 10px; }
-  .logo { flex-shrink: 0; font-size: 0; gap: 0; } /* sembunyikan teks "KitaBelajar" */
-  .logo-maskot { width: 38px !important; height: 38px !important; }
+  .logo { flex-shrink: 0; font-size: 14px; }
+  .logo-maskot { width: 36px !important; height: 36px !important; }
   .nav-links { gap: 5px; flex-shrink: 0; }
   #guru-nav-name, #murid-nav-name {
     max-width: 70px; overflow: hidden;
