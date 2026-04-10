@@ -837,18 +837,18 @@
   .features { padding: 16px 14px 40px; gap: 12px; }
   .feature-card { padding: 20px 16px; }
 
-  /* Navbar: nama guru/murid jangan overflow */
-  .navbar { flex-wrap: nowrap; overflow: hidden; }
-  .nav-links { gap: 6px; flex-shrink: 0; min-width: 0; }
-  .logo { flex-shrink: 0; font-size: 16px; }
-  .logo-maskot { width: 36px !important; height: 36px !important; }
+  /* Navbar mobile: hemat ruang maksimal */
+  .navbar { flex-wrap: nowrap; overflow: visible; padding: 6px 10px; }
+  .logo { flex-shrink: 0; font-size: 0; gap: 0; } /* sembunyikan teks "KitaBelajar" */
+  .logo-maskot { width: 38px !important; height: 38px !important; }
+  .nav-links { gap: 5px; flex-shrink: 0; }
   #guru-nav-name, #murid-nav-name {
-    max-width: 80px; overflow: hidden;
+    max-width: 70px; overflow: hidden;
     text-overflow: ellipsis; white-space: nowrap;
     display: inline-block;
   }
-  /* Kompreskan tombol profil & nav di mobile */
-  .nav-links button[onclick*="bukaProfile"] { padding: 5px 8px !important; font-size: 11px !important; }
-  .nav-btn { padding: 7px 10px !important; font-size: 12px !important; }
-  .bell-btn { padding: 5px 8px !important; }
+  /* Kompreskan semua tombol nav */
+  .nav-links button { padding: 5px 8px !important; font-size: 11px !important; gap: 4px !important; }
+  .nav-btn { padding: 6px 10px !important; font-size: 12px !important; }
+  .bell-btn { padding: 5px 7px !important; font-size: 14px !important; }
 }
