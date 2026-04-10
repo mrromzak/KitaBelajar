@@ -46,7 +46,7 @@
   })();
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/belajar-seru.css?v=15">
+<link rel="stylesheet" href="/css/belajar-seru.css?v=16">
 <style>
 /* ===== GURU AI CHATBOT ===== */
 .guru-chatbot-fab{position:fixed!important;bottom:28px;right:28px;width:60px;height:60px;border-radius:50%;background:#fff;border:none;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 6px 28px rgba(0,0,0,0.18);transition:all .25s;z-index:9999;padding:0;overflow:hidden}
@@ -454,7 +454,7 @@
         <h2 id="guru-greeting">Selamat Datang, Bu Guru! 👩‍🏫</h2>
         <p id="guru-info">Kelola kelas dan materi kamu</p>
       </div>
-      <div class="avatar-big">👩‍🏫</div>
+      <div class="avatar-big" id="guru-banner-avatar">👩‍🏫</div>
     </div>
 
     <div class="guru-stats">
@@ -2594,7 +2594,8 @@ async function simpanProfilGuru() {
       localStorage.setItem('kb_user', JSON.stringify(currentUser));
       document.getElementById('pg-nama-display').textContent = nama;
       document.getElementById('guru-nav-name').textContent   = nama;
-      document.getElementById('guru-greeting').textContent   = `Selamat Datang, ${nama}! 👩‍🏫`;
+      document.getElementById('guru-greeting').textContent   = `Selamat Datang, ${nama}! ${currentUser.avatar || '👩‍🏫'}`;
+      document.getElementById('guru-banner-avatar').textContent = currentUser.avatar || '👩‍🏫';
       toast('Profil berhasil diperbarui! ✅', 'success');
     } else toast(data.pesan || 'Gagal simpan profil', 'error');
   } catch(e) { toast('Tidak bisa terhubung ke server', 'error'); }
@@ -4346,7 +4347,8 @@ async function loadGuruDashboard() {
 
   document.getElementById('guru-nav-name').textContent = currentUser.nama;
   document.getElementById('guru-nav-avatar').textContent = currentUser.avatar || '👩‍🏫';
-  document.getElementById('guru-greeting').textContent = `Selamat Datang, ${currentUser.nama}! 👩‍🏫`;
+  document.getElementById('guru-greeting').textContent = `Selamat Datang, ${currentUser.nama}! ${currentUser.avatar || '👩‍🏫'}`;
+  document.getElementById('guru-banner-avatar').textContent = currentUser.avatar || '👩‍🏫';
 
   showLoading(true);
   try {
