@@ -1,18 +1,61 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
-  <!-- Speech bubble background -->
-  <path d="M10 8 Q10 2 16 2 H104 Q110 2 110 8 V72 Q110 78 104 78 H36 L18 98 L22 78 H16 Q10 78 10 72 Z" fill="#D8DCE3"/>
-  <!-- Robot face dome -->
-  <path d="M22 38 Q22 18 60 18 Q98 18 98 38 V74 Q98 80 92 80 H28 Q22 80 22 74 Z" fill="#3D4A5C"/>
-  <!-- Antennas -->
-  <line x1="44" y1="18" x2="44" y2="6" stroke="#3D4A5C" stroke-width="4" stroke-linecap="round"/>
-  <circle cx="44" cy="4" r="5" fill="#3D4A5C"/>
-  <line x1="76" y1="18" x2="76" y2="6" stroke="#3D4A5C" stroke-width="4" stroke-linecap="round"/>
-  <circle cx="76" cy="4" r="5" fill="#3D4A5C"/>
-  <!-- Eyes -->
-  <circle cx="44" cy="46" r="9" fill="#29B6F6"/>
-  <circle cx="76" cy="46" r="9" fill="#29B6F6"/>
+  <defs>
+    <radialGradient id="bodyGrad" cx="45%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#A78BFA"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </radialGradient>
+    <radialGradient id="eyeGradL" cx="35%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#E0D7FF"/>
+    </radialGradient>
+    <radialGradient id="cheekGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FF9EBC" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#FF6FA3" stop-opacity="0.3"/>
+    </radialGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#5B21B6" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Antenna -->
+  <line x1="60" y1="14" x2="60" y2="28" stroke="#8B5CF6" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Antenna star -->
+  <polygon points="60,2 62.4,8.2 69,8.2 63.8,12 65.8,18.2 60,14.5 54.2,18.2 56.2,12 51,8.2 57.6,8.2"
+           fill="#FBBF24" stroke="#F59E0B" stroke-width="0.5"/>
+
+  <!-- Body / Head — big rounded circle -->
+  <circle cx="60" cy="72" r="44" fill="url(#bodyGrad)" filter="url(#softShadow)"/>
+
+  <!-- Inner face plate -->
+  <ellipse cx="60" cy="68" rx="34" ry="30" fill="#EDE9FE" opacity="0.25"/>
+
+  <!-- LEFT EYE -->
+  <circle cx="44" cy="64" r="13" fill="white"/>
+  <circle cx="44" cy="64" r="9" fill="#6D28D9"/>
+  <circle cx="44" cy="64" r="5" fill="#1E1B4B"/>
+  <!-- eye shine -->
+  <circle cx="47" cy="60" r="2.5" fill="white" opacity="0.9"/>
+  <circle cx="41" cy="66" r="1.2" fill="white" opacity="0.5"/>
+
+  <!-- RIGHT EYE -->
+  <circle cx="76" cy="64" r="13" fill="white"/>
+  <circle cx="76" cy="64" r="9" fill="#6D28D9"/>
+  <circle cx="76" cy="64" r="5" fill="#1E1B4B"/>
+  <!-- eye shine -->
+  <circle cx="79" cy="60" r="2.5" fill="white" opacity="0.9"/>
+  <circle cx="73" cy="66" r="1.2" fill="white" opacity="0.5"/>
+
+  <!-- Rosy cheeks -->
+  <ellipse cx="31" cy="78" rx="9" ry="6" fill="url(#cheekGrad)"/>
+  <ellipse cx="89" cy="78" rx="9" ry="6" fill="url(#cheekGrad)"/>
+
   <!-- Smile -->
-  <path d="M38 62 Q60 78 82 62" stroke="white" stroke-width="5" fill="none" stroke-linecap="round"/>
-  <path d="M38 62 Q60 80 82 62 Q60 90 38 62 Z" fill="white"/>
-  <path d="M46 70 Q60 80 74 70 Q60 90 46 70 Z" fill="#29B6F6"/>
+  <path d="M46 80 Q60 94 74 80" stroke="white" stroke-width="3.5" fill="none"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Tiny sparkles -->
+  <circle cx="23" cy="48" r="2" fill="#FCD34D" opacity="0.8"/>
+  <circle cx="97" cy="52" r="1.5" fill="#FCD34D" opacity="0.7"/>
+  <circle cx="18" cy="70" r="1.2" fill="#FBCFE8" opacity="0.8"/>
+  <circle cx="103" cy="68" r="1.8" fill="#FBCFE8" opacity="0.7"/>
 </svg>

@@ -8520,15 +8520,14 @@ let guruChatOpen = false;
 let guruChatHistory = [];
 
 const GURU_SYSTEM_PROMPT = `Kamu adalah asisten AI khusus untuk guru Indonesia bernama "Asisten Guru". Tugasmu membantu guru dalam:
-- Mencari artikel dan referensi untuk bahan ajar (berikan judul artikel yang relevan dan sumber/website terpercaya)
-- Merekomendasikan video YouTube edukatif (berikan judul video dan channel yang bisa dicari)
+- Mencari artikel dan referensi untuk bahan ajar (berikan judul artikel yang nama pengarang/jurnal/buku)
+- Merekomendasikan video YouTube edukatif (berikan judul video dan nama channel yang bisa dicari)
 - Memberikan ide soal, kuis, dan aktivitas pembelajaran kreatif
 - Membantu membuat RPP, silabus, dan rencana pembelajaran
 - Memberikan tips motivasi siswa dan manajemen kelas
 - Menjelaskan konsep materi pelajaran dengan cara yang mudah diajarkan
-Gunakan bahasa Indonesia yang ramah dan profesional. Jika ada link/URL, tulis dengan format yang jelas.
-Saat merekomendasikan video YouTube, tulis: "Cari di YouTube: [judul video] oleh [channel]".
-Saat merekomendasikan artikel, tulis sumber website yang terpercaya (Kemendikbud, jurnal, dll).`;
+Gunakan bahasa Indonesia yang ramah dan profesional.
+PENTING: Jangan pernah menulis URL atau link (http/https) dalam jawabanmu. Untuk video YouTube, tulis: "Cari di YouTube: [judul video] oleh [channel]". Untuk artikel/jurnal, sebutkan nama jurnal atau nama buku saja tanpa URL.`;
 
 function guruChatSetVisible(show) {
   const fab = document.getElementById('guru-chat-fab');
@@ -8649,16 +8648,16 @@ function gchatHideTyping() {
 }
 
 function gchatFormatReply(reply) {
-  const linkStyle = 'color:#7b2ff7;font-weight:700;word-break:break-all;text-decoration:underline';
-  return reply
+  // Escape HTML dulu agar AI tidak bisa inject tag apapun
+  const safe = reply
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+  return safe
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    // Markdown links [teks](url) → <a> dulu
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, (_, label, url) =>
-      `<a href="${url}" target="_blank" rel="noopener" style="${linkStyle}">${label}</a>`)
-    // Plain URLs yang BELUM di dalam href="..." (lookbehind cegah href=" dan setelah >)
-    .replace(/(?<!href=["']|["'>])(https?:\/\/[^\s<>"')\]]+)/g, url =>
-      `<a href="${url}" target="_blank" rel="noopener" style="${linkStyle}">${url}</a>`)
+    // URL tetap tampil sebagai teks biasa (tidak dijadikan link agar tidak bisa diklik)
     .replace(/\n/g, '<br>');
 }
 
