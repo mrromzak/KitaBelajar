@@ -8134,7 +8134,7 @@ let zepWaktuMulaiSoal = 0;
 const CIRCUMFERENCE = 2 * Math.PI * 28; // r=28
 
 function zepConnect() {
-  if (zepSocket && zepSocket.connected) return;
+  if (zepSocket) return; // gunakan socket yang ada, biarkan socket.io handle reconnect otomatis
   zepSocket = io(ZEP_SERVER, {
     transports: ['websocket', 'polling'],
     auth: { token },
@@ -8950,19 +8950,26 @@ function zepMuridJawab(jawaban, btnEl) {
   const waktuSisa = zepTimerSisa;
   document.querySelectorAll('.zep-opsi').forEach(b => b.classList.add('disabled'));
 
-  if (zepSocket?.connected) {
-    zepSocket.emit('zep:jawab', {
-      kode_room: zepRoom.kode,
-      soalIdx: zepSoalIdx,
-      jawaban,
-      waktuSisa
-    });
+  if (!zepSocket) {
+    toast('Tidak terhubung ke server. Silakan refresh halaman.', 'error');
+    zepSudahJawab = false;
+    return;
   }
+
+  // Kirim jawaban — socket.io otomatis buffer & kirim ulang jika sedang reconnect
+  zepSocket.emit('zep:jawab', {
+    kode_room: zepRoom.kode,
+    soalIdx: zepSoalIdx,
+    jawaban,
+    waktuSisa
+  });
 
   // Tampilkan animasi menunggu
   const feedback = document.getElementById('zep-hasil-feedback');
-  feedback.style.display = 'block';
-  feedback.innerHTML = '<div class="zep-sudah-jawab">✅ Jawaban terkirim! Tunggu ya...</div>';
+  if (feedback) {
+    feedback.style.display = 'block';
+    feedback.innerHTML = '<div class="zep-sudah-jawab">✅ Jawaban terkirim! Tunggu ya...</div>';
+  }
 }
 
 function zepMuridHasilJawab({ benar, poinDapat, jawabanBenar, totalSkor }) {
