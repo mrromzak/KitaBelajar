@@ -337,47 +337,66 @@ app.get('/api/proxy/fetch', async (req, res) => {
       return res.json({ success: false, pesan: 'URL tidak valid.' });
     }
 
-    const request = https.get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; KitaBelajar/1.0)',
-        'Accept': 'text/html,application/xhtml+xml'
-      },
-      timeout: 10000
-    }, (response) => {
-      // Hanya terima content-type html/text
-      const ct = response.headers['content-type'] || '';
-      if (!ct.includes('text/html') && !ct.includes('text/plain')) {
-        response.destroy();
-        return res.json({ success: false, pesan: 'Tipe konten tidak didukung.' });
-      }
+    // Fungsi fetch dengan follow redirect (max 5 hop)
+    function doFetch(targetUrl, hopsLeft) {
+      if (hopsLeft <= 0) return res.json({ success: false, pesan: 'Terlalu banyak redirect.' });
+      let parsedTarget;
+      try { parsedTarget = new URL(targetUrl); } catch(e) { return res.json({ success: false, pesan: 'URL redirect tidak valid.' }); }
+      if (parsedTarget.protocol !== 'https:') return res.json({ success: false, pesan: 'Redirect ke non-HTTPS tidak diizinkan.' });
+      if (BLOCKED_INTERNAL.some(r => r.test(parsedTarget.hostname))) return res.json({ success: false, pesan: 'URL tidak valid.' });
 
-      let html = '';
-      response.setEncoding('utf8');
-      response.on('data', chunk => { if (html.length < 300000) html += chunk; });
-      response.on('end', () => {
-        let teks = html
-          .replace(/<script[\s\S]*?<\/script>/gi, '')
-          .replace(/<style[\s\S]*?<\/style>/gi, '')
-          .replace(/<nav[\s\S]*?<\/nav>/gi, '')
-          .replace(/<header[\s\S]*?<\/header>/gi, '')
-          .replace(/<footer[\s\S]*?<\/footer>/gi, '')
-          .replace(/<[^>]+>/g, ' ')
-          .replace(/&nbsp;/g, ' ')
-          .replace(/&amp;/g, '&')
-          .replace(/&lt;/g, '<')
-          .replace(/&gt;/g, '>')
-          .replace(/\s{3,}/g, '\n\n')
-          .trim();
+      const request = https.get(targetUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7'
+        },
+        timeout: 15000
+      }, (response) => {
+        // Ikuti redirect 301/302/303/307/308
+        const sc = response.statusCode;
+        if (sc >= 300 && sc < 400 && response.headers.location) {
+          response.destroy();
+          let loc = response.headers.location;
+          if (loc.startsWith('/')) loc = `${parsedTarget.protocol}//${parsedTarget.host}${loc}`;
+          return doFetch(loc, hopsLeft - 1);
+        }
 
-        if (teks.length > 8000) teks = teks.substring(0, 8000);
-        res.json({ success: true, teks, panjang: teks.length });
+        // Hanya terima content-type html/text
+        const ct = response.headers['content-type'] || '';
+        if (!ct.includes('text/html') && !ct.includes('text/plain')) {
+          response.destroy();
+          return res.json({ success: false, pesan: 'Tipe konten tidak didukung.' });
+        }
+
+        let html = '';
+        response.setEncoding('utf8');
+        response.on('data', chunk => { if (html.length < 400000) html += chunk; });
+        response.on('end', () => {
+          let teks = html
+            .replace(/<script[\s\S]*?<\/script>/gi, '')
+            .replace(/<style[\s\S]*?<\/style>/gi, '')
+            .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+            .replace(/<header[\s\S]*?<\/header>/gi, '')
+            .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+            .replace(/<aside[\s\S]*?<\/aside>/gi, '')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/&nbsp;/g, ' ')
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&#\d+;/g, ' ')
+            .replace(/\s{3,}/g, '\n\n')
+            .trim();
+
+          if (teks.length > 8000) teks = teks.substring(0, 8000);
+          res.json({ success: true, teks, panjang: teks.length });
+        });
       });
-    });
-    request.on('error', () => res.json({ success: false, pesan: 'Gagal mengambil artikel.' }));
-    request.on('timeout', () => {
-      request.destroy();
-      res.json({ success: false, pesan: 'Request timeout.' });
-    });
+      request.on('error', () => res.json({ success: false, pesan: 'Gagal mengambil artikel.' }));
+      request.on('timeout', () => { request.destroy(); res.json({ success: false, pesan: 'Request timeout.' }); });
+    }
+    doFetch(url, 5);
   } catch(e) {
     res.json({ success: false, pesan: 'URL tidak valid.' });
   }

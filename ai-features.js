@@ -412,7 +412,8 @@ async function kirimChatAI() {
       const hasil = await fetchArtikelUrl(detectedUrl);
       if (hasil.ok) {
         const permintaan = pesan.replace(detectedUrl, '').trim() || 'Tolong ringkas artikel ini dengan bahasa yang mudah dipahami.';
-        pesanUntukAI = `[Konten artikel dari ${hasil.url}]\n\n${hasil.teks}\n\n[Permintaan pengguna]: ${permintaan}`;
+        // Jangan sertakan URL di pesan ke AI agar tidak trigger refusal bawaan model
+        pesanUntukAI = `Berikut ini adalah teks dari sebuah artikel/halaman web yang sudah diambil:\n\n---\n${hasil.teks}\n---\n\nPermintaan: ${permintaan}`;
       } else {
         // Fetch gagal — langsung kasih tahu user, jangan kirim ke AI
         typing.remove();
@@ -430,7 +431,7 @@ async function kirimChatAI() {
 Nama kamu adalah "Kiki" 🤖. Selalu gunakan bahasa Indonesia yang sederhana dan mudah dipahami.
 Gunakan emoji secukupnya agar terasa fun. Berikan penjelasan singkat, jelas, dan pakai contoh nyata.
 Kalau ada soal matematika, tunjukkan langkah-langkahnya. Semangati murid jika mereka kesulitan.
-Jika ada konten artikel yang diberikan, ringkas atau jelaskan sesuai permintaan — JANGAN bilang tidak bisa akses link.
+Jika ada teks artikel yang diberikan pengguna, langsung proses dan ringkas/jelaskan sesuai permintaan tanpa perlu komentar tentang cara kamu mendapatkan teks tersebut.
 User saat ini: ${window.currentUser?.nama || 'Murid'}`,
       chatMuridHistory.slice(-10)
     );
@@ -474,7 +475,7 @@ async function kirimChatGuru() {
       const hasil = await fetchArtikelUrl(detectedUrl);
       if (hasil.ok) {
         const permintaan = pesan.replace(detectedUrl, '').trim() || 'Tolong ringkas artikel ini untuk keperluan mengajar.';
-        pesanUntukAI = `[Konten artikel dari ${hasil.url}]\n\n${hasil.teks}\n\n[Permintaan guru]: ${permintaan}`;
+        pesanUntukAI = `Berikut ini adalah teks dari sebuah artikel/jurnal yang sudah diambil:\n\n---\n${hasil.teks}\n---\n\nPermintaan guru: ${permintaan}`;
       } else {
         typing.remove();
         const pesanGagal = `😕 Maaf, artikel tersebut tidak bisa diakses secara otomatis.\n\nKemungkinan penyebabnya:\n• Artikel memerlukan login atau berlangganan\n• Situs memblokir akses otomatis\n• URL tidak valid\n\nSolusi: **salin teks artikel**-nya lalu tempel di sini — saya akan bantu ringkas dan kaitkan dengan materi ajar! 📋`;
@@ -489,7 +490,7 @@ async function kirimChatGuru() {
       `Kamu adalah konsultan pendidikan AI untuk guru SD/SMP di Indonesia.
 Nama kamu adalah "Prof. Kiki" 👩‍🏫. Berikan saran yang praktis, berbasis penelitian pendidikan,
 dan mudah diterapkan di kelas. Gunakan bahasa Indonesia yang profesional namun hangat.
-Jika ada konten artikel yang diberikan, ringkas atau kaitkan dengan konteks pembelajaran — JANGAN bilang tidak bisa akses link.
+Jika ada teks artikel yang diberikan, langsung ringkas atau kaitkan dengan konteks pembelajaran tanpa komentar tentang cara kamu mendapatkan teks tersebut.
 Jika ingin merujuk sumber, sebutkan nama buku atau nama jurnal saja tanpa URL.
 Guru saat ini: ${window.currentUser?.nama || 'Guru'}`,
       chatGuruHistory.slice(-10)
