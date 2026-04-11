@@ -215,6 +215,89 @@ module.exports = function(io) {
       }
     });
 
+    // ── VS ONLINE: Murid buat public room ────────────────────
+    socket.on('zep:create_public_room', ({ kode_room, quiz, soal, creator }) => {
+      if (rooms[kode_room]) { socket.emit('zep:error', { pesan: 'Kode room sudah ada.' }); return; }
+      rooms[kode_room] = {
+        kode: kode_room, quiz, soal,
+        guru: null, creator,
+        pemain: {}, scores: {}, jawaban: {}, soalStartTime: {},
+        status: 'lobby', soalIdx: -1, timer: null,
+        is_public: true, auto_start_timer: null
+      };
+      const userId = creator.id;
+      rooms[kode_room].pemain[userId] = { id: userId, nama: creator.nama, avatar: creator.avatar || '🦁', socketId: socket.id };
+      rooms[kode_room].scores[userId] = 0;
+      socket.join(kode_room);
+      socket.data.kode = kode_room;
+      socket.data.userId = userId;
+      socket.emit('zep:public_room_created', getRoomState(kode_room));
+    });
+
+    // ── VS ONLINE: List public rooms yang sedang lobby ────────
+    socket.on('zep:get_public_rooms', () => {
+      const list = Object.values(rooms)
+        .filter(r => r.is_public && r.status === 'lobby')
+        .map(r => ({
+          kode: r.kode,
+          judul: r.quiz.judul,
+          mapel: r.quiz.mapel,
+          total_soal: r.soal.length,
+          pemain_count: Object.keys(r.pemain).length
+        }));
+      socket.emit('zep:public_rooms_list', { rooms: list });
+    });
+
+    // ── VS ONLINE: Join public room (murid) ───────────────────
+    socket.on('zep:join_public_room', ({ kode_room, user }) => {
+      const room = rooms[kode_room];
+      if (!room || !room.is_public) { socket.emit('zep:error', { pesan: 'Room tidak ditemukan.' }); return; }
+      if (room.status !== 'lobby') { socket.emit('zep:error', { pesan: 'Game sudah dimulai.' }); return; }
+
+      const userId = user?.id;
+      if (!userId) { socket.emit('zep:error', { pesan: 'Login dulu ya!' }); return; }
+
+      room.pemain[userId] = { id: userId, nama: user.nama, avatar: user.avatar || '🦁', socketId: socket.id };
+      room.scores[userId] = 0;
+      socket.join(kode_room);
+      socket.data.kode = kode_room;
+      socket.data.userId = userId;
+
+      socket.emit('zep:joined', getRoomState(kode_room));
+      broadcast(kode_room, 'zep:pemain_masuk', {
+        pemain: Object.values(room.pemain).map(p => ({ id: p.id, nama: p.nama, avatar: p.avatar, skor: 0 }))
+      });
+
+      // Auto-start jika sudah ada 2+ pemain (countdown 10 detik)
+      const jumlahPemain = Object.keys(room.pemain).length;
+      if (jumlahPemain >= 2 && !room.auto_start_timer) {
+        let countdown = 10;
+        broadcast(kode_room, 'zep:auto_start_countdown', { detik: countdown });
+        room.auto_start_timer = setInterval(() => {
+          countdown--;
+          broadcast(kode_room, 'zep:auto_start_countdown', { detik: countdown });
+          if (countdown <= 0) {
+            clearInterval(room.auto_start_timer);
+            room.auto_start_timer = null;
+            room.status = 'playing';
+            broadcast(kode_room, 'zep:game_start', { totalSoal: room.soal.length });
+            setTimeout(() => kirimSoal(kode_room, 0), 1500);
+          }
+        }, 1000);
+      }
+    });
+
+    // ── VS ONLINE: Creator bisa mulai lebih awal ──────────────
+    socket.on('zep:online_start_now', ({ kode_room }) => {
+      const room = rooms[kode_room];
+      if (!room || !room.is_public || room.status !== 'lobby') return;
+      if (room.creator?.id !== socket.data.userId) return;
+      if (room.auto_start_timer) { clearInterval(room.auto_start_timer); room.auto_start_timer = null; }
+      room.status = 'playing';
+      broadcast(kode_room, 'zep:game_start', { totalSoal: room.soal.length });
+      setTimeout(() => kirimSoal(kode_room, 0), 1500);
+    });
+
   }); // end io.on connection
 
   // ── Helpers ──────────────────────────────────────────────────
