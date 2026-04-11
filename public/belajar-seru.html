@@ -8135,10 +8135,40 @@ const CIRCUMFERENCE = 2 * Math.PI * 28; // r=28
 
 function zepConnect() {
   if (zepSocket && zepSocket.connected) return;
-  zepSocket = io(ZEP_SERVER, { transports: ['websocket', 'polling'], auth: { token } });
+  zepSocket = io(ZEP_SERVER, {
+    transports: ['websocket', 'polling'],
+    auth: { token },
+    reconnection: true,
+    reconnectionAttempts: 10,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 45000
+  });
 
-  zepSocket.on('connect', () => console.log('🎯 ZepQuiz connected:', zepSocket.id));
-  zepSocket.on('disconnect', () => console.log('🎯 ZepQuiz disconnected'));
+  zepSocket.on('connect', () => {
+    console.log('🎯 ZepQuiz connected:', zepSocket.id);
+    // Jika sedang dalam game, langsung rejoin room
+    if (zepRoom?.kode && currentUser?.id) {
+      zepSocket.emit('zep:rejoin', { kode_room: zepRoom.kode, user_id: currentUser.id });
+    }
+  });
+
+  zepSocket.on('disconnect', (reason) => {
+    console.log('🎯 ZepQuiz disconnected:', reason);
+    // Tampilkan notif kecil jika sedang dalam game aktif
+    const activePage = document.querySelector('.page.active')?.id || '';
+    if (activePage.startsWith('page-zep') && zepRoom) {
+      toast('Koneksi terputus, mencoba sambung ulang...', '');
+    }
+  });
+
+  zepSocket.on('zep:rejoined', (state) => {
+    console.log('🎯 ZepQuiz rejoined room:', state.kode);
+    zepRoom = state;
+    // Kalau di halaman tunggu, update tampilan
+    const activePage = document.querySelector('.page.active')?.id || '';
+    if (activePage === 'page-zep-wait') renderZepPemainWait(state.pemain || []);
+  });
   zepSocket.on('zep:error', ({ pesan }) => { toast(pesan, 'error'); showLoading(false); });
 
   // ── MURID events ──

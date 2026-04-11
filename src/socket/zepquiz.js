@@ -381,6 +381,43 @@ module.exports = function(io) {
       }
     });
 
+    // ── REJOIN: Pemain reconnect saat game sedang berjalan ───
+    socket.on('zep:rejoin', ({ kode_room, user_id }) => {
+      const room = rooms[kode_room];
+      if (!room) { socket.emit('zep:error', { pesan: 'Room sudah tidak ada.' }); return; }
+
+      // Update socket ID pemain yang reconnect
+      if (room.pemain[user_id]) {
+        room.pemain[user_id].socketId = socket.id;
+        socket.join(kode_room);
+        socket.data.kode    = kode_room;
+        socket.data.userId  = user_id;
+
+        // Kirim state game saat ini agar pemain bisa lanjut
+        const state = getRoomState(kode_room);
+        socket.emit('zep:rejoined', {
+          ...state,
+          soalIdx:  room.soalIdx,
+          status:   room.status,
+          mySkor:   room.scores[user_id] || 0
+        });
+
+        // Kalau game sedang jalan, kirim soal sekarang
+        if (room.status === 'playing' && room.soalIdx >= 0) {
+          const soal = room.soal[room.soalIdx];
+          const durasi = room.quiz.durasi_per_soal || 25;
+          const elapsed = (Date.now() - (room.soalStartTime[room.soalIdx] || Date.now())) / 1000;
+          const sisaWaktu = Math.max(1, Math.round(durasi - elapsed));
+          socket.emit('zep:soal', {
+            idx: room.soalIdx,
+            totalSoal: room.soal.length,
+            soal: { id: soal.id, pertanyaan: soal.pertanyaan, emoji: soal.emoji, opsi: soal.opsi, poin: soal.poin },
+            durasi: sisaWaktu  // waktu tersisa, bukan durasi penuh
+          });
+        }
+      }
+    });
+
     // ── MATCHMAKING: Batal ────────────────────────────────────
     socket.on('zep:matchmaking_cancel', ({ user_id }) => {
       const kategori = socket.data.mmKategori;

@@ -49,7 +49,11 @@ const aiLimiter = rateLimit({
 
 // ── Socket.io setup ─────────────────────────────────────────
 const io = new Server(httpServer, {
-  cors: { origin: corsOriginFn, credentials: true }
+  cors: { origin: corsOriginFn, credentials: true },
+  pingTimeout: 60000,     // tunggu 60s sebelum anggap disconnect
+  pingInterval: 25000,    // kirim ping tiap 25s
+  connectTimeout: 45000,  // timeout saat connect awal
+  transports: ['websocket', 'polling']
 });
 
 // Socket.io auth middleware — verifikasi JWT jika token dikirim
