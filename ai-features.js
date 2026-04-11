@@ -980,6 +980,8 @@ function escapeHtml(str) {
 }
 
 function renderAIText(teks) {
+  // Strip thinking tag sebelum render (defense in depth)
+  teks = teks.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/<think>[\s\S]*/i, '').trim();
   // Escape HTML dulu agar AI tidak bisa inject tag apapun
   let safe = escapeHtml(teks);
   safe = safe

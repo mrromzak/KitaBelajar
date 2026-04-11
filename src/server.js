@@ -304,6 +304,17 @@ app.post('/api/ai/chat', aiLimiter, async (req, res) => {
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error?.message || 'Groq API error');
+
+    // Strip <think>...</think> dari model reasoning (qwen3, dll)
+    if (data.choices?.[0]?.message?.content) {
+      let content = data.choices[0].message.content;
+      // Hapus blok thinking lengkap: <think>...</think>
+      content = content.replace(/<think>[\s\S]*?<\/think>/gi, '');
+      // Kalau model tidak menutup tag <think> (hanya ada opening tag)
+      content = content.replace(/<think>[\s\S]*/i, '');
+      data.choices[0].message.content = content.trim();
+    }
+
     res.json({ success: true, data });
   } catch (err) {
     console.error('[AI proxy]', err.message);
