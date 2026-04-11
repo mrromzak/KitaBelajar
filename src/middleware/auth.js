@@ -14,7 +14,7 @@ function authMiddleware(req, res, next) {
     req.user = jwt.verify(token, JWT_SECRET);
     next();
   } catch {
-    return res.status(403).json({ success: false, pesan: 'Token tidak valid atau sudah kadaluarsa.' });
+    return res.status(401).json({ success: false, pesan: 'Token tidak valid atau sudah kadaluarsa.' });
   }
 }
 
