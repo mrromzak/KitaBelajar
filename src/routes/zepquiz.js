@@ -272,7 +272,7 @@ router.get('/ai-generate', authMiddleware, async (req, res) => {
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
+        model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
         max_tokens: 3000,
         temperature: 0.9,
         messages: [
@@ -283,7 +283,14 @@ router.get('/ai-generate', authMiddleware, async (req, res) => {
     });
 
     const groqData = await groqRes.json();
-    if (!groqRes.ok) throw new Error(groqData.error?.message || 'Groq API error');
+    if (!groqRes.ok) {
+      if (groqRes.status === 429) {
+        console.warn('[AI generate soal] Rate limit Groq tercapai — fallback ke bank soal disarankan.');
+        return res.json({ success: false, fallback: true });
+      }
+      console.error('[AI generate soal] Groq error:', JSON.stringify(groqData.error));
+      throw new Error(groqData.error?.message || 'Groq API error');
+    }
 
     const raw = groqData.choices?.[0]?.message?.content || '';
 
@@ -314,7 +321,7 @@ router.get('/ai-generate', authMiddleware, async (req, res) => {
     res.json({ success: true, soal, mapel, jenjang, kelas, total: soal.length, generated: true });
   } catch (err) {
     console.error('[AI generate soal]', err.message);
-    res.status(500).json({ success: false, pesan: 'Gagal membuat soal: ' + err.message });
+    res.json({ success: false, fallback: true });
   }
 });
 
