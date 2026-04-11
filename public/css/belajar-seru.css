@@ -411,7 +411,7 @@
   .zep-pemain-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-bottom: 24px; }
   .zep-pemain-card { background: rgba(255,255,255,0.08); border-radius: 16px; padding: 16px 12px; text-align: center; border: 1px solid rgba(255,255,255,0.1); animation: fadeInUp 0.4s ease; }
   @keyframes fadeInUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-  .zep-pemain-avatar { font-size: 34px; margin-bottom: 6px; }
+  .zep-pemain-avatar { font-size: 34px; margin-bottom: 6px; width: 44px; height: 44px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; margin-left: auto; margin-right: auto; background: rgba(255,255,255,0.1); }
   .zep-pemain-nama { font-size: 12px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .zep-waiting { text-align: center; padding: 32px; opacity: 0.5; font-size: 15px; }
   .zep-soal-wrap { max-width: 760px; margin: 0 auto; padding: 24px; }
@@ -444,14 +444,14 @@
   .zep-hasil-soal { background: rgba(255,255,255,0.06); border-radius: 20px; padding: 20px; margin-top: 20px; animation: fadeInUp 0.4s ease; }
   .zep-lb-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
   .zep-lb-rank { font-family: 'Fredoka One', cursive; font-size: 18px; width: 28px; text-align: center; flex-shrink:0; }
-  .zep-lb-avatar { font-size: 22px; flex-shrink:0; }
+  .zep-lb-avatar { font-size: 22px; flex-shrink:0; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); }
   .zep-lb-nama { flex: 1; font-weight: 700; font-size: 14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .zep-lb-skor { font-family: 'Fredoka One', cursive; font-size: 18px; color: #FFD93D; }
   .zep-lb-benar { font-size: 16px; margin-left: 6px; flex-shrink:0; }
   .zep-final { max-width: 640px; margin: 0 auto; padding: 36px 24px; text-align: center; }
   .zep-podium { display: flex; align-items: flex-end; justify-content: center; gap: 12px; margin: 28px 0; }
   .zep-podium-item { text-align: center; }
-  .zep-podium-avatar { font-size: 36px; margin-bottom: 6px; }
+  .zep-podium-avatar { font-size: 36px; margin-bottom: 6px; width: 48px; height: 48px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; margin-left: auto; margin-right: auto; background: rgba(255,255,255,0.15); }
   .zep-podium-nama { font-size: 12px; font-weight: 800; margin-bottom: 6px; max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .zep-podium-skor { font-family: 'Fredoka One', cursive; font-size: 14px; color: #FFD93D; }
   .zep-podium-bar { border-radius: 12px 12px 0 0; display: flex; align-items: center; justify-content: center; font-size: 22px; }
