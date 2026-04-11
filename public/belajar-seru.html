@@ -8889,10 +8889,11 @@ function zepMuridTampilSoal({ idx, totalSoal, soal, durasi }) {
 function zepStartTimer(detik) {
   clearInterval(zepTimerInterval);
   zepTimerSisa = detik;
-  const circle = document.getElementById('zep-timer-circle');
-  const numEl = document.getElementById('zep-timer-num');
 
   function update() {
+    const circle = document.getElementById('zep-timer-circle');
+    const numEl = document.getElementById('zep-timer-num');
+    if (!circle || !numEl) return;
     const ratio = zepTimerSisa / detik;
     circle.style.strokeDashoffset = CIRCUMFERENCE * (1 - ratio);
     numEl.textContent = zepTimerSisa;
@@ -8939,18 +8940,24 @@ function zepStartTimer(detik) {
 
 function zepMuridJawab(jawaban, btnEl) {
   if (zepSudahJawab) return;
+  if (!zepRoom || !zepRoom.kode) {
+    toast('Koneksi bermasalah. Coba refresh halaman.', 'error');
+    return;
+  }
   zepSudahJawab = true;
   clearInterval(zepTimerInterval);
 
   const waktuSisa = zepTimerSisa;
   document.querySelectorAll('.zep-opsi').forEach(b => b.classList.add('disabled'));
 
-  zepSocket.emit('zep:jawab', {
-    kode_room: zepRoom.kode,
-    soalIdx: zepSoalIdx,
-    jawaban,
-    waktuSisa
-  });
+  if (zepSocket?.connected) {
+    zepSocket.emit('zep:jawab', {
+      kode_room: zepRoom.kode,
+      soalIdx: zepSoalIdx,
+      jawaban,
+      waktuSisa
+    });
+  }
 
   // Tampilkan animasi menunggu
   const feedback = document.getElementById('zep-hasil-feedback');
