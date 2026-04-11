@@ -1384,7 +1384,7 @@
   <div class="modal" style="max-width:440px;padding:0;border-radius:20px;overflow:hidden;display:flex;flex-direction:column;height:85vh;max-height:600px">
     <!-- Header -->
     <div style="display:flex;align-items:center;gap:12px;padding:16px 20px;background:var(--blue);color:white;flex-shrink:0">
-      <div id="pc-avatar" style="font-size:28px;width:40px;height:40px;background:rgba(255,255,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center">👩‍🏫</div>
+      <div id="pc-avatar" style="font-size:28px;width:40px;height:40px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">👩‍🏫</div>
       <div style="flex:1">
         <div id="pc-nama" style="font-weight:800;font-size:15px">Nama</div>
         <div id="pc-status" style="font-size:11px;opacity:0.8">Chat Privat</div>
@@ -4183,7 +4183,7 @@ async function bukaPrivateChat(userId, nama, avatar) {
   privateChatTargetNama = nama;
   privateChatTargetAvatar = avatar;
 
-  document.getElementById('pc-avatar').textContent = avatar;
+  setAvatarEl(document.getElementById('pc-avatar'), avatar, 'nav');
   document.getElementById('pc-nama').textContent = nama;
   document.getElementById('pc-status').textContent = 'Chat Privat';
   document.getElementById('pc-messages').innerHTML =
