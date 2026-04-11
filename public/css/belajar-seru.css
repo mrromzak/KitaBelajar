@@ -440,6 +440,7 @@
   .zep-opsi.benar { animation: pop 0.4s ease; box-shadow: 0 0 0 4px #6BCB77, 0 8px 24px rgba(107,203,119,0.5); }
   .zep-opsi.salah { animation: shake 0.4s ease; opacity: 0.4; }
   .zep-opsi.reveal-benar { box-shadow: 0 0 0 4px #6BCB77; opacity: 1 !important; }
+  .zep-opsi.reveal-salah { box-shadow: 0 0 0 4px #FF6B9D; opacity: 0.6 !important; }
   .zep-sudah-jawab { text-align: center; padding: 16px; font-size: 20px; font-weight: 800; animation: fadeInUp 0.3s ease; }
   .zep-hasil-soal { background: rgba(255,255,255,0.06); border-radius: 20px; padding: 20px; margin-top: 20px; animation: fadeInUp 0.4s ease; }
   .zep-lb-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }

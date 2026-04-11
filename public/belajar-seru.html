@@ -100,7 +100,7 @@
 
 <!-- Toast & Loading -->
 <div id="toast"></div>
-<div id="loading"><div class="spinner"></div><div style="font-weight:700;color:var(--muted)">Memuat...</div></div>
+<div id="loading"><div class="spinner"></div><div id="loading-text" style="font-weight:700;color:var(--muted)">Memuat...</div></div>
 
 <!-- ========== LANDING ========== -->
 <div class="page active" id="page-landing">
@@ -2228,8 +2228,10 @@ function showPage(id) {
   window.scrollTo(0, 0);
 }
 
-function showLoading(v) {
+function showLoading(v, msg) {
   document.getElementById('loading').classList.toggle('show', v);
+  const txtEl = document.getElementById('loading-text');
+  if (txtEl) txtEl.textContent = v && msg ? msg : 'Memuat...';
 }
 
 function toast(msg, type = '') {
@@ -8308,7 +8310,7 @@ function renderMapelGrid(containerId, mode) {
       data-mapel="${m.mapel}">
       <span style="font-size:22px">${getMapelIcon(m.mapel)}</span>
       <span style="font-size:11px;line-height:1.2">${m.mapel}</span>
-      <span style="font-size:10px;opacity:.5">${m.total} soal</span>
+      <span style="font-size:10px;opacity:.5">${m.total !== null ? m.total+' soal' : '🤖 AI'}</span>
     </button>`;
   }).join('');
 }
@@ -8348,14 +8350,26 @@ function getKategoriKey(mode) {
   return `${selectedJenjang[mode]}_${selectedKelas[mode]}_${selectedMapel[mode] || 'acak'}`;
 }
 
+// Daftar default mata pelajaran yang bisa di-generate AI
+const DEFAULT_MAPEL = [
+  'Matematika','Bahasa Indonesia','Bahasa Inggris','IPA','IPS',
+  'Biologi','Fisika','Kimia','Sejarah','Geografi',
+  'Ekonomi','PKN','Seni Budaya','PJOK','Informatika',
+  'Sosiologi','Bahasa Jawa','Agama'
+];
+
 async function loadBankMapel(mode) {
   try {
     const data = await api('GET', '/zepquiz/bank-mapel');
-    bankMapelList = data.data || [];
+    const fromBank = (data.data || []).map(m => m.mapel);
+    // Gabungkan: dari bank soal + default, deduplikasi
+    const all = [...new Set([...fromBank, ...DEFAULT_MAPEL])];
+    bankMapelList = all.map(m => ({ mapel: m, total: fromBank.includes(m) ? (data.data.find(x=>x.mapel===m)?.total||0) : null }));
     renderMapelGrid(`${mode === 'online' ? 'online' : 'ai'}-mapel-grid`, mode);
   } catch(e) {
-    const el = document.getElementById(`${mode === 'online' ? 'online' : 'ai'}-mapel-grid`);
-    if (el) el.innerHTML = '<div style="grid-column:1/-1;text-align:center;opacity:.5;font-size:13px;padding:12px">Gagal memuat mapel.</div>';
+    // Fallback: gunakan daftar default
+    bankMapelList = DEFAULT_MAPEL.map(m => ({ mapel: m, total: null }));
+    renderMapelGrid(`${mode === 'online' ? 'online' : 'ai'}-mapel-grid`, mode);
   }
 }
 
@@ -8381,16 +8395,16 @@ async function zepCariLawan() {
   const jenjang = selectedJenjang.online;
   const kelas = selectedKelas.online;
 
-  // Ambil soal dari bank soal untuk mapel ini
-  showLoading(true);
+  // Generate soal via AI untuk mapel + kategori ini
+  showLoading(true, `🤖 KikiBot sedang membuat soal ${mapel}...`);
   let soalData = null;
   try {
-    const d = await api('GET', `/zepquiz/bank-soal?mapel=${encodeURIComponent(mapel)}&jumlah=10`);
+    const d = await api('GET', `/zepquiz/ai-generate?mapel=${encodeURIComponent(mapel)}&jenjang=${encodeURIComponent(jenjang)}&kelas=${encodeURIComponent(kelas)}&jumlah=10`);
     if (d.success && d.soal?.length) soalData = d;
   } catch(e) {}
   showLoading(false);
 
-  if (!soalData) { toast(`Belum ada soal untuk ${mapel}!`, 'error'); return; }
+  if (!soalData) { toast(`Gagal membuat soal untuk ${mapel}. Coba lagi!`, 'error'); return; }
 
   // Tampilkan status matchmaking
   document.getElementById('online-cari-btn').style.display = 'none';
@@ -8456,12 +8470,14 @@ function pilihDiffAI(btn, diff) {
 }
 
 async function zepMulaiVSAI() {
-  const mapel = selectedMapel.ai;
+  const mapel   = selectedMapel.ai;
+  const jenjang = selectedJenjang.ai;
+  const kelas   = selectedKelas.ai;
   if (!mapel) { toast('Pilih mata pelajaran dulu!', 'error'); return; }
-  showLoading(true);
+  showLoading(true, `🤖 KikiBot sedang membuat soal ${mapel}...`);
   try {
-    const data = await api('GET', `/zepquiz/bank-soal?mapel=${encodeURIComponent(mapel)}&jumlah=10`);
-    if (!data.success || !data.soal?.length) { toast(`Belum ada soal untuk ${mapel}!`, 'error'); showLoading(false); return; }
+    const data = await api('GET', `/zepquiz/ai-generate?mapel=${encodeURIComponent(mapel)}&jenjang=${encodeURIComponent(jenjang)}&kelas=${encodeURIComponent(kelas)}&jumlah=10`);
+    if (!data.success || !data.soal?.length) { toast(`Gagal membuat soal untuk ${mapel}. Coba lagi!`, 'error'); showLoading(false); return; }
 
     aiGameState = {
       soal: data.soal,
@@ -8470,7 +8486,9 @@ async function zepMulaiVSAI() {
       skorAI: 0,
       totalSoal: data.soal.length,
       durasi: 15,
-      aiName: AI_NAME
+      aiName: AI_NAME,
+      aiJawaban: null, aiBenar: false, aiPoin: 0, aiSudahPilih: false,
+      userJawaban: null, userBenar: false, userPoin: 0
     };
     showLoading(false);
     zepVSAITampilSoal();
@@ -8496,24 +8514,33 @@ function zepVSAITampilSoal() {
         onclick="zepVSAIJawab('${String(o).replace(/'/g,"\\'")}',this)"
         data-jawaban="${String(o).replace(/"/g,'&quot;')}">${o}</button>`).join('')}
   </div>`;
+  // Reset pilihan AI untuk soal ini
+  aiGameState.aiJawaban   = null;
+  aiGameState.aiBenar     = false;
+  aiGameState.aiPoin      = 0;
+  aiGameState.aiSudahPilih = false;
+
   document.getElementById('zep-hasil-feedback').style.display = 'none';
   showPage('page-zep-soal');
   zepStartTimer(durasi);
 
-  // AI jawab setelah delay random
+  // AI diam-diam memilih setelah delay random
   const acc = AI_ACCURACY[aiDifficulty] || 0.65;
-  const delay = 2000 + Math.random() * 6000;
+  const delay = 1500 + Math.random() * 5000;
   setTimeout(() => {
     if (!aiGameState || aiGameState.idx !== idx) return;
     const benar = Math.random() < acc;
-    const jawabanAI = benar ? s.jawaban : (s.opsi||[]).filter(o => String(o).trim().toLowerCase() !== String(s.jawaban).trim().toLowerCase())[Math.floor(Math.random()*3)] || s.opsi[0];
+    const salahOpsi = (s.opsi||[]).filter(o => String(o).trim().toLowerCase() !== String(s.jawaban).trim().toLowerCase());
+    const jawabanAI = benar ? s.jawaban : (salahOpsi[Math.floor(Math.random()*salahOpsi.length)] || s.opsi[0]);
     const waktuSisa = zepTimerSisa;
     const poinAI = benar ? Math.round((s.poin||100)*(0.5+0.5*(waktuSisa/aiGameState.durasi))) : 0;
-    aiGameState.skorAI += poinAI;
-    // Tampilkan notif AI jawab
-    const feedback = document.getElementById('zep-hasil-feedback');
-    feedback.style.display = 'block';
-    feedback.innerHTML += `<div class="zep-sudah-jawab" style="font-size:13px;opacity:.7;margin-top:4px">🤖 KikiBot sudah menjawab!</div>`;
+    // Simpan pilihan AI — akan ditampilkan saat user menjawab atau waktu habis
+    aiGameState.aiJawaban    = jawabanAI;
+    aiGameState.aiBenar      = benar;
+    aiGameState.aiPoin       = poinAI;
+    aiGameState.aiSudahPilih = true;
+    // Jika user sudah menjawab duluan, tampilkan komparasi sekarang
+    if (zepSudahJawab) zepVSAITampilKomparasi();
   }, delay);
 }
 
@@ -8522,31 +8549,88 @@ function zepVSAIJawab(jawaban, btnEl) {
   if (zepSudahJawab) return;
   zepSudahJawab = true;
   clearInterval(zepTimerInterval);
-  clearInterval(aiTimerInterval);
   document.querySelectorAll('.zep-opsi').forEach(b => b.classList.add('disabled'));
 
-  const s = aiGameState.soal[aiGameState.idx];
+  const s    = aiGameState.soal[aiGameState.idx];
+  const idx  = aiGameState.idx;
   const benar = String(jawaban).trim().toLowerCase() === String(s.jawaban).trim().toLowerCase();
   const waktuSisa = zepTimerSisa;
   const poin = benar ? Math.round((s.poin||100)*(0.5+0.5*(waktuSisa/aiGameState.durasi))) : 0;
-  aiGameState.skorSaya += poin;
+
+  // Simpan pilihan user
+  aiGameState.userJawaban = jawaban;
+  aiGameState.userBenar   = benar;
+  aiGameState.userPoin    = poin;
+
+  // Jika AI sudah memilih → langsung tampilkan komparasi
+  // Jika belum → tunggu sampai AI memilih (handled di timeout AI di atas)
+  if (aiGameState.aiSudahPilih) {
+    zepVSAITampilKomparasi();
+  } else {
+    // Tampil animasi menunggu AI
+    const feedback = document.getElementById('zep-hasil-feedback');
+    feedback.style.display = 'block';
+    feedback.innerHTML = `<div class="zep-sudah-jawab" style="opacity:.7">🤖 KikiBot sedang berpikir...</div>`;
+  }
+}
+
+function zepVSAITampilKomparasi() {
+  if (!aiGameState) return;
+  const s   = aiGameState.soal[aiGameState.idx];
+  const idx = aiGameState.idx;
+
+  const jawabanSaya = aiGameState.userJawaban;
+  const benarSaya   = aiGameState.userBenar;
+  const poinSaya    = aiGameState.userPoin;
+  const jawabanAI   = aiGameState.aiJawaban;
+  const benarAI     = aiGameState.aiBenar;
+  const poinAI      = aiGameState.aiPoin;
+
+  // Tambah ke skor total
+  aiGameState.skorSaya += poinSaya;
+  aiGameState.skorAI   += poinAI;
   zepSkorSaya = aiGameState.skorSaya;
 
-  // Highlight jawaban benar
+  // Reset agar tidak ditambahkan dua kali
+  aiGameState.userJawaban  = null;
+  aiGameState.userBenar    = false;
+  aiGameState.userPoin     = 0;
+  aiGameState.aiJawaban    = null;
+  aiGameState.aiBenar      = false;
+  aiGameState.aiPoin       = 0;
+  aiGameState.aiSudahPilih = false;
+
+  // Highlight tombol opsi
   document.querySelectorAll('.zep-opsi').forEach(b => {
-    if (String(b.getAttribute('data-jawaban')).trim().toLowerCase() === String(s.jawaban).trim().toLowerCase())
-      b.classList.add('reveal-benar');
+    const val = String(b.getAttribute('data-jawaban')).trim().toLowerCase();
+    if (val === String(s.jawaban).trim().toLowerCase()) b.classList.add('reveal-benar');
+    else if (jawabanSaya && val === String(jawabanSaya).trim().toLowerCase() && !benarSaya) b.classList.add('reveal-salah');
   });
 
   const feedback = document.getElementById('zep-hasil-feedback');
   feedback.style.display = 'block';
-  feedback.innerHTML = benar
-    ? `<div class="zep-sudah-jawab">🎉 Benar! +${poin} poin</div>`
-    : `<div class="zep-sudah-jawab" style="color:#FF6B9D">❌ Salah. Jawaban: ${s.jawaban}</div>`;
+  feedback.innerHTML = `
+    <div style="display:flex;gap:10px;align-items:stretch;margin-bottom:8px">
+      <div style="flex:1;background:${benarSaya?'rgba(107,203,119,0.18)':'rgba(255,107,157,0.18)'};border:2px solid ${benarSaya?'#6BCB77':'#FF6B9D'};border-radius:14px;padding:10px 8px;text-align:center">
+        <div style="font-size:10px;font-weight:800;opacity:.65;margin-bottom:5px;letter-spacing:.5px">KAMU</div>
+        <div style="font-size:12px;font-weight:800;color:white;word-break:break-word;line-height:1.3;min-height:32px;display:flex;align-items:center;justify-content:center">${jawabanSaya || '—'}</div>
+        <div style="font-size:20px;margin:5px 0">${benarSaya ? '✅' : '❌'}</div>
+        <div style="font-size:12px;font-weight:800;color:${benarSaya?'#6BCB77':'#FF6B9D'}">${benarSaya ? '+'+poinSaya+' poin' : 'Salah'}</div>
+      </div>
+      <div style="flex:1;background:${benarAI?'rgba(107,203,119,0.18)':'rgba(255,107,157,0.18)'};border:2px solid ${benarAI?'#6BCB77':'#FF6B9D'};border-radius:14px;padding:10px 8px;text-align:center">
+        <div style="font-size:10px;font-weight:800;opacity:.65;margin-bottom:5px;letter-spacing:.5px">🤖 KIKIBOT</div>
+        <div style="font-size:12px;font-weight:800;color:white;word-break:break-word;line-height:1.3;min-height:32px;display:flex;align-items:center;justify-content:center">${jawabanAI || '—'}</div>
+        <div style="font-size:20px;margin:5px 0">${benarAI ? '✅' : '❌'}</div>
+        <div style="font-size:12px;font-weight:800;color:${benarAI?'#6BCB77':'#FF6B9D'}">${benarAI ? '+'+poinAI+' poin' : 'Salah'}</div>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:12px;opacity:.6">Jawaban benar: <strong style="color:#FFD93D">${s.jawaban}</strong></div>
+  `;
 
-  // Lanjut ke soal berikutnya setelah 3 detik
+  // Lanjut ke soal berikutnya setelah 3.5 detik
   setTimeout(() => {
-    const next = aiGameState.idx + 1;
+    if (!aiGameState || aiGameState.idx !== idx) return;
+    const next = idx + 1;
     if (next < aiGameState.totalSoal) {
       aiGameState.idx = next;
       zepSudahJawab = false;
@@ -8554,7 +8638,7 @@ function zepVSAIJawab(jawaban, btnEl) {
     } else {
       zepVSAISelesai();
     }
-  }, 3000);
+  }, 3500);
 }
 
 function zepVSAISelesai() {
@@ -8707,16 +8791,25 @@ function zepStartTimer(detik) {
       clearInterval(zepTimerInterval);
       if (!zepSudahJawab) {
         document.querySelectorAll('.zep-opsi').forEach(b => b.classList.add('disabled'));
-        // VS AI: auto lanjut ke soal berikutnya saat waktu habis
+        // VS AI: waktu habis — user dianggap tidak menjawab, tampilkan komparasi
         if (aiGameState) {
           zepSudahJawab = true;
-          const feedback = document.getElementById('zep-hasil-feedback');
-          if (feedback) { feedback.style.display = 'block'; feedback.innerHTML = '<div class="zep-sudah-jawab" style="color:#FF6B9D">⏰ Waktu habis!</div>'; }
-          setTimeout(() => {
-            const next = aiGameState.idx + 1;
-            if (next < aiGameState.totalSoal) { aiGameState.idx = next; zepSudahJawab = false; zepVSAITampilSoal(); }
-            else zepVSAISelesai();
-          }, 2000);
+          const s = aiGameState.soal[aiGameState.idx];
+          // Pastikan AI sudah memilih (jika belum, putuskan sekarang)
+          if (!aiGameState.aiSudahPilih) {
+            const acc = AI_ACCURACY[aiDifficulty] || 0.65;
+            const benarAI = Math.random() < acc;
+            const salahOpsi = (s.opsi||[]).filter(o => String(o).trim().toLowerCase() !== String(s.jawaban).trim().toLowerCase());
+            aiGameState.aiJawaban    = benarAI ? s.jawaban : (salahOpsi[Math.floor(Math.random()*salahOpsi.length)] || s.opsi[0]);
+            aiGameState.aiBenar      = benarAI;
+            aiGameState.aiPoin       = benarAI ? Math.round((s.poin||100)*0.5) : 0;
+            aiGameState.aiSudahPilih = true;
+          }
+          // User tidak menjawab
+          aiGameState.userJawaban = null;
+          aiGameState.userBenar   = false;
+          aiGameState.userPoin    = 0;
+          zepVSAITampilKomparasi();
         }
       }
     }
@@ -8793,8 +8886,12 @@ function zepMuridFinal({ leaderboard, judul }) {
   const posSaya = leaderboard.findIndex(p => p.id === currentUser.id) + 1;
   const medals = ['🥇', '🥈', '🥉'];
 
+  // Ambil skor dari leaderboard server (lebih akurat dari client-side zepSkorSaya)
+  const mySelf = leaderboard.find(p => p.id === currentUser.id);
+  const mySkor = mySelf?.skor ?? zepSkorSaya;
+
   document.getElementById('zep-final-judul').textContent = judul + ' — Selesai!';
-  document.getElementById('zep-final-skor').textContent = zepSkorSaya + ' poin';
+  document.getElementById('zep-final-skor').textContent = mySkor + ' poin';
   document.getElementById('zep-final-posisi').textContent = `Kamu di posisi #${posSaya} dari ${leaderboard.length} pemain`;
 
   renderPodium('zep-podium', leaderboard);

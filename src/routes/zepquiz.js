@@ -230,4 +230,92 @@ router.get('/bank-soal', authMiddleware, async (req, res) => {
   }
 });
 
+// ============================================================
+//  GET /api/zepquiz/ai-generate?mapel=&jenjang=&kelas=&jumlah=
+//  Generate soal pilihan ganda via Groq AI — fresh setiap request
+// ============================================================
+router.get('/ai-generate', authMiddleware, async (req, res) => {
+  try {
+    const { mapel, jenjang = 'SMP', kelas = 7, jumlah = 10 } = req.query;
+    if (!mapel) return res.status(400).json({ success: false, pesan: 'mapel wajib diisi.' });
+    if (!process.env.GROQ_API_KEY)
+      return res.status(500).json({ success: false, pesan: 'Layanan AI belum dikonfigurasi.' });
+
+    const n    = Math.min(parseInt(jumlah) || 10, 15);
+    const seed = Math.random().toString(36).substring(2, 8); // buat variasi setiap request
+
+    const systemPrompt =
+      'Kamu adalah generator soal kuis pendidikan Indonesia. ' +
+      'Jawab HANYA dengan JSON array yang valid, tanpa teks, komentar, atau markdown apapun di luar array. ' +
+      'Pastikan setiap soal BERBEDA dan UNIK, jangan gunakan soal klise yang sering muncul.';
+
+    const userPrompt =
+      `Buat ${n} soal pilihan ganda untuk mata pelajaran "${mapel}", jenjang ${jenjang} kelas ${kelas} (kurikulum Merdeka Indonesia). ` +
+      `Seed variasi: ${seed}. ` +
+      `Variasikan jenis soal: definisi, analisis, hitungan, penerapan, perbandingan, sebab-akibat. ` +
+      `Variasikan tingkat kesulitan (mudah, sedang, sulit). ` +
+      `\n\nFormat output (HANYA JSON array, tidak ada teks lain):\n` +
+      `[\n` +
+      `  {\n` +
+      `    "pertanyaan": "teks soal lengkap?",\n` +
+      `    "opsi": ["A. teks", "B. teks", "C. teks", "D. teks"],\n` +
+      `    "jawaban": "A. teks",\n` +
+      `    "emoji": "emoji relevan dengan topik"\n` +
+      `  }\n` +
+      `]\n\n` +
+      `Pastikan "jawaban" sama persis dengan salah satu elemen di "opsi".`;
+
+    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
+        max_tokens: 3000,
+        temperature: 0.9,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user',   content: userPrompt   }
+        ]
+      })
+    });
+
+    const groqData = await groqRes.json();
+    if (!groqRes.ok) throw new Error(groqData.error?.message || 'Groq API error');
+
+    const raw = groqData.choices?.[0]?.message?.content || '';
+
+    // Ekstrak JSON array dari respons (model kadang masih menambah teks)
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) throw new Error('AI tidak menghasilkan JSON yang valid.');
+
+    let parsed;
+    try { parsed = JSON.parse(jsonMatch[0]); }
+    catch (e) { throw new Error('Format JSON dari AI tidak bisa diparsing.'); }
+
+    const soal = parsed
+      .filter(s => s.pertanyaan && Array.isArray(s.opsi) && s.opsi.length >= 2 && s.jawaban)
+      .map((s, i) => ({
+        id:          `ai-${seed}-${i}`,
+        pertanyaan:  String(s.pertanyaan).trim(),
+        emoji:       String(s.emoji || '❓').trim(),
+        mapel,
+        jenis:       'pilihan_ganda',
+        opsi:        s.opsi.map(o => String(o).trim()),
+        jawaban:     String(s.jawaban).trim(),
+        poin:        100
+      }));
+
+    if (!soal.length)
+      return res.status(500).json({ success: false, pesan: 'AI tidak menghasilkan soal yang valid. Coba lagi.' });
+
+    res.json({ success: true, soal, mapel, jenjang, kelas, total: soal.length, generated: true });
+  } catch (err) {
+    console.error('[AI generate soal]', err.message);
+    res.status(500).json({ success: false, pesan: 'Gagal membuat soal: ' + err.message });
+  }
+});
+
 module.exports = router;
