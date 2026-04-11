@@ -3419,6 +3419,14 @@ async function loadKelasChatHistory(kelasId) {
   }
 }
 
+// Render avatar di dalam chat (emoji atau foto kecil)
+function chatAvatarHtml(avatarStr) {
+  if (avatarStr && (avatarStr.startsWith('data:') || avatarStr.startsWith('http'))) {
+    return `<img src="${avatarStr}" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:middle;display:inline-block;flex-shrink:0">`;
+  }
+  return `<span>${avatarStr || '🦁'}</span>`;
+}
+
 function appendChatMessage(p) {
   const box = document.getElementById('kelas-chat-messages');
   if (!box) return;
@@ -3438,7 +3446,7 @@ function appendChatMessage(p) {
       <button onclick="hapusPesanKelas('${msgId}')" title="Hapus" style="background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;border-radius:6px;color:inherit">🗑️</button>
     </span>` : '';
   div.innerHTML = `
-    ${!isSelf ? `<div style="font-size:11px;color:var(--muted);font-weight:700;padding:0 8px">${pengirim.avatar || '🦁'} ${pengirim.nama}${isGuru ? ' 👩‍🏫' : ''}</div>` : ''}
+    ${!isSelf ? `<div style="font-size:11px;color:var(--muted);font-weight:700;padding:0 8px;display:flex;align-items:center;gap:4px">${chatAvatarHtml(pengirim.avatar)} ${pengirim.nama}${isGuru ? ' 👩‍🏫' : ''}</div>` : ''}
     <div id="msg-bubble-${msgId}" data-isi="${escapeHtml(p.isi)}" style="max-width:75%;padding:10px 14px;border-radius:${isSelf ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isSelf ? 'var(--orange)' : 'white'};color:${isSelf ? 'white' : 'var(--text)'};font-size:14px;font-weight:600;border:${isSelf ? 'none' : '1.5px solid #E8E8E8'};word-break:break-word">${escapeHtml(p.isi)}</div>
     <div style="display:flex;align-items:center;gap:6px;padding:0 8px">
       <span style="font-size:10px;color:var(--muted)">${waktu}</span>
@@ -3990,7 +3998,7 @@ function tampilkanNotifPrivateChat(pesan) {
   const ava  = pesan.pengirim_avatar || '🦁';
   const isi  = pesan.isi || '';
 
-  document.getElementById('notif-pc-avatar').textContent = ava;
+  setAvatarEl(document.getElementById('notif-pc-avatar'), ava, 'nav');
   document.getElementById('notif-pc-nama').textContent   = nama;
   document.getElementById('notif-pc-isi').textContent    = isi.length > 50 ? isi.substring(0, 50) + '…' : isi;
 
@@ -4203,7 +4211,7 @@ function appendPrivateMessage(p, isSelf) {
     <div style="display:flex;align-items:flex-end;gap:6px;flex-direction:${isSelf ? 'row-reverse' : 'row'}"
          onmouseenter="${isSelf && msgId ? `this.querySelector('.pc-msg-actions')&&(this.querySelector('.pc-msg-actions').style.display='flex')` : ''}"
          onmouseleave="${isSelf && msgId ? `this.querySelector('.pc-msg-actions')&&(this.querySelector('.pc-msg-actions').style.display='none')` : ''}">
-      <div style="font-size:18px;flex-shrink:0">${ava}</div>
+      <div style="font-size:18px;flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:50%">${chatAvatarHtml(ava)}</div>
       <div style="max-width:78%">
         <div class="pc-msg-bubble" style="padding:10px 14px;border-radius:${isSelf ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isSelf ? 'var(--blue)' : 'white'};color:${isSelf ? 'white' : 'var(--text)'};font-size:14px;font-weight:600;border:${isSelf ? 'none' : '1.5px solid #E8E8E8'};word-break:break-word">${escapeHtml(p.isi)}${editedLabel}</div>
         ${selfActions}

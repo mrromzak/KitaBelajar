@@ -9,16 +9,27 @@
 // API key disimpan di .env server, frontend memanggil proxy
 const AI_MAX_TOKENS = 1024;
 
-// ── Helper: deteksi dan fetch konten dari URL dalam pesan ─────
-async function fetchUrlDariPesan(pesan) {
-  const urlMatch = pesan.match(/https:\/\/[^\s]+/);
-  if (!urlMatch) return null;
+// ── Helper: deteksi URL dalam pesan ─────────────────────────
+function ambilUrlDariPesan(pesan) {
+  const m = pesan.match(/https?:\/\/[^\s]+/);
+  return m ? m[0] : null;
+}
+
+// ── Helper: fetch konten artikel dari URL via proxy ──────────
+// Returns: { ok: true, url, teks } | { ok: false, url, pesan }
+async function fetchArtikelUrl(url) {
   try {
-    const res = await fetch('/api/proxy/fetch?url=' + encodeURIComponent(urlMatch[0]));
+    // Pastikan https
+    const safeUrl = url.replace(/^http:\/\//i, 'https://');
+    const res = await fetch('/api/proxy/fetch?url=' + encodeURIComponent(safeUrl));
     const json = await res.json();
-    if (json.success && json.teks) return { url: urlMatch[0], teks: json.teks };
-  } catch(e) {}
-  return null;
+    if (json.success && json.teks && json.teks.length > 100) {
+      return { ok: true, url: safeUrl, teks: json.teks };
+    }
+    return { ok: false, url: safeUrl, pesan: json.pesan || 'Konten tidak bisa dibaca' };
+  } catch(e) {
+    return { ok: false, url, pesan: 'Koneksi ke server gagal' };
+  }
 }
 
 // ── Helper: panggil Groq via proxy backend ─────────────────
@@ -393,20 +404,33 @@ async function kirimChatAI() {
   const typing = tambahTyping('ai-chat-messages');
 
   try {
-    // Cek apakah ada URL dalam pesan — kalau ada, fetch isi artikelnya dulu
     let pesanUntukAI = pesan;
-    const artikelData = await fetchUrlDariPesan(pesan);
-    if (artikelData) {
-      pesanUntukAI = `Pengguna meminta bantuan terkait artikel dari: ${artikelData.url}\n\nIsi artikel:\n${artikelData.teks}\n\nPermintaan pengguna: ${pesan.replace(artikelData.url, '').trim() || 'Tolong ringkas artikel ini.'}`;
+    const detectedUrl = ambilUrlDariPesan(pesan);
+
+    if (detectedUrl) {
+      // Ada URL — coba fetch artikel
+      const hasil = await fetchArtikelUrl(detectedUrl);
+      if (hasil.ok) {
+        const permintaan = pesan.replace(detectedUrl, '').trim() || 'Tolong ringkas artikel ini dengan bahasa yang mudah dipahami.';
+        pesanUntukAI = `[Konten artikel dari ${hasil.url}]\n\n${hasil.teks}\n\n[Permintaan pengguna]: ${permintaan}`;
+      } else {
+        // Fetch gagal — langsung kasih tahu user, jangan kirim ke AI
+        typing.remove();
+        const pesanGagal = `😕 Maaf, aku tidak berhasil membuka artikel itu.\n\nKemungkinan penyebabnya:\n• Artikel memerlukan login/berlangganan\n• Situs memblokir akses otomatis\n• URL tidak valid\n\nCoba **salin isi artikel**-nya dan tempel di sini, nanti aku bantu ringkas! 📋`;
+        tambahPesanChat('ai-chat-messages', 'ai', pesanGagal, '🤖');
+        aiIsLoading = false;
+        document.getElementById('ai-send-btn').disabled = false;
+        return;
+      }
     }
 
     chatMuridHistory.push({ role: 'user', content: pesanUntukAI });
     const jawaban = await callAIWithHistory(
       `Kamu adalah asisten belajar yang ramah dan menyenangkan untuk siswa SD/SMP Indonesia.
 Nama kamu adalah "Kiki" 🤖. Selalu gunakan bahasa Indonesia yang sederhana dan mudah dipahami.
-Gunakan emoji secukupnya agar terasa fun. Berikan penjelasan yang singkat, jelas, dan pakai contoh nyata.
+Gunakan emoji secukupnya agar terasa fun. Berikan penjelasan singkat, jelas, dan pakai contoh nyata.
 Kalau ada soal matematika, tunjukkan langkah-langkahnya. Semangati murid jika mereka kesulitan.
-Jika diberikan konten artikel, ringkas atau jelaskan sesuai permintaan pengguna.
+Jika ada konten artikel yang diberikan, ringkas atau jelaskan sesuai permintaan — JANGAN bilang tidak bisa akses link.
 User saat ini: ${window.currentUser?.nama || 'Murid'}`,
       chatMuridHistory.slice(-10)
     );
@@ -443,11 +467,21 @@ async function kirimChatGuru() {
   const typing = tambahTyping('ai-guru-messages');
 
   try {
-    // Cek apakah ada URL dalam pesan — kalau ada, fetch isi artikelnya dulu
     let pesanUntukAI = pesan;
-    const artikelData = await fetchUrlDariPesan(pesan);
-    if (artikelData) {
-      pesanUntukAI = `Guru meminta bantuan terkait artikel dari: ${artikelData.url}\n\nIsi artikel:\n${artikelData.teks}\n\nPermintaan guru: ${pesan.replace(artikelData.url, '').trim() || 'Tolong ringkas artikel ini untuk keperluan mengajar.'}`;
+    const detectedUrl = ambilUrlDariPesan(pesan);
+
+    if (detectedUrl) {
+      const hasil = await fetchArtikelUrl(detectedUrl);
+      if (hasil.ok) {
+        const permintaan = pesan.replace(detectedUrl, '').trim() || 'Tolong ringkas artikel ini untuk keperluan mengajar.';
+        pesanUntukAI = `[Konten artikel dari ${hasil.url}]\n\n${hasil.teks}\n\n[Permintaan guru]: ${permintaan}`;
+      } else {
+        typing.remove();
+        const pesanGagal = `😕 Maaf, artikel tersebut tidak bisa diakses secara otomatis.\n\nKemungkinan penyebabnya:\n• Artikel memerlukan login atau berlangganan\n• Situs memblokir akses otomatis\n• URL tidak valid\n\nSolusi: **salin teks artikel**-nya lalu tempel di sini — saya akan bantu ringkas dan kaitkan dengan materi ajar! 📋`;
+        tambahPesanChat('ai-guru-messages', 'ai', pesanGagal, '👩‍🏫');
+        aiIsLoading = false;
+        return;
+      }
     }
 
     chatGuruHistory.push({ role: 'user', content: pesanUntukAI });
@@ -455,7 +489,7 @@ async function kirimChatGuru() {
       `Kamu adalah konsultan pendidikan AI untuk guru SD/SMP di Indonesia.
 Nama kamu adalah "Prof. Kiki" 👩‍🏫. Berikan saran yang praktis, berbasis penelitian pendidikan,
 dan mudah diterapkan di kelas. Gunakan bahasa Indonesia yang profesional namun hangat.
-Jika diberikan konten artikel, ringkas atau kaitkan dengan konteks pembelajaran sesuai permintaan guru.
+Jika ada konten artikel yang diberikan, ringkas atau kaitkan dengan konteks pembelajaran — JANGAN bilang tidak bisa akses link.
 Jika ingin merujuk sumber, sebutkan nama buku atau nama jurnal saja tanpa URL.
 Guru saat ini: ${window.currentUser?.nama || 'Guru'}`,
       chatGuruHistory.slice(-10)
