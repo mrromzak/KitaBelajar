@@ -294,7 +294,7 @@ router.get('/murid-init', authMiddleware, async (req, res) => {
     // Ambil semua kelas murid
     const { data: kelasMuridRows } = await supabase
       .from('kelas_murid')
-      .select('kelas:kelas_id(id, nama, tahun_ajar, mapel, kode_akses, guru:guru_id(nama, avatar))')
+      .select('kelas:kelas_id(id, nama, tahun_ajar, mapel, kode_akses, guru_id, guru:guru_id(nama, avatar))')
       .eq('murid_id', muridId);
     const kelasList = (kelasMuridRows || []).map(r => r.kelas).filter(Boolean);
     const kelasIds = kelasList.map(k => k.id);
@@ -302,6 +302,17 @@ router.get('/murid-init', authMiddleware, async (req, res) => {
     if (kelasIds.length === 0) {
       return res.json({ success: true, kelas: [], deadlines: [] });
     }
+
+    // Hitung total_materi per kelas secara batch
+    const { data: materiRows } = await supabase
+      .from('materi')
+      .select('kelas_id')
+      .in('kelas_id', kelasIds);
+    const materiCount = {};
+    for (const m of (materiRows || [])) {
+      materiCount[m.kelas_id] = (materiCount[m.kelas_id] || 0) + 1;
+    }
+    kelasList.forEach(k => { k.total_materi = materiCount[k.id] || 0; });
 
     // Ambil semua quiz aktif dari semua kelas sekaligus (1 query, bukan N)
     const [{ data: quizList }, { data: hasilList }] = await Promise.all([

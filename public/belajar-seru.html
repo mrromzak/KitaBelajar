@@ -2977,11 +2977,19 @@ function loadLeaderboardPage() { toast('Leaderboard segera hadir! 🏆'); }
 const KELAS_COLORS = ['bg-c1','bg-c2','bg-c3','bg-c4','bg-c5','bg-c6','bg-c7','bg-c8'];
 const KELAS_EMOJIS = ['📐','🔬','📖','🗺️','🎨','🏃','🎵','💻'];
 
+function kelasHashIdx(id) {
+  let h = 0;
+  const s = id || '';
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) & 0xffff;
+  return h;
+}
+
 function renderKelasCard(k, i, role) {
-  const colorClass = KELAS_COLORS[i % KELAS_COLORS.length];
-  const emoji = KELAS_EMOJIS[i % KELAS_EMOJIS.length];
+  const idx = kelasHashIdx(k.id);
+  const colorClass = KELAS_COLORS[idx % KELAS_COLORS.length];
+  const emoji = KELAS_EMOJIS[idx % KELAS_EMOJIS.length];
   const isGuru = role === 'guru';
-  return `<div class="kelas-card" onclick="openKelas('${k.id}',${i})">
+  return `<div class="kelas-card" onclick="openKelas('${k.id}',${idx % KELAS_COLORS.length})">
     <div class="kelas-card-header ${colorClass}">
       <div class="kelas-emoji">${emoji}</div>
       ${k.mapel ? `<div class="kelas-mapel-tag">${k.mapel}</div><br>` : ''}
@@ -3018,9 +3026,10 @@ async function openKelas(kelasId, colorIdx) {
     // Pakai data card yang sudah ada sebagai tampilan awal
     const cached = (window._kelasList || []).find(x => x.id === kelasId);
     let k = cached || { id: kelasId, nama: 'Kelas', mapel: '', guru_nama: '–', kode_akses: '–', total_materi: 0, total_murid: 0 };
-    currentKelas = { ...k, id: kelasId, colorIdx: colorIdx || 0 };
+    const resolvedColorIdx = kelasHashIdx(kelasId) % KELAS_COLORS.length;
+    currentKelas = { ...k, id: kelasId, colorIdx: resolvedColorIdx };
 
-    const colorClass = KELAS_COLORS[(colorIdx || 0) % KELAS_COLORS.length];
+    const colorClass = KELAS_COLORS[resolvedColorIdx];
     const isGuru = currentUser?.role === 'guru';
 
     document.getElementById('kelas-detail-title').textContent = k.nama;
@@ -3148,11 +3157,24 @@ async function loadKelasStream(kelasId) {
     const isGuru = currentUser?.role === 'guru';
 
     if (list.length === 0) {
-      stream.innerHTML = `<div style="text-align:center;padding:48px 24px">
-        <div style="font-size:56px;margin-bottom:16px">📭</div>
-        <p style="font-weight:700;font-size:16px;color:var(--text);margin-bottom:8px">Belum ada materi</p>
-        <p style="font-size:14px;color:var(--muted)">${isGuru ? 'Klik "+ Tambah Materi" untuk mulai mengisi kelas ini!' : 'Gurumu belum menambahkan materi. Tunggu ya!'}</p>
-      </div>`;
+      if (isGuru) {
+        stream.innerHTML = `<div style="padding:8px 0">
+          <div onclick="document.getElementById('kelas-add-materi-btn')?.click()"
+            style="border:2.5px dashed #C8B8F5;border-radius:18px;padding:36px 24px;text-align:center;cursor:pointer;transition:all 0.2s;background:#FAFAFF"
+            onmouseover="this.style.borderColor='var(--purple)';this.style.background='#F3EEFF'"
+            onmouseout="this.style.borderColor='#C8B8F5';this.style.background='#FAFAFF'">
+            <div style="font-size:44px;margin-bottom:12px">📚</div>
+            <div style="font-weight:800;font-size:15px;color:var(--purple);margin-bottom:6px">Belum ada materi</div>
+            <div style="font-size:13px;color:var(--muted)">Klik di sini untuk menambahkan materi pertama</div>
+          </div>
+        </div>`;
+      } else {
+        stream.innerHTML = `<div style="text-align:center;padding:48px 24px">
+          <div style="font-size:56px;margin-bottom:16px">📭</div>
+          <p style="font-weight:700;font-size:16px;color:var(--text);margin-bottom:8px">Belum ada materi</p>
+          <p style="font-size:14px;color:var(--muted)">Gurumu belum menambahkan materi. Tunggu ya!</p>
+        </div>`;
+      }
       return;
     }
 
@@ -6517,11 +6539,34 @@ function renderKuisFiltered() {
 
   if (filtered.length === 0) {
     const labels = { semua: 'belum ada kuis atau tugas', fun: 'belum ada Fun Quiz', pr: 'belum ada Tugas/PR', deadline: 'tidak ada tugas dengan deadline dekat' };
-    container.innerHTML = `<div style="text-align:center;padding:40px 24px">
-      <div style="font-size:48px;margin-bottom:12px">📋</div>
-      <p style="font-weight:700;color:var(--text);margin-bottom:6px">Kosong!</p>
-      <p style="font-size:14px;color:var(--muted)">${isGuru ? `Belum ada ${labels[activeKuisFilter]}` : `${labels[activeKuisFilter].charAt(0).toUpperCase() + labels[activeKuisFilter].slice(1)}`}</p>
-    </div>`;
+    if (isGuru && (activeKuisFilter === 'semua' || activeKuisFilter === 'fun' || activeKuisFilter === 'pr')) {
+      const isFun = activeKuisFilter !== 'pr';
+      const isPr = activeKuisFilter !== 'fun';
+      container.innerHTML = `<div style="display:flex;flex-direction:column;gap:12px;padding:4px 0">
+        ${isFun ? `<div onclick="tambahKuisBaru('fun')"
+          style="border:2.5px dashed #FFCC99;border-radius:18px;padding:28px 24px;text-align:center;cursor:pointer;transition:all 0.2s;background:#FFFAF5"
+          onmouseover="this.style.borderColor='var(--orange)';this.style.background='#FFF3E6'"
+          onmouseout="this.style.borderColor='#FFCC99';this.style.background='#FFFAF5'">
+          <div style="font-size:36px;margin-bottom:10px">⚡</div>
+          <div style="font-weight:800;font-size:14px;color:var(--orange);margin-bottom:4px">Belum ada Fun Quiz</div>
+          <div style="font-size:12px;color:var(--muted)">Klik di sini untuk membuat Fun Quiz</div>
+        </div>` : ''}
+        ${isPr ? `<div onclick="tambahKuisBaru('pr')"
+          style="border:2.5px dashed #A0C4FF;border-radius:18px;padding:28px 24px;text-align:center;cursor:pointer;transition:all 0.2s;background:#F5F9FF"
+          onmouseover="this.style.borderColor='var(--blue)';this.style.background='#EEF5FF'"
+          onmouseout="this.style.borderColor='#A0C4FF';this.style.background='#F5F9FF'">
+          <div style="font-size:36px;margin-bottom:10px">📝</div>
+          <div style="font-weight:800;font-size:14px;color:var(--blue);margin-bottom:4px">Belum ada Tugas/PR</div>
+          <div style="font-size:12px;color:var(--muted)">Klik di sini untuk membuat Tugas/PR</div>
+        </div>` : ''}
+      </div>`;
+    } else {
+      container.innerHTML = `<div style="text-align:center;padding:40px 24px">
+        <div style="font-size:48px;margin-bottom:12px">📋</div>
+        <p style="font-weight:700;color:var(--text);margin-bottom:6px">Kosong!</p>
+        <p style="font-size:14px;color:var(--muted)">${isGuru ? `Belum ada ${labels[activeKuisFilter]}` : `${labels[activeKuisFilter].charAt(0).toUpperCase() + labels[activeKuisFilter].slice(1)}`}</p>
+      </div>`;
+    }
     return;
   }
   container.innerHTML = filtered.map(q => renderKuisCard(q, isGuru)).join('');
@@ -6946,13 +6991,18 @@ function updateSoalCount() {
   updateKuisTotalLabel();
 }
 
-async function openBuatKuis() {
+function tambahKuisBaru(tipe) {
+  if (!currentKelas) return;
+  openBuatKuis(tipe || 'fun');
+}
+
+async function openBuatKuis(tipe) {
   if (!currentKelas) return;
   // Reset form
-  currentTipeKuis = 'fun';
+  currentTipeKuis = tipe || 'fun';
   kuisSoalTabAktif = 'bank';
   aiSoalUntukKuis = [];
-  switchTipeKuis('fun');
+  switchTipeKuis(currentTipeKuis);
   switchKuisSoalTab('bank');
   document.getElementById('kuis-judul').value = '';
   document.getElementById('kuis-deskripsi').value = '';

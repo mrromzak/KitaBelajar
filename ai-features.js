@@ -9,6 +9,18 @@
 // API key disimpan di .env server, frontend memanggil proxy
 const AI_MAX_TOKENS = 1024;
 
+// ── Helper: deteksi dan fetch konten dari URL dalam pesan ─────
+async function fetchUrlDariPesan(pesan) {
+  const urlMatch = pesan.match(/https:\/\/[^\s]+/);
+  if (!urlMatch) return null;
+  try {
+    const res = await fetch('/api/proxy/fetch?url=' + encodeURIComponent(urlMatch[0]));
+    const json = await res.json();
+    if (json.success && json.teks) return { url: urlMatch[0], teks: json.teks };
+  } catch(e) {}
+  return null;
+}
+
 // ── Helper: panggil Groq via proxy backend ─────────────────
 async function callAI(systemPrompt, userMessage, maxTokens = AI_MAX_TOKENS) {
   const res = await fetch('/api/ai/chat', {
@@ -375,19 +387,26 @@ async function kirimChatAI() {
   input.value = '';
 
   tambahPesanChat('ai-chat-messages', 'user', pesan, window.currentUser?.avatar || '🦁');
-  chatMuridHistory.push({ role: 'user', content: pesan });
-
-  const typing = tambahTyping('ai-chat-messages');
   aiIsLoading = true;
   document.getElementById('ai-send-btn').disabled = true;
 
+  const typing = tambahTyping('ai-chat-messages');
+
   try {
+    // Cek apakah ada URL dalam pesan — kalau ada, fetch isi artikelnya dulu
+    let pesanUntukAI = pesan;
+    const artikelData = await fetchUrlDariPesan(pesan);
+    if (artikelData) {
+      pesanUntukAI = `Pengguna meminta bantuan terkait artikel dari: ${artikelData.url}\n\nIsi artikel:\n${artikelData.teks}\n\nPermintaan pengguna: ${pesan.replace(artikelData.url, '').trim() || 'Tolong ringkas artikel ini.'}`;
+    }
+
+    chatMuridHistory.push({ role: 'user', content: pesanUntukAI });
     const jawaban = await callAIWithHistory(
       `Kamu adalah asisten belajar yang ramah dan menyenangkan untuk siswa SD/SMP Indonesia.
 Nama kamu adalah "Kiki" 🤖. Selalu gunakan bahasa Indonesia yang sederhana dan mudah dipahami.
 Gunakan emoji secukupnya agar terasa fun. Berikan penjelasan yang singkat, jelas, dan pakai contoh nyata.
 Kalau ada soal matematika, tunjukkan langkah-langkahnya. Semangati murid jika mereka kesulitan.
-PENTING: Jangan pernah menyertakan URL, link, atau alamat situs web dalam jawabanmu.
+Jika diberikan konten artikel, ringkas atau jelaskan sesuai permintaan pengguna.
 User saat ini: ${window.currentUser?.nama || 'Murid'}`,
       chatMuridHistory.slice(-10)
     );
@@ -419,17 +438,25 @@ async function kirimChatGuru() {
   input.value = '';
 
   tambahPesanChat('ai-guru-messages', 'user', pesan, window.currentUser?.avatar || '👩‍🏫');
-  chatGuruHistory.push({ role: 'user', content: pesan });
-
-  const typing = tambahTyping('ai-guru-messages');
   aiIsLoading = true;
 
+  const typing = tambahTyping('ai-guru-messages');
+
   try {
+    // Cek apakah ada URL dalam pesan — kalau ada, fetch isi artikelnya dulu
+    let pesanUntukAI = pesan;
+    const artikelData = await fetchUrlDariPesan(pesan);
+    if (artikelData) {
+      pesanUntukAI = `Guru meminta bantuan terkait artikel dari: ${artikelData.url}\n\nIsi artikel:\n${artikelData.teks}\n\nPermintaan guru: ${pesan.replace(artikelData.url, '').trim() || 'Tolong ringkas artikel ini untuk keperluan mengajar.'}`;
+    }
+
+    chatGuruHistory.push({ role: 'user', content: pesanUntukAI });
     const jawaban = await callAIWithHistory(
       `Kamu adalah konsultan pendidikan AI untuk guru SD/SMP di Indonesia.
 Nama kamu adalah "Prof. Kiki" 👩‍🏫. Berikan saran yang praktis, berbasis penelitian pendidikan,
 dan mudah diterapkan di kelas. Gunakan bahasa Indonesia yang profesional namun hangat.
-PENTING: Jangan pernah menyertakan URL, link, atau alamat situs web dalam jawabanmu. Jika ingin merujuk sumber, sebutkan nama buku atau nama jurnal saja tanpa URL.
+Jika diberikan konten artikel, ringkas atau kaitkan dengan konteks pembelajaran sesuai permintaan guru.
+Jika ingin merujuk sumber, sebutkan nama buku atau nama jurnal saja tanpa URL.
 Guru saat ini: ${window.currentUser?.nama || 'Guru'}`,
       chatGuruHistory.slice(-10)
     );
