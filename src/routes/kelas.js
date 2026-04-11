@@ -78,7 +78,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
       { data: muridList },
       { count: totalMateri }
     ] = await Promise.all([
-      supabase.from('kelas').select('*, guru:guru_id(nama)').eq('id', req.params.id).single(),
+      supabase.from('kelas').select('*, guru:guru_id(nama, avatar)').eq('id', req.params.id).single(),
       supabase.from('kelas_murid').select('murid:murid_id(id, nama, avatar, xp, level)').eq('kelas_id', req.params.id),
       supabase.from('materi').select('id', { count: 'exact', head: true }).eq('kelas_id', req.params.id)
     ]);

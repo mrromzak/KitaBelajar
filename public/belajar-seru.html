@@ -3147,7 +3147,7 @@ async function openKelas(kelasId, colorIdx) {
         <button id="vc-meeting-btn" class="btn-meeting" onclick="vcJoinMeeting()" style="display:none">
           📹 Gabung Meeting
         </button>
-        <button onclick="bukaPrivateChat('${guruId}','${guruNama.replace(/'/g,"\\'")}','👩‍🏫')"
+        <button onclick="chatDenganGuru()"
           style="width:100%;padding:12px;border-radius:12px;border:none;background:#EEF5FF;color:var(--blue);font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s"
           onmouseover="this.style.background='var(--blue)';this.style.color='white'"
           onmouseout="this.style.background='#EEF5FF';this.style.color='var(--blue)'">
@@ -3170,7 +3170,7 @@ async function openKelas(kelasId, colorIdx) {
     api('GET', `/kelas/${kelasId}`).then(data => {
       const detail = data.kelas || data.data || data;
       if (detail && detail.nama) {
-        currentKelas = { ...detail, id: kelasId, colorIdx: colorIdx || 0 };
+        currentKelas = { ...detail, id: kelasId, colorIdx: resolvedColorIdx };
         // Update sidebar info dengan data lengkap
         document.getElementById('kelas-code-display').textContent = detail.kode_akses || '–';
         document.getElementById('kelas-info-sidebar').innerHTML = `
@@ -3223,6 +3223,17 @@ async function openKelas(kelasId, colorIdx) {
     showLoading(false);
     toast('Gagal membuka kelas', 'error');
   }
+}
+
+// Dipanggil dari tombol "Chat dengan Guru" di halaman kelas murid
+function chatDenganGuru() {
+  const k = currentKelas;
+  if (!k) return;
+  const guruId   = k.guru_id || '';
+  const guruNama = k.guru?.nama || k.guru_nama || 'Guru';
+  const guruAva  = k.guru?.avatar || '👩‍🏫';
+  if (!guruId) { toast('Tidak bisa membuka chat', 'error'); return; }
+  bukaPrivateChat(guruId, guruNama, guruAva);
 }
 
 async function loadKelasStream(kelasId) {
