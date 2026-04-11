@@ -32,6 +32,11 @@ async function fetchArtikelUrl(url) {
   }
 }
 
+// ── Helper: hapus <think>...</think> dari respons model reasoning ──
+function stripThinking(text) {
+  return (text || '').replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+}
+
 // ── Helper: panggil Groq via proxy backend ─────────────────
 async function callAI(systemPrompt, userMessage, maxTokens = AI_MAX_TOKENS) {
   const res = await fetch('/api/ai/chat', {
@@ -47,7 +52,7 @@ async function callAI(systemPrompt, userMessage, maxTokens = AI_MAX_TOKENS) {
   });
   const json = await res.json();
   if (!json.success) throw new Error(json.pesan || 'AI error');
-  return json.data.choices?.[0]?.message?.content || '';
+  return stripThinking(json.data.choices?.[0]?.message?.content || '');
 }
 
 // ── Helper: panggil Groq dengan history chat ───────────────
@@ -65,7 +70,7 @@ async function callAIWithHistory(systemPrompt, history, maxTokens = AI_MAX_TOKEN
   });
   const json = await res.json();
   if (!json.success) throw new Error(json.pesan || 'AI error');
-  return json.data.choices?.[0]?.message?.content || '';
+  return stripThinking(json.data.choices?.[0]?.message?.content || '');
 }
 
 // ============================================================

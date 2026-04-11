@@ -221,7 +221,7 @@ router.get('/bank-soal', authMiddleware, async (req, res) => {
     });
 
     const shuffled = all.sort(() => Math.random() - 0.5).slice(0, parseInt(jumlah));
-    if (!shuffled.length) return res.status(404).json({ success: false, pesan: `Belum ada soal untuk mapel "${mapel}".` });
+    if (!shuffled.length) return res.json({ success: false, pesan: `Belum ada soal untuk mapel "${mapel}".` });
 
     const soal = decryptSoal(shuffled);
     res.json({ success: true, soal, mapel, total: soal.length });
@@ -292,7 +292,7 @@ router.get('/ai-generate', authMiddleware, async (req, res) => {
       throw new Error(groqData.error?.message || 'Groq API error');
     }
 
-    const raw = groqData.choices?.[0]?.message?.content || '';
+    const raw = (groqData.choices?.[0]?.message?.content || '').replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
 
     // Ekstrak JSON array dari respons (model kadang masih menambah teks)
     const jsonMatch = raw.match(/\[[\s\S]*\]/);

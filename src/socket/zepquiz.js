@@ -140,7 +140,7 @@ module.exports = function(io) {
 
       const soal = room.soal[soalIdx];
       const benar = jawaban.trim().toLowerCase() === String(soal.jawaban).trim().toLowerCase();
-      const durasi = room.quiz.durasi_per_soal || 15;
+      const durasi = room.quiz.durasi_per_soal || 25;
 
       // Hitung waktu sisa berdasarkan server timer (anti-cheat: abaikan waktu dari client)
       const elapsed = (Date.now() - (room.soalStartTime[soalIdx] || Date.now())) / 1000;
@@ -299,6 +299,11 @@ module.exports = function(io) {
     // ── MATCHMAKING: Masuk antrian ────────────────────────────
     socket.on('zep:matchmaking_join', ({ kategori, user, soal, quizJudul, durasi }) => {
       if (!kategori || !user?.id) return;
+
+      // Mode random: cocokkan hanya berdasarkan jenjang (prefix "random_")
+      // Kategori random: "random_SD", "random_SMP", "random_SMA"
+      // Kategori pilih mapel: "SD_7_Matematika", dst
+
       if (!matchmakingQueue[kategori]) matchmakingQueue[kategori] = [];
 
       // Hapus entry lama dari user yang sama (reconnect)
@@ -306,7 +311,7 @@ module.exports = function(io) {
 
       matchmakingQueue[kategori].push({
         userId: user.id, socketId: socket.id, user,
-        soal: soal || null, quizJudul: quizJudul || 'Quiz Online', durasi: durasi || 15
+        soal: soal || null, quizJudul: quizJudul || 'Quiz Online', durasi: durasi || 25
       });
 
       socket.data.mmKategori = kategori;
@@ -319,7 +324,7 @@ module.exports = function(io) {
         // Pilih soal: dari p1 jika ada, else p2, else soal default kosong
         const finalSoal = p1.soal || p2.soal || [];
         const finalJudul = p1.soal ? p1.quizJudul : (p2.soal ? p2.quizJudul : 'Quick Match');
-        const finalDurasi = p1.durasi || p2.durasi || 15;
+        const finalDurasi = p1.durasi || p2.durasi || 25;
 
         if (!finalSoal.length) {
           // Tidak ada soal tersedia — kembalikan keduanya ke antrian
@@ -404,7 +409,7 @@ module.exports = function(io) {
     room.soalStartTime[idx] = Date.now(); // catat waktu server saat soal dikirim
 
     const soal = room.soal[idx];
-    const durasi = room.quiz.durasi_per_soal || 15;
+    const durasi = room.quiz.durasi_per_soal || 25;
 
     // Kirim soal tanpa jawaban ke murid
     broadcast(kode, 'zep:soal', {
@@ -436,9 +441,7 @@ module.exports = function(io) {
     // Hitung statistik jawaban per opsi
     const opsiCount = {};
     (soal.opsi || []).forEach(o => { opsiCount[o] = 0; });
-    Object.values(jawaban).forEach(j => {
-      // cari jawaban user dari event — kita simpan jawabanTeks di sini nanti
-    });
+    Object.values(jawaban).forEach(_j => { /* statistik per opsi — reserved */ });
 
     broadcast(kode, 'zep:hasil_soal', {
       idx,

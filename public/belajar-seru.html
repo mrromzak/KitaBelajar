@@ -626,17 +626,34 @@
       <div style="font-weight:700;font-size:13px;margin-bottom:8px;opacity:.7;color:white">Kelas</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap" id="online-kelas-pills"></div>
     </div>
-    <!-- Step 2: Pilih Mapel dari Bank Soal -->
+    <!-- Step 2: Mode Join -->
     <div style="background:rgba(255,255,255,0.06);border-radius:20px;padding:18px;margin-bottom:14px">
-      <div style="font-weight:800;font-size:14px;margin-bottom:6px;color:white">📖 Pilih Mata Pelajaran</div>
-      <div style="font-size:12px;opacity:.5;margin-bottom:12px">Soal diambil acak dari bank soal</div>
-      <div id="online-mapel-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-        <div style="grid-column:1/-1;text-align:center;opacity:.5;font-size:13px;padding:12px">Memuat...</div>
+      <div style="font-weight:800;font-size:14px;margin-bottom:10px;color:white">🎮 Mode Bergabung</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button id="online-mode-random" onclick="setOnlineMode('random')"
+          style="flex:1;padding:12px 8px;border-radius:14px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;border:2px solid #FFD93D;background:rgba(255,217,61,0.15);color:#FFD93D;transition:all 0.15s">
+          🎲 Random<br><span style="font-size:10px;font-weight:600;opacity:.8">Sesuai jenjangmu</span>
+        </button>
+        <button id="online-mode-pilih" onclick="setOnlineMode('pilih')"
+          style="flex:1;padding:12px 8px;border-radius:14px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;border:2px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);transition:all 0.15s">
+          📖 Pilih Mapel<br><span style="font-size:10px;font-weight:600;opacity:.8">Tentukan sendiri</span>
+        </button>
+      </div>
+      <!-- Mapel grid (hanya tampil di mode pilih) -->
+      <div id="online-mapel-wrap" style="display:none">
+        <div style="font-size:12px;opacity:.5;margin-bottom:10px">Pilih mata pelajaran:</div>
+        <div id="online-mapel-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+          <div style="grid-column:1/-1;text-align:center;opacity:.5;font-size:13px;padding:12px">Memuat...</div>
+        </div>
+      </div>
+      <!-- Info random -->
+      <div id="online-random-info" style="text-align:center;padding:8px 0;font-size:12px;opacity:.6;color:white">
+        Kamu akan dicocokkan dengan pemain <strong style="color:#FFD93D">jenjang yang sama</strong>.<br>Soal dibuat acak oleh KikiBot 🤖
       </div>
     </div>
     <!-- Cari Lawan -->
-    <button class="zep-btn zep-btn-primary zep-btn-lg" id="online-cari-btn" style="width:100%;background:linear-gradient(135deg,#4D96FF,#2979FF);font-size:16px" onclick="zepCariLawan()" disabled>
-      🔍 Cari Lawan
+    <button class="zep-btn zep-btn-primary zep-btn-lg" id="online-cari-btn" style="width:100%;background:linear-gradient(135deg,#FFD93D,#FFA500);color:#1a1a2e;font-size:16px" onclick="zepCariLawan()">
+      🎲 Cari Lawan Random
     </button>
     <!-- Matchmaking Status -->
     <div id="online-matchmaking-status" style="margin-top:14px;display:none">
@@ -8264,6 +8281,7 @@ function bukaZepQuizDariKode(kode) {
 let selectedJenjang  = { online: 'SD', ai: 'SD' };
 let selectedKelas    = { online: 1,    ai: 1    };
 let selectedMapel    = { online: null, ai: null };
+let onlineJoinMode   = 'random'; // 'random' | 'pilih'
 let bankMapelList    = [];
 let mmTimerInterval  = null;
 let mmElapsed        = 0;
@@ -8341,12 +8359,51 @@ function pilihMapel(mapel, mode) {
   renderMapelGrid(`${mode === 'online' ? 'online' : 'ai'}-mapel-grid`, mode);
   if (mode === 'online') {
     document.getElementById('online-cari-btn').disabled = false;
+    document.getElementById('online-cari-btn').innerHTML = `🔍 Cari Lawan — ${mapel}`;
   } else {
     document.getElementById('ai-mulai-btn').disabled = false;
   }
 }
 
+function setOnlineMode(mode) {
+  onlineJoinMode = mode;
+  const btnRandom = document.getElementById('online-mode-random');
+  const btnPilih  = document.getElementById('online-mode-pilih');
+  const mapelWrap = document.getElementById('online-mapel-wrap');
+  const randomInfo = document.getElementById('online-random-info');
+  const cariBtn   = document.getElementById('online-cari-btn');
+  if (mode === 'random') {
+    btnRandom.style.borderColor = '#FFD93D';
+    btnRandom.style.background  = 'rgba(255,217,61,0.15)';
+    btnRandom.style.color       = '#FFD93D';
+    btnPilih.style.borderColor  = 'rgba(255,255,255,0.15)';
+    btnPilih.style.background   = 'rgba(255,255,255,0.05)';
+    btnPilih.style.color        = 'rgba(255,255,255,0.6)';
+    mapelWrap.style.display     = 'none';
+    randomInfo.style.display    = 'block';
+    cariBtn.disabled = false;
+    cariBtn.style.background = 'linear-gradient(135deg,#FFD93D,#FFA500)';
+    cariBtn.style.color = '#1a1a2e';
+    cariBtn.innerHTML = '🎲 Cari Lawan Random';
+  } else {
+    btnPilih.style.borderColor  = '#4D96FF';
+    btnPilih.style.background   = 'rgba(77,150,255,0.15)';
+    btnPilih.style.color        = '#4D96FF';
+    btnRandom.style.borderColor = 'rgba(255,255,255,0.15)';
+    btnRandom.style.background  = 'rgba(255,255,255,0.05)';
+    btnRandom.style.color       = 'rgba(255,255,255,0.6)';
+    mapelWrap.style.display     = 'block';
+    randomInfo.style.display    = 'none';
+    cariBtn.disabled = !selectedMapel.online;
+    cariBtn.style.background = 'linear-gradient(135deg,#4D96FF,#2979FF)';
+    cariBtn.style.color = 'white';
+    cariBtn.innerHTML = '🔍 Cari Lawan';
+  }
+}
+
 function getKategoriKey(mode) {
+  if (mode === 'online' && onlineJoinMode === 'random')
+    return `random_${selectedJenjang[mode]}`;
   return `${selectedJenjang[mode]}_${selectedKelas[mode]}_${selectedMapel[mode] || 'acak'}`;
 }
 
@@ -8379,21 +8436,28 @@ async function loadBankMapel(mode) {
 async function bukaVSOnline() {
   showPage('page-zep-online');
   selectedMapel.online = null;
+  onlineJoinMode = 'random';
   document.getElementById('online-matchmaking-status').style.display = 'none';
   document.getElementById('online-cari-btn').style.display = 'block';
-  document.getElementById('online-cari-btn').disabled = true;
   renderKelasPills('online-kelas-pills', selectedJenjang.online, 'online');
   await loadBankMapel('online');
+  setOnlineMode('random');
 }
 
 async function zepCariLawan() {
-  if (!selectedMapel.online) { toast('Pilih mata pelajaran dulu!', 'error'); return; }
+  if (onlineJoinMode === 'pilih' && !selectedMapel.online) { toast('Pilih mata pelajaran dulu!', 'error'); return; }
   if (!zepSocket) zepConnect();
 
-  const kategori = getKategoriKey('online');
-  const mapel = selectedMapel.online;
   const jenjang = selectedJenjang.online;
-  const kelas = selectedKelas.online;
+  const kelas   = selectedKelas.online;
+
+  // Mode random: pilih mapel acak dari daftar default
+  let mapel = selectedMapel.online;
+  if (onlineJoinMode === 'random') {
+    mapel = DEFAULT_MAPEL[Math.floor(Math.random() * DEFAULT_MAPEL.length)];
+  }
+
+  const kategori = getKategoriKey('online');
 
   // Generate soal via AI, fallback ke bank soal jika AI gagal
   showLoading(true, `🤖 KikiBot sedang membuat soal ${mapel}...`);
@@ -8402,19 +8466,19 @@ async function zepCariLawan() {
     const d = await api('GET', `/zepquiz/ai-generate?mapel=${encodeURIComponent(mapel)}&jenjang=${encodeURIComponent(jenjang)}&kelas=${encodeURIComponent(kelas)}&jumlah=10`);
     if (d.success && d.soal?.length) soalData = d;
     else {
-      // AI gagal/limit — coba bank soal tanpa notif ke user
       const b = await api('GET', `/zepquiz/bank-soal?mapel=${encodeURIComponent(mapel)}&jumlah=10`);
       if (b.success && b.soal?.length) soalData = b;
     }
   } catch(e) {}
   showLoading(false);
 
-  if (!soalData) { toast(`Belum ada soal untuk ${mapel}. Pilih mata pelajaran lain!`, 'error'); return; }
+  if (!soalData) { toast(`Belum ada soal tersedia. Coba lagi!`, 'error'); return; }
 
   // Tampilkan status matchmaking
   document.getElementById('online-cari-btn').style.display = 'none';
   document.getElementById('online-matchmaking-status').style.display = 'block';
-  document.getElementById('online-mm-info').textContent = `${getMapelIcon(mapel)} ${mapel} · ${jenjang} Kelas ${kelas}`;
+  const modeLabel = onlineJoinMode === 'random' ? '🎲 Random' : '📖 Pilih Mapel';
+  document.getElementById('online-mm-info').textContent = `${getMapelIcon(mapel)} ${mapel} · ${jenjang} · ${modeLabel}`;
   mmElapsed = 0;
   clearInterval(mmTimerInterval);
   mmTimerInterval = setInterval(() => {
@@ -8428,8 +8492,8 @@ async function zepCariLawan() {
     kategori,
     user: { id: currentUser.id, nama: currentUser.nama, avatar: currentUser.avatar || '🦁' },
     soal: soalData.soal,
-    quizJudul: `${mapel} · ${jenjang} Kelas ${kelas}`,
-    durasi: 15
+    quizJudul: onlineJoinMode === 'random' ? `🎲 ${mapel} · ${jenjang} Random` : `${mapel} · ${jenjang} Kelas ${kelas}`,
+    durasi: 25
   });
 }
 
