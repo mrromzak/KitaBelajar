@@ -8460,7 +8460,7 @@ async function zepCariLawan() {
   const kategori = getKategoriKey('online');
 
   // Generate soal via AI, fallback ke bank soal jika AI gagal
-  showLoading(true, `🤖 KikiBot sedang membuat soal ${mapel}...`);
+  showLoading(true, 'Loading...');
   let soalData = null;
   try {
     const d = await api('GET', `/zepquiz/ai-generate?mapel=${encodeURIComponent(mapel)}&jenjang=${encodeURIComponent(jenjang)}&kelas=${encodeURIComponent(kelas)}&jumlah=10`);
@@ -8543,7 +8543,7 @@ async function zepMulaiVSAI() {
   const jenjang = selectedJenjang.ai;
   const kelas   = selectedKelas.ai;
   if (!mapel) { toast('Pilih mata pelajaran dulu!', 'error'); return; }
-  showLoading(true, `🤖 KikiBot sedang membuat soal ${mapel}...`);
+  showLoading(true, 'Loading...');
   try {
     let data = await api('GET', `/zepquiz/ai-generate?mapel=${encodeURIComponent(mapel)}&jenjang=${encodeURIComponent(jenjang)}&kelas=${encodeURIComponent(kelas)}&jumlah=10`);
     if (!data.success || !data.soal?.length) {
