@@ -17,6 +17,9 @@ module.exports = function(io) {
   // rooms[kode] = { kode, quiz, soal[], pemain{}, status, soalIdx, timer, scores{} }
   const rooms = {};
 
+  // matchmakingQueue[kategori] = [{ userId, socketId, user, soal, quizJudul, durasi }, ...]
+  const matchmakingQueue = {};
+
   function broadcast(kode, event, data) {
     io.to(kode).emit(event, data);
   }
@@ -188,6 +191,12 @@ module.exports = function(io) {
 
     // ── Disconnect ───────────────────────────────────────────
     socket.on('disconnect', () => {
+      // Hapus dari matchmaking queue
+      const mmKat = socket.data.mmKategori;
+      if (mmKat && matchmakingQueue[mmKat]) {
+        matchmakingQueue[mmKat] = matchmakingQueue[mmKat].filter(e => e.socketId !== socket.id);
+      }
+
       const kode = socket.data.kode;
       const userId = socket.data.userId;
       if (!kode || !rooms[kode]) return;
@@ -285,6 +294,91 @@ module.exports = function(io) {
           }
         }, 1000);
       }
+    });
+
+    // ── MATCHMAKING: Masuk antrian ────────────────────────────
+    socket.on('zep:matchmaking_join', ({ kategori, user, soal, quizJudul, durasi }) => {
+      if (!kategori || !user?.id) return;
+      if (!matchmakingQueue[kategori]) matchmakingQueue[kategori] = [];
+
+      // Hapus entry lama dari user yang sama (reconnect)
+      matchmakingQueue[kategori] = matchmakingQueue[kategori].filter(e => e.userId !== user.id);
+
+      matchmakingQueue[kategori].push({
+        userId: user.id, socketId: socket.id, user,
+        soal: soal || null, quizJudul: quizJudul || 'Quiz Online', durasi: durasi || 15
+      });
+
+      socket.data.mmKategori = kategori;
+      socket.data.userId = user.id;
+
+      // Kalau ada 2+ di antrian → cocokkan 2 pemain pertama
+      if (matchmakingQueue[kategori].length >= 2) {
+        const [p1, p2] = matchmakingQueue[kategori].splice(0, 2);
+
+        // Pilih soal: dari p1 jika ada, else p2, else soal default kosong
+        const finalSoal = p1.soal || p2.soal || [];
+        const finalJudul = p1.soal ? p1.quizJudul : (p2.soal ? p2.quizJudul : 'Quick Match');
+        const finalDurasi = p1.durasi || p2.durasi || 15;
+
+        if (!finalSoal.length) {
+          // Tidak ada soal tersedia — kembalikan keduanya ke antrian
+          [p1, p2].forEach(p => {
+            const s = io.sockets.sockets.get(p.socketId);
+            if (s) s.emit('zep:matchmaking_waiting', { posisi: 1 });
+          });
+          matchmakingQueue[kategori].unshift(p1, p2);
+          return;
+        }
+
+        // Buat room baru
+        const kode_room = Math.random().toString(36).substring(2, 8).toUpperCase();
+        rooms[kode_room] = {
+          kode: kode_room,
+          quiz: { judul: finalJudul, mapel: kategori, durasi_per_soal: finalDurasi, kelas_id: null },
+          soal: finalSoal,
+          guru: null, creator: p1.user,
+          pemain: {}, scores: {}, jawaban: {}, soalStartTime: {},
+          status: 'lobby', soalIdx: -1, timer: null,
+          is_public: true, auto_start_timer: null
+        };
+
+        // Masukkan kedua pemain ke room
+        [p1, p2].forEach(p => {
+          rooms[kode_room].pemain[p.userId] = { id: p.userId, nama: p.user.nama, avatar: p.user.avatar || '🦁', socketId: p.socketId };
+          rooms[kode_room].scores[p.userId] = 0;
+          const s = io.sockets.sockets.get(p.socketId);
+          if (s) {
+            s.join(kode_room);
+            s.data.kode = kode_room;
+            s.data.userId = p.userId;
+            // Beritahu masing-masing siapa lawannya
+            const lawan = p.userId === p1.userId ? p2.user : p1.user;
+            s.emit('zep:matched', { kode_room, lawan, judul: finalJudul });
+          }
+        });
+
+        // Auto-start setelah 3 detik
+        setTimeout(() => {
+          if (!rooms[kode_room]) return;
+          rooms[kode_room].status = 'playing';
+          broadcast(kode_room, 'zep:game_start', { totalSoal: finalSoal.length });
+          setTimeout(() => kirimSoal(kode_room, 0), 1500);
+        }, 3000);
+
+      } else {
+        // Masih sendirian di antrian
+        socket.emit('zep:matchmaking_waiting', { posisi: matchmakingQueue[kategori].length });
+      }
+    });
+
+    // ── MATCHMAKING: Batal ────────────────────────────────────
+    socket.on('zep:matchmaking_cancel', ({ user_id }) => {
+      const kategori = socket.data.mmKategori;
+      if (kategori && matchmakingQueue[kategori]) {
+        matchmakingQueue[kategori] = matchmakingQueue[kategori].filter(e => e.userId !== user_id);
+      }
+      socket.data.mmKategori = null;
     });
 
     // ── VS ONLINE: Creator bisa mulai lebih awal ──────────────
