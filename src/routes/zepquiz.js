@@ -10,6 +10,16 @@ const express = require('express');
 const router  = express.Router();
 const supabase = require('../supabase');
 const { authMiddleware, guruOnly } = require('../middleware/auth');
+const { decrypt } = require('../utils/crypto');
+
+// Helper: decrypt jawaban di array soal
+function decryptSoal(soalArr) {
+  return soalArr.map(s => ({
+    ...s,
+    jawaban: (() => { try { return decrypt(s.jawaban); } catch(e) { return s.jawaban; } })(),
+    opsi: typeof s.opsi === 'string' ? JSON.parse(s.opsi || '[]') : (s.opsi || [])
+  }));
+}
 
 // ============================================================
 //  POST /api/zepquiz/room — Guru buat room baru
@@ -30,7 +40,7 @@ router.post('/room', authMiddleware, guruOnly, async (req, res) => {
       .eq('quiz_id', quiz_id)
       .order('urutan');
 
-    const soal = (qs || []).map(r => r.soal).filter(Boolean);
+    const soal = decryptSoal((qs || []).map(r => r.soal).filter(Boolean));
     if (!soal.length) return res.status(400).json({ success: false, pesan: 'Quiz tidak punya soal.' });
 
     // Generate kode room 6 huruf
@@ -39,17 +49,12 @@ router.post('/room', authMiddleware, guruOnly, async (req, res) => {
     res.json({
       success: true,
       room: {
-        kode_room,
-        quiz_id,
-        judul: quiz.judul,
-        mapel: quiz.mapel,
+        kode_room, quiz_id,
+        judul: quiz.judul, mapel: quiz.mapel,
         kelas_id: quiz.kelas_id || null,
         durasi_per_soal: quiz.durasi || 15,
         total_soal: soal.length,
-        soal: soal.map(s => ({
-          ...s,
-          opsi: typeof s.opsi === 'string' ? JSON.parse(s.opsi || '[]') : (s.opsi || [])
-        }))
+        soal
       }
     });
   } catch (err) {
@@ -126,10 +131,7 @@ router.get('/quiz-soal/:quiz_id', authMiddleware, async (req, res) => {
       .eq('quiz_id', req.params.quiz_id)
       .order('urutan');
 
-    const soal = (qs || []).map(r => r.soal).filter(Boolean).map(s => ({
-      ...s,
-      opsi: typeof s.opsi === 'string' ? JSON.parse(s.opsi || '[]') : (s.opsi || [])
-    }));
+    const soal = decryptSoal((qs || []).map(r => r.soal).filter(Boolean));
 
     if (!soal.length) return res.status(404).json({ success: false, pesan: 'Soal tidak ditemukan.' });
     res.json({ success: true, soal });
@@ -154,7 +156,7 @@ router.post('/room-public', authMiddleware, async (req, res) => {
       .select('urutan, soal:soal_id(id, pertanyaan, emoji, mapel, jenis, opsi, jawaban, poin)')
       .eq('quiz_id', quiz_id).order('urutan');
 
-    const soal = (qs || []).map(r => r.soal).filter(Boolean);
+    const soal = decryptSoal((qs || []).map(r => r.soal).filter(Boolean));
     if (!soal.length) return res.status(400).json({ success: false, pesan: 'Quiz tidak punya soal.' });
 
     const kode_room = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -167,9 +169,62 @@ router.post('/room-public', authMiddleware, async (req, res) => {
         durasi_per_soal: quiz.durasi || 15,
         total_soal: soal.length,
         is_public: true,
-        soal: soal.map(s => ({ ...s, opsi: typeof s.opsi === 'string' ? JSON.parse(s.opsi || '[]') : (s.opsi || []) }))
+        soal
       }
     });
+  } catch (err) {
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan.' });
+  }
+});
+
+// ============================================================
+//  GET /api/zepquiz/bank-mapel — Daftar mapel tersedia di bank soal
+// ============================================================
+router.get('/bank-mapel', authMiddleware, async (_req, res) => {
+  try {
+    const { data } = await supabase
+      .from('soal')
+      .select('mapel')
+      .eq('jenis', 'pilihan_ganda');
+    const counts = {};
+    (data || []).forEach(s => { counts[s.mapel] = (counts[s.mapel] || 0) + 1; });
+    const result = Object.entries(counts)
+      .map(([mapel, total]) => ({ mapel, total }))
+      .sort((a, b) => b.total - a.total);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan.' });
+  }
+});
+
+// ============================================================
+//  GET /api/zepquiz/bank-soal?mapel=&jumlah= — Ambil soal dari bank untuk game
+// ============================================================
+router.get('/bank-soal', authMiddleware, async (req, res) => {
+  try {
+    const { mapel, jumlah = 10 } = req.query;
+    if (!mapel) return res.status(400).json({ success: false, pesan: 'mapel wajib diisi.' });
+
+    const { data, error } = await supabase
+      .from('soal')
+      .select('id, pertanyaan, emoji, mapel, jenis, opsi, jawaban, poin')
+      .eq('jenis', 'pilihan_ganda')
+      .eq('mapel', mapel)
+      .limit(parseInt(jumlah) * 3); // ambil lebih, lalu acak
+
+    if (error) throw error;
+
+    // Acak dan ambil sejumlah yang diminta
+    const all = (data || []).filter(s => {
+      const opsi = typeof s.opsi === 'string' ? JSON.parse(s.opsi || '[]') : (s.opsi || []);
+      return opsi.length >= 2;
+    });
+
+    const shuffled = all.sort(() => Math.random() - 0.5).slice(0, parseInt(jumlah));
+    if (!shuffled.length) return res.status(404).json({ success: false, pesan: `Belum ada soal untuk mapel "${mapel}".` });
+
+    const soal = decryptSoal(shuffled);
+    res.json({ success: true, soal, mapel, total: soal.length });
   } catch (err) {
     console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan.' });
   }

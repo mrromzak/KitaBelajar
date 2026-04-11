@@ -614,10 +614,10 @@
     <div class="zep-logo">🌐 VS Online</div>
     <button class="zep-btn zep-btn-secondary" onclick="showPage('page-zep-mode')">← Kembali</button>
   </nav>
-  <div style="max-width:560px;margin:0 auto;padding:24px 20px">
-    <!-- Kategori Jenjang -->
-    <div style="background:rgba(255,255,255,0.06);border-radius:20px;padding:20px;margin-bottom:16px">
-      <div style="font-weight:800;font-size:14px;margin-bottom:12px;color:white">🎓 Pilih Jenjang</div>
+  <div style="max-width:560px;margin:0 auto;padding:20px" id="online-setup-wrap">
+    <!-- Step 1: Jenjang + Kelas -->
+    <div style="background:rgba(255,255,255,0.06);border-radius:20px;padding:18px;margin-bottom:14px">
+      <div style="font-weight:800;font-size:14px;margin-bottom:12px;color:white">🎓 Jenjang</div>
       <div style="display:flex;gap:8px;margin-bottom:14px" id="online-jenjang-pills">
         <button class="jenjang-pill active" data-j="SD" onclick="pilihJenjang(this,'SD','online')" style="flex:1;padding:10px 6px;border-radius:12px;background:linear-gradient(135deg,#4D96FF,#2979FF);border:none;color:white;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer">🏫 SD</button>
         <button class="jenjang-pill" data-j="SMP" onclick="pilihJenjang(this,'SMP','online')" style="flex:1;padding:10px 6px;border-radius:12px;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6);font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer">🏫 SMP</button>
@@ -626,25 +626,26 @@
       <div style="font-weight:700;font-size:13px;margin-bottom:8px;opacity:.7;color:white">Kelas</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap" id="online-kelas-pills"></div>
     </div>
-    <!-- Pilih Quiz -->
-    <div style="background:rgba(255,255,255,0.06);border-radius:20px;padding:20px;margin-bottom:16px">
-      <div style="font-weight:800;font-size:14px;margin-bottom:12px;color:white">📚 Pilih Quiz (Opsional)</div>
-      <div style="font-size:12px;opacity:.5;margin-bottom:10px">Kosongkan untuk dicocokkan secara otomatis</div>
-      <select id="online-quiz-select" style="width:100%;padding:12px 16px;border-radius:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:white;font-family:Nunito,sans-serif;font-size:14px;outline:none;cursor:pointer">
-        <option value="">-- Acak / Pilih sendiri --</option>
-      </select>
+    <!-- Step 2: Pilih Mapel dari Bank Soal -->
+    <div style="background:rgba(255,255,255,0.06);border-radius:20px;padding:18px;margin-bottom:14px">
+      <div style="font-weight:800;font-size:14px;margin-bottom:6px;color:white">📖 Pilih Mata Pelajaran</div>
+      <div style="font-size:12px;opacity:.5;margin-bottom:12px">Soal diambil acak dari bank soal</div>
+      <div id="online-mapel-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div style="grid-column:1/-1;text-align:center;opacity:.5;font-size:13px;padding:12px">Memuat...</div>
+      </div>
     </div>
-    <!-- Matchmaking -->
-    <button class="zep-btn zep-btn-primary zep-btn-lg" id="online-cari-btn" style="width:100%;background:linear-gradient(135deg,#4D96FF,#2979FF);font-size:16px" onclick="zepCariLawan()">
-      🔍 Cari Lawan Sekarang!
+    <!-- Cari Lawan -->
+    <button class="zep-btn zep-btn-primary zep-btn-lg" id="online-cari-btn" style="width:100%;background:linear-gradient(135deg,#4D96FF,#2979FF);font-size:16px" onclick="zepCariLawan()" disabled>
+      🔍 Cari Lawan
     </button>
-    <div id="online-matchmaking-status" style="margin-top:16px;text-align:center;display:none">
-      <div style="background:rgba(255,255,255,0.06);border-radius:16px;padding:24px">
-        <div style="font-size:40px;margin-bottom:10px" id="online-mm-anim">⚔️</div>
-        <div style="font-family:'Fredoka One',cursive;font-size:20px;color:white;margin-bottom:6px">Mencari Lawan...</div>
-        <div style="font-size:13px;opacity:.6" id="online-mm-info">Menunggu pemain lain dengan kategori yang sama</div>
-        <div style="font-size:24px;font-weight:900;color:#FFD93D;margin-top:10px" id="online-mm-timer">0s</div>
-        <button class="zep-btn zep-btn-secondary" style="margin-top:16px;padding:8px 20px;font-size:13px" onclick="zepBatalMatchmaking()">✕ Batal</button>
+    <!-- Matchmaking Status -->
+    <div id="online-matchmaking-status" style="margin-top:14px;display:none">
+      <div style="background:rgba(255,255,255,0.06);border-radius:16px;padding:28px;text-align:center">
+        <div style="font-size:48px;margin-bottom:12px" id="online-mm-anim">⚔️</div>
+        <div style="font-family:'Fredoka One',cursive;font-size:22px;color:white;margin-bottom:6px">Mencari Lawan...</div>
+        <div style="font-size:13px;opacity:.6;margin-bottom:4px" id="online-mm-info"></div>
+        <div style="font-size:28px;font-weight:900;color:#FFD93D;margin-top:12px" id="online-mm-timer">0s</div>
+        <button class="zep-btn zep-btn-secondary" style="margin-top:16px;padding:8px 24px;font-size:13px" onclick="zepBatalMatchmaking()">✕ Batal</button>
       </div>
     </div>
   </div>
@@ -657,7 +658,7 @@
     <button class="zep-btn zep-btn-secondary" onclick="showPage('page-zep-mode')">← Kembali</button>
   </nav>
   <div style="max-width:520px;margin:0 auto;padding:20px">
-    <!-- Kategori Jenjang -->
+    <!-- Step 1: Jenjang + Kelas -->
     <div style="background:rgba(255,255,255,0.06);border-radius:20px;padding:18px;margin-bottom:14px">
       <div style="font-weight:800;font-size:14px;margin-bottom:10px;color:white">🎓 Jenjang Kamu</div>
       <div style="display:flex;gap:8px;margin-bottom:12px" id="ai-jenjang-pills">
@@ -668,11 +669,12 @@
       <div style="font-weight:700;font-size:13px;margin-bottom:8px;opacity:.7;color:white">Kelas</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap" id="ai-kelas-pills"></div>
     </div>
-    <!-- Pilih Quiz -->
+    <!-- Step 2: Pilih Mapel -->
     <div style="background:rgba(255,255,255,0.06);border-radius:20px;padding:18px;margin-bottom:14px">
-      <div style="font-weight:800;font-size:14px;margin-bottom:10px;color:white">📚 Pilih Quiz</div>
-      <div id="ai-quiz-list" style="display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto">
-        <div style="text-align:center;opacity:.5;font-size:14px;padding:16px">Loading quiz...</div>
+      <div style="font-weight:800;font-size:14px;margin-bottom:6px;color:white">📖 Pilih Mata Pelajaran</div>
+      <div style="font-size:12px;opacity:.5;margin-bottom:12px">Soal diambil dari bank soal</div>
+      <div id="ai-mapel-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div style="grid-column:1/-1;text-align:center;opacity:.5;font-size:13px;padding:12px">Memuat...</div>
       </div>
     </div>
     <!-- Tingkat KikiBot -->
@@ -8255,16 +8257,28 @@ function bukaZepQuizDariKode(kode) {
 }
 
 // ============================================================
-//  SHARED: Jenjang / Kategori Picker
+//  SHARED: Jenjang / Kelas / Mapel Picker
 // ============================================================
-let selectedJenjang = { online: 'SD', ai: 'SD' };
-let selectedKelas   = { online: 1,    ai: 1    };
-let allMuridQuiz    = [];
-let mmTimerInterval = null;
-let mmElapsed       = 0;
+let selectedJenjang  = { online: 'SD', ai: 'SD' };
+let selectedKelas    = { online: 1,    ai: 1    };
+let selectedMapel    = { online: null, ai: null };
+let bankMapelList    = [];
+let mmTimerInterval  = null;
+let mmElapsed        = 0;
 
-const KELAS_MAP = { SD: [1,2,3,4,5,6], SMP: [7,8,9], SMA: [10,11,12] };
+const KELAS_MAP   = { SD: [1,2,3,4,5,6], SMP: [7,8,9], SMA: [10,11,12] };
 const KELAS_LABEL = { SD: n => `Kelas ${n}`, SMP: n => `Kelas ${n-6}`, SMA: n => `Kelas ${n-9}` };
+
+// Ikon mapel umum
+const MAPEL_ICON = {
+  'Matematika':'🔢','Bahasa Indonesia':'📝','Bahasa Inggris':'🌐','IPA':'🔬','IPS':'🗺️',
+  'Biologi':'🌿','Fisika':'⚛️','Kimia':'🧪','Sejarah':'📜','Geografi':'🌍',
+  'Ekonomi':'💹','PKN':'🏛️','Agama':'📖','Seni Budaya':'🎨','PJOK':'⚽',
+  'Informatika':'💻','Sosiologi':'👥','Bahasa Jawa':'🗣️'
+};
+function getMapelIcon(mapel) {
+  return MAPEL_ICON[mapel] || '📚';
+}
 
 function renderKelasPills(containerId, jenjang, mode) {
   const el = document.getElementById(containerId);
@@ -8275,7 +8289,28 @@ function renderKelasPills(containerId, jenjang, mode) {
   el.innerHTML = klsList.map(k => `
     <button onclick="pilihKelas(${k},'${mode}')"
       style="padding:7px 14px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:12px;cursor:pointer;border:2px solid ${k===cur?accent:'rgba(255,255,255,0.15)'};background:${k===cur?`rgba(${mode==='online'?'77,150,255':'199,125,255'},0.2)`:'rgba(255,255,255,0.05)'};color:${k===cur?'white':'rgba(255,255,255,0.5)'};transition:all 0.15s"
-      data-kelas="${k}">${KELAS_LABEL[jenjang](k)}</button>`).join('');
+    >${KELAS_LABEL[jenjang](k)}</button>`).join('');
+}
+
+function renderMapelGrid(containerId, mode) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!bankMapelList.length) {
+    el.innerHTML = '<div style="grid-column:1/-1;text-align:center;opacity:.5;font-size:13px;padding:12px">Belum ada soal di bank soal.</div>';
+    return;
+  }
+  const accent = mode === 'online' ? '#4D96FF' : '#C77DFF';
+  const accentRgb = mode === 'online' ? '77,150,255' : '199,125,255';
+  el.innerHTML = bankMapelList.map(m => {
+    const isSel = selectedMapel[mode] === m.mapel;
+    return `<button onclick="pilihMapel('${m.mapel.replace(/'/g,"\\'")}','${mode}')"
+      style="padding:12px 8px;border-radius:14px;font-family:Nunito,sans-serif;font-weight:800;font-size:12px;cursor:pointer;border:2px solid ${isSel ? accent : 'rgba(255,255,255,0.1)'};background:${isSel ? `rgba(${accentRgb},0.2)` : 'rgba(255,255,255,0.05)'};color:${isSel ? 'white' : 'rgba(255,255,255,0.65)'};transition:all 0.15s;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center"
+      data-mapel="${m.mapel}">
+      <span style="font-size:22px">${getMapelIcon(m.mapel)}</span>
+      <span style="font-size:11px;line-height:1.2">${m.mapel}</span>
+      <span style="font-size:10px;opacity:.5">${m.total} soal</span>
+    </button>`;
+  }).join('');
 }
 
 function pilihJenjang(btn, jenjang, mode) {
@@ -8292,75 +8327,90 @@ function pilihJenjang(btn, jenjang, mode) {
   selectedJenjang[mode] = jenjang;
   selectedKelas[mode] = KELAS_MAP[jenjang][0];
   renderKelasPills(`${prefix}-kelas-pills`, jenjang, mode);
-  if (mode === 'ai') filterAIQuizList();
 }
 
 function pilihKelas(kelas, mode) {
   selectedKelas[mode] = kelas;
-  const prefix = mode === 'online' ? 'online' : 'ai';
-  renderKelasPills(`${prefix}-kelas-pills`, selectedJenjang[mode], mode);
-  if (mode === 'ai') filterAIQuizList();
+  renderKelasPills(`${mode === 'online' ? 'online' : 'ai'}-kelas-pills`, selectedJenjang[mode], mode);
+}
+
+function pilihMapel(mapel, mode) {
+  selectedMapel[mode] = mapel;
+  renderMapelGrid(`${mode === 'online' ? 'online' : 'ai'}-mapel-grid`, mode);
+  if (mode === 'online') {
+    document.getElementById('online-cari-btn').disabled = false;
+  } else {
+    document.getElementById('ai-mulai-btn').disabled = false;
+  }
 }
 
 function getKategoriKey(mode) {
-  return `${selectedJenjang[mode]}_${selectedKelas[mode]}`;
+  return `${selectedJenjang[mode]}_${selectedKelas[mode]}_${selectedMapel[mode] || 'acak'}`;
+}
+
+async function loadBankMapel(mode) {
+  try {
+    const data = await api('GET', '/zepquiz/bank-mapel');
+    bankMapelList = data.data || [];
+    renderMapelGrid(`${mode === 'online' ? 'online' : 'ai'}-mapel-grid`, mode);
+  } catch(e) {
+    const el = document.getElementById(`${mode === 'online' ? 'online' : 'ai'}-mapel-grid`);
+    if (el) el.innerHTML = '<div style="grid-column:1/-1;text-align:center;opacity:.5;font-size:13px;padding:12px">Gagal memuat mapel.</div>';
+  }
 }
 
 // ============================================================
-//  MODE: VS ONLINE — Matchmaking
+//  MODE: VS ONLINE — Matchmaking by Mapel
 // ============================================================
 async function bukaVSOnline() {
   showPage('page-zep-online');
+  selectedMapel.online = null;
   document.getElementById('online-matchmaking-status').style.display = 'none';
   document.getElementById('online-cari-btn').style.display = 'block';
+  document.getElementById('online-cari-btn').disabled = true;
   renderKelasPills('online-kelas-pills', selectedJenjang.online, 'online');
-  showLoading(true);
-  try {
-    const data = await api('GET', '/zepquiz/murid-quiz');
-    allMuridQuiz = data.quiz || [];
-    const sel = document.getElementById('online-quiz-select');
-    sel.innerHTML = '<option value="">-- Acak / Pilih sendiri --</option>' +
-      allMuridQuiz.map(q => `<option value="${q.id}">${q.judul} (${q.mapel})</option>`).join('');
-  } catch(e) {}
-  showLoading(false);
+  await loadBankMapel('online');
 }
 
 async function zepCariLawan() {
+  if (!selectedMapel.online) { toast('Pilih mata pelajaran dulu!', 'error'); return; }
   if (!zepSocket) zepConnect();
-  const quizId = document.getElementById('online-quiz-select').value;
-  const kategori = getKategoriKey('online');
 
-  // Kalau ada quiz dipilih, ambil soalnya dulu
+  const kategori = getKategoriKey('online');
+  const mapel = selectedMapel.online;
+  const jenjang = selectedJenjang.online;
+  const kelas = selectedKelas.online;
+
+  // Ambil soal dari bank soal untuk mapel ini
+  showLoading(true);
   let soalData = null;
-  if (quizId) {
-    showLoading(true);
-    try {
-      const d = await api('POST', '/zepquiz/room-public', { quiz_id: quizId });
-      if (d.success) soalData = d.room;
-    } catch(e) {}
-    showLoading(false);
-  }
+  try {
+    const d = await api('GET', `/zepquiz/bank-soal?mapel=${encodeURIComponent(mapel)}&jumlah=10`);
+    if (d.success && d.soal?.length) soalData = d;
+  } catch(e) {}
+  showLoading(false);
+
+  if (!soalData) { toast(`Belum ada soal untuk ${mapel}!`, 'error'); return; }
 
   // Tampilkan status matchmaking
   document.getElementById('online-cari-btn').style.display = 'none';
   document.getElementById('online-matchmaking-status').style.display = 'block';
-  document.getElementById('online-mm-info').textContent = `Kategori: ${selectedJenjang.online} Kelas ${selectedKelas.online}`;
+  document.getElementById('online-mm-info').textContent = `${getMapelIcon(mapel)} ${mapel} · ${jenjang} Kelas ${kelas}`;
   mmElapsed = 0;
   clearInterval(mmTimerInterval);
   mmTimerInterval = setInterval(() => {
     mmElapsed++;
     document.getElementById('online-mm-timer').textContent = mmElapsed + 's';
-    // Animasi icon
-    const icons = ['⚔️','🎯','🏆','🎮'];
-    document.getElementById('online-mm-anim').textContent = icons[Math.floor(mmElapsed/2) % icons.length];
+    const icons = ['⚔️','🎯','🏆','🎮','⚡'];
+    document.getElementById('online-mm-anim').textContent = icons[Math.floor(mmElapsed / 2) % icons.length];
   }, 1000);
 
   zepSocket.emit('zep:matchmaking_join', {
     kategori,
     user: { id: currentUser.id, nama: currentUser.nama, avatar: currentUser.avatar || '🦁' },
-    soal: soalData?.soal || null,
-    quizJudul: soalData?.judul || `Quiz ${selectedJenjang.online} Kelas ${selectedKelas.online}`,
-    durasi: soalData?.durasi_per_soal || 15
+    soal: soalData.soal,
+    quizJudul: `${mapel} · ${jenjang} Kelas ${kelas}`,
+    durasi: 15
   });
 }
 
@@ -8372,12 +8422,12 @@ function zepBatalMatchmaking() {
 }
 
 // ============================================================
-//  MODE: VS AI
+//  MODE: VS AI — pilih mapel dari bank soal
 // ============================================================
-let aiGameState = null;
-let aiDifficulty = 'mudah';
-let aiSelectedQuizId = null;
-let aiTimerInterval = null;
+let aiGameState      = null;
+let aiDifficulty     = 'mudah';
+let aiSelectedMapel  = null;
+let aiTimerInterval  = null;
 
 const AI_ACCURACY = { mudah: 0.40, sedang: 0.65, sulit: 0.85 };
 const AI_NAME = 'KikiBot 🤖';
@@ -8385,50 +8435,11 @@ const AI_AVATAR = '🤖';
 
 async function bukaVSAI() {
   showPage('page-zep-ai');
-  aiSelectedQuizId = null;
+  aiSelectedMapel = null;
+  selectedMapel.ai = null;
   document.getElementById('ai-mulai-btn').disabled = true;
   renderKelasPills('ai-kelas-pills', selectedJenjang.ai, 'ai');
-  showLoading(true);
-  try {
-    const data = await api('GET', '/zepquiz/murid-quiz');
-    allMuridQuiz = data.quiz || [];
-    filterAIQuizList();
-  } catch(e) { toast('Gagal memuat quiz', 'error'); }
-  showLoading(false);
-}
-
-function filterAIQuizList() {
-  const el = document.getElementById('ai-quiz-list');
-  if (!el) return;
-  // Tampilkan semua quiz (tidak ada filter mapel yg strict karena jenjang tidak ada di DB)
-  // Tandai dengan badge jenjang yang dipilih
-  const list = allMuridQuiz;
-  if (!list.length) {
-    el.innerHTML = '<div style="opacity:.5;font-size:14px;text-align:center;padding:12px">Belum ada quiz aktif di kelasmu.</div>';
-    return;
-  }
-  el.innerHTML = list.map(q => `
-    <div class="ai-quiz-item" data-id="${q.id}" onclick="pilihQuizAI('${q.id}',this)"
-      style="background:rgba(255,255,255,0.06);border:2px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:space-between">
-      <div>
-        <div style="font-weight:800;font-size:13px;color:white">${q.judul}</div>
-        <div style="font-size:11px;opacity:.6;margin-top:2px">${q.mapel} · ${q.total_soal} soal</div>
-      </div>
-      <div style="font-size:16px;opacity:.4" id="ai-check-${q.id}">○</div>
-    </div>`).join('');
-}
-
-function pilihQuizAI(quizId, el) {
-  document.querySelectorAll('.ai-quiz-item').forEach(i => {
-    i.style.borderColor = 'rgba(255,255,255,0.1)';
-    i.style.background = 'rgba(255,255,255,0.06)';
-    i.querySelector('div:last-child').textContent = '○';
-  });
-  el.style.borderColor = '#C77DFF';
-  el.style.background = 'rgba(199,125,255,0.15)';
-  el.querySelector('div:last-child').textContent = '✓';
-  aiSelectedQuizId = quizId;
-  document.getElementById('ai-mulai-btn').disabled = false;
+  await loadBankMapel('ai');
 }
 
 function pilihDiffAI(btn, diff) {
@@ -8445,11 +8456,12 @@ function pilihDiffAI(btn, diff) {
 }
 
 async function zepMulaiVSAI() {
-  if (!aiSelectedQuizId) { toast('Pilih quiz dulu!', 'error'); return; }
+  const mapel = selectedMapel.ai;
+  if (!mapel) { toast('Pilih mata pelajaran dulu!', 'error'); return; }
   showLoading(true);
   try {
-    const data = await api('GET', `/zepquiz/quiz-soal/${aiSelectedQuizId}`);
-    if (!data.success || !data.soal?.length) { toast('Soal tidak ditemukan.', 'error'); showLoading(false); return; }
+    const data = await api('GET', `/zepquiz/bank-soal?mapel=${encodeURIComponent(mapel)}&jumlah=10`);
+    if (!data.success || !data.soal?.length) { toast(`Belum ada soal untuk ${mapel}!`, 'error'); showLoading(false); return; }
 
     aiGameState = {
       soal: data.soal,
