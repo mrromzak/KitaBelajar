@@ -301,12 +301,9 @@ module.exports = function(io) {
     });
 
     // ── MATCHMAKING: Masuk antrian ────────────────────────────
-    socket.on('zep:matchmaking_join', ({ kategori, user, soal, quizJudul, durasi }) => {
+    // Soal TIDAK dikirim dari client — server yang generate setelah match
+    socket.on('zep:matchmaking_join', ({ kategori, user, mapel, jenjang, kelas, durasi }) => {
       if (!kategori || !user?.id) return;
-
-      // Mode random: cocokkan hanya berdasarkan jenjang (prefix "random_")
-      // Kategori random: "random_SD", "random_SMP", "random_SMA"
-      // Kategori pilih mapel: "SD_7_Matematika", dst
 
       if (!matchmakingQueue[kategori]) matchmakingQueue[kategori] = [];
 
@@ -315,7 +312,10 @@ module.exports = function(io) {
 
       matchmakingQueue[kategori].push({
         userId: user.id, socketId: socket.id, user,
-        soal: soal || null, quizJudul: quizJudul || 'Quiz Online', durasi: durasi || 25
+        mapel: mapel || 'Matematika',
+        jenjang: jenjang || 'SMP',
+        kelas: kelas || 7,
+        durasi: durasi || 25
       });
 
       socket.data.mmKategori = kategori;
@@ -325,30 +325,21 @@ module.exports = function(io) {
       if (matchmakingQueue[kategori].length >= 2) {
         const [p1, p2] = matchmakingQueue[kategori].splice(0, 2);
 
-        // Pilih soal: dari p1 jika ada, else p2, else soal default kosong
-        const finalSoal = p1.soal || p2.soal || [];
-        const finalJudul = p1.soal ? p1.quizJudul : (p2.soal ? p2.quizJudul : 'Quick Match');
+        const finalMapel  = p1.mapel || p2.mapel;
+        const finalJenjang = p1.jenjang || p2.jenjang;
+        const finalKelas  = p1.kelas || p2.kelas;
         const finalDurasi = p1.durasi || p2.durasi || 25;
+        const finalJudul  = `${finalMapel} · ${finalJenjang}`;
 
-        if (!finalSoal.length) {
-          // Tidak ada soal tersedia — kembalikan keduanya ke antrian
-          [p1, p2].forEach(p => {
-            const s = io.sockets.sockets.get(p.socketId);
-            if (s) s.emit('zep:matchmaking_waiting', { posisi: 1 });
-          });
-          matchmakingQueue[kategori].unshift(p1, p2);
-          return;
-        }
-
-        // Buat room baru
+        // Buat room dengan status 'generating' — soal belum ada
         const kode_room = Math.random().toString(36).substring(2, 8).toUpperCase();
         rooms[kode_room] = {
           kode: kode_room,
-          quiz: { judul: finalJudul, mapel: kategori, durasi_per_soal: finalDurasi, kelas_id: null },
-          soal: finalSoal,
+          quiz: { judul: finalJudul, mapel: finalMapel, durasi_per_soal: finalDurasi, kelas_id: null },
+          soal: [],
           guru: null, creator: p1.user,
           pemain: {}, scores: {}, jawaban: {}, soalStartTime: {},
-          status: 'lobby', soalIdx: -1, timer: null,
+          status: 'generating', soalIdx: -1, timer: null,
           is_public: true, auto_start_timer: null
         };
 
@@ -361,19 +352,31 @@ module.exports = function(io) {
             s.join(kode_room);
             s.data.kode = kode_room;
             s.data.userId = p.userId;
-            // Beritahu masing-masing siapa lawannya
             const lawan = p.userId === p1.userId ? p2.user : p1.user;
-            s.emit('zep:matched', { kode_room, lawan, judul: finalJudul });
+            // Beritahu sudah match, server sedang generate soal
+            s.emit('zep:matched', { kode_room, lawan, judul: finalJudul, generating: true });
           }
         });
 
-        // Auto-start setelah 3 detik
-        setTimeout(() => {
-          if (!rooms[kode_room]) return;
-          rooms[kode_room].status = 'playing';
-          broadcast(kode_room, 'zep:game_start', { totalSoal: finalSoal.length });
-          setTimeout(() => kirimSoal(kode_room, 0), 1500);
-        }, 3000);
+        // Generate soal di server — tidak ada konflik antar player
+        generateSoalServer(finalMapel, finalJenjang, finalKelas, 10)
+          .then(soal => {
+            if (!rooms[kode_room]) return; // room sudah tutup
+            rooms[kode_room].soal   = soal;
+            rooms[kode_room].status = 'lobby';
+            // Mulai game setelah 2 detik
+            setTimeout(() => {
+              if (!rooms[kode_room]) return;
+              rooms[kode_room].status = 'playing';
+              broadcast(kode_room, 'zep:game_start', { totalSoal: soal.length });
+              setTimeout(() => kirimSoal(kode_room, 0), 1500);
+            }, 2000);
+          })
+          .catch(() => {
+            // Gagal generate — tutup room dan beritahu kedua player
+            broadcast(kode_room, 'zep:error', { pesan: 'Gagal membuat soal. Silakan coba lagi.' });
+            delete rooms[kode_room];
+          });
 
       } else {
         // Masih sendirian di antrian
@@ -523,6 +526,56 @@ module.exports = function(io) {
 
     // Bersihkan room setelah 5 menit
     setTimeout(() => { delete rooms[kode]; }, 300000);
+  }
+
+  // ── Helper: Generate soal di server via Groq ──────────────
+  async function generateSoalServer(mapel, jenjang, kelas, jumlah = 10) {
+    const GROQ_API_KEY = process.env.GROQ_API_KEY;
+    const GROQ_MODEL   = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+
+    if (!GROQ_API_KEY) throw new Error('GROQ_API_KEY tidak diset');
+
+    const seed = Math.random().toString(36).substring(2, 8);
+    const systemPrompt = 'Kamu adalah generator soal kuis pendidikan Indonesia. Jawab HANYA dengan JSON array yang valid, tanpa teks atau markdown apapun di luar array.';
+    const userPrompt =
+      `Buat ${jumlah} soal pilihan ganda untuk "${mapel}", jenjang ${jenjang} kelas ${kelas} (kurikulum Merdeka). ` +
+      `Seed: ${seed}. Variasikan jenis dan tingkat kesulitan.\n\n` +
+      `Format (HANYA JSON array):\n` +
+      `[{"pertanyaan":"...?","opsi":["A. ...","B. ...","C. ...","D. ..."],"jawaban":"A. ...","emoji":"emoji"}]` +
+      `\nPastikan "jawaban" sama persis dengan salah satu elemen "opsi".`;
+
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY}` },
+      body: JSON.stringify({
+        model: GROQ_MODEL, max_tokens: 3000, temperature: 0.85,
+        messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }]
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'Groq error');
+
+    // Strip <think> tag dari model reasoning
+    const raw = (data.choices?.[0]?.message?.content || '').replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) throw new Error('AI tidak menghasilkan JSON valid');
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    const soal = parsed
+      .filter(s => s.pertanyaan && Array.isArray(s.opsi) && s.opsi.length >= 2 && s.jawaban)
+      .map((s, i) => ({
+        id:         `srv-${seed}-${i}`,
+        pertanyaan: String(s.pertanyaan).trim(),
+        emoji:      String(s.emoji || '❓').trim(),
+        mapel, jenis: 'pilihan_ganda',
+        opsi:    s.opsi.map(o => String(o).trim()),
+        jawaban: String(s.jawaban).trim(),
+        poin:    100
+      }));
+
+    if (!soal.length) throw new Error('Soal tidak valid dari AI');
+    return soal;
   }
 
 };
