@@ -2543,15 +2543,36 @@ function bukaGantiAvatar(role) {
   }
 }
 
-// Helper: render avatar (emoji atau foto data URI) ke elemen
-function setAvatarEl(el, avatarStr) {
+// Helper: cek apakah avatar adalah foto (bukan emoji)
+function isFotoAvatar(a) { return a && (a.startsWith('data:') || a.startsWith('http')); }
+
+// Helper: render avatar ke elemen — otomatis handle emoji vs foto
+// size: 'big' (banner, profil), 'nav' (kecil di nav bar)
+function setAvatarEl(el, avatarStr, size) {
   if (!el) return;
-  if (avatarStr && (avatarStr.startsWith('data:') || avatarStr.startsWith('http'))) {
-    el.style.fontSize = '';
-    el.innerHTML = `<img src="${avatarStr}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block">`;
+  if (isFotoAvatar(avatarStr)) {
+    const dim = size === 'nav' ? '28px' : '100%';
+    el.style.fontSize = '0';
+    el.innerHTML = `<img src="${avatarStr}" style="width:${dim};height:${dim};object-fit:cover;border-radius:50%;display:block">`;
   } else {
     el.innerHTML = '';
+    el.style.fontSize = '';
     el.textContent = avatarStr || '🦁';
+  }
+}
+
+// Update semua elemen avatar sesuai role sekaligus
+function syncAvatarUI(avatarStr, role) {
+  const isPhoto = isFotoAvatar(avatarStr);
+  if (role === 'murid') {
+    setAvatarEl(document.getElementById('murid-avatar'), avatarStr, 'big');
+    setAvatarEl(document.getElementById('murid-nav-avatar'), avatarStr, 'nav');
+  } else if (role === 'guru') {
+    setAvatarEl(document.getElementById('guru-banner-avatar'), avatarStr, 'big');
+    setAvatarEl(document.getElementById('guru-nav-avatar'), avatarStr, 'nav');
+    // Greeting: jangan tampilkan foto sebagai teks
+    const grEl = document.getElementById('guru-greeting');
+    if (grEl) grEl.textContent = `Selamat Datang, ${currentUser?.nama || ''}!${isPhoto ? '' : ' ' + (avatarStr || '👩‍🏫')}`;
   }
 }
 
@@ -2564,12 +2585,11 @@ async function pilihAvatar(avatar, role) {
       if (role === 'murid') {
         setAvatarEl(document.getElementById('pm-avatar-display'), avatar);
         document.getElementById('pm-avatar-picker').style.display = 'none';
-        document.getElementById('murid-nav-avatar').textContent = avatar;
-        document.getElementById('murid-avatar').textContent = avatar;
+        syncAvatarUI(avatar, 'murid');
       } else {
         setAvatarEl(document.getElementById('pg-avatar-display'), avatar);
         document.getElementById('pg-avatar-picker').style.display = 'none';
-        document.getElementById('guru-nav-avatar').textContent = avatar;
+        syncAvatarUI(avatar, 'guru');
       }
       toast('Avatar berhasil diganti! ' + avatar, 'success');
     } else toast(data.pesan || 'Gagal ganti avatar', 'error');
@@ -2605,9 +2625,11 @@ function uploadFotoProfil(role) {
             if (role === 'murid') {
               setAvatarEl(document.getElementById('pm-avatar-display'), dataUrl);
               document.getElementById('pm-avatar-picker').style.display = 'none';
+              syncAvatarUI(dataUrl, 'murid');
             } else {
               setAvatarEl(document.getElementById('pg-avatar-display'), dataUrl);
               document.getElementById('pg-avatar-picker').style.display = 'none';
+              syncAvatarUI(dataUrl, 'guru');
             }
             toast('Foto profil berhasil diubah! 📸', 'success');
           } else toast(data.pesan || 'Gagal upload foto', 'error');
@@ -2651,8 +2673,7 @@ async function simpanProfilGuru() {
       localStorage.setItem('kb_user', JSON.stringify(currentUser));
       document.getElementById('pg-nama-display').textContent = nama;
       document.getElementById('guru-nav-name').textContent   = nama.split(' ')[0];
-      document.getElementById('guru-greeting').textContent   = `Selamat Datang, ${nama}! ${currentUser.avatar || '👩‍🏫'}`;
-      document.getElementById('guru-banner-avatar').textContent = currentUser.avatar || '👩‍🏫';
+      syncAvatarUI(currentUser.avatar || '👩‍🏫', 'guru');
       toast('Profil berhasil diperbarui! ✅', 'success');
     } else toast(data.pesan || 'Gagal simpan profil', 'error');
   } catch(e) { toast('Tidak bisa terhubung ke server', 'error'); }
@@ -2903,9 +2924,8 @@ async function loadMuridDashboard() {
   if (!currentUser) return;
 
   document.getElementById('murid-nav-name').textContent = currentUser.nama;
-  document.getElementById('murid-nav-avatar').textContent = currentUser.avatar || '🦁';
   document.getElementById('murid-greeting').textContent = `Halo, ${currentUser.nama}! 👋`;
-  document.getElementById('murid-avatar').textContent = currentUser.avatar || '🦁';
+  syncAvatarUI(currentUser.avatar || '🦁', 'murid');
 
   const xp = currentUser.xp || 0;
   const xpNeeded = (currentUser.level || 1) * 1000;
@@ -3439,42 +3459,56 @@ function scrollChatToBottom() {
 async function editPesanKelas(msgId) {
   const bubble = document.getElementById('msg-bubble-' + msgId);
   if (!bubble || bubble.querySelector('textarea')) return;
+
   const originalHTML = bubble.innerHTML;
   const originalIsi = bubble.dataset.isi || '';
-  const originalMaxWidth = bubble.style.maxWidth;
-  const originalMinWidth = bubble.style.minWidth;
-  const originalWidth = bubble.style.width;
   const currentText = originalIsi || bubble.textContent.replace(/\s*[\u270F\uFE0F]+\s*$/, '').trim();
 
-  const restore = () => {
-    bubble.innerHTML = originalHTML;
-    bubble.dataset.isi = originalIsi;
-    bubble.style.padding = '';
-    bubble.style.maxWidth = originalMaxWidth;
-    bubble.style.minWidth = originalMinWidth;
-    bubble.style.width = originalWidth;
+  // Simpan semua inline styles yang relevan agar bisa di-restore persis
+  const origStyle = {
+    padding:   bubble.style.padding,
+    maxWidth:  bubble.style.maxWidth,
+    minWidth:  bubble.style.minWidth,
+    width:     bubble.style.width
   };
 
-  bubble.style.padding = '8px';
+  function applyOrigStyle(html, isi) {
+    bubble.innerHTML = html;
+    bubble.dataset.isi = isi;
+    bubble.style.padding  = origStyle.padding;
+    bubble.style.maxWidth = origStyle.maxWidth;
+    bubble.style.minWidth = origStyle.minWidth;
+    bubble.style.width    = origStyle.width;
+  }
+
+  const restore = () => applyOrigStyle(originalHTML, originalIsi);
+
+  // Mode edit: expand sedikit agar textarea nyaman, tapi JANGAN set width tetap
+  bubble.style.padding  = '8px';
   bubble.style.maxWidth = '85%';
-  bubble.style.minWidth = '220px';
-  bubble.style.width = 'clamp(220px, 60vw, 400px)';
+  bubble.style.minWidth = '180px';
+  bubble.style.width    = 'auto';
   bubble.innerHTML = '';
 
   const ta = document.createElement('textarea');
   ta.value = currentText;
-  ta.style.cssText = 'width:100%;box-sizing:border-box;border:none;border-radius:8px;padding:6px 8px;font-family:Nunito,sans-serif;font-size:14px;font-weight:600;resize:none;min-height:64px;background:rgba(255,255,255,0.15);color:inherit;outline:none;display:block';
+  ta.style.cssText = 'width:100%;box-sizing:border-box;border:none;border-radius:8px;padding:6px 8px;font-family:Nunito,sans-serif;font-size:14px;font-weight:600;resize:none;background:rgba(255,255,255,0.15);color:inherit;outline:none;display:block;overflow:hidden';
+
+  // Auto-resize textarea sesuai isi
+  const autoResize = () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; };
+  ta.addEventListener('input', autoResize);
+  setTimeout(autoResize, 0);
 
   const btnRow = document.createElement('div');
-  btnRow.style.cssText = 'display:flex;gap:6px;margin-top:4px';
+  btnRow.style.cssText = 'display:flex;gap:6px;margin-top:6px';
 
   const saveBtn = document.createElement('button');
   saveBtn.textContent = '✓ Simpan';
-  saveBtn.style.cssText = 'background:rgba(255,255,255,0.9);color:var(--blue);border:none;border-radius:8px;padding:4px 12px;font-size:12px;cursor:pointer;font-family:Nunito,sans-serif;font-weight:800';
+  saveBtn.style.cssText = 'background:rgba(255,255,255,0.9);color:var(--blue);border:none;border-radius:8px;padding:4px 14px;font-size:12px;cursor:pointer;font-family:Nunito,sans-serif;font-weight:800';
 
   const cancelBtn = document.createElement('button');
   cancelBtn.textContent = '✕ Batal';
-  cancelBtn.style.cssText = 'background:rgba(255,255,255,0.2);color:inherit;border:none;border-radius:8px;padding:4px 12px;font-size:12px;cursor:pointer;font-family:Nunito,sans-serif;font-weight:800';
+  cancelBtn.style.cssText = 'background:rgba(255,255,255,0.2);color:inherit;border:none;border-radius:8px;padding:4px 14px;font-size:12px;cursor:pointer;font-family:Nunito,sans-serif;font-weight:800';
 
   cancelBtn.onclick = restore;
   saveBtn.onclick = async () => {
@@ -3485,9 +3519,8 @@ async function editPesanKelas(msgId) {
     try {
       const data = await api('PUT', `/kelas/${kelasChatKelasId}/chat/${msgId}`, { isi: newText });
       if (data.success) {
-        bubble.dataset.isi = newText;
-        bubble.innerHTML = escapeHtml(newText) + ' <span style="font-size:11px;opacity:0.7">✏️</span>';
-        bubble.style.padding = '';
+        const newHTML = escapeHtml(newText) + ' <span style="font-size:11px;opacity:0.7">✏️</span>';
+        applyOrigStyle(newHTML, newText);
         socket.emit('kelas:edit_pesan', { kelasId: kelasChatKelasId, msgId, isi: newText });
       } else { toast('Gagal mengedit pesan', 'error'); restore(); }
     } catch(e) { toast('Gagal mengedit pesan', 'error'); restore(); }
@@ -4438,9 +4471,7 @@ async function loadGuruDashboard() {
   if (btnLog) btnLog.style.display = DEV_EMAILS.includes(currentUser.email) ? 'inline-block' : 'none';
 
   document.getElementById('guru-nav-name').textContent = currentUser.nama.split(' ')[0];
-  document.getElementById('guru-nav-avatar').textContent = currentUser.avatar || '👩‍🏫';
-  document.getElementById('guru-greeting').textContent = `Selamat Datang, ${currentUser.nama}! ${currentUser.avatar || '👩‍🏫'}`;
-  document.getElementById('guru-banner-avatar').textContent = currentUser.avatar || '👩‍🏫';
+  syncAvatarUI(currentUser.avatar || '👩‍🏫', 'guru');
 
   showLoading(true);
   try {
