@@ -246,7 +246,7 @@ module.exports = function(io) {
     // ── VS ONLINE: List public rooms yang sedang lobby ────────
     socket.on('zep:get_public_rooms', () => {
       const list = Object.values(rooms)
-        .filter(r => r.is_public && r.status === 'lobby')
+        .filter(r => r.is_public && r.status === 'lobby' && Object.keys(r.pemain).length < 2)
         .map(r => ({
           kode: r.kode,
           judul: r.quiz.judul,
@@ -266,6 +266,10 @@ module.exports = function(io) {
       const userId = user?.id;
       if (!userId) { socket.emit('zep:error', { pesan: 'Login dulu ya!' }); return; }
 
+      // Batasi maksimal 2 pemain per battle
+      const sudahAda = Object.keys(room.pemain).length;
+      if (sudahAda >= 2) { socket.emit('zep:error', { pesan: 'Room sudah penuh (maks. 2 pemain).' }); return; }
+
       room.pemain[userId] = { id: userId, nama: user.nama, avatar: user.avatar || '🦁', socketId: socket.id };
       room.scores[userId] = 0;
       socket.join(kode_room);
@@ -277,10 +281,10 @@ module.exports = function(io) {
         pemain: Object.values(room.pemain).map(p => ({ id: p.id, nama: p.nama, avatar: p.avatar, skor: 0 }))
       });
 
-      // Auto-start jika sudah ada 2+ pemain (countdown 10 detik)
+      // Auto-start tepat saat pemain ke-2 masuk (room 1v1, langsung mulai dalam 3 detik)
       const jumlahPemain = Object.keys(room.pemain).length;
-      if (jumlahPemain >= 2 && !room.auto_start_timer) {
-        let countdown = 10;
+      if (jumlahPemain === 2 && !room.auto_start_timer) {
+        let countdown = 3;
         broadcast(kode_room, 'zep:auto_start_countdown', { detik: countdown });
         room.auto_start_timer = setInterval(() => {
           countdown--;

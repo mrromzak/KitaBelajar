@@ -781,9 +781,10 @@
     <div class="zep-podium" id="zep-podium"></div>
     <div class="zep-hasil-soal" id="zep-final-lb" style="text-align:left"></div>
     <div style="margin-top:28px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-      <button class="zep-btn zep-btn-primary zep-btn-lg" onclick="bukaZepQuizMurid()">🔄 Main Lagi</button>
+      <button class="zep-btn zep-btn-primary zep-btn-lg" id="zep-final-battle-lagi" onclick="zepSesiBaru()">⚡ Sesi Baru</button>
       <button class="zep-btn zep-btn-secondary zep-btn-lg" onclick="showPage('page-murid')">🏠 Dashboard</button>
     </div>
+    <p id="zep-final-info-sesi" style="font-size:12px;opacity:.5;margin-top:10px;text-align:center">Kamu bisa langsung mulai sesi baru tanpa menunggu lawan</p>
   </div>
 </div>
 
@@ -2266,6 +2267,14 @@ async function api(method, path, body) {
   if (token) opts.headers['Authorization'] = `Bearer ${token}`;
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch(API + path, opts);
+  if (res.status === 401) {
+    // Token expired — bersihkan sesi dan minta login ulang
+    localStorage.removeItem('kb_token');
+    token = null;
+    toast('Sesi habis. Silakan login ulang.', 'error');
+    setTimeout(() => showPage('page-login'), 1500);
+    return { success: false, _authExpired: true };
+  }
   return res.json();
 }
 
@@ -8282,6 +8291,7 @@ let selectedJenjang  = { online: 'SD', ai: 'SD' };
 let selectedKelas    = { online: 1,    ai: 1    };
 let selectedMapel    = { online: null, ai: null };
 let onlineJoinMode   = 'random'; // 'random' | 'pilih'
+let zepPrevMode      = null;     // 'online' | 'ai' | 'guru' — untuk tombol Sesi Baru
 let bankMapelList    = [];
 let mmTimerInterval  = null;
 let mmElapsed        = 0;
@@ -8434,6 +8444,7 @@ async function loadBankMapel(mode) {
 //  MODE: VS ONLINE — Matchmaking by Mapel
 // ============================================================
 async function bukaVSOnline() {
+  zepPrevMode = 'online';
   showPage('page-zep-online');
   selectedMapel.online = null;
   onlineJoinMode = 'random';
@@ -8448,31 +8459,56 @@ async function zepCariLawan() {
   if (onlineJoinMode === 'pilih' && !selectedMapel.online) { toast('Pilih mata pelajaran dulu!', 'error'); return; }
   if (!zepSocket) zepConnect();
 
+  // Cek token — jika tidak ada, minta login ulang
+  const tkn = localStorage.getItem('kb_token');
+  if (!tkn) { toast('Sesi habis. Silakan refresh halaman.', 'error'); return; }
+
   const jenjang = selectedJenjang.online;
   const kelas   = selectedKelas.online;
 
-  // Mode random: pilih mapel acak dari daftar default
+  // Mode random: prioritaskan mapel yang ada di bank soal, acak sisanya
+  const daftarRandom = onlineJoinMode === 'random'
+    ? [...bankMapelList.filter(m => m.total > 0).map(m => m.mapel),
+       ...DEFAULT_MAPEL].filter((v,i,a) => a.indexOf(v) === i) // deduplikasi
+    : null;
+
   let mapel = selectedMapel.online;
   if (onlineJoinMode === 'random') {
-    mapel = DEFAULT_MAPEL[Math.floor(Math.random() * DEFAULT_MAPEL.length)];
+    mapel = daftarRandom[Math.floor(Math.random() * daftarRandom.length)];
   }
 
   const kategori = getKategoriKey('online');
 
-  // Generate soal via AI, fallback ke bank soal jika AI gagal
+  // Generate soal: coba AI, fallback bank soal, retry mapel lain jika perlu (max 3x)
   showLoading(true, 'Loading...');
   let soalData = null;
-  try {
-    const d = await api('GET', `/zepquiz/ai-generate?mapel=${encodeURIComponent(mapel)}&jenjang=${encodeURIComponent(jenjang)}&kelas=${encodeURIComponent(kelas)}&jumlah=10`);
-    if (d.success && d.soal?.length) soalData = d;
-    else {
-      const b = await api('GET', `/zepquiz/bank-soal?mapel=${encodeURIComponent(mapel)}&jumlah=10`);
-      if (b.success && b.soal?.length) soalData = b;
+  const triedMapel = new Set();
+
+  for (let attempt = 0; attempt < 3 && !soalData; attempt++) {
+    if (triedMapel.has(mapel) && onlineJoinMode === 'random') {
+      // Pilih mapel berbeda
+      const sisa = daftarRandom.filter(m => !triedMapel.has(m));
+      if (!sisa.length) break;
+      mapel = sisa[Math.floor(Math.random() * sisa.length)];
     }
-  } catch(e) {}
+    triedMapel.add(mapel);
+    try {
+      const d = await api('GET', `/zepquiz/ai-generate?mapel=${encodeURIComponent(mapel)}&jenjang=${encodeURIComponent(jenjang)}&kelas=${encodeURIComponent(kelas)}&jumlah=10`);
+      // Deteksi 401 — token expired
+      if (d.pesan && (d.pesan.includes('Token') || d.pesan.includes('token') || d.pesan.includes('login'))) {
+        showLoading(false);
+        toast('Sesi habis. Silakan refresh halaman.', 'error');
+        return;
+      }
+      if (d.success && d.soal?.length) { soalData = d; break; }
+      // AI gagal — coba bank soal
+      const b = await api('GET', `/zepquiz/bank-soal?mapel=${encodeURIComponent(mapel)}&jumlah=10`);
+      if (b.success && b.soal?.length) { soalData = b; break; }
+    } catch(e) {}
+  }
   showLoading(false);
 
-  if (!soalData) { toast(`Belum ada soal tersedia. Coba lagi!`, 'error'); return; }
+  if (!soalData) { toast('Gagal memuat soal. Coba lagi!', 'error'); return; }
 
   // Tampilkan status matchmaking
   document.getElementById('online-cari-btn').style.display = 'none';
@@ -8517,6 +8553,7 @@ const AI_NAME = 'KikiBot 🤖';
 const AI_AVATAR = '🤖';
 
 async function bukaVSAI() {
+  zepPrevMode = 'ai';
   showPage('page-zep-ai');
   aiSelectedMapel = null;
   selectedMapel.ai = null;
@@ -9138,6 +9175,13 @@ function zepReset() {
   zepSoalIdx = -1;
   zepSudahJawab = false;
   zepSelectedQuizId = null;
+}
+
+function zepSesiBaru() {
+  // Langsung ke mode yang sama tanpa menunggu lawan
+  if (zepPrevMode === 'online') bukaVSOnline();
+  else if (zepPrevMode === 'ai')  bukaVSAI();
+  else bukaZepQuizMurid();
 }
 </script>
 
