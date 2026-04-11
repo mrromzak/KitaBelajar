@@ -359,7 +359,7 @@ router.post('/register', async (req, res) => {
       }
     }
 
-    const token = jwt.sign({ id, nama: safaNama, email: normalEmail, role }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id, nama: safaNama, email: normalEmail, role }, JWT_SECRET, { expiresIn: '30d' });
     res.status(201).json({
       success: true,
       pesan: 'Registrasi berhasil!' + (parentInfo ? ' Akun orangtua dikirim ke email kamu.' : ''),
@@ -393,7 +393,7 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign(
       { id: user.id, nama: user.nama, email: user.email, role: user.role },
-      JWT_SECRET, { expiresIn: '7d' }
+      JWT_SECRET, { expiresIn: '30d' }
     );
     res.json({
       success: true,
@@ -623,11 +623,11 @@ router.post('/google', async (req, res) => {
         parentInfo = { parentEmail, parentPassword };
       }
 
-      const jwtToken = jwt.sign({ id, nama: safaNama, email: normalEmail, role }, JWT_SECRET, { expiresIn: '7d' });
+      const jwtToken = jwt.sign({ id, nama: safaNama, email: normalEmail, role }, JWT_SECRET, { expiresIn: '30d' });
       return res.status(201).json({ success: true, pesan: `Selamat datang, ${safaNama}!`, token: jwtToken, user: { id, nama: safaNama, email: normalEmail, role, avatar, xp: 0, level: 1 }, parent_info: parentInfo });
     }
 
-    const jwtToken = jwt.sign({ id: user.id, nama: user.nama, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    const jwtToken = jwt.sign({ id: user.id, nama: user.nama, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
     res.json({ success: true, is_new: false, pesan: `Selamat datang, ${user.nama}!`, token: jwtToken, user: { id: user.id, nama: user.nama, email: user.email, role: user.role, avatar: user.avatar, xp: user.xp, level: user.level } });
   } catch (err) {
     console.error('[google-auth]', err.message);
