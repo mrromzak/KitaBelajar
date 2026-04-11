@@ -8174,7 +8174,10 @@ function zepConnect() {
   // ── MURID events ──
   zepSocket.on('zep:joined', (state) => {
     showLoading(false);
-    zepRoom = state;
+    zepRoom = state; // update dengan data lengkap dari server
+    // Kalau online matchmaking (is_online), tetap di halaman matchmaking tunggu soal
+    if (state.is_online) return;
+    // Kalau join pakai kode, tampilkan lobby wait
     document.getElementById('zep-wait-judul').textContent = state.judul || 'Quiz';
     document.getElementById('zep-wait-kode').textContent = state.kode;
     renderZepPemainWait(state.pemain);
@@ -8286,19 +8289,16 @@ function zepConnect() {
     const info = document.getElementById('online-mm-info');
     const anim = document.getElementById('online-mm-anim');
     if (generating) {
-      // Server sedang generate soal — tampilkan loading
       if (info) info.textContent = `✅ Lawan: ${lawan?.nama || 'Seseorang'} — Menyiapkan soal...`;
       if (anim) anim.textContent = '⚙️';
     } else {
       if (info) info.textContent = `✅ Lawan ditemukan: ${lawan?.nama || 'Seseorang'}!`;
     }
-    // Bergabung ke room
+    // Langsung set zepRoom dari event ini — server sudah masukkan player ke room
+    // TIDAK perlu emit zep:join_room lagi (server sudah handle di matchmaking)
     zepSkorSaya = 0;
     zepIsOnline = true;
-    zepSocket.emit('zep:join_room', {
-      kode_room,
-      user: { id: currentUser.id, nama: currentUser.nama, avatar: currentUser.avatar || '🦁' }
-    });
+    zepRoom = { kode: kode_room, judul };
   });
   zepSocket.on('zep:matchmaking_waiting', ({ posisi }) => {
     const info = document.getElementById('online-mm-info');

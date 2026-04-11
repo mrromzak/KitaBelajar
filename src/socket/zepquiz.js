@@ -514,8 +514,14 @@ module.exports = function(io) {
             s.data.kode = kode_room;
             s.data.userId = p.userId;
             const lawan = p.userId === p1.userId ? p2.user : p1.user;
-            // Beritahu sudah match, server sedang generate soal
+            // Kirim matched + joined sekaligus agar client langsung set zepRoom
             s.emit('zep:matched', { kode_room, lawan, judul: finalJudul, generating: true });
+            s.emit('zep:joined', {
+              kode: kode_room,
+              judul: finalJudul,
+              pemain: [p1.user, p2.user].map(u => ({ ...u })),
+              is_online: true
+            });
           }
         });
 
