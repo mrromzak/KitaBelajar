@@ -12,12 +12,173 @@
 
 const supabase = require('../supabase');
 
+// ── Soal Cache: hindari generate berulang untuk kategori sama ──
+// Key: "mapel_jenjang_kelas", value: { soal[], expiry }
+const soalCache = {};
+const CACHE_TTL  = 8 * 60 * 1000; // 8 menit
+
+// ── Antrian generate soal: batasi max 2 concurrent Groq call ──
+let   groqConcurrent = 0;
+const GROQ_MAX_CONCURRENT = 2;
+const groqQueue = [];
+
+function processGroqQueue() {
+  while (groqConcurrent < GROQ_MAX_CONCURRENT && groqQueue.length > 0) {
+    const task = groqQueue.shift();
+    groqConcurrent++;
+    _callGroq(task.mapel, task.jenjang, task.kelas, task.jumlah)
+      .then(soal => {
+        // Simpan ke cache
+        const key = `${task.mapel}_${task.jenjang}_${task.kelas}`;
+        soalCache[key] = { soal, expiry: Date.now() + CACHE_TTL };
+        task.resolve(soal);
+      })
+      .catch(task.reject)
+      .finally(() => { groqConcurrent--; processGroqQueue(); });
+  }
+}
+
+// ── Generate soal: cache-first → antrian Groq → fallback bank soal ──
+async function generateSoalServer(mapel, jenjang, kelas, jumlah = 10) {
+  const key = `${mapel}_${jenjang}_${kelas}`;
+
+  // 1. Cache hit → acak ulang dan kembalikan
+  if (soalCache[key] && soalCache[key].expiry > Date.now()) {
+    const cached = [...soalCache[key].soal].sort(() => Math.random() - 0.5);
+    console.log(`[soal] cache hit: ${key}`);
+    return cached.slice(0, jumlah);
+  }
+
+  // 2. Coba via Groq (dengan antrian & retry)
+  try {
+    const soal = await new Promise((resolve, reject) => {
+      groqQueue.push({ mapel, jenjang, kelas, jumlah, resolve, reject });
+      processGroqQueue();
+    });
+    return soal;
+  } catch (groqErr) {
+    console.warn(`[soal] Groq gagal (${groqErr.message}), fallback ke bank soal`);
+  }
+
+  // 3. Fallback: ambil dari bank soal Supabase
+  const { data } = await supabase
+    .from('soal')
+    .select('id, pertanyaan, emoji, mapel, jenis, opsi, jawaban, poin')
+    .eq('jenis', 'pilihan_ganda')
+    .eq('mapel', mapel)
+    .limit(jumlah * 3);
+
+  let bankSoal = (data || []).filter(s => {
+    const opsi = typeof s.opsi === 'string' ? JSON.parse(s.opsi || '[]') : (s.opsi || []);
+    return opsi.length >= 2;
+  });
+
+  // Kalau tidak ada soal mapel ini, ambil soal apapun
+  if (!bankSoal.length) {
+    const { data: any } = await supabase
+      .from('soal')
+      .select('id, pertanyaan, emoji, mapel, jenis, opsi, jawaban, poin')
+      .eq('jenis', 'pilihan_ganda')
+      .limit(jumlah * 2);
+    bankSoal = (any || []).filter(s => {
+      const opsi = typeof s.opsi === 'string' ? JSON.parse(s.opsi || '[]') : (s.opsi || []);
+      return opsi.length >= 2;
+    });
+  }
+
+  if (!bankSoal.length) throw new Error('Tidak ada soal tersedia');
+
+  const { decrypt } = require('../utils/crypto');
+  return bankSoal
+    .sort(() => Math.random() - 0.5)
+    .slice(0, jumlah)
+    .map((s, i) => ({
+      id: s.id || `bk-${i}`,
+      pertanyaan: s.pertanyaan,
+      emoji: s.emoji || '❓',
+      mapel: s.mapel,
+      jenis: 'pilihan_ganda',
+      opsi: typeof s.opsi === 'string' ? JSON.parse(s.opsi || '[]') : (s.opsi || []),
+      jawaban: (() => { try { return decrypt(s.jawaban); } catch(e) { return s.jawaban; } })(),
+      poin: s.poin || 100
+    }));
+}
+
+// ── Panggil Groq API dengan retry + backoff ──────────────────
+async function _callGroq(mapel, jenjang, kelas, jumlah, retries = 3) {
+  const GROQ_API_KEY = process.env.GROQ_API_KEY;
+  const GROQ_MODEL   = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+  if (!GROQ_API_KEY) throw new Error('GROQ_API_KEY tidak diset');
+
+  const seed = Math.random().toString(36).substring(2, 8);
+  const systemPrompt = 'Kamu adalah generator soal kuis pendidikan Indonesia. Jawab HANYA dengan JSON array yang valid, tanpa teks atau markdown apapun.';
+  const userPrompt =
+    `Buat ${jumlah} soal pilihan ganda untuk "${mapel}", jenjang ${jenjang} kelas ${kelas} (kurikulum Merdeka). ` +
+    `Seed: ${seed}. Variasikan jenis dan tingkat kesulitan.\n` +
+    `Format (HANYA JSON array, tidak ada teks lain):\n` +
+    `[{"pertanyaan":"...?","opsi":["A. ...","B. ...","C. ...","D. ..."],"jawaban":"A. ...","emoji":"🔢"}]\n` +
+    `Pastikan "jawaban" sama persis dengan salah satu elemen "opsi".`;
+
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY}` },
+        body: JSON.stringify({
+          model: GROQ_MODEL, max_tokens: 3000, temperature: 0.85,
+          messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }]
+        }),
+        signal: AbortSignal.timeout(25000) // timeout 25 detik
+      });
+
+      if (res.status === 503 || res.status === 429) {
+        const delay = 1000 * Math.pow(2, attempt - 1); // 1s, 2s, 4s
+        console.warn(`[Groq] ${res.status} — retry ${attempt}/${retries} dalam ${delay}ms`);
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || `Groq ${res.status}`);
+
+      const raw = (data.choices?.[0]?.message?.content || '')
+        .replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+      const jsonMatch = raw.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) throw new Error('JSON tidak valid dari AI');
+
+      const parsed = JSON.parse(jsonMatch[0]);
+      const soal = parsed
+        .filter(s => s.pertanyaan && Array.isArray(s.opsi) && s.opsi.length >= 2 && s.jawaban)
+        .map((s, i) => ({
+          id: `srv-${seed}-${i}`,
+          pertanyaan: String(s.pertanyaan).trim(),
+          emoji: String(s.emoji || '❓').trim(),
+          mapel, jenis: 'pilihan_ganda',
+          opsi:    s.opsi.map(o => String(o).trim()),
+          jawaban: String(s.jawaban).trim(),
+          poin:    100
+        }));
+
+      if (!soal.length) throw new Error('Soal tidak valid dari AI');
+      console.log(`[Groq] OK: ${soal.length} soal untuk ${mapel} (attempt ${attempt})`);
+      return soal;
+
+    } catch (err) {
+      if (attempt === retries) throw err;
+      const delay = 1000 * Math.pow(2, attempt - 1);
+      console.warn(`[Groq] Error attempt ${attempt}: ${err.message} — retry dalam ${delay}ms`);
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+  throw new Error('Groq gagal setelah semua retry');
+}
+
 module.exports = function(io) {
 
   // rooms[kode] = { kode, quiz, soal[], pemain{}, status, soalIdx, timer, scores{} }
   const rooms = {};
 
-  // matchmakingQueue[kategori] = [{ userId, socketId, user, soal, quizJudul, durasi }, ...]
+  // matchmakingQueue[kategori] = [{ userId, socketId, user, mapel, jenjang, kelas, durasi }, ...]
   const matchmakingQueue = {};
 
   function broadcast(kode, event, data) {
@@ -526,56 +687,6 @@ module.exports = function(io) {
 
     // Bersihkan room setelah 5 menit
     setTimeout(() => { delete rooms[kode]; }, 300000);
-  }
-
-  // ── Helper: Generate soal di server via Groq ──────────────
-  async function generateSoalServer(mapel, jenjang, kelas, jumlah = 10) {
-    const GROQ_API_KEY = process.env.GROQ_API_KEY;
-    const GROQ_MODEL   = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
-
-    if (!GROQ_API_KEY) throw new Error('GROQ_API_KEY tidak diset');
-
-    const seed = Math.random().toString(36).substring(2, 8);
-    const systemPrompt = 'Kamu adalah generator soal kuis pendidikan Indonesia. Jawab HANYA dengan JSON array yang valid, tanpa teks atau markdown apapun di luar array.';
-    const userPrompt =
-      `Buat ${jumlah} soal pilihan ganda untuk "${mapel}", jenjang ${jenjang} kelas ${kelas} (kurikulum Merdeka). ` +
-      `Seed: ${seed}. Variasikan jenis dan tingkat kesulitan.\n\n` +
-      `Format (HANYA JSON array):\n` +
-      `[{"pertanyaan":"...?","opsi":["A. ...","B. ...","C. ...","D. ..."],"jawaban":"A. ...","emoji":"emoji"}]` +
-      `\nPastikan "jawaban" sama persis dengan salah satu elemen "opsi".`;
-
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY}` },
-      body: JSON.stringify({
-        model: GROQ_MODEL, max_tokens: 3000, temperature: 0.85,
-        messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }]
-      })
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error?.message || 'Groq error');
-
-    // Strip <think> tag dari model reasoning
-    const raw = (data.choices?.[0]?.message?.content || '').replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-    const jsonMatch = raw.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) throw new Error('AI tidak menghasilkan JSON valid');
-
-    const parsed = JSON.parse(jsonMatch[0]);
-    const soal = parsed
-      .filter(s => s.pertanyaan && Array.isArray(s.opsi) && s.opsi.length >= 2 && s.jawaban)
-      .map((s, i) => ({
-        id:         `srv-${seed}-${i}`,
-        pertanyaan: String(s.pertanyaan).trim(),
-        emoji:      String(s.emoji || '❓').trim(),
-        mapel, jenis: 'pilihan_ganda',
-        opsi:    s.opsi.map(o => String(o).trim()),
-        jawaban: String(s.jawaban).trim(),
-        poin:    100
-      }));
-
-    if (!soal.length) throw new Error('Soal tidak valid dari AI');
-    return soal;
   }
 
 };
