@@ -936,7 +936,7 @@ function updateLevelCounts() {
       if (m.kelas) return s + Object.values(m.kelas).reduce((a,arr)=>a+arr.length,0);
       return s;
     }, 0);
-    document.getElementById('count-' + lv.toLowerCase()).textContent = `${mapels} Mapel · ${soalTotal} Soal`;
+    document.getElementById('count-' + lv.toLowerCase()).textContent = `${mapels} Mata Pelajaran`;
   });
 }
 
@@ -970,7 +970,6 @@ function pilihLevel(lv) {
     return `<div class="subj-card" style="background:${cfg.bg};animation-delay:${i*0.05}s" onclick="pilihMapel('${esc(name)}')">
       <span class="subj-ico">${cfg.icon}</span>
       <div class="subj-name">${name}</div>
-      <div class="subj-count">${totalSoal} soal</div>
     </div>`;
   }).join('');
   showView('subjects');

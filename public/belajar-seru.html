@@ -727,12 +727,20 @@
   </div>
 </div>
 
+<!-- Forfeit button: fixed overlay, hanya muncul saat VS Player online -->
+<button id="zep-forfeit-btn" onclick="zepKonfirmasiForfeit()"
+  style="display:none;position:fixed;bottom:24px;right:20px;z-index:500;
+    background:rgba(26,26,46,0.92);border:2px solid rgba(255,71,87,0.6);
+    color:#FF6B6B;border-radius:50px;padding:10px 18px;font-family:Nunito,sans-serif;
+    font-weight:800;font-size:13px;cursor:pointer;gap:6px;align-items:center;
+    box-shadow:0 4px 20px rgba(255,71,87,0.3);transition:all .2s"
+  title="Keluar / Menyerah">🏳️ Menyerah</button>
+
 <!-- ========== KITA QUIZ: SOAL (MURID) ========== -->
 <div class="page zep-page" id="page-zep-soal">
   <nav class="zep-navbar">
     <div class="zep-soal-num" id="zep-soal-num-nav">Soal 1/5</div>
     <div class="zep-skor-live">⭐ <span id="zep-my-skor">0</span></div>
-    <button id="zep-forfeit-btn" onclick="zepKonfirmasiForfeit()" style="display:none;background:rgba(255,71,87,0.18);border:2px solid rgba(255,71,87,0.5);color:#FF4757;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;font-weight:900;line-height:1;padding:0;transition:all .15s" title="Keluar / Menyerah">✕</button>
     <div class="zep-timer-ring" id="zep-timer-ring">
       <svg width="68" height="68" viewBox="0 0 68 68">
         <circle class="zep-timer-bg" cx="34" cy="34" r="28"/>
@@ -3093,6 +3101,8 @@ async function loadMuridDashboard() {
   showPage('page-murid');
   onGuruPageHidden();
   if (!currentUser) return;
+  // Cek apakah ada game online yang belum selesai sebelum refresh
+  setTimeout(zepCekReconnect, 500);
 
   document.getElementById('murid-nav-name').textContent = currentUser.nama;
   document.getElementById('murid-greeting').textContent = `Halo, ${currentUser.nama}! 👋`;
@@ -8167,9 +8177,12 @@ function zepConnect() {
     console.log('🎯 ZepQuiz rejoined room:', state.kode);
     zepRoom = { ...zepRoom, ...state, kode: state.kode };
     zepIsOnline = true;
+    if (state.mySkor !== undefined) zepSkorSaya = state.mySkor;
     const activePage = document.querySelector('.page.active')?.id || '';
     if (activePage === 'page-zep-wait') renderZepPemainWait(state.pemain || []);
-    if (state.mySkor !== undefined) zepSkorSaya = state.mySkor;
+    // Kalau reconnect dari halaman murid (refresh), tapi game masih playing → server akan segera kirim zep:soal
+    // Cukup pastikan forfeit btn muncul saat soal tiba
+    toast('Tersambung kembali ke game! ✅', 'success');
   });
   zepSocket.on('zep:error', ({ pesan }) => { toast(pesan, 'error'); showLoading(false); });
 
@@ -8301,6 +8314,8 @@ function zepConnect() {
     zepSkorSaya = 0;
     zepIsOnline = true;
     zepRoom = { kode: kode_room, judul };
+    // Simpan ke sessionStorage agar bisa reconnect setelah refresh
+    try { sessionStorage.setItem('zep_active_room', JSON.stringify({ kode: kode_room, judul, ts: Date.now() })); } catch(e) {}
   });
   zepSocket.on('zep:matchmaking_waiting', ({ posisi }) => {
     const info = document.getElementById('online-mm-info');
@@ -9234,6 +9249,41 @@ function renderPodium(containerId, leaderboard) {
   }).join('');
 }
 
+// ── Reconnect setelah refresh ─────────────────────────────
+function zepCekReconnect() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem('zep_active_room') || 'null');
+    if (!saved) return;
+    // Hanya relevan dalam 10 menit
+    if (Date.now() - saved.ts > 10 * 60 * 1000) {
+      sessionStorage.removeItem('zep_active_room');
+      return;
+    }
+    // Tampilkan banner
+    const banner = document.getElementById('zep-reconnect-banner');
+    if (banner) banner.style.display = 'flex';
+    window._zepReconnectKode = saved.kode;
+  } catch(e) {}
+}
+
+function zepDoReconnect() {
+  const banner = document.getElementById('zep-reconnect-banner');
+  if (banner) banner.style.display = 'none';
+  const kode = window._zepReconnectKode;
+  if (!kode || !currentUser?.id) return;
+  zepConnect();
+  zepIsOnline = true;
+  zepRoom = { kode };
+  zepSocket.emit('zep:rejoin', { kode_room: kode, user_id: currentUser.id });
+  toast('Mencoba menyambung ulang ke game...', 'info');
+}
+
+function zepAbaikanReconnect() {
+  const banner = document.getElementById('zep-reconnect-banner');
+  if (banner) banner.style.display = 'none';
+  try { sessionStorage.removeItem('zep_active_room'); } catch(e) {}
+}
+
 function zepKonfirmasiForfeit() {
   const modal = document.getElementById('modal-forfeit');
   if (modal) { modal.style.display = 'flex'; }
@@ -9264,6 +9314,8 @@ function zepReset() {
   // Sembunyikan tombol forfeit
   const forfeitBtn = document.getElementById('zep-forfeit-btn');
   if (forfeitBtn) forfeitBtn.style.display = 'none';
+  // Bersihkan sesi reconnect
+  try { sessionStorage.removeItem('zep_active_room'); } catch(e) {}
 }
 
 function zepSesiBaru() {
@@ -9273,6 +9325,19 @@ function zepSesiBaru() {
   else bukaZepQuizMurid();
 }
 </script>
+
+<!-- Banner Reconnect setelah Refresh -->
+<div id="zep-reconnect-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;
+  background:linear-gradient(135deg,#FF4757,#c0392b);color:white;padding:14px 20px;
+  display:none;align-items:center;justify-content:space-between;gap:12px;
+  font-family:Nunito,sans-serif;font-weight:800;font-size:14px;
+  box-shadow:0 4px 20px rgba(255,71,87,0.4)">
+  <span>⚔️ Kamu punya game yang belum selesai! Lanjut main?</span>
+  <div style="display:flex;gap:8px;flex-shrink:0">
+    <button onclick="zepDoReconnect()" style="background:white;color:#FF4757;border:none;border-radius:50px;padding:8px 18px;font-family:Nunito,sans-serif;font-weight:900;font-size:13px;cursor:pointer">▶ Lanjutkan</button>
+    <button onclick="zepAbaikanReconnect()" style="background:rgba(255,255,255,0.2);color:white;border:2px solid rgba(255,255,255,0.4);border-radius:50px;padding:8px 14px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer">✕</button>
+  </div>
+</div>
 
 <!-- Modal Konfirmasi Forfeit / Keluar Game -->
 <div class="modal-overlay" id="modal-forfeit" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9000;display:none;align-items:center;justify-content:center">
