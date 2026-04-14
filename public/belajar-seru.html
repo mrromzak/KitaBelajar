@@ -3146,11 +3146,15 @@ async function loadDeadlineAlertDashboard() {
     const allQuizArrays = await Promise.all(quizPromises);
     const allQuiz = allQuizArrays.flat();
     const prQuiz = allQuiz.filter(q => q.tipe === 'pr' && q.deadline);
-    const cekPromises = prQuiz.map(q =>
-      api('GET', `/quiz/hasil/cek?quiz_id=${q.id}`)
+    const cekPromises = prQuiz.map(q => {
+      // Submission-type pakai endpoint berbeda
+      const url = q.tipe_submission
+        ? `/quiz/${q.id}/submission/cek`
+        : `/quiz/hasil/cek?quiz_id=${q.id}`;
+      return api('GET', url)
         .then(cek => { q.sudah_dikerjakan = cek.sudah || false; })
-        .catch(() => { q.sudah_dikerjakan = false; })
-    );
+        .catch(() => { q.sudah_dikerjakan = false; });
+    });
     await Promise.all(cekPromises);
     tampilDeadlineAlert(allQuiz);
   } catch(e) {}
@@ -6908,6 +6912,7 @@ async function loadKelasKuis(kelasId) {
             const cek = await api('GET', `/quiz/${q.id}/submission/cek`);
             q.sudah_dikerjakan = cek.sudah || false;
             q.nilai_submission = cek.submission?.nilai ?? null;
+            q.feedback_submission = cek.submission?.feedback ?? null;
           } else {
             const cek = await api('GET', `/quiz/hasil/cek?quiz_id=${q.id}`);
             q.sudah_dikerjakan = cek.sudah || false;
@@ -6973,9 +6978,11 @@ function renderKuisCard(q, isGuru) {
   } else if (isSubmission) {
     if (sudahDikerjakan) {
       const nilai = q.nilai_submission;
-      actionHtml = `<div class="qsc-done-badge" style="flex-direction:column;align-items:flex-end;gap:2px">
+      const fb = q.feedback_submission;
+      actionHtml = `<div class="qsc-done-badge" style="flex-direction:column;align-items:flex-end;gap:4px;max-width:180px">
         <span>✅ Sudah dikumpulkan</span>
         ${nilai != null ? `<span style="font-size:14px;font-weight:900;color:${nilai>=80?'var(--green)':nilai>=60?'var(--orange)':'var(--red)'}">${nilai}<span style="font-size:11px;font-weight:700"> / 100</span></span>` : '<span style="font-size:11px;color:var(--muted)">Menunggu penilaian...</span>'}
+        ${fb ? `<div style="font-size:11px;font-weight:700;color:#5A6A9A;background:#EEF5FF;border-radius:8px;padding:4px 8px;text-align:right;word-break:break-word;max-width:180px">💬 ${fb}</div>` : ''}
       </div>`;
     } else if (deadlineLewat) {
       actionHtml = `<div class="qsc-deadline deadline-over">⛔ Tenggat terlewat</div>`;
@@ -8209,7 +8216,9 @@ function zepConnect() {
       renderZepLB('zep-lb-sementara', pemain);
     }
   });
-  zepSocket.on('zep:game_selesai', (data) => zepMuridFinal(data));
+  zepSocket.on('zep:game_selesai', (data) => {
+    if (!zepIsGuru && (zepRoom || zepIsOnline)) zepMuridFinal(data);
+  });
   zepSocket.on('zep:room_closed', ({ pesan }) => {
     if (zepIsGuru) return; // guru yang tutup room, sudah handle sendiri via zepGuruTutupRoom
     toast(pesan || 'Room ditutup oleh guru.', 'error');
@@ -8337,8 +8346,10 @@ function zepConnect() {
     toast('Lawan kembali terhubung!', 'success');
   });
 
-  zepSocket.on('zep:player_forfeited', ({ pesan }) => {
-    toast(pesan || 'Lawan menyerah!', 'success');
+  zepSocket.on('zep:player_forfeited', ({ userId, pesan }) => {
+    // Abaikan jika saya sendiri yang forfeit (saya sudah dapat toast dari zepDoForfeit)
+    if (userId && userId === currentUser?.id) return;
+    toast(pesan || 'Lawan menyerah! Kamu menang! 🏆', 'success');
   });
 }
 

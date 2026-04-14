@@ -314,35 +314,43 @@ router.get('/murid-init', authMiddleware, async (req, res) => {
     }
     kelasList.forEach(k => { k.total_materi = materiCount[k.id] || 0; });
 
-    // Ambil semua quiz aktif dari semua kelas sekaligus (1 query, bukan N)
-    const [{ data: quizList }, { data: hasilList }] = await Promise.all([
+    // Ambil semua quiz aktif + hasil quiz + tugas_submission sekaligus
+    const [{ data: quizList }, { data: hasilList }, { data: subList }] = await Promise.all([
       supabase.from('quiz')
-        .select('id, judul, mapel, kelas_id, tipe, deadline, durasi, status')
+        .select('id, judul, mapel, kelas_id, tipe, deadline, durasi, status, tipe_submission')
         .in('kelas_id', kelasIds)
         .eq('status', 'aktif')
         .order('created_at', { ascending: false }),
-      // Ambil semua hasil quiz murid ini untuk semua kelas sekaligus (1 query, bukan N)
       supabase.from('hasil_quiz')
         .select('quiz_id, skor, benar, total_soal')
+        .eq('murid_id', muridId),
+      // Ambil submission murid untuk semua kelas (untuk tipe_submission)
+      supabase.from('tugas_submission')
+        .select('quiz_id, nilai, feedback')
         .eq('murid_id', muridId)
     ]);
 
-    // Index hasil quiz by quiz_id
+    // Index hasil quiz & submissions by quiz_id
     const hasilMap = {};
     (hasilList || []).forEach(h => { hasilMap[h.quiz_id] = h; });
+    const subMap = {};
+    (subList || []).forEach(s => { subMap[s.quiz_id] = s; });
 
-    // Gabungkan quiz + status sudah/belum dikerjakan
-    const quizWithStatus = (quizList || []).map(q => ({
-      ...q,
-      sudah_dikerjakan: !!hasilMap[q.id],
-      hasil: hasilMap[q.id] || null
-    }));
+    // Gabungkan quiz + status sudah/belum dikerjakan (cek tabel yang tepat)
+    const quizWithStatus = (quizList || []).map(q => {
+      if (q.tipe_submission) {
+        const sub = subMap[q.id] || null;
+        return { ...q, sudah_dikerjakan: !!sub, nilai_submission: sub?.nilai ?? null, feedback_submission: sub?.feedback ?? null };
+      }
+      return { ...q, sudah_dikerjakan: !!hasilMap[q.id], hasil: hasilMap[q.id] || null };
+    });
 
-    // Filter untuk deadline alert: PR dengan deadline dalam 7 hari ke depan
+    // Filter untuk deadline alert: PR dengan deadline dalam 7 hari ke depan, belum dikerjakan
     const now = new Date();
     const sevenDays = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     const deadlines = quizWithStatus.filter(q =>
-      q.tipe === 'pr' && q.deadline && new Date(q.deadline) > now && new Date(q.deadline) <= sevenDays
+      q.tipe === 'pr' && q.deadline && !q.sudah_dikerjakan &&
+      new Date(q.deadline) > now && new Date(q.deadline) <= sevenDays
     ).map(q => ({
       ...q,
       kelas_nama: kelasList.find(k => k.id === q.kelas_id)?.nama || ''
