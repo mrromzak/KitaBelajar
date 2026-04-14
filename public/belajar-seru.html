@@ -384,7 +384,7 @@
           <div class="kb-latihan-banner-icon">📚</div>
           <div class="kb-latihan-banner-text">
             <span class="kb-latihan-brand">KitaBelajar</span>
-            <span class="kb-latihan-title">Kita Materi!</span>
+            <span class="kb-latihan-title">AyoBelajar!</span>
             <span class="kb-latihan-sub">Ringkasan materi SD · SMP · SMA lengkap & mudah dipahami!</span>
           </div>
         </div>
@@ -609,7 +609,7 @@
   </div>
 </div>
 
-<!-- ========== KITA QUIZ: VS ONLINE ========== -->
+<!-- ========== KITA QUIZ: VS PLAYER ========== -->
 <div class="page zep-page" id="page-zep-online">
   <nav class="zep-navbar">
     <div class="zep-logo">🌐 VS Player</div>
@@ -629,15 +629,15 @@
     </div>
     <!-- Step 2: Mode Join -->
     <div style="background:rgba(255,255,255,0.06);border-radius:20px;padding:18px;margin-bottom:14px">
-      <div style="font-weight:800;font-size:14px;margin-bottom:10px;color:white">🎮 Mode Bergabung</div>
-      <div style="display:flex;gap:8px;margin-bottom:14px">
+      <div style="font-weight:800;font-size:14px;margin-bottom:12px;color:white">🎮 Mode Bergabung</div>
+      <div style="display:flex;gap:10px;margin-bottom:14px">
         <button id="online-mode-random" onclick="setOnlineMode('random')"
-          style="flex:1;padding:12px 8px;border-radius:14px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;border:2px solid #FFD93D;background:rgba(255,217,61,0.15);color:#FFD93D;transition:all 0.15s">
-          🎲 Random<br><span style="font-size:10px;font-weight:600;opacity:.8">Sesuai jenjangmu</span>
+          style="flex:1;padding:20px 10px;border-radius:16px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer;border:2px solid #FFD93D;background:rgba(255,217,61,0.15);color:#FFD93D;transition:all 0.15s;line-height:1.4">
+          🎲 Random<br><span style="font-size:12px;font-weight:600;opacity:.8">Sesuai jenjangmu</span>
         </button>
         <button id="online-mode-pilih" onclick="setOnlineMode('pilih')"
-          style="flex:1;padding:12px 8px;border-radius:14px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;border:2px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);transition:all 0.15s">
-          📖 Pilih Mapel<br><span style="font-size:10px;font-weight:600;opacity:.8">Tentukan sendiri</span>
+          style="flex:1;padding:20px 10px;border-radius:16px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer;border:2px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);transition:all 0.15s;line-height:1.4">
+          📖 Pilih Mapel<br><span style="font-size:12px;font-weight:600;opacity:.8">Tentukan sendiri</span>
         </button>
       </div>
       <!-- Mapel grid (hanya tampil di mode pilih) -->
@@ -732,6 +732,7 @@
   <nav class="zep-navbar">
     <div class="zep-soal-num" id="zep-soal-num-nav">Soal 1/5</div>
     <div class="zep-skor-live">⭐ <span id="zep-my-skor">0</span></div>
+    <button id="zep-forfeit-btn" onclick="zepKonfirmasiForfeit()" style="display:none;background:rgba(255,71,87,0.18);border:2px solid rgba(255,71,87,0.5);color:#FF4757;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;font-weight:900;line-height:1;padding:0;transition:all .15s" title="Keluar / Menyerah">✕</button>
     <div class="zep-timer-ring" id="zep-timer-ring">
       <svg width="68" height="68" viewBox="0 0 68 68">
         <circle class="zep-timer-bg" cx="34" cy="34" r="28"/>
@@ -8147,8 +8148,8 @@ function zepConnect() {
 
   zepSocket.on('connect', () => {
     console.log('🎯 ZepQuiz connected:', zepSocket.id);
-    // Jika sedang dalam game, langsung rejoin room
-    if (zepRoom?.kode && currentUser?.id) {
+    // Jika sedang dalam game online, langsung rejoin room
+    if (zepRoom?.kode && currentUser?.id && zepIsOnline) {
       zepSocket.emit('zep:rejoin', { kode_room: zepRoom.kode, user_id: currentUser.id });
     }
   });
@@ -8157,17 +8158,18 @@ function zepConnect() {
     console.log('🎯 ZepQuiz disconnected:', reason);
     // Tampilkan notif kecil jika sedang dalam game aktif
     const activePage = document.querySelector('.page.active')?.id || '';
-    if (activePage.startsWith('page-zep') && zepRoom) {
-      toast('Koneksi terputus, mencoba sambung ulang...', '');
+    if (activePage.startsWith('page-zep-soal') && zepRoom && zepIsOnline) {
+      toast('Koneksi terputus, mencoba sambung ulang...', 'info');
     }
   });
 
   zepSocket.on('zep:rejoined', (state) => {
     console.log('🎯 ZepQuiz rejoined room:', state.kode);
-    zepRoom = state;
-    // Kalau di halaman tunggu, update tampilan
+    zepRoom = { ...zepRoom, ...state, kode: state.kode };
+    zepIsOnline = true;
     const activePage = document.querySelector('.page.active')?.id || '';
     if (activePage === 'page-zep-wait') renderZepPemainWait(state.pemain || []);
+    if (state.mySkor !== undefined) zepSkorSaya = state.mySkor;
   });
   zepSocket.on('zep:error', ({ pesan }) => { toast(pesan, 'error'); showLoading(false); });
 
@@ -8304,6 +8306,25 @@ function zepConnect() {
     const info = document.getElementById('online-mm-info');
     if (info) info.textContent = `Antrian: ${posisi} orang menunggu lawan...`;
   });
+
+  zepSocket.on('zep:queue_counts', ({ counts }) => {
+    queueCounts = counts || {};
+    if (onlineJoinMode === 'pilih') {
+      renderMapelGrid('online-mapel-grid', 'online');
+    }
+  });
+
+  zepSocket.on('zep:opponent_disconnected', ({ pesan }) => {
+    toast(pesan || 'Lawan terputus dari permainan.', 'info');
+  });
+
+  zepSocket.on('zep:opponent_reconnected', () => {
+    toast('Lawan kembali terhubung!', 'success');
+  });
+
+  zepSocket.on('zep:player_forfeited', ({ pesan }) => {
+    toast(pesan || 'Lawan menyerah!', 'success');
+  });
 }
 
 // ── MURID: Buka mode selection ────────────────────────────────
@@ -8338,6 +8359,7 @@ let zepPrevMode      = null;     // 'online' | 'ai' | 'guru' — untuk tombol Se
 let bankMapelList    = [];
 let mmTimerInterval  = null;
 let mmElapsed        = 0;
+let queueCounts      = {};       // mapel → jumlah orang dalam antrian
 
 const KELAS_MAP   = { SD: [1,2,3,4,5,6], SMP: [7,8,9], SMA: [10,11,12] };
 const KELAS_LABEL = { SD: n => `Kelas ${n}`, SMP: n => `Kelas ${n-6}`, SMA: n => `Kelas ${n-9}` };
@@ -8376,12 +8398,17 @@ function renderMapelGrid(containerId, mode) {
   const accentRgb = mode === 'online' ? '77,150,255' : '199,125,255';
   el.innerHTML = bankMapelList.map(m => {
     const isSel = selectedMapel[mode] === m.mapel;
+    const qCount = mode === 'online' ? (queueCounts[m.mapel] || 0) : 0;
+    const qBadge = (mode === 'online' && qCount > 0)
+      ? `<span style="font-size:10px;background:rgba(255,107,107,0.85);color:white;border-radius:50px;padding:2px 6px;font-weight:800;margin-top:2px">⚔️ ${qCount} nunggu</span>`
+      : '';
     return `<button onclick="pilihMapel('${m.mapel.replace(/'/g,"\\'")}','${mode}')"
       style="padding:12px 8px;border-radius:14px;font-family:Nunito,sans-serif;font-weight:800;font-size:12px;cursor:pointer;border:2px solid ${isSel ? accent : 'rgba(255,255,255,0.1)'};background:${isSel ? `rgba(${accentRgb},0.2)` : 'rgba(255,255,255,0.05)'};color:${isSel ? 'white' : 'rgba(255,255,255,0.65)'};transition:all 0.15s;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center"
       data-mapel="${m.mapel}">
       <span style="font-size:22px">${getMapelIcon(m.mapel)}</span>
       <span style="font-size:11px;line-height:1.2">${m.mapel}</span>
-      <span style="font-size:10px;opacity:.5">${m.total !== null ? m.total+' soal' : '🤖 AI'}</span>
+      <span style="font-size:10px;opacity:.5">${m.total === null ? '🤖 AI' : ''}</span>
+      ${qBadge}
     </button>`;
   }).join('');
 }
@@ -8400,11 +8427,13 @@ function pilihJenjang(btn, jenjang, mode) {
   selectedJenjang[mode] = jenjang;
   selectedKelas[mode] = KELAS_MAP[jenjang][0];
   renderKelasPills(`${prefix}-kelas-pills`, jenjang, mode);
+  if (mode === 'online') requestQueueCounts();
 }
 
 function pilihKelas(kelas, mode) {
   selectedKelas[mode] = kelas;
   renderKelasPills(`${mode === 'online' ? 'online' : 'ai'}-kelas-pills`, selectedJenjang[mode], mode);
+  if (mode === 'online') requestQueueCounts();
 }
 
 function pilihMapel(mapel, mode) {
@@ -8451,7 +8480,16 @@ function setOnlineMode(mode) {
     cariBtn.style.background = 'linear-gradient(135deg,#4D96FF,#2979FF)';
     cariBtn.style.color = 'white';
     cariBtn.innerHTML = '🔍 Cari Lawan';
+    requestQueueCounts();
   }
+}
+
+function requestQueueCounts() {
+  if (!zepSocket || onlineJoinMode !== 'pilih') return;
+  zepSocket.emit('zep:get_queue_counts', {
+    jenjang: selectedJenjang.online,
+    kelas: selectedKelas.online
+  });
 }
 
 function getKategoriKey(mode) {
@@ -8880,6 +8918,9 @@ function zepMuridTampilSoal({ idx, totalSoal, soal, durasi }) {
   </div>`;
 
   document.getElementById('zep-hasil-feedback').style.display = 'none';
+  // Tampilkan tombol forfeit hanya di VS Player online (bukan VS AI, bukan guru-hosted)
+  const forfeitBtn = document.getElementById('zep-forfeit-btn');
+  if (forfeitBtn) forfeitBtn.style.display = zepIsOnline ? 'flex' : 'none';
   showPage('page-zep-soal');
 
   // Timer
@@ -9193,6 +9234,25 @@ function renderPodium(containerId, leaderboard) {
   }).join('');
 }
 
+function zepKonfirmasiForfeit() {
+  const modal = document.getElementById('modal-forfeit');
+  if (modal) { modal.style.display = 'flex'; }
+}
+function closeForfeitModal() {
+  const modal = document.getElementById('modal-forfeit');
+  if (modal) { modal.style.display = 'none'; }
+}
+function zepDoForfeit() {
+  closeForfeitModal();
+  if (zepSocket && zepRoom?.kode) {
+    zepSocket.emit('zep:forfeit', { kode_room: zepRoom.kode, user_id: currentUser?.id });
+  }
+  clearInterval(zepTimerInterval);
+  zepReset();
+  showPage('page-murid');
+  toast('Kamu menyerah dari permainan.', 'info');
+}
+
 function zepReset() {
   clearInterval(zepTimerInterval);
   zepRoom = null;
@@ -9200,6 +9260,10 @@ function zepReset() {
   zepSoalIdx = -1;
   zepSudahJawab = false;
   zepSelectedQuizId = null;
+  zepIsOnline = false;
+  // Sembunyikan tombol forfeit
+  const forfeitBtn = document.getElementById('zep-forfeit-btn');
+  if (forfeitBtn) forfeitBtn.style.display = 'none';
 }
 
 function zepSesiBaru() {
@@ -9209,6 +9273,19 @@ function zepSesiBaru() {
   else bukaZepQuizMurid();
 }
 </script>
+
+<!-- Modal Konfirmasi Forfeit / Keluar Game -->
+<div class="modal-overlay" id="modal-forfeit" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9000;display:none;align-items:center;justify-content:center">
+  <div class="modal" style="max-width:340px;text-align:center;background:#1a1a2e;border:2px solid rgba(255,71,87,0.4);border-radius:20px;padding:28px 24px">
+    <div style="font-size:52px;margin-bottom:12px">🏳️</div>
+    <h3 style="color:white;font-family:'Fredoka One',cursive;font-size:22px;margin-bottom:8px">Menyerah?</h3>
+    <p style="font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:20px;font-weight:600">Kalau kamu keluar sekarang, lawan otomatis menang dan kamu tidak dapat poin.</p>
+    <div style="display:flex;gap:10px">
+      <button style="flex:1;padding:13px;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.15);color:white;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer" onclick="closeForfeitModal()">Lanjut Main</button>
+      <button style="flex:1;padding:13px;background:linear-gradient(135deg,#FF4757,#c0392b);border:none;color:white;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer" onclick="zepDoForfeit()">🏳️ Menyerah</button>
+    </div>
+  </div>
+</div>
 
 <!-- Modal Konfirmasi Hapus Kelas (Guru) -->
 <div class="modal-overlay" id="modal-hapus-kelas">

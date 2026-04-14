@@ -371,8 +371,31 @@ module.exports = function(io) {
           }
         }, 30000);
       } else if (userId) {
-        delete rooms[kode].pemain[userId];
-        broadcast(kode, 'zep:pemain_keluar', { userId });
+        const room = rooms[kode];
+        // Untuk game VS Player online yang sedang berjalan: beri grace period 20 detik untuk reconnect
+        if (room && room.is_public && room.status === 'playing') {
+          if (room.pemain[userId]) {
+            room.pemain[userId].disconnected = true;
+            // Beri tahu pemain lain
+            broadcast(kode, 'zep:opponent_disconnected', {
+              userId,
+              pesan: 'Lawan terputus, menunggu 20 detik...'
+            });
+            // Timer: kalau tidak reconnect dalam 20 detik → akhiri game, lawan menang
+            room.pemain[userId].disconnectTimer = setTimeout(() => {
+              if (!rooms[kode]) return;
+              const winnerId = Object.keys(rooms[kode].pemain).find(id => id !== userId && !rooms[kode].pemain[id].disconnected);
+              if (winnerId) {
+                rooms[kode].scores[winnerId] = (rooms[kode].scores[winnerId] || 0) + 9999;
+              }
+              broadcast(kode, 'zep:player_forfeited', { userId, pesan: 'Lawan keluar dari permainan. Kamu menang! 🏆' });
+              akhiriGame(kode);
+            }, 20000);
+          }
+        } else {
+          delete rooms[kode].pemain[userId];
+          broadcast(kode, 'zep:pemain_keluar', { userId });
+        }
       }
     });
 
@@ -558,10 +581,21 @@ module.exports = function(io) {
 
       // Update socket ID pemain yang reconnect
       if (room.pemain[user_id]) {
+        // Batalkan timer disconnect jika ada
+        if (room.pemain[user_id].disconnectTimer) {
+          clearTimeout(room.pemain[user_id].disconnectTimer);
+          delete room.pemain[user_id].disconnectTimer;
+        }
+        const wasDisconnected = room.pemain[user_id].disconnected;
+        room.pemain[user_id].disconnected = false;
         room.pemain[user_id].socketId = socket.id;
         socket.join(kode_room);
         socket.data.kode    = kode_room;
         socket.data.userId  = user_id;
+        // Beritahu pemain lain bahwa player ini kembali
+        if (wasDisconnected) {
+          socket.to(kode_room).emit('zep:opponent_reconnected', { userId: user_id });
+        }
 
         // Kirim state game saat ini agar pemain bisa lanjut
         const state = getRoomState(kode_room);
@@ -595,6 +629,41 @@ module.exports = function(io) {
         matchmakingQueue[kategori] = matchmakingQueue[kategori].filter(e => e.userId !== user_id);
       }
       socket.data.mmKategori = null;
+    });
+
+    // ── MATCHMAKING: Jumlah antrian per mapel ─────────────────
+    socket.on('zep:get_queue_counts', ({ jenjang, kelas }) => {
+      const counts = {};
+      Object.entries(matchmakingQueue).forEach(([kategori, entries]) => {
+        // format key: `${jenjang}_${kelas}_${mapel}`
+        const firstUnderscore = kategori.indexOf('_');
+        const secondUnderscore = kategori.indexOf('_', firstUnderscore + 1);
+        if (firstUnderscore < 0 || secondUnderscore < 0) return;
+        const kJ = kategori.substring(0, firstUnderscore);
+        const kK = parseInt(kategori.substring(firstUnderscore + 1, secondUnderscore));
+        const mapelKey = kategori.substring(secondUnderscore + 1);
+        if (kJ === jenjang && kK === parseInt(kelas) && entries.length > 0) {
+          counts[mapelKey] = entries.length;
+        }
+      });
+      socket.emit('zep:queue_counts', { counts });
+    });
+
+    // ── VS PLAYER: Forfeit / menyerah ─────────────────────────
+    socket.on('zep:forfeit', ({ kode_room, user_id }) => {
+      const room = rooms[kode_room];
+      if (!room) return;
+      // Batalkan timer disconnect jika ada
+      if (room.pemain[user_id]?.disconnectTimer) {
+        clearTimeout(room.pemain[user_id].disconnectTimer);
+      }
+      // Beri poin bonus ke lawan agar menang
+      const winnerId = Object.keys(room.pemain).find(id => id !== user_id);
+      if (winnerId) {
+        rooms[kode_room].scores[winnerId] = (rooms[kode_room].scores[winnerId] || 0) + 9999;
+      }
+      broadcast(kode_room, 'zep:player_forfeited', { userId: user_id, pesan: 'Lawan menyerah! Kamu menang! 🏆' });
+      akhiriGame(kode_room);
     });
 
     // ── VS ONLINE: Creator bisa mulai lebih awal ──────────────
