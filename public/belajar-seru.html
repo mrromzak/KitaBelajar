@@ -8355,6 +8355,7 @@ function zepConnect() {
 
 // ── MURID: Buka mode selection ────────────────────────────────
 function bukaZepQuizMurid() {
+  zepIForfeited = false;
   zepConnect();
   zepIsGuru = false;
   showPage('page-zep-mode');
@@ -8551,6 +8552,7 @@ async function loadBankMapel(mode) {
 //  MODE: VS ONLINE — Matchmaking by Mapel
 // ============================================================
 async function bukaVSOnline() {
+  zepIForfeited = false;
   zepPrevMode = 'online';
   showPage('page-zep-online');
   selectedMapel.online = null;
@@ -9308,10 +9310,10 @@ function zepDoForfeit() {
   if (zepSocket && zepRoom?.kode) {
     zepSocket.emit('zep:forfeit', { kode_room: zepRoom.kode, user_id: currentUser?.id });
   }
-  zepIForfeited = true; // tandai: saya yang menyerah — cegah event balik salah arah
   clearInterval(zepTimerInterval);
   zepReset();
-  showPage('page-murid');
+  zepIForfeited = true; // set SETELAH zepReset agar tidak langsung di-clear
+  showPage('page-zep-mode');
   toast('Kamu menyerah dari permainan.', 'info');
 }
 
@@ -9323,7 +9325,7 @@ function zepReset() {
   zepSudahJawab = false;
   zepSelectedQuizId = null;
   zepIsOnline = false;
-  zepIForfeited = false;
+  // zepIForfeited TIDAK di-clear di sini — di-clear saat sesi baru (bukaVSOnline / bukaZepQuizMurid)
   // Sembunyikan tombol forfeit
   const forfeitBtn = document.getElementById('zep-forfeit-btn');
   if (forfeitBtn) forfeitBtn.style.display = 'none';
