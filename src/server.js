@@ -105,8 +105,10 @@ app.get('/', (req, res) => {
 });
 
 // Routes — login pakai loginLimiter khusus
-app.use('/api/auth/login',    loginLimiter);
-app.use('/api/auth/register', loginLimiter);
+app.use('/api/auth/login',           loginLimiter);
+app.use('/api/auth/register',        loginLimiter);
+app.use('/api/auth/send-otp',        loginLimiter);
+app.use('/api/auth/forgot-password', loginLimiter);
 app.use('/api/auth',      require('./routes/auth'));
 app.use('/api/kelas',     require('./routes/kelas'));
 app.use('/api/materi',    require('./routes/materi'));
@@ -283,8 +285,67 @@ app.get('/api/error-logs', async (req, res) => {
   } catch { res.status(403).json({ success: false }); }
 });
 
-// ── Proxy: Groq AI (agar API key tidak terekspos di frontend) ──
+// Model yang diizinkan dari frontend (whitelist agar tidak disalahgunakan)
+const ALLOWED_GROQ_MODELS = new Set([
+  'llama-3.1-8b-instant',
+  'llama-3.3-70b-versatile',
+  'llama3-70b-8192',
+  'llama3-8b-8192',
+  'gemma2-9b-it',
+  'meta-llama/llama-4-scout-17b-16e-instruct'
+]);
+
+// Helper: panggil Groq dan strip <think> tags
+async function callGroq(payload) {
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.GROQ_API_KEY}` },
+    body: JSON.stringify(payload)
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error?.message || 'Groq API error');
+  if (data.choices?.[0]?.message?.content) {
+    let content = data.choices[0].message.content;
+    content = content.replace(/<think>[\s\S]*?<\/think>/gi, '');
+    content = content.replace(/<think>[\s\S]*/i, '');
+    data.choices[0].message.content = content.trim();
+  }
+  return data;
+}
+
+// ── Proxy: Groq AI chat/soal (agar API key tidak terekspos di frontend) ──
 app.post('/api/ai/chat', aiLimiter, async (req, res) => {
+  try {
+    if (!process.env.GROQ_API_KEY)
+      return res.status(500).json({ success: false, pesan: 'GROQ_API_KEY belum diset di server.' });
+
+    const { messages, max_tokens, model, temperature, top_p } = req.body;
+    if (!messages || !Array.isArray(messages))
+      return res.status(400).json({ success: false, pesan: 'messages wajib berupa array.' });
+
+    // Validasi model — hanya izinkan model dari whitelist
+    const safeModel = (model && ALLOWED_GROQ_MODELS.has(model))
+      ? model
+      : (process.env.GROQ_MODEL || 'llama-3.1-8b-instant');
+
+    const payload = {
+      model: safeModel,
+      max_tokens: Math.min(parseInt(max_tokens) || 1024, 4096),
+      messages
+    };
+    if (temperature !== undefined) payload.temperature = Math.min(Math.max(parseFloat(temperature) || 0.7, 0), 2);
+    if (top_p !== undefined) payload.top_p = Math.min(Math.max(parseFloat(top_p) || 1, 0), 1);
+
+    const data = await callGroq(payload);
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error('[AI proxy]', err.message);
+    res.status(500).json({ success: false, pesan: 'Layanan AI tidak tersedia saat ini.' });
+  }
+});
+
+// ── Proxy: Groq Vision (analisis gambar untuk chatbot guru) ──
+app.post('/api/ai/vision', aiLimiter, async (req, res) => {
   try {
     if (!process.env.GROQ_API_KEY)
       return res.status(500).json({ success: false, pesan: 'GROQ_API_KEY belum diset di server.' });
@@ -293,36 +354,15 @@ app.post('/api/ai/chat', aiLimiter, async (req, res) => {
     if (!messages || !Array.isArray(messages))
       return res.status(400).json({ success: false, pesan: 'messages wajib berupa array.' });
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
-        max_tokens: max_tokens || 1024,
-        messages
-      })
+    const data = await callGroq({
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      max_tokens: Math.min(parseInt(max_tokens) || 1024, 2048),
+      messages
     });
-
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error?.message || 'Groq API error');
-
-    // Strip <think>...</think> dari model reasoning (qwen3, dll)
-    if (data.choices?.[0]?.message?.content) {
-      let content = data.choices[0].message.content;
-      // Hapus blok thinking lengkap: <think>...</think>
-      content = content.replace(/<think>[\s\S]*?<\/think>/gi, '');
-      // Kalau model tidak menutup tag <think> (hanya ada opening tag)
-      content = content.replace(/<think>[\s\S]*/i, '');
-      data.choices[0].message.content = content.trim();
-    }
-
     res.json({ success: true, data });
   } catch (err) {
-    console.error('[AI proxy]', err.message);
-    res.status(500).json({ success: false, pesan: 'Layanan AI tidak tersedia saat ini.' });
+    console.error('[AI vision proxy]', err.message);
+    res.status(500).json({ success: false, pesan: 'Layanan AI Vision tidak tersedia saat ini.' });
   }
 });
 

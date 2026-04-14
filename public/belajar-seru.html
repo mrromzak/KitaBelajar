@@ -4985,7 +4985,7 @@ let selectedPdfFile = null;
 // ============================================================
 //  AI MATERI — PDF, Artikel, YouTube
 // ============================================================
-const GROQ_API_KEY_MATERI = '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';
+// GROQ_API_KEY_MATERI dihapus — semua AI call dilakukan via backend proxy /api/ai/
 let aiSumberAktif = null;
 let aiPdfFile = null;
 let aiHasilMateri = null;
@@ -6469,25 +6469,20 @@ async function mulaiStage(stageIdx) {
       const tingkatNames = ['sangat mudah','mudah','sedang','susah','sangat susah'];
       const tingkat = tingkatNames[stageIdx] || 'sedang';
 
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer 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` },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          max_tokens: 2000,
-          temperature: 0.7,
-          messages: [{
-            role: 'system',
-            content: 'Kamu pembuat soal. Balas HANYA JSON object: {"soal":[...]} tanpa teks lain.'
-          },{
-            role: 'user',
-            content: `Buat ${QK_SOAL_PER_STAGE} soal pilihan ganda tingkat ${tingkat} dari materi ini:\n\n${kontenMateri}\n\nFormat: {"soal":[{"pertanyaan":"...","emoji":"📚","opsi":["A","B","C","D"],"jawaban":"teks jawaban persis sama dengan opsi","poin":${50*(stageIdx+1)}}]}`
-          }]
-        })
+      const aiResp = await api('POST', '/ai/chat', {
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 2000,
+        temperature: 0.7,
+        messages: [{
+          role: 'system',
+          content: 'Kamu pembuat soal. Balas HANYA JSON object: {"soal":[...]} tanpa teks lain.'
+        },{
+          role: 'user',
+          content: `Buat ${QK_SOAL_PER_STAGE} soal pilihan ganda tingkat ${tingkat} dari materi ini:\n\n${kontenMateri}\n\nFormat: {"soal":[{"pertanyaan":"...","emoji":"📚","opsi":["A","B","C","D"],"jawaban":"teks jawaban persis sama dengan opsi","poin":${50*(stageIdx+1)}}]}`
+        }]
       });
-
-      const aiData = await res.json();
-      if (aiData.error) throw new Error(aiData.error.message);
+      if (!aiResp.success) throw new Error(aiResp.pesan || 'AI error');
+      const aiData = aiResp.data;
       let soalAI = [];
       try {
         const parsed = JSON.parse(aiData.choices?.[0]?.message?.content || '{}');
@@ -7137,9 +7132,9 @@ async function generateSoalUntukKuis() {
       // Retry logic untuk handle rate limit Groq
       let res, retryCount = 0;
       while (retryCount < 3) {
-        res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        res = await fetch('/api/ai/chat', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer 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` },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (token || localStorage.getItem('kb_token') || '') },
           body: JSON.stringify({
             model: 'llama-3.3-70b-versatile',
             max_tokens: 1500,
@@ -7176,17 +7171,21 @@ Format JSON wajib:
           })
         });
 
-        const resData = await res.json();
+        const resJson = await res.json();
+        // Backend membungkus: { success, data: { choices } } atau { success: false, pesan }
+        const resData = resJson.data || resJson;
 
         // Cek rate limit
-        if (resData.error?.message?.includes('rate_limit') || resData.error?.message?.includes('tokens per minute')) {
+        const errMsg = resJson.pesan || resData.error?.message || '';
+        if (errMsg.includes('rate_limit') || errMsg.includes('tokens per minute') || errMsg.includes('429')) {
           retryCount++;
           btn.textContent = `⏳ Rate limit! Tunggu ${12 * retryCount} detik... (${retryCount}/3)`;
-          toast(`Rate limit Groq, retry ke-${retryCount}...`, '');
+          toast(`Rate limit AI, retry ke-${retryCount}...`, '');
           await new Promise(r => setTimeout(r, 12000 * retryCount));
           continue;
         }
 
+        if (!resJson.success && resJson.pesan) throw new Error(resJson.pesan);
         if (resData.error) throw new Error(resData.error.message);
 
         let teks = resData.choices?.[0]?.message?.content || '{}';
@@ -8141,6 +8140,7 @@ let zepRoom = null;       // { kode_room, quiz, soal[], durasi_per_soal }
 let zepIsGuru = false;
 let zepIsOnline = false;  // VS Online mode
 let zepSkorSaya = 0;
+let zepIForfeited = false; // flag: saya yang menyerah (cegah toast/final salah)
 let zepSoalIdx = -1;
 let zepDurasi = 15;
 let zepTimerInterval = null;
@@ -8217,7 +8217,7 @@ function zepConnect() {
     }
   });
   zepSocket.on('zep:game_selesai', (data) => {
-    if (!zepIsGuru && (zepRoom || zepIsOnline)) zepMuridFinal(data);
+    if (!zepIsGuru && !zepIForfeited && (zepRoom || zepIsOnline)) zepMuridFinal(data);
   });
   zepSocket.on('zep:room_closed', ({ pesan }) => {
     if (zepIsGuru) return; // guru yang tutup room, sudah handle sendiri via zepGuruTutupRoom
@@ -8256,7 +8256,7 @@ function zepConnect() {
   });
   zepSocket.on('zep:game_selesai', (data) => {
     if (zepIsGuru) zepGuruFinal(data);
-    else zepMuridFinal(data);
+    // murid ditangani oleh handler sebelumnya dengan guard zepIForfeited
   });
 
   // ── VS ONLINE events ──
@@ -8346,9 +8346,9 @@ function zepConnect() {
     toast('Lawan kembali terhubung!', 'success');
   });
 
-  zepSocket.on('zep:player_forfeited', ({ userId, pesan }) => {
-    // Abaikan jika saya sendiri yang forfeit (saya sudah dapat toast dari zepDoForfeit)
-    if (userId && userId === currentUser?.id) return;
+  zepSocket.on('zep:player_forfeited', ({ pesan }) => {
+    // Abaikan jika saya sendiri yang menyerah
+    if (zepIForfeited) return;
     toast(pesan || 'Lawan menyerah! Kamu menang! 🏆', 'success');
   });
 }
@@ -9308,6 +9308,7 @@ function zepDoForfeit() {
   if (zepSocket && zepRoom?.kode) {
     zepSocket.emit('zep:forfeit', { kode_room: zepRoom.kode, user_id: currentUser?.id });
   }
+  zepIForfeited = true; // tandai: saya yang menyerah — cegah event balik salah arah
   clearInterval(zepTimerInterval);
   zepReset();
   showPage('page-murid');
@@ -9322,6 +9323,7 @@ function zepReset() {
   zepSudahJawab = false;
   zepSelectedQuizId = null;
   zepIsOnline = false;
+  zepIForfeited = false;
   // Sembunyikan tombol forfeit
   const forfeitBtn = document.getElementById('zep-forfeit-btn');
   if (forfeitBtn) forfeitBtn.style.display = 'none';
@@ -9700,16 +9702,23 @@ async function loadErrorLog(filter) {
       return;
     }
 
-    el.innerHTML = logs.map(l => `
-      <div style="background:white;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow);border-left:4px solid ${l.sumber === 'backend' ? 'var(--red)' : 'var(--orange)'}">
+    el.innerHTML = logs.map(l => {
+      const eSumber = escapeHtml(l.sumber || 'frontend');
+      const ePesan  = escapeHtml(l.pesan || '–');
+      const eUrl    = l.url ? escapeHtml(l.url) : '';
+      const eMethod = l.method ? escapeHtml(l.method) : '';
+      const eStack  = l.stack ? escapeHtml(l.stack) : '';
+      const color   = eSumber === 'backend' ? 'var(--red)' : 'var(--orange)';
+      return `<div style="background:white;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow);border-left:4px solid ${color}">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
-          <span style="background:${l.sumber === 'backend' ? 'var(--red)' : 'var(--orange)'};color:white;padding:3px 10px;border-radius:50px;font-size:11px;font-weight:800">${l.sumber.toUpperCase()}</span>
+          <span style="background:${color};color:white;padding:3px 10px;border-radius:50px;font-size:11px;font-weight:800">${eSumber.toUpperCase()}</span>
           <span style="font-size:12px;color:var(--muted)">${l.created_at ? new Date(l.created_at).toLocaleString('id-ID') : '–'}</span>
         </div>
-        <div style="font-weight:800;font-size:14px;margin-bottom:6px;word-break:break-word">${l.pesan || '–'}</div>
-        ${l.url ? `<div style="font-size:12px;color:var(--muted);margin-bottom:4px">📍 ${l.url}${l.method ? ' [' + l.method + ']' : ''}</div>` : ''}
-        ${l.stack ? `<details style="margin-top:8px"><summary style="font-size:12px;color:var(--blue);cursor:pointer;font-weight:700">Stack trace</summary><pre style="font-size:11px;background:#f8f8f8;padding:10px;border-radius:8px;overflow-x:auto;margin-top:6px;white-space:pre-wrap;word-break:break-all">${l.stack}</pre></details>` : ''}
-      </div>`).join('');
+        <div style="font-weight:800;font-size:14px;margin-bottom:6px;word-break:break-word">${ePesan}</div>
+        ${eUrl ? `<div style="font-size:12px;color:var(--muted);margin-bottom:4px">📍 ${eUrl}${eMethod ? ' [' + eMethod + ']' : ''}</div>` : ''}
+        ${eStack ? `<details style="margin-top:8px"><summary style="font-size:12px;color:var(--blue);cursor:pointer;font-weight:700">Stack trace</summary><pre style="font-size:11px;background:#f8f8f8;padding:10px;border-radius:8px;overflow-x:auto;margin-top:6px;white-space:pre-wrap;word-break:break-all">${eStack}</pre></details>` : ''}
+      </div>`;
+    }).join('');
   } catch(e) {
     el.innerHTML = '<div style="padding:24px;color:var(--red)">Gagal memuat error log.</div>';
   }
@@ -9890,12 +9899,10 @@ async function kirimGuruChat() {
     if (fileSnap && fileSnap.type === 'image') {
       // ── Gambar: pakai Groq vision model langsung ──
       const userMsg = text || 'Tolong analisis dan deskripsikan gambar ini. Jika berupa desain atau infografis, berikan rekomendasi perbaikan.';
-      const visionRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const visionRes = await fetch('/api/ai/vision', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_API_KEY_MATERI },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (token || localStorage.getItem('kb_token') || '') },
         body: JSON.stringify({
-          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-          max_tokens: 1024,
           messages: [
             { role: 'system', content: GURU_SYSTEM_PROMPT },
             { role: 'user', content: [
@@ -9906,7 +9913,7 @@ async function kirimGuruChat() {
         })
       });
       const vData = await visionRes.json();
-      reply = vData?.choices?.[0]?.message?.content || 'Maaf, tidak bisa menganalisis gambar.';
+      reply = vData?.data?.choices?.[0]?.message?.content || 'Maaf, tidak bisa menganalisis gambar.';
       guruChatHistory.push({ role: 'user', content: userMsg });
       guruChatHistory.push({ role: 'assistant', content: reply });
 

@@ -138,7 +138,7 @@ router.get('/latihan', authMiddleware, async (req, res) => {
       .eq('jenis', 'pilihan_ganda');
     if (mapel) query = query.eq('mapel', mapel);
     if (tingkat) query = query.eq('tingkat', tingkat);
-    query = query.order('created_at', { ascending: false }).limit(parseInt(limit));
+    query = query.order('created_at', { ascending: false }).limit(Math.min(parseInt(limit) || 50, 200));
 
     const { data, error } = await query;
     if (error) throw error;

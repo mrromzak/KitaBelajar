@@ -749,6 +749,7 @@ module.exports = function(io) {
     const room = rooms[kode];
     if (!room) return;
     room.status = 'finished';
+    clearTimeout(room.timer); // hentikan soal berikutnya yang masih terjadwal
 
     const final = Object.values(room.pemain).map(p => ({
       id: p.id, nama: p.nama, avatar: p.avatar,
