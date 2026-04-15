@@ -4934,6 +4934,9 @@ async function loadGuruSoalPreview() {
     }
     // Tampilkan max 5 soal terbaru + tombol lihat semua
     const tampil = soalList.slice(0, 5);
+    // Simpan data soal ke cache global agar bisa diakses via ID
+    window._soalCache = window._soalCache || {};
+    tampil.forEach(s => { window._soalCache[s.id] = s; });
     el.innerHTML = tampil.map(s => {
       const jenis = s.jenis === 'pilihan_ganda' ? '🔵 PG' : s.jenis === 'isian' ? '✍️ Essay' : '✅ B/S';
       return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #F5F5F5">
@@ -4942,7 +4945,7 @@ async function loadGuruSoalPreview() {
           <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.pertanyaan}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:2px">${jenis} · ${s.mapel || '–'} · ${s.poin || 100} poin</div>
         </div>
-        <button onclick="editSoalDashboard(${JSON.stringify(s)})" title="Edit" style="background:none;border:none;cursor:pointer;font-size:14px;opacity:0.4;flex-shrink:0;padding:4px;transition:opacity 0.2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.4'">✏️</button>
+        <button onclick="editSoalDashboard(window._soalCache['${s.id}'])" title="Edit" style="background:none;border:none;cursor:pointer;font-size:14px;opacity:0.4;flex-shrink:0;padding:4px;transition:opacity 0.2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.4'">✏️</button>
         <button onclick="hapusSoalDashboard('${s.id}', this)" title="Hapus" style="background:none;border:none;cursor:pointer;font-size:14px;opacity:0.35;flex-shrink:0;padding:4px;transition:opacity 0.2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.35'">🗑️</button>
       </div>`;
     }).join('') +
