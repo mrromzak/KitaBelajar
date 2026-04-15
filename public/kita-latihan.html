@@ -2202,14 +2202,14 @@ function _voiceSpeakFallback(clean) {
   if (voiceGender === 'male' && _lockedMaleVoice) {
     utter.voice = _lockedMaleVoice;
     utter.lang  = _lockedMaleVoice.lang;
-    utter.rate  = 1.1;
+    utter.rate  = 1.0;
     utter.pitch = 0.95;
   } else {
     // female fallback: pakai suara terbaik wanita yang tersedia
     const femaleVoice = getVoice(voiceLang);
     if (femaleVoice) { utter.voice = femaleVoice; utter.lang = femaleVoice.lang; }
     else { utter.lang = voiceLang === 'id' ? 'id-ID' : 'en-GB'; }
-    utter.rate  = 1.1;
+    utter.rate  = 1.0;
     utter.pitch = 1.05;
   }
   utter.volume = 1.0;
@@ -2289,7 +2289,7 @@ async function _playHFTTS(chunks, idx = 0) {
     console.log('[TTS] HF backend OK, size:', blob.size);
     const url  = URL.createObjectURL(blob);
     const audio = new Audio(url);
-    audio.playbackRate = 1.15; // sedikit lebih cepat agar terdengar natural
+    audio.playbackRate = 1.05; // sedikit lebih cepat agar terdengar natural
     audio.onended = () => { URL.revokeObjectURL(url); _playHFTTS(chunks, idx + 1); };
     audio.onerror = () => { URL.revokeObjectURL(url); _playGoogleTTS(chunks, idx); };
     audio.play().catch(() => { URL.revokeObjectURL(url); _playGoogleTTS(chunks, idx); });
