@@ -383,30 +383,21 @@ app.post('/api/ai/tts/kokoro', async (req, res) => {
   try {
     let hfRes;
 
-    if (isId) {
-      // Indonesia → Meta MMS TTS (natural, mendukung Bahasa Indonesia)
-      hfRes = await fetch('https://api-inference.huggingface.co/models/facebook/mms-tts-ind', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.HF_TOKEN}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ inputs: clean })
-      });
-    } else {
-      // Inggris → Kokoro-82M
-      // Voice valid: af_bella/af_sarah/af_nicole/af_sky (wanita), am_adam/am_michael (pria)
-      const kokoroVoice = voice === 'male' ? 'am_michael' : 'af_bella';
-      console.log(`[HF TTS] Kokoro request — voice: ${kokoroVoice}, text: "${clean.slice(0,40)}..."`);
-      hfRes = await fetch('https://api-inference.huggingface.co/models/hexgrad/Kokoro-82M', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.HF_TOKEN}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ inputs: clean, parameters: { voice: kokoroVoice } })
-      });
-    }
+    // Model MMS TTS dari Meta — support Inference API, natural, gratis
+    const model = isId
+      ? 'facebook/mms-tts-ind'  // Indonesia
+      : 'facebook/mms-tts-eng'; // Inggris
+
+    console.log(`[HF TTS] model: ${model}, text: "${clean.slice(0, 40)}..."`);
+
+    hfRes = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.HF_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ inputs: clean })
+    });
 
     console.log(`[HF TTS] response status: ${hfRes.status}, content-type: ${hfRes.headers.get('Content-Type')}`);
 
