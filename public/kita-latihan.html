@@ -259,7 +259,7 @@
     .vm.bot .vm-bubble{background:#F4F0FF;color:#1a1a2e;border-bottom-left-radius:4px}
     .vm.user .vm-bubble{background:linear-gradient(135deg,#7b2ff7,#4D96FF);color:#fff;border-bottom-right-radius:4px}
     .vm-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:#F4F0FF}
-    .vm-correction{font-size:12px;background:#FFF8E1;border:1.5px solid #FFD54F;border-radius:10px;padding:6px 10px;margin-top:6px;color:#795548;font-weight:700}
+    .vm-correction{font-size:12.5px;background:linear-gradient(135deg,#FFF8E1,#FFF3E0);border:2px solid #FFB300;border-radius:10px;padding:8px 12px;margin-top:8px;color:#5D4037;font-weight:700;line-height:1.5;box-shadow:0 2px 8px rgba(255,179,0,.18)}
 
     .voice-mic-area{text-align:center;margin-bottom:16px}
     .mic-btn{width:80px;height:80px;border-radius:50%;border:none;cursor:pointer;font-size:36px;display:inline-flex;align-items:center;justify-content:center;transition:all .25s;background:linear-gradient(135deg,#7b2ff7,#4D96FF);box-shadow:0 6px 24px rgba(123,47,247,.4);position:relative}
@@ -1541,31 +1541,66 @@ function initSpeechRecognition() {
   }
   voiceSpeechSupported = true;
   voiceRecognition = new SR();
-  voiceRecognition.continuous = false;
-  voiceRecognition.interimResults = true;  // tampilkan teks real-time
+  voiceRecognition.continuous    = true;   // live mode: tidak putus di jeda singkat
+  voiceRecognition.interimResults = true;
   voiceRecognition.maxAlternatives = 1;
   voiceRecognition.lang = voiceLang === 'id' ? 'id-ID' : 'en-US';
 
+  let _liveAccumulated = '';  // teks terkumpul di live mode
+  let _liveSendTimer   = null; // timer kirim setelah jeda
+
   voiceRecognition.onresult = (e) => {
     let interim = '';
-    let final   = '';
+    let finalChunk = '';
+
     for (let i = e.resultIndex; i < e.results.length; i++) {
       const t = e.results[i][0].transcript;
-      if (e.results[i].isFinal) final += t;
+      if (e.results[i].isFinal) finalChunk += t;
       else interim += t;
     }
-    // Tampilkan di input box agar user lihat apa yang dikenali
-    const inp = document.getElementById('voice-text-input');
-    if (inp) inp.value = final || interim;
 
-    if (final.trim()) {
-      if (inp) inp.value = '';
-      stopListening();
-      kirimVoiceMsg(final.trim());
+    const inp = document.getElementById('voice-text-input');
+
+    if (voiceLiveMode && voiceLiveActive) {
+      // Live mode: kumpulkan teks, kirim setelah jeda 1.8 detik tanpa suara
+      if (finalChunk) _liveAccumulated += finalChunk;
+      if (inp) inp.value = (_liveAccumulated + interim).trim();
+
+      clearTimeout(_liveSendTimer);
+      if (_liveAccumulated.trim() || finalChunk.trim()) {
+        _liveSendTimer = setTimeout(() => {
+          const toSend = _liveAccumulated.trim();
+          _liveAccumulated = '';
+          if (inp) inp.value = '';
+          if (toSend) {
+            stopListening();
+            kirimVoiceMsg(toSend);
+          }
+        }, 1800); // tunggu 1.8 detik jeda sebelum kirim
+      }
+    } else {
+      // Mode normal: kirim langsung setelah final
+      if (inp) inp.value = finalChunk || interim;
+      if (finalChunk.trim()) {
+        if (inp) inp.value = '';
+        stopListening();
+        kirimVoiceMsg(finalChunk.trim());
+      }
     }
   };
+
   voiceRecognition.onerror = (e) => {
     const inp = document.getElementById('voice-text-input');
+    clearTimeout(_liveSendTimer);
+    // Kirim apa yang sudah terkumpul jika ada
+    if (voiceLiveMode && _liveAccumulated.trim()) {
+      const toSend = _liveAccumulated.trim();
+      _liveAccumulated = '';
+      if (inp) inp.value = '';
+      stopListening();
+      kirimVoiceMsg(toSend);
+      return;
+    }
     if (inp) inp.value = '';
     if (e.error === 'no-speech') {
       if (voiceLiveMode && voiceLiveActive && !voiceSpeaking) {
@@ -1579,8 +1614,18 @@ function initSpeechRecognition() {
       setMicStatus(voiceLang === 'id' ? 'Gagal mendeteksi suara, coba lagi' : 'Could not detect speech, try again', '');
     }
   };
+
   voiceRecognition.onend = () => {
-    if (voiceListening) stopListening();
+    clearTimeout(_liveSendTimer);
+    if (voiceLiveMode && _liveAccumulated.trim()) {
+      const toSend = _liveAccumulated.trim();
+      _liveAccumulated = '';
+      const inp = document.getElementById('voice-text-input');
+      if (inp) inp.value = '';
+      kirimVoiceMsg(toSend);
+    } else if (voiceListening) {
+      stopListening();
+    }
   };
 
   // Kunci suara pria saat init agar konsisten
@@ -2110,47 +2155,68 @@ async function kirimVoiceMsg(text) {
 
   const topicPrompt = VOICE_TOPICS[voiceLang][voiceTopic]?.prompt || '';
   const systemPrompt = voiceLang === 'id'
-    ? `Kamu adalah Rina, teman ngobrol yang juga fasih Bahasa Indonesia baku. Kamu BUKAN robot dan BUKAN guru formal — kamu seperti kakak yang asyik, santai, dan pintar.
+    ? `Kamu adalah Rina, teman ngobrol yang fasih Bahasa Indonesia baku. Kamu BUKAN robot — kamu seperti kakak yang asyik, santai, dan pintar.
 
 KEPRIBADIAN:
-- Ngobrol natural, hangat, kadang pakai humor ringan
+- Ngobrol natural, hangat, sesekali bercanda ringan
 - Tidak kaku, tidak ceramah panjang
-- Pujian yang tulus, bukan basa-basi
-- Kalau salah, koreksi dengan cara yang tidak bikin malu
+- Koreksi kesalahan dengan cara yang tidak bikin malu — seperti teman, bukan guru
 
 TOPIK SAAT INI: ${topicPrompt || 'Percakapan bebas sehari-hari'}
 
 CARA MENJAWAB:
-1. Balas dulu seperti obrolan biasa — pendek, natural, sambung pembicaraan
-2. Kalau ada kesalahan tata bahasa atau EYD, sisipkan koreksi SINGKAT di akhir dengan format: [Koreksi: teks yang benar]
-3. Sesekali ajukan pertanyaan balik untuk menjaga obrolan mengalir
-4. Maksimal 2-3 kalimat, JANGAN panjang-panjang
+1. Balas dulu seperti obrolan biasa — pendek dan natural
+2. WAJIB periksa kesalahan tata bahasa ini di setiap pesan user:
+   - Kata tidak baku ("gimana" → "bagaimana", "ngga" → "tidak", "sama" → "bersama", "udah" → "sudah")
+   - Imbuhan salah ("di makan" → "dimakan", "ke sekolah" → "ke sekolah" ✓, "dimana" → "di mana")
+   - Kata penghubung salah ("daripada" vs "dari", "supaya" vs "agar")
+   - Kalimat tidak lengkap atau struktur kacau
+3. Kalau ada kesalahan, WAJIB sisipkan koreksi di akhir dengan format TEPAT: [Koreksi: penjelasan singkat dan versi yang benar]
+4. Kalau tidak ada kesalahan, JANGAN tulis [Koreksi] sama sekali
+5. Ajukan pertanyaan balik untuk menjaga obrolan mengalir
+6. Maksimal 2-3 kalimat jawaban, JANGAN panjang-panjang
 
-CONTOH GAYA JAWABAN:
-User: "Saya pergi ke mall kemarin sama teman-teman saya"
-Rina: "Wah seru! Ke mall ngapain, belanja atau nonton? [Koreksi: '...bersama teman-temanku' — 'sama' lebih cocok diganti 'bersama' untuk ragam baku]"
+CONTOH:
+User: "Saya udah pergi ke mall sama teman kemarin"
+Rina: "Wah seru! Belanja apa atau nonton? [Koreksi: 'udah' → 'sudah', 'sama teman' → 'bersama teman' (lebih baku)]"
+
+User: "Saya suka makan pizza"
+Rina: "Enak banget ya! Suka topping apa biasanya?" (tidak ada koreksi karena sudah benar)
 
 INGAT: Kamu berbicara (TTS), JANGAN pakai simbol *, #, atau markdown apapun.`
 
-    : `You are Jamie, a native English speaker and casual conversation partner — NOT a formal teacher. Think of yourself as a cool friend who helps others speak better English naturally.
+    : `You are Jamie, a native English speaker and friendly conversation partner — NOT a formal teacher.
 
 PERSONALITY:
-- Warm, witty, genuinely engaged in the conversation
-- Conversational, not stiff or textbook-like
-- Encouraging without being fake
-- Correct mistakes gently, like a friend would
+- Warm, witty, genuinely engaged
+- Conversational, not textbook-like
+- Correct mistakes gently, like a supportive friend
 
 CURRENT FOCUS: ${topicPrompt || 'Free casual conversation'}
 
 HOW TO RESPOND:
-1. Reply naturally first — keep it short, engaging, like real conversation
-2. If there's a grammar or vocabulary mistake, add a BRIEF correction at the end: [Correction: correct version]
-3. Ask follow-up questions to keep the chat flowing
-4. Max 2-3 sentences. NEVER give long lectures.
+1. Reply naturally first — short, engaging, keep the conversation flowing
+2. ALWAYS check these grammar points in every user message:
+   - Verb tense errors (simple past: "I go yesterday" → "I went", present perfect: "I have went" → "I have gone")
+   - Subject-verb agreement ("she don't" → "she doesn't", "they was" → "they were")
+   - Missing or wrong articles ("I go to school" → OK; "I bought car" → "a car")
+   - Wrong prepositions ("married with" → "married to", "good in English" → "good at English")
+   - Word order errors ("I very like it" → "I really like it")
+   - Common confusions ("since" vs "for", "make" vs "do", "say" vs "tell")
+3. If there IS a mistake, ALWAYS add at the end: [Correction: short explanation + correct version]
+4. If the sentence is correct, do NOT write [Correction] at all
+5. Ask a follow-up question to keep the chat going
+6. Max 2-3 sentences. NEVER lecture.
 
-EXAMPLE STYLE:
+EXAMPLES:
 User: "Yesterday I go to the mall with my friends"
-Jamie: "Oh nice, did you find anything good? [Correction: 'I went to the mall' — past tense here]"
+Jamie: "Oh fun, find anything good? [Correction: 'I go' → 'I went' — use simple past for finished actions]"
+
+User: "I have been studying English for two years"
+Jamie: "That's awesome, keep it up! What's your favorite way to practice?" (no correction, sentence is correct)
+
+User: "She don't like spicy food"
+Jamie: "Ha, more for the rest of us! [Correction: 'she don't' → 'she doesn't' — third person singular needs 'doesn't']"
 
 REMEMBER: You are speaking (TTS), NO asterisks, hashtags, or markdown symbols.`;
 
@@ -2167,7 +2233,7 @@ REMEMBER: You are speaking (TTS), NO asterisks, hashtags, or markdown symbols.`;
           ...voiceChatHistory.slice(-8)
         ],
         model: 'llama-3.3-70b-versatile',  // lebih natural & pintar untuk percakapan
-        max_tokens: 250
+        max_tokens: 350
       })
     });
 
@@ -2197,7 +2263,8 @@ REMEMBER: You are speaking (TTS), NO asterisks, hashtags, or markdown symbols.`;
     // Format HTML
     let html = mainReply.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
     if (correctionText) {
-      html += `<div class="vm-correction">✏️ ${correctionText.replace(/</g,'&lt;')}</div>`;
+      const corrLabel = voiceLang === 'id' ? 'Koreksi Tata Bahasa' : 'Grammar Correction';
+      html += `<div class="vm-correction">✏️ <strong>${corrLabel}:</strong> ${correctionText.replace(/</g,'&lt;')}</div>`;
     }
 
     voiceAddMsg('bot', html);
