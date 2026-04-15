@@ -522,8 +522,8 @@
     <button class="gchat-close" onclick="toggleGuruChat()">✕</button>
   </div>
   <div class="gchat-chips">
-    <button class="gchat-chip" onclick="guruChatChip('Carikan artikel tentang metode pembelajaran aktif')">📰 Artikel Mengajar</button>
-    <button class="gchat-chip" onclick="guruChatChip('Rekomendasikan video YouTube untuk materi matematika kelas 12')">▶️ Video YouTube</button>
+    <button class="gchat-chip" onclick="guruChatChip('Carikan artikel tentang metode pembelajaran aktif beserta linknya')">📰 Cari Artikel</button>
+    <button class="gchat-chip" onclick="guruChatChip('Carikan video YouTube untuk materi fotosintesis kelas 7 beserta linknya')">▶️ Cari Video</button>
     <button class="gchat-chip" onclick="guruChatChip('Berikan contoh soal kreatif untuk murid SMA')">✏️ Ide Soal</button>
     <button class="gchat-chip" onclick="guruChatChip('Bagaimana cara membuat RPP yang menarik?')">📋 Buat RPP</button>
     <button class="gchat-chip" onclick="guruChatChip('Tips motivasi murid yang malas belajar')">💡 Tips Motivasi</button>
@@ -531,7 +531,7 @@
   <div class="gchat-messages" id="gchat-messages">
     <div class="gchat-msg bot">
       <div class="gchat-avatar"><img src="/assets/robot-icon.svg" alt="AI" style="width:28px;height:28px;border-radius:50%;background:white"></div>
-      <div class="gchat-bubble">Halo, Bu/Pak Guru! 👋 Saya siap membantu mencari <strong>artikel</strong>, <strong>link video</strong>, <strong>ide materi</strong>, atau apa pun yang dibutuhkan untuk mengajar. Silakan tanya!</div>
+      <div class="gchat-bubble">Halo, Bu/Pak Guru! 👋 Saya bisa:<br>• <strong>Carikan artikel + link</strong> — ketik "carikan artikel tentang..."<br>• <strong>Rangkum dari link</strong> — paste URL artikel langsung di chat<br>• Bantu buat <strong>RPP, soal, ide mengajar</strong><br><br>Silakan tanya apa saja! 😊</div>
     </div>
   </div>
   <div id="gchat-file-preview" style="display:none;padding:8px 14px 0;gap:8px;align-items:center;flex-wrap:wrap"></div>
@@ -9833,14 +9833,15 @@ let guruChatOpen = false;
 let guruChatHistory = [];
 
 const GURU_SYSTEM_PROMPT = `Kamu adalah asisten AI khusus untuk guru Indonesia bernama "Asisten Guru". Tugasmu membantu guru dalam:
-- Mencari artikel dan referensi untuk bahan ajar (berikan judul artikel yang nama pengarang/jurnal/buku)
-- Merekomendasikan video YouTube edukatif (berikan judul video dan nama channel yang bisa dicari)
+- Merangkum artikel dari link/URL yang diberikan guru
+- Mencari artikel dan referensi untuk bahan ajar
+- Merekomendasikan video YouTube edukatif (sertakan link YouTube jika tahu)
 - Memberikan ide soal, kuis, dan aktivitas pembelajaran kreatif
 - Membantu membuat RPP, silabus, dan rencana pembelajaran
 - Memberikan tips motivasi siswa dan manajemen kelas
 - Menjelaskan konsep materi pelajaran dengan cara yang mudah diajarkan
 Gunakan bahasa Indonesia yang ramah dan profesional.
-PENTING: Jangan pernah menulis URL atau link (http/https) dalam jawabanmu. Untuk video YouTube, tulis: "Cari di YouTube: [judul video] oleh [channel]". Untuk artikel/jurnal, sebutkan nama jurnal atau nama buku saja tanpa URL.`;
+PENTING: Kamu BOLEH dan HARUS memberikan URL/link nyata jika relevan (Wikipedia, Kemdikbud, YouTube, dll). Format link sebagai [teks](https://url). Jika diminta carikan artikel tapi tidak ada hasil pencarian yang diberikan, rekomendasikan sumber tepercaya seperti Wikipedia, Kemdikbud.go.id, atau Google Scholar dengan link lengkap.`;
 
 function guruChatSetVisible(show) {
   const fab = document.getElementById('guru-chat-fab');
@@ -9961,22 +9962,72 @@ function gchatHideTyping() {
 }
 
 function gchatFormatReply(reply) {
-  // Escape HTML dulu agar AI tidak bisa inject tag apapun
-  const safe = reply
+  // Pisahkan markdown link [teks](url) sebelum escape
+  // Simpan dulu ke placeholder agar tidak ikut di-escape
+  const links = [];
+  let processed = reply.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, (_, label, url) => {
+    const idx = links.length;
+    links.push({ label, url });
+    return `%%LINK_${idx}%%`;
+  });
+
+  // Escape HTML
+  processed = processed
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
-  return safe
-    // Bold: **teks**
+
+  // Kembalikan link sebagai tag <a>
+  processed = processed.replace(/%%LINK_(\d+)%%/g, (_, i) => {
+    const { label, url } = links[parseInt(i)];
+    const safeUrl = url.replace(/"/g, '%22');
+    const safeLabel = label.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color:#7b2ff7;font-weight:700;text-decoration:underline">${safeLabel}</a>`;
+  });
+
+  // Ubah URL mentah (bukan dari markdown link) jadi link klik
+  processed = processed.replace(/(^|[\s\n(])((https?:\/\/)[^\s<>"&]+)/g, (_, pre, url) => {
+    const safeUrl = url.replace(/"/g, '%22');
+    return `${pre}<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color:#7b2ff7;font-weight:700;word-break:break-all;text-decoration:underline">${url}</a>`;
+  });
+
+  return processed
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    // Bullet point: baris yang diawali "* " atau "- " → ubah ke karakter •
-    // (harus sebelum italic agar * bullet tidak dianggap italic)
     .replace(/(^|\n)\* /g, '$1• ')
     .replace(/(^|\n)- /g, '$1• ')
-    // Italic: hanya pasangan * yang mengapit teks tanpa spasi di ujungnya
     .replace(/\*(\S[^*]*?\S|\S)\*/g, '<em>$1</em>')
     .replace(/\n/g, '<br>');
+}
+
+// Deteksi URL di teks (https://...)
+function gchatExtractUrl(text) {
+  const m = text.match(/https?:\/\/[^\s"'<>]+/i);
+  return m ? m[0] : null;
+}
+
+// Deteksi intent pencarian artikel/web
+function gchatIsSearchIntent(text) {
+  return /carikan|cari(?:kan)?\s+artikel|cari(?:kan)?\s+referensi|cari(?:kan)?\s+sumber|tolong cari|cariin|search(kan)?|temukan artikel|cari materi/i.test(text);
+}
+
+// Fetch konten artikel via proxy
+async function gchatFetchArtikel(url) {
+  const res = await fetch(`${API}/proxy/fetch?url=${encodeURIComponent(url)}`, {
+    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('kb_token') }
+  });
+  const data = await res.json();
+  if (!data.success) throw new Error(data.pesan || 'Gagal mengambil artikel');
+  return data.teks || '';
+}
+
+// Cari artikel via backend (DuckDuckGo)
+async function gchatSearchWeb(query) {
+  const res = await fetch(`${API}/ai/search?q=${encodeURIComponent(query)}`, {
+    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('kb_token') }
+  });
+  const data = await res.json();
+  return data.results || [];
 }
 
 async function kirimGuruChat() {
@@ -9992,16 +10043,14 @@ async function kirimGuruChat() {
     : text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
   gchatAddMsg('user', userLabel);
 
-  // Hapus preview file setelah kirim
   if (fileSnap) guruChatHapusFile();
-
   gchatShowTyping();
 
   try {
     let reply;
 
     if (fileSnap && fileSnap.type === 'image') {
-      // ── Gambar: pakai Groq vision model langsung ──
+      // ── Gambar: pakai vision model ──
       const userMsg = text || 'Tolong analisis dan deskripsikan gambar ini. Jika berupa desain atau infografis, berikan rekomendasi perbaikan.';
       const visionRes = await fetch('/api/ai/vision', {
         method: 'POST',
@@ -10022,14 +10071,52 @@ async function kirimGuruChat() {
       guruChatHistory.push({ role: 'assistant', content: reply });
 
     } else {
-      // ── Teks / PDF ──
+      // ── Teks / PDF / URL / Search ──
       let userContent = text || 'Tolong rangkum isi dokumen ini.';
+      let extraContext = '';
+
+      // 1) Jika ada file PDF
       if (fileSnap && fileSnap.type === 'pdf') {
         const maxChar = 6000;
         const potongan = fileSnap.content.length > maxChar ? fileSnap.content.slice(0, maxChar) + '\n...(terpotong)' : fileSnap.content;
-        userContent = `[File PDF: ${fileSnap.name}]\n\n${potongan}\n\n---\n${userContent}`;
+        extraContext = `[File PDF: ${fileSnap.name}]\n\n${potongan}\n\n---\n`;
       }
-      guruChatHistory.push({ role: 'user', content: userContent });
+
+      // 2) Jika pesan mengandung URL → fetch kontennya dulu
+      const urlDalamPesan = gchatExtractUrl(text);
+      if (urlDalamPesan && !fileSnap) {
+        gchatUpdateTypingLabel('Mengambil konten dari URL...');
+        try {
+          const kontenArtikel = await gchatFetchArtikel(urlDalamPesan);
+          if (kontenArtikel) {
+            const potongan = kontenArtikel.length > 6000 ? kontenArtikel.slice(0, 6000) + '\n...(terpotong)' : kontenArtikel;
+            extraContext = `[Konten dari URL: ${urlDalamPesan}]\n\n${potongan}\n\n---\n`;
+            userContent = text.replace(urlDalamPesan, '').trim() || 'Tolong rangkum artikel ini dan berikan poin-poin pentingnya.';
+          }
+        } catch(e) {
+          extraContext = `[Catatan: Gagal mengambil konten dari ${urlDalamPesan}. Jawab berdasarkan pengetahuanmu saja.]\n\n`;
+        }
+      }
+
+      // 3) Jika intent pencarian artikel → search web dulu
+      else if (gchatIsSearchIntent(text) && !fileSnap) {
+        gchatUpdateTypingLabel('Mencari di web...');
+        try {
+          const hasilCari = await gchatSearchWeb(text);
+          if (hasilCari.length > 0) {
+            const ringkasanHasil = hasilCari.map((r, i) =>
+              `${i+1}. **${r.title}**\n   URL: ${r.url}\n   ${r.snippet}`
+            ).join('\n\n');
+            extraContext = `[Hasil pencarian web untuk: "${text}"]\n\n${ringkasanHasil}\n\n---\nBerdasarkan hasil pencarian di atas, jawab pertanyaan guru. Sertakan link asli dari hasil pencarian dalam jawabanmu.\n\n`;
+            userContent = text;
+          }
+        } catch(e) {
+          // Lanjut tanpa search result, AI jawab dari pengetahuan sendiri
+        }
+      }
+
+      const finalContent = extraContext + userContent;
+      guruChatHistory.push({ role: 'user', content: finalContent });
 
       const messages = [
         { role: 'system', content: GURU_SYSTEM_PROMPT },
@@ -10051,6 +10138,12 @@ async function kirimGuruChat() {
     gchatHideTyping();
     gchatAddMsg('bot', '❌ Gagal terhubung ke AI. Coba lagi sebentar.');
   }
+}
+
+// Update label di typing indicator sementara proses berlangsung
+function gchatUpdateTypingLabel(label) {
+  const el = document.querySelector('.gchat-typing');
+  if (el) el.title = label;
 }
 </script>
 

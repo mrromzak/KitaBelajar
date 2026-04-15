@@ -446,6 +446,58 @@ app.get('/api/proxy/fetch', async (req, res) => {
   }
 });
 
+// ── Web search via DuckDuckGo (tanpa API key) ──
+// Dipakai oleh Asisten Guru untuk carikan artikel/referensi
+app.get('/api/ai/search', async (req, res) => {
+  const { q } = req.query;
+  if (!q) return res.json({ success: false, pesan: 'Query wajib diisi.' });
+
+  try {
+    const query = encodeURIComponent(q.slice(0, 200));
+    const ddgUrl = `https://html.duckduckgo.com/html/?q=${query}&kl=id-id`;
+
+    const response = await fetch(ddgUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml',
+        'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8'
+      }
+    });
+
+    if (!response.ok) throw new Error('DuckDuckGo tidak merespons.');
+    const html = await response.text();
+
+    // Parse hasil: ambil judul, snippet, dan URL dari <a class="result__a"> & <a class="result__snippet">
+    const results = [];
+    const blockRe = /<div class="result[^"]*"[\s\S]*?(?=<div class="result[^"]*"|$)/g;
+    let block;
+    while ((block = blockRe.exec(html)) !== null && results.length < 6) {
+      const titleMatch = block[0].match(/class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/);
+      const snippetMatch = block[0].match(/class="result__snippet"[^>]*>([\s\S]*?)<\/a>/);
+      if (!titleMatch) continue;
+
+      let url = titleMatch[1];
+      // DuckDuckGo pakai redirect URL — ekstrak URL asli
+      if (url.includes('//duckduckgo.com/l/')) {
+        const uddMatch = url.match(/uddg=([^&]+)/);
+        if (uddMatch) url = decodeURIComponent(uddMatch[1]);
+      }
+      // Skip iklan / non-https
+      if (!url.startsWith('https://')) continue;
+
+      const title = titleMatch[2].replace(/<[^>]+>/g, '').replace(/&amp;/g,'&').trim();
+      const snippet = snippetMatch ? snippetMatch[1].replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').trim() : '';
+
+      if (title && url) results.push({ title, url, snippet });
+    }
+
+    res.json({ success: true, results });
+  } catch (err) {
+    console.error('[web search]', err.message);
+    res.json({ success: false, pesan: 'Gagal melakukan pencarian web.', results: [] });
+  }
+});
+
 // Info endpoint
 app.get('/api', (req, res) => {
   res.json({
