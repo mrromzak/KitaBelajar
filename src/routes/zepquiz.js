@@ -11,6 +11,7 @@ const router  = express.Router();
 const supabase = require('../supabase');
 const { authMiddleware, guruOnly } = require('../middleware/auth');
 const { decrypt } = require('../utils/crypto');
+const { callGroq, RateLimitError } = require('../utils/groq');
 
 // Helper: decrypt jawaban di array soal
 function decryptSoal(soalArr) {
@@ -265,13 +266,9 @@ router.get('/ai-generate', authMiddleware, async (req, res) => {
       `]\n\n` +
       `Pastikan "jawaban" sama persis dengan salah satu elemen di "opsi".`;
 
-    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
-      },
-      body: JSON.stringify({
+    let groqData;
+    try {
+      groqData = await callGroq({
         model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
         max_tokens: 3000,
         temperature: 0.9,
@@ -279,20 +276,16 @@ router.get('/ai-generate', authMiddleware, async (req, res) => {
           { role: 'system', content: systemPrompt },
           { role: 'user',   content: userPrompt   }
         ]
-      })
-    });
-
-    const groqData = await groqRes.json();
-    if (!groqRes.ok) {
-      if (groqRes.status === 429) {
-        console.warn('[AI generate soal] Rate limit Groq tercapai — fallback ke bank soal disarankan.');
+      });
+    } catch (err) {
+      if (err instanceof RateLimitError) {
+        console.warn('[AI generate soal] Semua API key kena rate limit — fallback ke bank soal.');
         return res.json({ success: false, fallback: true });
       }
-      console.error('[AI generate soal] Groq error:', JSON.stringify(groqData.error));
-      throw new Error(groqData.error?.message || 'Groq API error');
+      throw err;
     }
 
-    const raw = (groqData.choices?.[0]?.message?.content || '').replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+    const raw = (groqData.choices?.[0]?.message?.content || '').trim();
 
     // Ekstrak JSON array dari respons (model kadang masih menambah teks)
     const jsonMatch = raw.match(/\[[\s\S]*\]/);

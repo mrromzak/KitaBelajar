@@ -295,23 +295,8 @@ const ALLOWED_GROQ_MODELS = new Set([
   'meta-llama/llama-4-scout-17b-16e-instruct'
 ]);
 
-// Helper: panggil Groq dan strip <think> tags
-async function callGroq(payload) {
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.GROQ_API_KEY}` },
-    body: JSON.stringify(payload)
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error?.message || 'Groq API error');
-  if (data.choices?.[0]?.message?.content) {
-    let content = data.choices[0].message.content;
-    content = content.replace(/<think>[\s\S]*?<\/think>/gi, '');
-    content = content.replace(/<think>[\s\S]*/i, '');
-    data.choices[0].message.content = content.trim();
-  }
-  return data;
-}
+// Helper: panggil Groq dengan dual-key fallback (lihat src/utils/groq.js)
+const { callGroq, RateLimitError } = require('./utils/groq');
 
 // ── Proxy: Groq AI chat/soal (agar API key tidak terekspos di frontend) ──
 app.post('/api/ai/chat', aiLimiter, async (req, res) => {
@@ -340,6 +325,8 @@ app.post('/api/ai/chat', aiLimiter, async (req, res) => {
     res.json({ success: true, data });
   } catch (err) {
     console.error('[AI proxy]', err.message);
+    if (err instanceof RateLimitError)
+      return res.status(429).json({ success: false, pesan: 'Layanan AI sedang sibuk, coba beberapa saat lagi.' });
     res.status(500).json({ success: false, pesan: 'Layanan AI tidak tersedia saat ini.' });
   }
 });
@@ -362,6 +349,8 @@ app.post('/api/ai/vision', aiLimiter, async (req, res) => {
     res.json({ success: true, data });
   } catch (err) {
     console.error('[AI vision proxy]', err.message);
+    if (err instanceof RateLimitError)
+      return res.status(429).json({ success: false, pesan: 'Layanan AI Vision sedang sibuk, coba beberapa saat lagi.' });
     res.status(500).json({ success: false, pesan: 'Layanan AI Vision tidak tersedia saat ini.' });
   }
 });
