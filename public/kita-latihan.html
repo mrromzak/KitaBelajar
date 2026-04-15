@@ -1890,32 +1890,28 @@ function _splitTTS(text, maxLen = 190) {
   return chunks.filter(Boolean);
 }
 
-async function _playTTSChunks(chunks, idx = 0) {
+function _playTTSChunks(chunks, idx = 0) {
   if (idx >= chunks.length) { _voiceSpeakOnEnd(); return; }
-  const token = localStorage.getItem('kb_token') || localStorage.getItem('token') || '';
-  try {
-    const resp = await fetch(VOICE_API + '/ai/tts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ text: chunks[idx], lang: voiceLang })
-    });
-    const ct = resp.headers.get('Content-Type') || '';
-    if (!resp.ok || ct.includes('application/json')) {
-      // fallback: baca semua sisa teks pakai Web Speech
-      voiceSpeaking = false;
-      _voiceSpeakFallback(chunks.slice(idx).join(' '));
-      return;
-    }
-    const blob = await resp.blob();
-    const url  = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    audio.onended = () => { URL.revokeObjectURL(url); _playTTSChunks(chunks, idx + 1); };
-    audio.onerror = () => { URL.revokeObjectURL(url); voiceSpeaking = false; _voiceSpeakFallback(chunks.slice(idx).join(' ')); };
-    audio.play();
-  } catch (e) {
+
+  // Panggil Google Translate TTS langsung dari browser (tidak lewat backend)
+  // Audio element tidak punya batasan CORS, jadi bisa cross-origin
+  const tl  = voiceLang === 'en' ? 'en' : 'id';
+  const url = 'https://translate.google.com/translate_tts?ie=UTF-8' +
+    '&q=' + encodeURIComponent(chunks[idx]) +
+    '&tl=' + tl +
+    '&client=tw-ob&ttsspeed=0.9';
+
+  const audio = new Audio(url);
+  audio.onended = () => _playTTSChunks(chunks, idx + 1);
+  audio.onerror = () => {
+    // Google TTS gagal (misalnya diblokir) → fallback Web Speech untuk sisa teks
     voiceSpeaking = false;
     _voiceSpeakFallback(chunks.slice(idx).join(' '));
-  }
+  };
+  audio.play().catch(() => {
+    voiceSpeaking = false;
+    _voiceSpeakFallback(chunks.slice(idx).join(' '));
+  });
 }
 
 async function voiceSpeak(text) {
@@ -1998,6 +1994,19 @@ Keep responses short (2-3 sentences), warm, and conversational.`;
     });
 
     const data = await res.json();
+
+    // Tangani error dari server (rate limit, dsb.)
+    if (!data?.success && data?.pesan) {
+      const errMsg = voiceLang === 'id'
+        ? `Maaf, AI sedang sibuk. ${data.pesan}`
+        : `Sorry, AI is busy right now. ${data.pesan}`;
+      voiceAddMsg('bot', `<span style="color:#e74c3c">${errMsg}</span>`);
+      hideWaves();
+      setMicStatus(voiceLang === 'id' ? 'Tekan untuk bicara' : 'Press to speak', '');
+      if (voiceLiveMode && voiceLiveActive) setTimeout(() => { if (voiceLiveMode && voiceLiveActive) startListening(); }, 2000);
+      return;
+    }
+
     const reply = data?.data?.choices?.[0]?.message?.content || (voiceLang === 'id' ? 'Maaf, saya tidak bisa merespons.' : 'Sorry, I could not respond.');
 
     voiceChatHistory.push({ role: 'assistant', content: reply });

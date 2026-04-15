@@ -355,44 +355,7 @@ app.post('/api/ai/vision', aiLimiter, async (req, res) => {
   }
 });
 
-// ── Google Translate TTS Proxy ──
-// Gratis, tanpa API key, kualitas seperti Google Translate
-app.post('/api/ai/tts', async (req, res) => {
-  const { text, lang } = req.body;
-  if (!text) return res.status(400).json({ success: false, pesan: 'text wajib diisi.' });
-
-  // Google Translate TTS: maksimal ~200 karakter per request
-  // Potong di batas kata agar tidak terpotong di tengah
-  const tl    = lang === 'en' ? 'en' : 'id';
-  const clean = text.slice(0, 200).replace(/[<>]/g, '');
-
-  try {
-    const url = `https://translate.google.com/translate_tts?` +
-      `ie=UTF-8&q=${encodeURIComponent(clean)}&tl=${tl}&client=tw-ob&ttsspeed=0.9`;
-
-    const gtRes = await fetch(url, {
-      headers: {
-        // User-agent wajib ada, tanpa ini Google tolak
-        'User-Agent': 'Mozilla/5.0 (compatible; KitaBelajar/1.0)',
-        'Referer':    'https://translate.google.com/'
-      }
-    });
-
-    if (!gtRes.ok) {
-      throw new Error(`Google TTS error ${gtRes.status}`);
-    }
-
-    // Stream audio/mpeg langsung ke frontend
-    res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Cache-Control', 'no-cache');
-    gtRes.body.pipe(res);
-
-  } catch (err) {
-    console.error('[TTS Google]', err.message);
-    // Fallback → frontend akan pakai Web Speech API
-    res.json({ success: false, fallback: true, pesan: err.message });
-  }
-});
+// (TTS ditangani langsung di frontend via Google Translate audio element — tanpa proxy backend)
 
 // ── Proxy: fetch artikel untuk AI Materi ──
 // Blokir IP internal (anti-SSRF), tapi izinkan semua domain publik
