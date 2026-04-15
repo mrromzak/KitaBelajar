@@ -357,8 +357,16 @@ app.post('/api/ai/vision', aiLimiter, async (req, res) => {
   }
 });
 
+// ── Debug: cek status TTS config ──
+app.get('/api/ai/tts/status', (req, res) => {
+  res.json({
+    hf_token_set: !!process.env.HF_TOKEN,
+    hf_token_preview: process.env.HF_TOKEN ? process.env.HF_TOKEN.slice(0, 8) + '...' : null
+  });
+});
+
 // ── HuggingFace TTS Proxy ──
-// Inggris  : Kokoro-82M  — af_heart (wanita, hangat & natural), am_michael (pria, ringan)
+// Inggris  : Kokoro-82M  — af_bella (wanita, natural), am_michael (pria, ringan)
 // Indonesia: MMS-TTS-ind — Meta MMS, lebih natural dari Google Translate TTS
 app.post('/api/ai/tts/kokoro', async (req, res) => {
   const { text, voice, lang } = req.body;
