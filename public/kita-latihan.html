@@ -2270,48 +2270,48 @@ function kirimVoiceText() {
   kirimVoiceMsg(text);
 }
 
-// Koreksi umum kesalahan STT (speech-to-text noise)
+// Koreksi HANYA kesalahan STT yang jelas-jelas bukan kata yang dimaksud user
+// (bukan informal speech — itu biarkan AI yang pahami dari konteks)
 function fixSTTNoise(text) {
-  // Normalisasi typo umum dari STT
   const fixes = [
-    // English common STT errors
+    // Kata yang sering salah tangkap STT karena bunyi mirip
     [/\bcaffe\b/gi, 'café'],
     [/\bcoffe\b/gi, 'coffee'],
-    [/\bcoffe+\b/gi, 'coffee'],
-    [/\bgonna\b/gi, 'going to'],
-    [/\bwanna\b/gi, 'want to'],
-    [/\bgotta\b/gi, 'got to'],
-    [/\bkinda\b/gi, 'kind of'],
-    [/\byeah\b/gi, 'yes'],
-    [/\bam I\b/gi, 'I am'],
-    // Indonesian common STT errors
-    [/\bngga\b/gi, 'tidak'],
-    [/\bnggak\b/gi, 'tidak'],
-    [/\bgimana\b/gi, 'bagaimana'],
-    [/\bgimana\b/gi, 'bagaimana'],
-    [/\budah\b/gi, 'sudah'],
-    [/\benggak\b/gi, 'tidak'],
+    // Pengulangan kata (stuttering dari STT): "aku aku pergi" → "aku pergi"
+    [/\b(\w{3,})\s+\1\b/gi, '$1'],
   ];
   let result = text;
   fixes.forEach(([pattern, replacement]) => {
     result = result.replace(pattern, replacement);
   });
-  return result;
+  // Bersihkan spasi ganda
+  return result.replace(/\s{2,}/g, ' ').trim();
 }
 
 // Deteksi apakah user sedang mengoreksi ucapannya sendiri
+// Hanya pattern yang sangat spesifik — hindari false positive pada kalimat normal
 function detectSelfCorrection(text, history) {
+  // Harus ada history dulu (minimal 1 pesan AI) agar koreksi masuk akal
+  if (!history || history.length < 1) return false;
+
   const enCorrectionPhrases = [
-    /^i mean[,\s]/i, /^i meant[,\s]/i, /^actually[,\s]/i,
-    /^no[,\s]i mean/i, /^sorry[,\s]i mean/i, /^correction[:\s]/i,
-    /^i said[,\s]/i, /^not .+? but/i, /^wait[,\s]/i,
-    /^let me correct/i, /^let me rephrase/i
+    /^i mean[,\s]+/i,          // "I mean, ..."
+    /^i meant[,\s]+/i,         // "I meant, ..."
+    /^no[,\s]+i mean[,\s]+/i,  // "no I mean, ..."
+    /^sorry[,\s]+i mean[,\s]+/i,
+    /^i said[,\s]+/i,          // "I said, ..."
+    /^let me correct[,\s]+/i,
+    /^let me rephrase[,\s]+/i,
+    /^correction[:\s]+/i,
   ];
   const idCorrectionPhrases = [
-    /^maksud(nya| saya)[,\s]/i, /^bukan[,\s]/i, /^maksud ku/i,
-    /^maaf[,\s]maksud/i, /^ralat[,\s:]/i, /^koreksi[,\s:]/i,
-    /^eh[,\s]bukan/i, /^tunggu[,\s]/i, /^yang benar/i,
-    /^saya tadi bilang/i
+    /^maksud saya[,\s]+/i,     // "maksud saya, ..."
+    /^maksudnya[,\s]+/i,
+    /^eh maksud/i,
+    /^maaf[,\s]+maksud/i,
+    /^ralat[,:\s]+/i,
+    /^saya tadi bilang[,\s]+/i,
+    /^yang saya maksud[,\s]+/i,
   ];
   const phrases = voiceLang === 'en' ? enCorrectionPhrases : idCorrectionPhrases;
   return phrases.some(p => p.test(text.trim()));
