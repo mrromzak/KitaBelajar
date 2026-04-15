@@ -527,6 +527,9 @@
       </div>
     </div>
 
+    <!-- Info suara yang dipakai -->
+    <div id="voice-info-bar" style="text-align:center;margin-bottom:10px;font-size:11px;color:#aaa;font-weight:700;min-height:16px"></div>
+
     <!-- Tombol mic -->
     <div class="voice-mic-area">
       <button class="mic-btn" id="mic-btn" onclick="toggleMic()" title="Tekan untuk bicara">🎙️</button>
@@ -1431,6 +1434,9 @@ function buatConfetti() {
 // ═══════════════════════════════════════════════════════
 //  LATIHAN BICARA — Voice Chat AI
 // ═══════════════════════════════════════════════════════
+const VOICE_API = window.location.origin.includes('localhost:5500') || window.location.origin.includes('127.0.0.1:5500')
+  ? 'http://localhost:3000/api'
+  : window.location.origin + '/api';
 
 const VOICE_TOPICS = {
   id: [
@@ -1488,9 +1494,26 @@ function initSpeechRecognition() {
   };
 }
 
+function tampilkanInfoSuara() {
+  const v = getVoice(voiceLang);
+  const el = document.getElementById('voice-info-bar');
+  if (!el) return;
+  if (v) {
+    const isNeural = v.name.toLowerCase().includes('google') || v.name.toLowerCase().includes('online') || v.name.toLowerCase().includes('neural');
+    el.textContent = `🔊 Suara: ${v.name}${isNeural ? ' ✨' : ''}`;
+    el.style.color = isNeural ? '#7b2ff7' : '#aaa';
+  } else {
+    el.textContent = '🔊 Suara: default browser';
+  }
+}
+
 function pilihBahasa(lang) {
   voiceLang = lang;
   voiceChatHistory = [];
+  // Reset cache suara saat ganti bahasa
+  _cachedVoiceId = null;
+  _cachedVoiceEn = null;
+
   document.getElementById('lang-btn-id').classList.toggle('active', lang === 'id');
   document.getElementById('lang-btn-en').classList.toggle('active', lang === 'en');
 
@@ -1499,6 +1522,7 @@ function pilihBahasa(lang) {
 
   // Render topik
   renderVoiceTopics();
+  tampilkanInfoSuara();
 
   // Reset chat
   const box = document.getElementById('voice-chat-box');
@@ -1532,6 +1556,20 @@ function bukaLatihanBicara() {
   showView('voice');
   initSpeechRecognition();
   renderVoiceTopics();
+  // Tunggu voices loaded (Chrome async), lalu tampilkan info
+  if (window.speechSynthesis) {
+    const tryShow = () => {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        _cachedVoiceId = null;
+        _cachedVoiceEn = null;
+        tampilkanInfoSuara();
+      } else {
+        setTimeout(tryShow, 200);
+      }
+    };
+    tryShow();
+  }
 }
 
 function keluarVoice() {
@@ -1583,17 +1621,120 @@ function voiceAddMsg(role, html) {
   box.scrollTop = box.scrollHeight;
 }
 
+// ── Voice selection: pilih suara terbaik yang tersedia ──
+// Prioritas: Google Neural > Microsoft Neural > suara native > default
+const VOICE_PRIORITY_ID = [
+  'Google Bahasa Indonesia',
+  'id-ID-ArdiNeural',       // Microsoft Edge
+  'id-ID-GadisNeural',      // Microsoft Edge (perempuan)
+  'Microsoft Andika',
+  'Microsoft Gadis',
+];
+const VOICE_PRIORITY_EN = [
+  'Google UK English Female',
+  'Google UK English Male',
+  'Microsoft Libby Online',   // Edge Neural
+  'Microsoft Sonia Online',   // Edge Neural
+  'Microsoft Ryan Online',    // Edge Neural
+  'Google US English',
+  'Microsoft Zira Desktop',
+  'Microsoft David Desktop',
+];
+
+let _cachedVoiceId = null;
+let _cachedVoiceEn = null;
+let _voicesLoaded = false;
+
+function pickBestVoice(lang) {
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return null;
+
+  const priorityList = lang === 'id' ? VOICE_PRIORITY_ID : VOICE_PRIORITY_EN;
+  const langCode = lang === 'id' ? 'id' : 'en';
+
+  // 1. Cari exact match dari priority list
+  for (const name of priorityList) {
+    const v = voices.find(v => v.name === name);
+    if (v) return v;
+  }
+  // 2. Cari "Google" + bahasa yang sesuai
+  const googleVoice = voices.find(v => v.name.toLowerCase().includes('google') && v.lang.toLowerCase().startsWith(langCode));
+  if (googleVoice) return googleVoice;
+
+  // 3. Cari "Microsoft" + bahasa yang sesuai
+  const msVoice = voices.find(v => v.name.toLowerCase().includes('microsoft') && v.lang.toLowerCase().startsWith(langCode));
+  if (msVoice) return msVoice;
+
+  // 4. Cari suara manapun yang cocok bahasa
+  return voices.find(v => v.lang.toLowerCase().startsWith(langCode)) || null;
+}
+
+function getVoice(lang) {
+  if (lang === 'id') {
+    if (!_cachedVoiceId) _cachedVoiceId = pickBestVoice('id');
+    return _cachedVoiceId;
+  } else {
+    if (!_cachedVoiceEn) _cachedVoiceEn = pickBestVoice('en');
+    return _cachedVoiceEn;
+  }
+}
+
+// Chrome loads voices async — preload saat tersedia
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = () => {
+    _cachedVoiceId = null;
+    _cachedVoiceEn = null;
+    _voicesLoaded = true;
+  };
+}
+
 function voiceSpeak(text) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  // Bersihkan markdown/simbol sebelum TTS
-  const clean = text.replace(/\*\*/g,'').replace(/\*/g,'').replace(/<[^>]+>/g,'').replace(/[📌✅❌🎯💡🔴🟡🟢]/g,'');
+
+  // Bersihkan markdown, emoji, tag HTML sebelum TTS
+  const clean = text
+    .replace(/\*\*/g, '').replace(/\*/g, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')  // hapus semua emoji
+    .replace(/[📌✅❌🎯💡🔴🟡🟢⭐🎓🤖✏️]/g, '')
+    .replace(/\[Koreksi:[^\]]*\]/gi, '')
+    .replace(/\[Correction:[^\]]*\]/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
+  if (!clean) return;
+
   const utter = new SpeechSynthesisUtterance(clean);
-  utter.lang = voiceLang === 'id' ? 'id-ID' : 'en-US';
-  utter.rate = 0.92;
-  utter.pitch = 1.05;
+
+  // Coba pakai suara terbaik
+  const bestVoice = getVoice(voiceLang);
+  if (bestVoice) {
+    utter.voice = bestVoice;
+    utter.lang = bestVoice.lang;
+  } else {
+    utter.lang = voiceLang === 'id' ? 'id-ID' : 'en-GB';
+  }
+
+  // Parameter natural: sedikit lebih lambat, pitch normal
+  const isGoogleNeural = bestVoice?.name?.toLowerCase().includes('google');
+  const isMsNeural = bestVoice?.name?.toLowerCase().includes('online') || bestVoice?.name?.toLowerCase().includes('neural');
+
+  if (isGoogleNeural || isMsNeural) {
+    // Suara neural sudah natural, tidak perlu banyak adjust
+    utter.rate = 0.95;
+    utter.pitch = 1.0;
+    utter.volume = 1.0;
+  } else {
+    // Suara lama: sedikit perlambat & turunkan pitch agar tidak terlalu robotik
+    utter.rate = 0.88;
+    utter.pitch = 0.95;
+    utter.volume = 1.0;
+  }
+
   utter.onstart = () => setMicStatus(voiceLang === 'id' ? 'AI sedang berbicara...' : 'AI is speaking...', 'speaking');
   utter.onend = () => setMicStatus(voiceLang === 'id' ? 'Tekan untuk bicara' : 'Press to speak', '');
+  utter.onerror = () => setMicStatus(voiceLang === 'id' ? 'Tekan untuk bicara' : 'Press to speak', '');
   window.speechSynthesis.speak(utter);
 }
 
@@ -1624,7 +1765,7 @@ Format: respond to the conversation first, then if there are mistakes add a brie
 Keep responses short (2-3 sentences), warm, and conversational.`;
 
   try {
-    const res = await fetch('/api/ai/chat', {
+    const res = await fetch(VOICE_API + '/ai/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
