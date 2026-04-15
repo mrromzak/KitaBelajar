@@ -95,11 +95,13 @@ router.get('/', authMiddleware, guruOnly, async (req, res) => {
 // =====================================================
 router.put('/:id', authMiddleware, guruOnly, async (req, res) => {
   try {
-    const { pertanyaan, emoji, opsi, jawaban, poin, tingkat } = req.body;
+    const { pertanyaan, emoji, mapel, jenis, opsi, jawaban, poin, tingkat } = req.body;
     const updates = {};
     if (pertanyaan) updates.pertanyaan = pertanyaan;
     if (emoji) updates.emoji = emoji;
-    if (opsi) updates.opsi = opsi;
+    if (mapel) updates.mapel = mapel;
+    if (jenis) updates.jenis = jenis;
+    if (opsi !== undefined) updates.opsi = opsi;
     if (jawaban) updates.jawaban = encrypt(jawaban);
     if (poin) updates.poin = poin;
     if (tingkat) updates.tingkat = tingkat;

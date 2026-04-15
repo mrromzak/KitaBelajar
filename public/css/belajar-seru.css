@@ -898,3 +898,66 @@
   /* Modal: maksimal penuh di layar kecil */
   .modal { width: 98% !important; padding: 18px 14px; border-radius: 18px; }
 }
+
+/* =====================================================
+   Soal Builder — Mobile Responsive (sidebar drawer)
+   ===================================================== */
+@media (max-width: 640px) {
+  /* Sidebar jadi overlay drawer dari kiri */
+  #sb-sidebar {
+    position: fixed !important;
+    left: -240px;
+    top: 0;
+    bottom: 0;
+    width: 240px !important;
+    z-index: 50;
+    transition: left 0.25s ease;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+  }
+  #sb-sidebar.sb-sidebar-open {
+    left: 0;
+  }
+
+  /* Content area takes full width */
+  #sb-layout {
+    display: block !important;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  #sb-layout > div:last-of-type {
+    overflow-y: visible !important;
+    height: auto;
+  }
+
+  /* Header: kurangi padding */
+  #page-soal-builder [style*="padding:14px 28px"] {
+    padding: 12px 14px !important;
+  }
+
+  /* Simpan button lebih kecil */
+  #sb-btn-simpan {
+    padding: 8px 14px !important;
+    font-size: 12px !important;
+  }
+
+  /* Soal card area padding */
+  #page-soal-builder [style*="max-width:720px"] {
+    margin: 16px auto !important;
+    padding: 0 12px !important;
+  }
+
+  /* Soal card padding */
+  #sb-soal-card [style*="padding:24px"] {
+    padding: 16px !important;
+  }
+
+  /* Textarea font lebih kecil */
+  #sb-pertanyaan {
+    font-size: 15px !important;
+  }
+
+  /* Info row: wrap */
+  #page-soal-builder [style*="display:flex;gap:12px;margin-bottom:20px"] {
+    gap: 8px !important;
+  }
+}

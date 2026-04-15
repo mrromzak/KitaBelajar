@@ -823,14 +823,7 @@
       <div class="zep-code-big" id="zep-guru-kode">------</div>
       <div class="zep-code-hint">Murid buka menu Kita Quiz → masukkan kode ini</div>
     </div>
-    <!-- Tombol Invite ke Kelas -->
-    <div style="margin-bottom:16px">
-      <button onclick="zepGuruInviteKelas()" id="zep-invite-btn"
-        style="width:100%;padding:12px;border-radius:14px;background:linear-gradient(135deg,#FF6B6B,#ee5a24);border:none;color:white;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
-        📢 Kirim Undangan ke Kelas
-      </button>
-      <div id="zep-invite-status" style="text-align:center;font-size:12px;opacity:.6;margin-top:6px"></div>
-    </div>
+    <!-- Tombol Invite ke Kelas dihapus: gunakan kode room saja -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div style="font-weight:800;font-size:15px"><span id="zep-guru-jumlah-pemain">0</span> Pemain</div>
       <div style="opacity:.5;font-size:13px" id="zep-guru-quiz-label"></div>
@@ -1793,7 +1786,10 @@
 
 <!-- ========== PAGE: SOAL BUILDER (Zep-style) ========== -->
 <div class="page" id="page-soal-builder">
-  <div style="display:flex;height:100vh;overflow:hidden">
+  <div style="display:flex;height:100vh;overflow:hidden" id="sb-layout">
+
+    <!-- Overlay backdrop untuk mobile -->
+    <div id="sb-overlay" onclick="sbToggleSidebar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:40"></div>
 
     <!-- Sidebar kiri: daftar soal -->
     <div id="sb-sidebar" style="width:220px;background:#1a1a2e;display:flex;flex-direction:column;flex-shrink:0">
@@ -1819,7 +1815,10 @@
     <div style="flex:1;overflow-y:auto;background:#F5F6FA">
       <!-- Header -->
       <div style="background:white;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #eee;position:sticky;top:0;z-index:10">
-        <div style="font-size:14px;font-weight:700;color:var(--muted)" id="sb-header-info">Buat & kelola soal</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button id="sb-toggle-btn" onclick="sbToggleSidebar()" style="display:none;background:#1a1a2e;border:none;color:white;width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:18px;align-items:center;justify-content:center" title="Daftar soal">☰</button>
+          <div style="font-size:14px;font-weight:700;color:var(--muted)" id="sb-header-info">Buat & kelola soal</div>
+        </div>
         <div style="display:flex;gap:10px">
           <button onclick="sbSimpanSemua()" id="sb-btn-simpan" style="background:var(--orange);color:white;border:none;padding:10px 24px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">
             💾 Simpan Semua
@@ -4943,6 +4942,7 @@ async function loadGuruSoalPreview() {
           <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.pertanyaan}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:2px">${jenis} · ${s.mapel || '–'} · ${s.poin || 100} poin</div>
         </div>
+        <button onclick="editSoalDashboard(${JSON.stringify(s)})" title="Edit" style="background:none;border:none;cursor:pointer;font-size:14px;opacity:0.4;flex-shrink:0;padding:4px;transition:opacity 0.2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.4'">✏️</button>
         <button onclick="hapusSoalDashboard('${s.id}', this)" title="Hapus" style="background:none;border:none;cursor:pointer;font-size:14px;opacity:0.35;flex-shrink:0;padding:4px;transition:opacity 0.2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.35'">🗑️</button>
       </div>`;
     }).join('') +
@@ -4966,6 +4966,38 @@ async function hapusSoalDashboard(id, btn) {
       btn.disabled = false; btn.textContent = '🗑️';
     }
   } catch(e) { toast('Gagal terhubung', 'error'); btn.disabled = false; btn.textContent = '🗑️'; }
+}
+
+function editSoalDashboard(s) {
+  // s adalah objek soal lengkap dari loadGuruSoalPreview
+  if (typeof s === 'string') { try { s = JSON.parse(s); } catch(e) { return; } }
+  const opsi = typeof s.opsi === 'string' ? JSON.parse(s.opsi || '[]') : (s.opsi || []);
+  const tipe = s.jenis || 'pilihan_ganda';
+  let jawabanIdx = null;
+  if (tipe === 'pilihan_ganda') {
+    jawabanIdx = opsi.findIndex(o => o === s.jawaban);
+    if (jawabanIdx < 0) jawabanIdx = null;
+  }
+  sbFromKuis = false;
+  sbSoalList = [{
+    id: Date.now(),
+    tipe,
+    pertanyaan: s.pertanyaan || '',
+    opsi: opsi.length ? opsi : ['', '', '', ''],
+    jawabanIdx,
+    jawaban: s.jawaban || '',
+    mapel: s.mapel || 'Umum',
+    poin: s.poin || 100,
+    tingkat: s.tingkat || 'sedang',
+    dbId: s.id  // existing ID → PUT saat simpan
+  }];
+  sbAktifIdx = 0;
+  sbPopulateMapel();
+  document.getElementById('sb-judul-label').textContent = 'Edit Soal';
+  showPage('page-soal-builder');
+  sbMuatSoal(0);
+  sbUpdateCount();
+  setTimeout(sbCheckMobile, 50);
 }
 
 function populateBuatKelasMapel() {
@@ -5689,6 +5721,7 @@ function bukaSoalBuilder(fromKuis = false) {
   sbPopulateMapel();
   document.getElementById('sb-judul-label').textContent = fromKuis ? 'Tambah Soal ke Kuis' : 'Bank Soal';
   showPage('page-soal-builder');
+  setTimeout(sbCheckMobile, 50);
 }
 
 function tutupSoalBuilder() {
@@ -5754,7 +5787,16 @@ function sbTambahSoal(tipe = 'pilihan_ganda', navigasi = true) {
   sbSoalList.push(soal);
   sbAktifIdx = sbSoalList.length - 1;
   sbRenderSidebar();
-  if (navigasi) sbMuatSoal(sbAktifIdx);
+  if (navigasi) {
+    sbMuatSoal(sbAktifIdx);
+    // Tutup sidebar otomatis di mobile setelah tambah soal baru
+    if (window.innerWidth <= 640) {
+      const sidebar = document.getElementById('sb-sidebar');
+      const overlay = document.getElementById('sb-overlay');
+      if (sidebar) sidebar.classList.remove('sb-sidebar-open');
+      if (overlay) overlay.style.display = 'none';
+    }
+  }
   sbUpdateCount();
 }
 
@@ -5896,12 +5938,52 @@ function sbRenderSidebar() {
 function sbPilihSoal(idx) {
   sbSimpanStateAktif();
   sbMuatSoal(idx);
+  // Tutup sidebar otomatis di mobile setelah pilih soal
+  if (window.innerWidth <= 640) {
+    const sidebar = document.getElementById('sb-sidebar');
+    const overlay = document.getElementById('sb-overlay');
+    sidebar.classList.remove('sb-sidebar-open');
+    if (overlay) overlay.style.display = 'none';
+  }
 }
 
 function sbUpdateCount() {
   const el = document.getElementById('sb-count-label');
   if (el) el.textContent = `${sbSoalList.length} soal`;
 }
+
+function sbToggleSidebar() {
+  const sidebar = document.getElementById('sb-sidebar');
+  const overlay = document.getElementById('sb-overlay');
+  const isOpen = sidebar.classList.contains('sb-sidebar-open');
+  if (isOpen) {
+    sidebar.classList.remove('sb-sidebar-open');
+    overlay.style.display = 'none';
+  } else {
+    sidebar.classList.add('sb-sidebar-open');
+    overlay.style.display = 'block';
+  }
+}
+
+function sbCheckMobile() {
+  const toggleBtn = document.getElementById('sb-toggle-btn');
+  const sidebar = document.getElementById('sb-sidebar');
+  const overlay = document.getElementById('sb-overlay');
+  if (!toggleBtn) return;
+  if (window.innerWidth <= 640) {
+    toggleBtn.style.display = 'flex';
+    // On mobile, sidebar starts hidden
+    if (!sidebar.classList.contains('sb-sidebar-open')) {
+      overlay.style.display = 'none';
+    }
+  } else {
+    toggleBtn.style.display = 'none';
+    sidebar.classList.remove('sb-sidebar-open');
+    overlay.style.display = 'none';
+  }
+}
+
+window.addEventListener('resize', sbCheckMobile);
 
 function sbHapusSoalAktif() {
   if (sbSoalList.length <= 1) { toast('Minimal harus ada 1 soal!', 'error'); return; }
@@ -5951,15 +6033,25 @@ async function sbSimpanSemua() {
     }
 
     try {
-      const data = await api('POST', '/soal', {
-        pertanyaan: s.pertanyaan, emoji: '❓', mapel: s.mapel,
-        jenis, opsi: JSON.stringify(opsi), jawaban, poin: s.poin, tingkat: s.tingkat
-      });
-      if (data.success && data.data?.id) {
-        s.dbId = data.data.id;
-        idsBaru.push(data.data.id);
-        berhasil++;
-      } else gagal++;
+      if (s.dbId) {
+        // Edit mode: update soal yang sudah ada
+        const data = await api('PUT', `/soal/${s.dbId}`, {
+          pertanyaan: s.pertanyaan, emoji: '❓', mapel: s.mapel,
+          jenis, opsi: JSON.stringify(opsi), jawaban, poin: s.poin, tingkat: s.tingkat
+        });
+        if (data.success) berhasil++; else gagal++;
+      } else {
+        // Create mode: soal baru
+        const data = await api('POST', '/soal', {
+          pertanyaan: s.pertanyaan, emoji: '❓', mapel: s.mapel,
+          jenis, opsi: JSON.stringify(opsi), jawaban, poin: s.poin, tingkat: s.tingkat
+        });
+        if (data.success && data.data?.id) {
+          s.dbId = data.data.id;
+          idsBaru.push(data.data.id);
+          berhasil++;
+        } else gagal++;
+      }
     } catch(e) { gagal++; }
   }
 
@@ -6952,15 +7044,15 @@ function renderKuisCard(q, isGuru) {
   const sudahDikerjakan = q.sudah_dikerjakan || false;
 
   let deadlineHtml = '';
-  if (!isFun && q.deadline && !sudahDikerjakan) {
+  const deadlineLewat = !isFun && q.deadline && new Date(q.deadline) < new Date();
+  if (!isFun && q.deadline && !sudahDikerjakan && !deadlineLewat) {
     const dl = new Date(q.deadline);
     const now = new Date();
     const diff = dl - now;
-    const cls = diff < 0 ? 'deadline-over' : diff < 86400000 ? 'deadline-soon' : 'deadline-ok';
-    const label = diff < 0 ? '⛔ Tenggat terlewat' : diff < 3600000 ? `⏰ ${Math.floor(diff/60000)} menit lagi` : diff < 86400000 ? `⚠️ ${Math.floor(diff/3600000)} jam lagi` : `📅 ${dl.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})} ${dl.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}`;
+    const cls = diff < 86400000 ? 'deadline-soon' : 'deadline-ok';
+    const label = diff < 3600000 ? `⏰ ${Math.floor(diff/60000)} menit lagi` : diff < 86400000 ? `⚠️ ${Math.floor(diff/3600000)} jam lagi` : `📅 ${dl.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})} ${dl.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}`;
     deadlineHtml = `<div class="qsc-deadline ${cls}">${label}</div>`;
   }
-  const deadlineLewat = !isFun && q.deadline && new Date(q.deadline) < new Date();
 
   let actionHtml = '';
   const isSubmission = !!q.tipe_submission;
@@ -6993,9 +7085,14 @@ function renderKuisCard(q, isGuru) {
   } else if (deadlineLewat) {
     actionHtml = `<div class="qsc-deadline deadline-over">⛔ Tenggat terlewat</div>`;
   } else {
-    actionHtml = `<button class="qsc-play-btn" style="background:${isFun ? 'var(--orange)' : 'var(--blue)'};color:white" onclick="mulaiKuisKelas('${q.id}')">
-      ${isFun ? '⚡ Main!' : '📝 Kerjakan'}
-    </button>`;
+    const totalSoal = q.total_soal || q.jumlah_soal || 0;
+    if (!isSubmission && totalSoal === 0) {
+      actionHtml = `<div style="font-size:12px;color:var(--muted);font-weight:700;background:#F5F5F5;padding:7px 14px;border-radius:10px">📭 Belum ada soal</div>`;
+    } else {
+      actionHtml = `<button class="qsc-play-btn" style="background:${isFun ? 'var(--orange)' : 'var(--blue)'};color:white" onclick="mulaiKuisKelas('${q.id}')">
+        ${isFun ? '⚡ Main!' : '📝 Kerjakan'}
+      </button>`;
+    }
   }
 
   return `<div class="quiz-stream-card" style="background:white">
@@ -7016,7 +7113,7 @@ function renderKuisCard(q, isGuru) {
       <div class="qsc-stats">
         ${isSubmission
           ? `<div class="qsc-stat" style="background:#EEF5FF"><div class="qsc-stat-num" style="font-size:16px">${{'file':'📄','gambar':'🖼️','link':'🔗','teks':'✏️','semua':'📤'}[q.tipe_submission]||'📤'}</div><div class="qsc-stat-label">Submission</div></div>`
-          : `<div class="qsc-stat"><div class="qsc-stat-num">${q.total_soal || q.jumlah_soal || '?'}</div><div class="qsc-stat-label">Soal</div></div>`
+          : `<div class="qsc-stat"><div class="qsc-stat-num">${(q.total_soal || q.jumlah_soal) > 0 ? (q.total_soal || q.jumlah_soal) : '0'}</div><div class="qsc-stat-label">Soal</div></div>`
         }
         ${isFun && !isSubmission ? `<div class="qsc-stat"><div class="qsc-stat-num">${q.durasi || 15}s</div><div class="qsc-stat-label">Per soal</div></div>` : ''}
       </div>
