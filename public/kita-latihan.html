@@ -242,9 +242,12 @@
 
     /* voice view */
     .voice-wrap{max-width:600px;margin:0 auto}
-    .voice-lang-select{display:flex;gap:10px;margin-bottom:20px}
+    .voice-lang-select{display:flex;gap:10px;margin-bottom:12px}
     .lang-btn{flex:1;padding:12px;border-radius:16px;border:2.5px solid #E0D0FF;background:#fff;font-family:var(--ff-body);font-weight:900;font-size:14px;cursor:pointer;transition:all .2s;color:#6C5CE7}
     .lang-btn.active{background:linear-gradient(135deg,#7b2ff7,#4D96FF);color:#fff;border-color:transparent;box-shadow:0 4px 16px rgba(123,47,247,.35)}
+    .voice-gender-row{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+    .gender-btn{padding:7px 18px;border-radius:20px;border:2px solid #E0D0FF;background:#fff;font-family:var(--ff-body);font-weight:800;font-size:13px;cursor:pointer;transition:all .2s;color:#6C5CE7}
+    .gender-btn.active{background:linear-gradient(135deg,#7b2ff7,#4D96FF);color:#fff;border-color:transparent;box-shadow:0 2px 10px rgba(123,47,247,.3)}
     .voice-topic-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
     .topic-chip{padding:7px 16px;border-radius:50px;border:2px solid #E0D0FF;background:#fff;font-family:var(--ff-body);font-weight:800;font-size:12px;cursor:pointer;transition:all .2s;color:#7b2ff7;white-space:nowrap}
     .topic-chip.active{background:linear-gradient(135deg,#7b2ff7,#4D96FF);color:#fff;border-color:transparent}
@@ -536,6 +539,13 @@
     <div class="voice-lang-select">
       <button class="lang-btn active" id="lang-btn-id" onclick="pilihBahasa('id')">🇮🇩 Bahasa Indonesia</button>
       <button class="lang-btn" id="lang-btn-en" onclick="pilihBahasa('en')">🇬🇧 English</button>
+    </div>
+
+    <!-- Pilih suara AI: Wanita / Pria -->
+    <div class="voice-gender-row" id="voice-gender-row">
+      <span style="font-size:12px;font-weight:700;color:#888;margin-right:6px">Suara AI:</span>
+      <button class="gender-btn active" id="gender-btn-f" onclick="pilihGender('female')">👩 Wanita</button>
+      <button class="gender-btn" id="gender-btn-m" onclick="pilihGender('male')">👨 Pria</button>
     </div>
 
     <!-- Pilih topik -->
@@ -1502,15 +1512,19 @@ const VOICE_TOPICS = {
   ]
 };
 
-let voiceLang = 'id';
-let voiceTopic = 0;
-let voiceChatHistory = [];
-let voiceRecognition = null;
-let voiceListening = false;
-let voiceSpeaking = false;
+let voiceLang   = 'id';
+let voiceGender = 'female'; // 'female' | 'male'
+let voiceTopic  = 0;
+let voiceChatHistory  = [];
+let voiceRecognition  = null;
+let voiceListening    = false;
+let voiceSpeaking     = false;
 let voiceSpeechSupported = false;
-let voiceLiveMode = false;   // mode percakapan otomatis
-let voiceLiveActive = false; // live mode sedang berjalan
+let voiceLiveMode     = false;
+let voiceLiveActive   = false;
+
+// Suara pria terbaik yang tersedia (dikunci saat init, tidak ganti-ganti)
+let _lockedMaleVoice = null;
 
 // Token dari localStorage (sama seperti belajar-seru)
 function getVoiceToken() {
@@ -1528,19 +1542,32 @@ function initSpeechRecognition() {
   voiceSpeechSupported = true;
   voiceRecognition = new SR();
   voiceRecognition.continuous = false;
-  voiceRecognition.interimResults = false;
+  voiceRecognition.interimResults = true;  // tampilkan teks real-time
+  voiceRecognition.maxAlternatives = 1;
   voiceRecognition.lang = voiceLang === 'id' ? 'id-ID' : 'en-US';
 
   voiceRecognition.onresult = (e) => {
-    const transcript = Array.from(e.results)
-      .map(r => r[0].transcript).join(' ').trim();
-    if (!transcript) return;
-    stopListening();
-    kirimVoiceMsg(transcript);
+    let interim = '';
+    let final   = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) final += t;
+      else interim += t;
+    }
+    // Tampilkan di input box agar user lihat apa yang dikenali
+    const inp = document.getElementById('voice-text-input');
+    if (inp) inp.value = final || interim;
+
+    if (final.trim()) {
+      if (inp) inp.value = '';
+      stopListening();
+      kirimVoiceMsg(final.trim());
+    }
   };
   voiceRecognition.onerror = (e) => {
+    const inp = document.getElementById('voice-text-input');
+    if (inp) inp.value = '';
     if (e.error === 'no-speech') {
-      // Di live mode, restart listening kalau tidak ada suara
       if (voiceLiveMode && voiceLiveActive && !voiceSpeaking) {
         stopListening();
         setTimeout(() => { if (voiceLiveMode && voiceLiveActive) startListening(); }, 300);
@@ -1549,12 +1576,67 @@ function initSpeechRecognition() {
       }
     } else {
       stopListening();
-      setMicStatus('Gagal mendeteksi suara, coba lagi', '');
+      setMicStatus(voiceLang === 'id' ? 'Gagal mendeteksi suara, coba lagi' : 'Could not detect speech, try again', '');
     }
   };
   voiceRecognition.onend = () => {
     if (voiceListening) stopListening();
   };
+
+  // Kunci suara pria saat init agar konsisten
+  _initMaleVoice();
+}
+
+// ── Inisialisasi suara pria (dikunci sekali, tidak ganti-ganti) ──
+function _initMaleVoice() {
+  const tryLock = () => {
+    const voices = window.speechSynthesis?.getVoices() || [];
+    if (!voices.length) return; // belum dimuat, tunggu event
+
+    // Prioritas suara pria Indonesia
+    const MALE_ID = [
+      'Google Bahasa Indonesia Male',
+      'id-ID-Wavenet-B', 'id-ID-Wavenet-C',
+      'id-ID-Standard-B', 'id-ID-Standard-C'
+    ];
+    // Prioritas suara pria Inggris
+    const MALE_EN = [
+      'Google UK English Male',
+      'Microsoft George Desktop',
+      'Microsoft David Desktop',
+      'Google US English Male',
+      'en-GB-Wavenet-B', 'en-US-Wavenet-B',
+      'en-GB-Standard-B'
+    ];
+
+    const pick = (list) => {
+      for (const name of list) {
+        const v = voices.find(v => v.name === name);
+        if (v) return v;
+      }
+      // Fallback: cari yang ada kata 'male' di nama
+      const byKeyword = voices.find(v => v.name.toLowerCase().includes('male'));
+      if (byKeyword) return byKeyword;
+      // Fallback terakhir: suara ke-2 yang tersedia (bukan index 0 yang biasanya wanita)
+      return voices[1] || voices[0] || null;
+    };
+
+    const lang = voiceLang;
+    _lockedMaleVoice = lang === 'id' ? pick(MALE_ID) : pick(MALE_EN);
+  };
+
+  if (window.speechSynthesis) {
+    tryLock();
+    window.speechSynthesis.onvoiceschanged = () => { if (!_lockedMaleVoice) tryLock(); };
+  }
+}
+
+// ── Pilih gender suara AI ──
+function pilihGender(gender) {
+  voiceGender = gender;
+  document.getElementById('gender-btn-f').classList.toggle('active', gender === 'female');
+  document.getElementById('gender-btn-m').classList.toggle('active', gender === 'male');
+  tampilkanInfoSuara();
 }
 
 // Toggle Live Mode on/off
@@ -1617,17 +1699,24 @@ function hideWaves() {
 function tampilkanInfoSuara() {
   const el = document.getElementById('voice-info-bar');
   if (!el) return;
-  // Selalu pakai Google Translate TTS (langsung dari browser, gratis)
-  el.textContent = '🔊 Suara: Google Translate TTS ✨';
-  el.style.color = '#7b2ff7';
+  if (voiceGender === 'female') {
+    el.textContent = '🔊 Suara AI: 👩 Wanita (Google TTS) ✨';
+    el.style.color = '#7b2ff7';
+  } else {
+    const mName = _lockedMaleVoice?.name || 'Browser Male';
+    el.textContent = `🔊 Suara AI: 👨 Pria (${mName.replace('Microsoft ','').replace(' Desktop','')}) ✨`;
+    el.style.color = '#4D96FF';
+  }
 }
 
 function pilihBahasa(lang) {
   voiceLang = lang;
   voiceChatHistory = [];
-  // Reset cache suara saat ganti bahasa
+  // Reset cache suara & kunci ulang suara pria untuk bahasa baru
   _cachedVoiceId = null;
   _cachedVoiceEn = null;
+  _lockedMaleVoice = null;
+  _initMaleVoice();
 
   document.getElementById('lang-btn-id').classList.toggle('active', lang === 'id');
   document.getElementById('lang-btn-en').classList.toggle('active', lang === 'en');
@@ -1836,14 +1925,21 @@ function _voiceSpeakFallback(clean) {
   if (!window.speechSynthesis) { _voiceSpeakOnEnd(); return; }
   window.speechSynthesis.cancel();
   const utter = new SpeechSynthesisUtterance(clean);
-  const bestVoice = getVoice(voiceLang);
-  if (bestVoice) { utter.voice = bestVoice; utter.lang = bestVoice.lang; }
-  else { utter.lang = voiceLang === 'id' ? 'id-ID' : 'en-GB'; }
-  const isNeural = bestVoice?.name?.toLowerCase().includes('google') ||
-                   bestVoice?.name?.toLowerCase().includes('online') ||
-                   bestVoice?.name?.toLowerCase().includes('neural');
-  utter.rate = isNeural ? 0.95 : 0.88;
-  utter.pitch = isNeural ? 1.0 : 0.95;
+
+  // Pilih suara sesuai gender yang dipilih user — dikunci agar konsisten
+  if (voiceGender === 'male' && _lockedMaleVoice) {
+    utter.voice = _lockedMaleVoice;
+    utter.lang  = _lockedMaleVoice.lang;
+    utter.rate  = 0.92;
+    utter.pitch = 0.9;
+  } else {
+    // female fallback: pakai suara terbaik wanita yang tersedia
+    const femaleVoice = getVoice(voiceLang);
+    if (femaleVoice) { utter.voice = femaleVoice; utter.lang = femaleVoice.lang; }
+    else { utter.lang = voiceLang === 'id' ? 'id-ID' : 'en-GB'; }
+    utter.rate  = 0.93;
+    utter.pitch = 1.0;
+  }
   utter.volume = 1.0;
   utter.onstart = () => {
     voiceSpeaking = true;
@@ -1888,8 +1984,13 @@ function _splitTTS(text, maxLen = 190) {
 function _playTTSChunks(chunks, idx = 0) {
   if (idx >= chunks.length) { _voiceSpeakOnEnd(); return; }
 
-  // Panggil Google Translate TTS langsung dari browser (tidak lewat backend)
-  // Audio element tidak punya batasan CORS, jadi bisa cross-origin
+  // Suara PRIA → Web Speech API dengan suara terkunci
+  if (voiceGender === 'male') {
+    _voiceSpeakFallback(chunks.slice(idx).join(' '));
+    return;
+  }
+
+  // Suara WANITA → Google Translate TTS (natural, gratis, konsisten)
   const tl  = voiceLang === 'en' ? 'en' : 'id';
   const url = 'https://translate.google.com/translate_tts?ie=UTF-8' +
     '&q=' + encodeURIComponent(chunks[idx]) +
@@ -1899,7 +2000,6 @@ function _playTTSChunks(chunks, idx = 0) {
   const audio = new Audio(url);
   audio.onended = () => _playTTSChunks(chunks, idx + 1);
   audio.onerror = () => {
-    // Google TTS gagal (misalnya diblokir) → fallback Web Speech untuk sisa teks
     voiceSpeaking = false;
     _voiceSpeakFallback(chunks.slice(idx).join(' '));
   };
