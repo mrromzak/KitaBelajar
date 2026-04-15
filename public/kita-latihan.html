@@ -560,7 +560,7 @@
     <div class="voice-chat-box" id="voice-chat-box">
       <div class="vm bot">
         <div class="vm-avatar">🤖</div>
-        <div class="vm-bubble" id="voice-welcome-msg">Halo! Ayo latihan Bahasa Indonesia. Tekan tombol 🎙️ atau ketik untuk mulai ngobrol. Saya akan bantu koreksi jika ada yang kurang tepat!</div>
+        <div class="vm-bubble" id="voice-welcome-msg">Hei! Aku Rina. Yuk ngobrol bareng — tekan 🎙️ atau ketik aja langsung. Santai aja, nggak perlu sempurna!</div>
       </div>
     </div>
 
@@ -1699,12 +1699,16 @@ function hideWaves() {
 function tampilkanInfoSuara() {
   const el = document.getElementById('voice-info-bar');
   if (!el) return;
+  const isEn = voiceLang === 'en';
   if (voiceGender === 'female') {
-    el.textContent = '🔊 Suara AI: 👩 Wanita (Google TTS) ✨';
+    el.textContent = isEn
+      ? '🔊 Suara AI: 👩 Jamie — Kokoro Neural ✨'
+      : '🔊 Suara AI: 👩 Rina — Google TTS ✨';
     el.style.color = '#7b2ff7';
   } else {
-    const mName = _lockedMaleVoice?.name || 'Browser Male';
-    el.textContent = `🔊 Suara AI: 👨 Pria (${mName.replace('Microsoft ','').replace(' Desktop','')}) ✨`;
+    el.textContent = isEn
+      ? '🔊 Suara AI: 👨 Jamie — Kokoro Neural ✨'
+      : '🔊 Suara AI: 👨 Rina — Browser Voice ✨';
     el.style.color = '#4D96FF';
   }
 }
@@ -1731,8 +1735,8 @@ function pilihBahasa(lang) {
   // Reset chat
   const box = document.getElementById('voice-chat-box');
   const welcome = lang === 'id'
-    ? 'Halo! Ayo latihan Bahasa Indonesia. Tekan 🎙️ atau ketik untuk mulai ngobrol. Saya akan koreksi jika ada yang kurang tepat!'
-    : "Hello! Let's practice English together. Press 🎙️ or type to start. I'll help correct your mistakes!";
+    ? 'Hei! Aku Rina. Yuk ngobrol bareng — tekan 🎙️ atau ketik aja langsung. Santai aja, nggak perlu sempurna!'
+    : "Hey! I'm Jamie. Let's chat — press 🎙️ or just type. No pressure, just talk!";
   box.innerHTML = `<div class="vm bot"><div class="vm-avatar">🤖</div><div class="vm-bubble">${welcome}</div></div>`;
   voiceChatHistory = [];
   voiceTopic = 0;
@@ -1981,32 +1985,65 @@ function _splitTTS(text, maxLen = 190) {
   return chunks.filter(Boolean);
 }
 
-function _playTTSChunks(chunks, idx = 0) {
+// Kokoro TTS via backend (Inggris, benar-benar seperti manusia)
+async function _playKokoro(chunks, idx = 0) {
+  if (idx >= chunks.length) { _voiceSpeakOnEnd(); return; }
+  const voice = voiceGender === 'male' ? 'am_adam' : 'af_heart';
+  const token = localStorage.getItem('kb_token') || localStorage.getItem('token') || '';
+  try {
+    const resp = await fetch(VOICE_API + '/ai/tts/kokoro', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ text: chunks[idx], voice })
+    });
+    const ct = resp.headers.get('Content-Type') || '';
+    if (!resp.ok || ct.includes('application/json')) {
+      // Kokoro tidak tersedia → fallback Google TTS atau Web Speech
+      _playGoogleTTS(chunks, idx);
+      return;
+    }
+    const blob  = await resp.blob();
+    const url   = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.onended = () => { URL.revokeObjectURL(url); _playKokoro(chunks, idx + 1); };
+    audio.onerror = () => { URL.revokeObjectURL(url); _playGoogleTTS(chunks, idx); };
+    audio.play().catch(() => { URL.revokeObjectURL(url); _playGoogleTTS(chunks, idx); });
+  } catch (e) {
+    _playGoogleTTS(chunks, idx);
+  }
+}
+
+// Google Translate TTS (Indonesian + fallback English)
+function _playGoogleTTS(chunks, idx = 0) {
   if (idx >= chunks.length) { _voiceSpeakOnEnd(); return; }
 
-  // Suara PRIA → Web Speech API dengan suara terkunci
+  // Suara PRIA → Web Speech (Google TTS hanya punya suara wanita)
   if (voiceGender === 'male') {
     _voiceSpeakFallback(chunks.slice(idx).join(' '));
     return;
   }
 
-  // Suara WANITA → Google Translate TTS (natural, gratis, konsisten)
   const tl  = voiceLang === 'en' ? 'en' : 'id';
   const url = 'https://translate.google.com/translate_tts?ie=UTF-8' +
     '&q=' + encodeURIComponent(chunks[idx]) +
-    '&tl=' + tl +
-    '&client=tw-ob&ttsspeed=0.9';
+    '&tl=' + tl + '&client=tw-ob&ttsspeed=0.9';
 
   const audio = new Audio(url);
-  audio.onended = () => _playTTSChunks(chunks, idx + 1);
-  audio.onerror = () => {
-    voiceSpeaking = false;
-    _voiceSpeakFallback(chunks.slice(idx).join(' '));
-  };
-  audio.play().catch(() => {
-    voiceSpeaking = false;
-    _voiceSpeakFallback(chunks.slice(idx).join(' '));
-  });
+  audio.onended = () => _playGoogleTTS(chunks, idx + 1);
+  audio.onerror = () => { voiceSpeaking = false; _voiceSpeakFallback(chunks.slice(idx).join(' ')); };
+  audio.play().catch(() => { voiceSpeaking = false; _voiceSpeakFallback(chunks.slice(idx).join(' ')); });
+}
+
+function _playTTSChunks(chunks, idx = 0) {
+  if (idx >= chunks.length) { _voiceSpeakOnEnd(); return; }
+
+  if (voiceLang === 'en') {
+    // Inggris → coba Kokoro dulu (suara manusia), fallback Google TTS
+    _playKokoro(chunks, idx);
+  } else {
+    // Indonesia → Google Translate TTS (pria: Web Speech)
+    _playGoogleTTS(chunks, idx);
+  }
 }
 
 function voiceSpeak(text) {
@@ -2056,14 +2093,49 @@ async function kirimVoiceMsg(text) {
 
   const topicPrompt = VOICE_TOPICS[voiceLang][voiceTopic]?.prompt || '';
   const systemPrompt = voiceLang === 'id'
-    ? `Kamu adalah guru Bahasa Indonesia yang ramah dan sabar. ${topicPrompt}
-Tugasmu: ajak murid bercakap dalam Bahasa Indonesia, koreksi kesalahan tata bahasa/EYD dengan lembut, dan berikan pujian.
-Format jawaban: balas percakapan dulu, lalu jika ada kesalahan tambahkan koreksi singkat dengan format: [Koreksi: ...]
-Jawab singkat (2-3 kalimat), ramah, dan natural seperti guru yang mengobrol.`
-    : `You are a friendly and patient English teacher. ${topicPrompt}
-Your job: have a natural conversation in English, gently correct grammar/vocabulary mistakes, and encourage the student.
-Format: respond to the conversation first, then if there are mistakes add a brief correction with format: [Correction: ...]
-Keep responses short (2-3 sentences), warm, and conversational.`;
+    ? `Kamu adalah Rina, teman ngobrol yang juga fasih Bahasa Indonesia baku. Kamu BUKAN robot dan BUKAN guru formal — kamu seperti kakak yang asyik, santai, dan pintar.
+
+KEPRIBADIAN:
+- Ngobrol natural, hangat, kadang pakai humor ringan
+- Tidak kaku, tidak ceramah panjang
+- Pujian yang tulus, bukan basa-basi
+- Kalau salah, koreksi dengan cara yang tidak bikin malu
+
+TOPIK SAAT INI: ${topicPrompt || 'Percakapan bebas sehari-hari'}
+
+CARA MENJAWAB:
+1. Balas dulu seperti obrolan biasa — pendek, natural, sambung pembicaraan
+2. Kalau ada kesalahan tata bahasa atau EYD, sisipkan koreksi SINGKAT di akhir dengan format: [Koreksi: teks yang benar]
+3. Sesekali ajukan pertanyaan balik untuk menjaga obrolan mengalir
+4. Maksimal 2-3 kalimat, JANGAN panjang-panjang
+
+CONTOH GAYA JAWABAN:
+User: "Saya pergi ke mall kemarin sama teman-teman saya"
+Rina: "Wah seru! Ke mall ngapain, belanja atau nonton? [Koreksi: '...bersama teman-temanku' — 'sama' lebih cocok diganti 'bersama' untuk ragam baku]"
+
+INGAT: Kamu berbicara (TTS), JANGAN pakai simbol *, #, atau markdown apapun.`
+
+    : `You are Jamie, a native English speaker and casual conversation partner — NOT a formal teacher. Think of yourself as a cool friend who helps others speak better English naturally.
+
+PERSONALITY:
+- Warm, witty, genuinely engaged in the conversation
+- Conversational, not stiff or textbook-like
+- Encouraging without being fake
+- Correct mistakes gently, like a friend would
+
+CURRENT FOCUS: ${topicPrompt || 'Free casual conversation'}
+
+HOW TO RESPOND:
+1. Reply naturally first — keep it short, engaging, like real conversation
+2. If there's a grammar or vocabulary mistake, add a BRIEF correction at the end: [Correction: correct version]
+3. Ask follow-up questions to keep the chat flowing
+4. Max 2-3 sentences. NEVER give long lectures.
+
+EXAMPLE STYLE:
+User: "Yesterday I go to the mall with my friends"
+Jamie: "Oh nice, did you find anything good? [Correction: 'I went to the mall' — past tense here]"
+
+REMEMBER: You are speaking (TTS), NO asterisks, hashtags, or markdown symbols.`;
 
   try {
     const res = await fetch(VOICE_API + '/ai/chat', {
@@ -2077,8 +2149,8 @@ Keep responses short (2-3 sentences), warm, and conversational.`;
           { role: 'system', content: systemPrompt },
           ...voiceChatHistory.slice(-8)
         ],
-        model: 'llama-3.1-8b-instant',  // model cepat, tidak pakai thinking tokens
-        max_tokens: 300
+        model: 'llama-3.3-70b-versatile',  // lebih natural & pintar untuk percakapan
+        max_tokens: 250
       })
     });
 

@@ -357,7 +357,43 @@ app.post('/api/ai/vision', aiLimiter, async (req, res) => {
   }
 });
 
-// (TTS ditangani langsung di frontend via Google Translate audio element — tanpa proxy backend)
+// ── Kokoro TTS Proxy (English only, via HuggingFace Inference API) ──
+// Suara benar-benar seperti manusia. Daftar gratis di huggingface.co → dapat token.
+// Isi HF_TOKEN di .env. Jika kosong, frontend fallback ke Google TTS.
+app.post('/api/ai/tts/kokoro', async (req, res) => {
+  const { text, voice } = req.body;
+  if (!text) return res.status(400).json({ success: false });
+  if (!process.env.HF_TOKEN)
+    return res.json({ success: false, fallback: true });
+
+  // Voice options: af_heart (US female), am_adam (US male), bf_emma (UK female), bm_george (UK male)
+  const selectedVoice = voice || 'af_heart';
+  const clean = text.slice(0, 400);
+
+  try {
+    const hfRes = await fetch('https://api-inference.huggingface.co/models/hexgrad/Kokoro-82M', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.HF_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ inputs: clean, parameters: { voice: selectedVoice, speed: 1.0 } })
+    });
+
+    if (!hfRes.ok) {
+      // 503 = model loading, 429 = rate limit → fallback
+      return res.json({ success: false, fallback: true });
+    }
+
+    const ct = hfRes.headers.get('Content-Type') || 'audio/wav';
+    res.setHeader('Content-Type', ct);
+    res.setHeader('Cache-Control', 'no-cache');
+    hfRes.body.pipe(res);
+  } catch (err) {
+    console.error('[Kokoro TTS]', err.message);
+    res.json({ success: false, fallback: true });
+  }
+});
 
 // ── Proxy: fetch artikel untuk AI Materi ──
 // Blokir IP internal (anti-SSRF), tapi izinkan semua domain publik
