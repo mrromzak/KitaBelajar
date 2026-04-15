@@ -279,6 +279,33 @@
 
     .no-speech-notice{background:#FFF8E1;border:1.5px solid #FFD54F;border-radius:14px;padding:12px 16px;font-size:13px;font-weight:700;color:#795548;margin-bottom:16px;display:none}
 
+    /* Live Mode toggle */
+    .live-toggle-wrap{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:14px}
+    .live-toggle{position:relative;width:52px;height:28px;cursor:pointer}
+    .live-toggle input{opacity:0;width:0;height:0}
+    .live-slider{position:absolute;inset:0;background:#ddd;border-radius:50px;transition:.3s}
+    .live-slider:before{content:'';position:absolute;width:22px;height:22px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+    .live-toggle input:checked + .live-slider{background:linear-gradient(135deg,#7b2ff7,#4D96FF)}
+    .live-toggle input:checked + .live-slider:before{transform:translateX(24px)}
+    .live-label{font-size:13px;font-weight:800;color:#555}
+    .live-label.on{color:#7b2ff7}
+
+    /* Live indicator di mic button */
+    .mic-btn.live-idle{background:linear-gradient(135deg,#7b2ff7,#4D96FF);box-shadow:0 0 0 0 rgba(123,47,247,.5);animation:livePulseIdle 2s ease infinite}
+    @keyframes livePulseIdle{0%,100%{box-shadow:0 6px 24px rgba(123,47,247,.4)}50%{box-shadow:0 6px 32px rgba(123,47,247,.7)}}
+
+    /* Wave animation saat listening di live mode */
+    .voice-waves{display:flex;align-items:center;justify-content:center;gap:5px;height:36px;margin-top:8px}
+    .voice-wave{width:5px;background:linear-gradient(135deg,#7b2ff7,#4D96FF);border-radius:50px;animation:waveAnim 0.8s ease-in-out infinite}
+    .voice-wave:nth-child(1){animation-delay:0s;height:12px}
+    .voice-wave:nth-child(2){animation-delay:0.1s;height:22px}
+    .voice-wave:nth-child(3){animation-delay:0.2s;height:30px}
+    .voice-wave:nth-child(4){animation-delay:0.3s;height:22px}
+    .voice-wave:nth-child(5){animation-delay:0.4s;height:12px}
+    @keyframes waveAnim{0%,100%{transform:scaleY(0.5);opacity:.6}50%{transform:scaleY(1);opacity:1}}
+    .voice-waves.listening .voice-wave{background:linear-gradient(135deg,#FF4040,#FF8C42)}
+    .voice-waves.speaking .voice-wave{background:linear-gradient(135deg,#00C851,#38ef7d)}
+
     /* ── MOBILE ── */
     @media(max-width:520px){
       .level-grid{grid-template-columns:1fr;gap:10px}
@@ -530,9 +557,26 @@
     <!-- Info suara yang dipakai -->
     <div id="voice-info-bar" style="text-align:center;margin-bottom:10px;font-size:11px;color:#aaa;font-weight:700;min-height:16px"></div>
 
-    <!-- Tombol mic -->
+    <!-- Live Mode toggle -->
+    <div class="live-toggle-wrap">
+      <span class="live-label" id="live-label">Mode Live</span>
+      <label class="live-toggle">
+        <input type="checkbox" id="live-mode-toggle" onchange="toggleLiveMode(this.checked)">
+        <span class="live-slider"></span>
+      </label>
+      <span style="font-size:12px;color:#aaa;font-weight:700">Percakapan otomatis</span>
+    </div>
+
+    <!-- Tombol mic + wave -->
     <div class="voice-mic-area">
       <button class="mic-btn" id="mic-btn" onclick="toggleMic()" title="Tekan untuk bicara">🎙️</button>
+      <div class="voice-waves" id="voice-waves" style="display:none">
+        <div class="voice-wave"></div>
+        <div class="voice-wave"></div>
+        <div class="voice-wave"></div>
+        <div class="voice-wave"></div>
+        <div class="voice-wave"></div>
+      </div>
       <div class="mic-status" id="mic-status">Tekan untuk bicara</div>
     </div>
 
@@ -540,6 +584,11 @@
     <div class="voice-input-row">
       <input type="text" class="voice-text-input" id="voice-text-input" placeholder="Atau ketik di sini..." onkeydown="if(event.key==='Enter')kirimVoiceText()">
       <button class="voice-send-btn" onclick="kirimVoiceText()" title="Kirim">➤</button>
+    </div>
+
+    <!-- Tips live mode -->
+    <div id="live-tips" style="display:none;background:#F4F0FF;border-radius:14px;padding:10px 14px;font-size:12px;font-weight:700;color:#6C5CE7;margin-top:10px;text-align:center">
+      💡 Tips: Pakai <strong>earphone</strong> agar mic tidak menangkap suara AI. Tekan tombol mic untuk mulai.
     </div>
   </div>
 </div>
@@ -1460,6 +1509,8 @@ let voiceRecognition = null;
 let voiceListening = false;
 let voiceSpeaking = false;
 let voiceSpeechSupported = false;
+let voiceLiveMode = false;   // mode percakapan otomatis
+let voiceLiveActive = false; // live mode sedang berjalan
 
 // Token dari localStorage (sama seperti belajar-seru)
 function getVoiceToken() {
@@ -1481,17 +1532,86 @@ function initSpeechRecognition() {
   voiceRecognition.lang = voiceLang === 'id' ? 'id-ID' : 'en-US';
 
   voiceRecognition.onresult = (e) => {
-    const transcript = e.results[0][0].transcript;
+    const transcript = Array.from(e.results)
+      .map(r => r[0].transcript).join(' ').trim();
+    if (!transcript) return;
     stopListening();
     kirimVoiceMsg(transcript);
   };
   voiceRecognition.onerror = (e) => {
-    stopListening();
-    if (e.error !== 'no-speech') setMicStatus('Gagal mendeteksi suara, coba lagi', '');
+    if (e.error === 'no-speech') {
+      // Di live mode, restart listening kalau tidak ada suara
+      if (voiceLiveMode && voiceLiveActive && !voiceSpeaking) {
+        stopListening();
+        setTimeout(() => { if (voiceLiveMode && voiceLiveActive) startListening(); }, 300);
+      } else {
+        stopListening();
+      }
+    } else {
+      stopListening();
+      setMicStatus('Gagal mendeteksi suara, coba lagi', '');
+    }
   };
   voiceRecognition.onend = () => {
     if (voiceListening) stopListening();
   };
+}
+
+// Toggle Live Mode on/off
+function toggleLiveMode(on) {
+  voiceLiveMode = on;
+  const label = document.getElementById('live-label');
+  const tips = document.getElementById('live-tips');
+  const micBtn = document.getElementById('mic-btn');
+
+  if (on) {
+    label.classList.add('on');
+    label.textContent = '🔴 Mode Live';
+    tips.style.display = 'block';
+    micBtn.title = 'Mulai percakapan live';
+  } else {
+    label.classList.remove('on');
+    label.textContent = 'Mode Live';
+    tips.style.display = 'none';
+    // Hentikan live session jika sedang aktif
+    if (voiceLiveActive) stopLiveSession();
+    micBtn.title = 'Tekan untuk bicara';
+  }
+}
+
+function startLiveSession() {
+  if (!voiceSpeechSupported) return;
+  voiceLiveActive = true;
+  const micBtn = document.getElementById('mic-btn');
+  micBtn.classList.add('live-idle');
+  micBtn.textContent = '⏹️';
+  micBtn.title = 'Tap untuk berhenti';
+  setMicStatus(voiceLang === 'id' ? 'Live aktif — silakan bicara!' : 'Live on — go ahead!', 'listening');
+  showWaves('listening');
+  startListening();
+}
+
+function stopLiveSession() {
+  voiceLiveActive = false;
+  stopListening();
+  window.speechSynthesis?.cancel();
+  const micBtn = document.getElementById('mic-btn');
+  micBtn.classList.remove('live-idle', 'listening');
+  micBtn.textContent = '🎙️';
+  micBtn.title = 'Mulai percakapan live';
+  setMicStatus(voiceLang === 'id' ? 'Tekan mic untuk mulai' : 'Tap mic to start', '');
+  hideWaves();
+}
+
+function showWaves(mode) {
+  const w = document.getElementById('voice-waves');
+  if (!w) return;
+  w.style.display = 'flex';
+  w.className = `voice-waves ${mode}`;
+}
+function hideWaves() {
+  const w = document.getElementById('voice-waves');
+  if (w) w.style.display = 'none';
 }
 
 function tampilkanInfoSuara() {
@@ -1573,17 +1693,26 @@ function bukaLatihanBicara() {
 }
 
 function keluarVoice() {
+  if (voiceLiveActive) stopLiveSession();
   stopListening();
   window.speechSynthesis?.cancel();
+  voiceLiveMode = false;
+  voiceLiveActive = false;
+  const toggle = document.getElementById('live-mode-toggle');
+  if (toggle) toggle.checked = false;
   showView('home');
 }
 
 function toggleMic() {
   if (document.getElementById('mic-btn').classList.contains('disabled')) return;
-  if (voiceListening) {
-    stopListening();
+  if (voiceLiveMode) {
+    // Live mode: toggle seluruh sesi
+    if (voiceLiveActive) stopLiveSession();
+    else startLiveSession();
   } else {
-    startListening();
+    // Mode manual: toggle satu utterance
+    if (voiceListening) stopListening();
+    else startListening();
   }
 }
 
@@ -1592,18 +1721,24 @@ function startListening() {
   window.speechSynthesis?.cancel();
   voiceListening = true;
   voiceRecognition.lang = voiceLang === 'id' ? 'id-ID' : 'en-US';
-  voiceRecognition.start();
-  document.getElementById('mic-btn').classList.add('listening');
-  document.getElementById('mic-btn').textContent = '⏹️';
+  try { voiceRecognition.start(); } catch(e) { voiceListening = false; return; }
+  if (!voiceLiveMode) {
+    document.getElementById('mic-btn').classList.add('listening');
+    document.getElementById('mic-btn').textContent = '⏹️';
+  }
+  showWaves('listening');
   setMicStatus(voiceLang === 'id' ? 'Mendengarkan...' : 'Listening...', 'listening');
 }
 
 function stopListening() {
   voiceListening = false;
   if (voiceRecognition) { try { voiceRecognition.stop(); } catch(e) {} }
-  document.getElementById('mic-btn').classList.remove('listening');
-  document.getElementById('mic-btn').textContent = '🎙️';
-  setMicStatus(voiceLang === 'id' ? 'Tekan untuk bicara' : 'Press to speak', '');
+  if (!voiceLiveMode) {
+    document.getElementById('mic-btn').classList.remove('listening');
+    document.getElementById('mic-btn').textContent = '🎙️';
+    hideWaves();
+    setMicStatus(voiceLang === 'id' ? 'Tekan untuk bicara' : 'Press to speak', '');
+  }
 }
 
 function setMicStatus(text, cls) {
@@ -1688,15 +1823,107 @@ if (window.speechSynthesis) {
   };
 }
 
-function voiceSpeak(text) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
+function _voiceSpeakOnEnd() {
+  voiceSpeaking = false;
+  if (voiceLiveMode && voiceLiveActive) {
+    showWaves('listening');
+    setMicStatus(voiceLang === 'id' ? 'Mendengarkan...' : 'Listening...', 'listening');
+    setTimeout(() => {
+      if (voiceLiveMode && voiceLiveActive) startListening();
+    }, 600);
+  } else {
+    hideWaves();
+    setMicStatus(voiceLang === 'id' ? 'Tekan untuk bicara' : 'Press to speak', '');
+  }
+}
 
+function _voiceSpeakFallback(clean) {
+  if (!window.speechSynthesis) { _voiceSpeakOnEnd(); return; }
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(clean);
+  const bestVoice = getVoice(voiceLang);
+  if (bestVoice) { utter.voice = bestVoice; utter.lang = bestVoice.lang; }
+  else { utter.lang = voiceLang === 'id' ? 'id-ID' : 'en-GB'; }
+  const isNeural = bestVoice?.name?.toLowerCase().includes('google') ||
+                   bestVoice?.name?.toLowerCase().includes('online') ||
+                   bestVoice?.name?.toLowerCase().includes('neural');
+  utter.rate = isNeural ? 0.95 : 0.88;
+  utter.pitch = isNeural ? 1.0 : 0.95;
+  utter.volume = 1.0;
+  utter.onstart = () => {
+    voiceSpeaking = true;
+    showWaves('speaking');
+    setMicStatus(voiceLang === 'id' ? 'AI sedang berbicara...' : 'AI is speaking...', 'speaking');
+  };
+  utter.onend = _voiceSpeakOnEnd;
+  utter.onerror = () => { voiceSpeaking = false; hideWaves(); setMicStatus(voiceLang === 'id' ? 'Tekan untuk bicara' : 'Press to speak', ''); };
+  window.speechSynthesis.speak(utter);
+}
+
+// Pecah teks panjang di batas kalimat/frasa agar tidak terpotong
+function _splitTTS(text, maxLen = 190) {
+  const chunks = [];
+  // Pecah di titik, tanda tanya, tanda seru, koma, titik koma
+  const sentences = text.split(/(?<=[.?!,;])\s+/);
+  let buf = '';
+  for (const s of sentences) {
+    if ((buf + ' ' + s).trim().length <= maxLen) {
+      buf = (buf + ' ' + s).trim();
+    } else {
+      if (buf) chunks.push(buf);
+      // Kalau 1 kalimat masih > maxLen, potong paksa di batas kata
+      if (s.length > maxLen) {
+        let tmp = s;
+        while (tmp.length > maxLen) {
+          let cut = tmp.lastIndexOf(' ', maxLen);
+          if (cut < 0) cut = maxLen;
+          chunks.push(tmp.slice(0, cut));
+          tmp = tmp.slice(cut).trim();
+        }
+        buf = tmp;
+      } else {
+        buf = s;
+      }
+    }
+  }
+  if (buf) chunks.push(buf);
+  return chunks.filter(Boolean);
+}
+
+async function _playTTSChunks(chunks, idx = 0) {
+  if (idx >= chunks.length) { _voiceSpeakOnEnd(); return; }
+  const token = localStorage.getItem('kb_token') || localStorage.getItem('token') || '';
+  try {
+    const resp = await fetch(VOICE_API + '/ai/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ text: chunks[idx], lang: voiceLang })
+    });
+    const ct = resp.headers.get('Content-Type') || '';
+    if (!resp.ok || ct.includes('application/json')) {
+      // fallback: baca semua sisa teks pakai Web Speech
+      voiceSpeaking = false;
+      _voiceSpeakFallback(chunks.slice(idx).join(' '));
+      return;
+    }
+    const blob = await resp.blob();
+    const url  = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.onended = () => { URL.revokeObjectURL(url); _playTTSChunks(chunks, idx + 1); };
+    audio.onerror = () => { URL.revokeObjectURL(url); voiceSpeaking = false; _voiceSpeakFallback(chunks.slice(idx).join(' ')); };
+    audio.play();
+  } catch (e) {
+    voiceSpeaking = false;
+    _voiceSpeakFallback(chunks.slice(idx).join(' '));
+  }
+}
+
+async function voiceSpeak(text) {
   // Bersihkan markdown, emoji, tag HTML sebelum TTS
   const clean = text
     .replace(/\*\*/g, '').replace(/\*/g, '')
     .replace(/<[^>]+>/g, '')
-    .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')  // hapus semua emoji
+    .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')
     .replace(/[📌✅❌🎯💡🔴🟡🟢⭐🎓🤖✏️]/g, '')
     .replace(/\[Koreksi:[^\]]*\]/gi, '')
     .replace(/\[Correction:[^\]]*\]/gi, '')
@@ -1705,37 +1932,21 @@ function voiceSpeak(text) {
 
   if (!clean) return;
 
-  const utter = new SpeechSynthesisUtterance(clean);
+  // Tandai sedang berbicara & tampilkan wave
+  voiceSpeaking = true;
+  showWaves('speaking');
+  setMicStatus(voiceLang === 'id' ? 'AI sedang berbicara...' : 'AI is speaking...', 'speaking');
 
-  // Coba pakai suara terbaik
-  const bestVoice = getVoice(voiceLang);
-  if (bestVoice) {
-    utter.voice = bestVoice;
-    utter.lang = bestVoice.lang;
-  } else {
-    utter.lang = voiceLang === 'id' ? 'id-ID' : 'en-GB';
+  // Pecah teks jadi potongan ≤190 karakter (limit Google Translate TTS)
+  const chunks = _splitTTS(clean);
+
+  try {
+    await _playTTSChunks(chunks);
+  } catch (e) {
+    voiceSpeaking = false;
+    _voiceSpeakFallback(clean);
   }
 
-  // Parameter natural: sedikit lebih lambat, pitch normal
-  const isGoogleNeural = bestVoice?.name?.toLowerCase().includes('google');
-  const isMsNeural = bestVoice?.name?.toLowerCase().includes('online') || bestVoice?.name?.toLowerCase().includes('neural');
-
-  if (isGoogleNeural || isMsNeural) {
-    // Suara neural sudah natural, tidak perlu banyak adjust
-    utter.rate = 0.95;
-    utter.pitch = 1.0;
-    utter.volume = 1.0;
-  } else {
-    // Suara lama: sedikit perlambat & turunkan pitch agar tidak terlalu robotik
-    utter.rate = 0.88;
-    utter.pitch = 0.95;
-    utter.volume = 1.0;
-  }
-
-  utter.onstart = () => setMicStatus(voiceLang === 'id' ? 'AI sedang berbicara...' : 'AI is speaking...', 'speaking');
-  utter.onend = () => setMicStatus(voiceLang === 'id' ? 'Tekan untuk bicara' : 'Press to speak', '');
-  utter.onerror = () => setMicStatus(voiceLang === 'id' ? 'Tekan untuk bicara' : 'Press to speak', '');
-  window.speechSynthesis.speak(utter);
 }
 
 function kirimVoiceText() {
@@ -1748,7 +1959,13 @@ function kirimVoiceText() {
 
 async function kirimVoiceMsg(text) {
   voiceAddMsg('user', text.replace(/</g,'&lt;').replace(/>/g,'&gt;'));
-  setMicStatus(voiceLang === 'id' ? 'AI sedang berpikir...' : 'AI is thinking...', 'thinking');
+  // Live mode: tampilkan wave thinking
+  if (voiceLiveMode) {
+    showWaves('');
+    setMicStatus(voiceLang === 'id' ? 'AI sedang berpikir...' : 'AI is thinking...', 'thinking');
+  } else {
+    setMicStatus(voiceLang === 'id' ? 'AI sedang berpikir...' : 'AI is thinking...', 'thinking');
+  }
 
   // Tambah ke history
   voiceChatHistory.push({ role: 'user', content: text });
