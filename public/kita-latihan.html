@@ -1700,17 +1700,11 @@ function tampilkanInfoSuara() {
   const el = document.getElementById('voice-info-bar');
   if (!el) return;
   const isEn = voiceLang === 'en';
-  if (voiceGender === 'female') {
-    el.textContent = isEn
-      ? '🔊 Suara AI: 👩 Jamie — Kokoro Neural ✨'
-      : '🔊 Suara AI: 👩 Rina — Google TTS ✨';
-    el.style.color = '#7b2ff7';
-  } else {
-    el.textContent = isEn
-      ? '🔊 Suara AI: 👨 Jamie — Kokoro Neural ✨'
-      : '🔊 Suara AI: 👨 Rina — Browser Voice ✨';
-    el.style.color = '#4D96FF';
-  }
+  const modelLabel = isEn ? 'Kokoro' : 'MMS';
+  const name = isEn ? 'Jamie' : 'Rina';
+  const icon = voiceGender === 'female' ? '👩' : '👨';
+  el.textContent = `🔊 Suara AI: ${icon} ${name} — ${modelLabel} Neural ✨`;
+  el.style.color = voiceGender === 'female' ? '#7b2ff7' : '#4D96FF';
 }
 
 function pilihBahasa(lang) {
@@ -1987,31 +1981,29 @@ function _splitTTS(text, maxLen = 190) {
 
 // Kokoro TTS via backend (Inggris, benar-benar seperti manusia)
 // Retry otomatis jika model HF masih loading (503)
-async function _callKokoro(text, voice, retryLeft = 2) {
+async function _callKokoro(text, voice, retryLeft = 1) {
   const token = localStorage.getItem('kb_token') || localStorage.getItem('token') || '';
   const resp = await fetch(VOICE_API + '/ai/tts/kokoro', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-    body: JSON.stringify({ text, voice })
+    body: JSON.stringify({ text, voice, lang: voiceLang })
   });
   const ct = resp.headers.get('Content-Type') || '';
   if (ct.includes('application/json')) {
     const data = await resp.json();
-    // 503 = model HF masih loading → tunggu 4 detik lalu retry
     if (data.status === 503 && retryLeft > 0) {
       setMicStatus('Memuat model suara...', 'thinking');
-      await new Promise(r => setTimeout(r, 4000));
+      await new Promise(r => setTimeout(r, 3000));
       return _callKokoro(text, voice, retryLeft - 1);
     }
-    return null; // fallback
+    return null;
   }
-  const blob = await resp.blob();
-  return blob;
+  return await resp.blob();
 }
 
 async function _playKokoro(chunks, idx = 0) {
   if (idx >= chunks.length) { _voiceSpeakOnEnd(); return; }
-  const voice = voiceGender === 'male' ? 'am_adam' : 'af_heart';
+  const voice = voiceGender === 'male' ? 'male' : 'female';
   try {
     const blob = await _callKokoro(chunks[idx], voice);
     if (!blob) { _playGoogleTTS(chunks, idx); return; }
@@ -2049,14 +2041,8 @@ function _playGoogleTTS(chunks, idx = 0) {
 
 function _playTTSChunks(chunks, idx = 0) {
   if (idx >= chunks.length) { _voiceSpeakOnEnd(); return; }
-
-  if (voiceLang === 'en') {
-    // Inggris → coba Kokoro dulu (suara manusia), fallback Google TTS
-    _playKokoro(chunks, idx);
-  } else {
-    // Indonesia → Google Translate TTS (pria: Web Speech)
-    _playGoogleTTS(chunks, idx);
-  }
+  // Semua bahasa → coba HF TTS dulu (Kokoro / MMS), fallback Google TTS / Web Speech
+  _playKokoro(chunks, idx);
 }
 
 function voiceSpeak(text) {

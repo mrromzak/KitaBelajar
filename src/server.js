@@ -357,46 +357,61 @@ app.post('/api/ai/vision', aiLimiter, async (req, res) => {
   }
 });
 
-// ── Kokoro TTS Proxy (English only, via HuggingFace Inference API) ──
-// Suara benar-benar seperti manusia. Daftar gratis di huggingface.co → dapat token.
-// Isi HF_TOKEN di .env. Jika kosong, frontend fallback ke Google TTS.
+// ── HuggingFace TTS Proxy ──
+// Inggris  : Kokoro-82M  — af_heart (wanita, hangat & natural), am_michael (pria, ringan)
+// Indonesia: MMS-TTS-ind — Meta MMS, lebih natural dari Google Translate TTS
 app.post('/api/ai/tts/kokoro', async (req, res) => {
-  const { text, voice } = req.body;
+  const { text, voice, lang } = req.body;
   if (!text) return res.status(400).json({ success: false });
   if (!process.env.HF_TOKEN)
     return res.json({ success: false, fallback: true });
 
-  // Voice options: af_heart (US female), am_adam (US male), bf_emma (UK female), bm_george (UK male)
-  const selectedVoice = voice || 'af_heart';
   const clean = text.slice(0, 400);
+  const isId  = lang === 'id';
 
   try {
-    const hfRes = await fetch('https://api-inference.huggingface.co/models/hexgrad/Kokoro-82M', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.HF_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ inputs: clean, parameters: { voice: selectedVoice, speed: 1.0 } })
-    });
+    let hfRes;
+
+    if (isId) {
+      // Indonesia → Meta MMS TTS (natural, mendukung Bahasa Indonesia)
+      hfRes = await fetch('https://api-inference.huggingface.co/models/facebook/mms-tts-ind', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.HF_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ inputs: clean })
+      });
+    } else {
+      // Inggris → Kokoro-82M
+      // Wanita: af_heart (paling natural, hangat, tidak robotik)
+      // Pria  : am_michael (ringan, tidak terlalu dalam/bass)
+      const kokoroVoice = voice === 'male' ? 'am_michael' : 'af_heart';
+      hfRes = await fetch('https://api-inference.huggingface.co/models/hexgrad/Kokoro-82M', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.HF_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ inputs: clean, parameters: { voice: kokoroVoice, speed: 1.05 } })
+      });
+    }
 
     if (!hfRes.ok) {
       const errBody = await hfRes.text().catch(() => '');
-      console.warn(`[Kokoro TTS] HF error ${hfRes.status}:`, errBody.slice(0, 200));
-      // 503 = model loading (coba lagi sebentar), 429 = rate limit → fallback
+      console.warn(`[HF TTS] error ${hfRes.status}:`, errBody.slice(0, 150));
       return res.json({ success: false, fallback: true, status: hfRes.status });
     }
 
-    // Ambil sebagai buffer — lebih reliabel dari .pipe() di Node.js modern
     const audioBuffer = await hfRes.arrayBuffer();
     const ct = hfRes.headers.get('Content-Type') || 'audio/wav';
-
     res.setHeader('Content-Type', ct);
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Content-Length', audioBuffer.byteLength);
     res.send(Buffer.from(audioBuffer));
+
   } catch (err) {
-    console.error('[Kokoro TTS]', err.message);
+    console.error('[HF TTS]', err.message);
     res.json({ success: false, fallback: true });
   }
 });
