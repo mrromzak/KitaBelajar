@@ -1615,16 +1615,11 @@ function hideWaves() {
 }
 
 function tampilkanInfoSuara() {
-  const v = getVoice(voiceLang);
   const el = document.getElementById('voice-info-bar');
   if (!el) return;
-  if (v) {
-    const isNeural = v.name.toLowerCase().includes('google') || v.name.toLowerCase().includes('online') || v.name.toLowerCase().includes('neural');
-    el.textContent = `🔊 Suara: ${v.name}${isNeural ? ' ✨' : ''}`;
-    el.style.color = isNeural ? '#7b2ff7' : '#aaa';
-  } else {
-    el.textContent = '🔊 Suara: default browser';
-  }
+  // Selalu pakai Google Translate TTS (langsung dari browser, gratis)
+  el.textContent = '🔊 Suara: Google Translate TTS ✨';
+  el.style.color = '#7b2ff7';
 }
 
 function pilihBahasa(lang) {
@@ -1914,7 +1909,7 @@ function _playTTSChunks(chunks, idx = 0) {
   });
 }
 
-async function voiceSpeak(text) {
+function voiceSpeak(text) {
   // Bersihkan markdown, emoji, tag HTML sebelum TTS
   const clean = text
     .replace(/\*\*/g, '').replace(/\*/g, '')
@@ -1935,14 +1930,7 @@ async function voiceSpeak(text) {
 
   // Pecah teks jadi potongan ≤190 karakter (limit Google Translate TTS)
   const chunks = _splitTTS(clean);
-
-  try {
-    await _playTTSChunks(chunks);
-  } catch (e) {
-    voiceSpeaking = false;
-    _voiceSpeakFallback(clean);
-  }
-
+  _playTTSChunks(chunks);
 }
 
 function kirimVoiceText() {
@@ -1989,7 +1977,8 @@ Keep responses short (2-3 sentences), warm, and conversational.`;
           { role: 'system', content: systemPrompt },
           ...voiceChatHistory.slice(-8)
         ],
-        max_tokens: 200
+        model: 'llama-3.1-8b-instant',  // model cepat, tidak pakai thinking tokens
+        max_tokens: 300
       })
     });
 

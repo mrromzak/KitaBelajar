@@ -292,7 +292,9 @@ const ALLOWED_GROQ_MODELS = new Set([
   'llama3-70b-8192',
   'llama3-8b-8192',
   'gemma2-9b-it',
-  'meta-llama/llama-4-scout-17b-16e-instruct'
+  'meta-llama/llama-4-scout-17b-16e-instruct',
+  'llama-3.1-70b-versatile',  // voice chat fallback
+  'llama3-groq-8b-8192-tool-use-preview'  // fast model
 ]);
 
 // Helper: panggil Groq dengan dual-key fallback (lihat src/utils/groq.js)
