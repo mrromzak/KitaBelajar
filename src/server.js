@@ -381,14 +381,20 @@ app.post('/api/ai/tts/kokoro', async (req, res) => {
     });
 
     if (!hfRes.ok) {
-      // 503 = model loading, 429 = rate limit → fallback
-      return res.json({ success: false, fallback: true });
+      const errBody = await hfRes.text().catch(() => '');
+      console.warn(`[Kokoro TTS] HF error ${hfRes.status}:`, errBody.slice(0, 200));
+      // 503 = model loading (coba lagi sebentar), 429 = rate limit → fallback
+      return res.json({ success: false, fallback: true, status: hfRes.status });
     }
 
+    // Ambil sebagai buffer — lebih reliabel dari .pipe() di Node.js modern
+    const audioBuffer = await hfRes.arrayBuffer();
     const ct = hfRes.headers.get('Content-Type') || 'audio/wav';
+
     res.setHeader('Content-Type', ct);
     res.setHeader('Cache-Control', 'no-cache');
-    hfRes.body.pipe(res);
+    res.setHeader('Content-Length', audioBuffer.byteLength);
+    res.send(Buffer.from(audioBuffer));
   } catch (err) {
     console.error('[Kokoro TTS]', err.message);
     res.json({ success: false, fallback: true });

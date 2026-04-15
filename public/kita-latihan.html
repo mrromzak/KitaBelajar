@@ -1986,23 +1986,36 @@ function _splitTTS(text, maxLen = 190) {
 }
 
 // Kokoro TTS via backend (Inggris, benar-benar seperti manusia)
+// Retry otomatis jika model HF masih loading (503)
+async function _callKokoro(text, voice, retryLeft = 2) {
+  const token = localStorage.getItem('kb_token') || localStorage.getItem('token') || '';
+  const resp = await fetch(VOICE_API + '/ai/tts/kokoro', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ text, voice })
+  });
+  const ct = resp.headers.get('Content-Type') || '';
+  if (ct.includes('application/json')) {
+    const data = await resp.json();
+    // 503 = model HF masih loading → tunggu 4 detik lalu retry
+    if (data.status === 503 && retryLeft > 0) {
+      setMicStatus('Memuat model suara...', 'thinking');
+      await new Promise(r => setTimeout(r, 4000));
+      return _callKokoro(text, voice, retryLeft - 1);
+    }
+    return null; // fallback
+  }
+  const blob = await resp.blob();
+  return blob;
+}
+
 async function _playKokoro(chunks, idx = 0) {
   if (idx >= chunks.length) { _voiceSpeakOnEnd(); return; }
   const voice = voiceGender === 'male' ? 'am_adam' : 'af_heart';
-  const token = localStorage.getItem('kb_token') || localStorage.getItem('token') || '';
   try {
-    const resp = await fetch(VOICE_API + '/ai/tts/kokoro', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ text: chunks[idx], voice })
-    });
-    const ct = resp.headers.get('Content-Type') || '';
-    if (!resp.ok || ct.includes('application/json')) {
-      // Kokoro tidak tersedia → fallback Google TTS atau Web Speech
-      _playGoogleTTS(chunks, idx);
-      return;
-    }
-    const blob  = await resp.blob();
+    const blob = await _callKokoro(chunks[idx], voice);
+    if (!blob) { _playGoogleTTS(chunks, idx); return; }
+
     const url   = URL.createObjectURL(blob);
     const audio = new Audio(url);
     audio.onended = () => { URL.revokeObjectURL(url); _playKokoro(chunks, idx + 1); };
