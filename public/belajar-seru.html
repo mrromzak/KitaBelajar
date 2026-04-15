@@ -3248,7 +3248,17 @@ function kelasHashIdx(id) {
 function renderKelasCard(k, i, role) {
   const idx = kelasHashIdx(k.id);
   const colorClass = KELAS_COLORS[idx % KELAS_COLORS.length];
-  const emoji = KELAS_EMOJIS[idx % KELAS_EMOJIS.length];
+  // Cari emoji dari mapel kelas: cek custom mapel user dulu, lalu fuzzy match, lalu fallback
+  let emoji = KELAS_EMOJIS[idx % KELAS_EMOJIS.length];
+  if (k.mapel) {
+    const customMapel = getMapelList().find(m => m.nama.toLowerCase() === k.mapel.toLowerCase());
+    if (customMapel?.emoji) {
+      emoji = customMapel.emoji;
+    } else {
+      const fuzzy = getMapelEmoji(k.mapel);
+      if (fuzzy && fuzzy !== '📚') emoji = fuzzy;
+    }
+  }
   const isGuru = role === 'guru';
   return `<div class="kelas-card" onclick="openKelas('${k.id}',${idx % KELAS_COLORS.length})">
     <div class="kelas-card-header ${colorClass}">
