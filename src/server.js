@@ -363,11 +363,14 @@ app.post('/api/ai/vision', aiLimiter, async (req, res) => {
 app.post('/api/ai/tts/kokoro', async (req, res) => {
   const { text, voice, lang } = req.body;
   if (!text) return res.status(400).json({ success: false });
-  if (!process.env.HF_TOKEN)
+  if (!process.env.HF_TOKEN) {
+    console.warn('[HF TTS] HF_TOKEN tidak ditemukan di .env');
     return res.json({ success: false, fallback: true });
+  }
 
   const clean = text.slice(0, 400);
   const isId  = lang === 'id';
+  console.log(`[HF TTS] request — lang: ${lang}, voice: ${voice}, token: ${process.env.HF_TOKEN.slice(0,8)}...`);
 
   try {
     let hfRes;
@@ -384,26 +387,35 @@ app.post('/api/ai/tts/kokoro', async (req, res) => {
       });
     } else {
       // Inggris → Kokoro-82M
-      // Wanita: af_heart (paling natural, hangat, tidak robotik)
-      // Pria  : am_michael (ringan, tidak terlalu dalam/bass)
-      const kokoroVoice = voice === 'male' ? 'am_michael' : 'af_heart';
+      // Voice valid: af_bella/af_sarah/af_nicole/af_sky (wanita), am_adam/am_michael (pria)
+      const kokoroVoice = voice === 'male' ? 'am_michael' : 'af_bella';
+      console.log(`[HF TTS] Kokoro request — voice: ${kokoroVoice}, text: "${clean.slice(0,40)}..."`);
       hfRes = await fetch('https://api-inference.huggingface.co/models/hexgrad/Kokoro-82M', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${process.env.HF_TOKEN}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ inputs: clean, parameters: { voice: kokoroVoice, speed: 1.05 } })
+        body: JSON.stringify({ inputs: clean, parameters: { voice: kokoroVoice } })
       });
     }
 
+    console.log(`[HF TTS] response status: ${hfRes.status}, content-type: ${hfRes.headers.get('Content-Type')}`);
+
     if (!hfRes.ok) {
       const errBody = await hfRes.text().catch(() => '');
-      console.warn(`[HF TTS] error ${hfRes.status}:`, errBody.slice(0, 150));
+      console.warn(`[HF TTS] error body:`, errBody.slice(0, 300));
       return res.json({ success: false, fallback: true, status: hfRes.status });
     }
 
     const audioBuffer = await hfRes.arrayBuffer();
+    console.log(`[HF TTS] audio buffer size: ${audioBuffer.byteLength} bytes`);
+
+    if (audioBuffer.byteLength < 100) {
+      console.warn('[HF TTS] audio buffer terlalu kecil, kemungkinan response kosong');
+      return res.json({ success: false, fallback: true });
+    }
+
     const ct = hfRes.headers.get('Content-Type') || 'audio/wav';
     res.setHeader('Content-Type', ct);
     res.setHeader('Cache-Control', 'no-cache');
