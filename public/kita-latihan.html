@@ -251,6 +251,16 @@
     .voice-topic-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
     .topic-chip{padding:7px 16px;border-radius:50px;border:2px solid #E0D0FF;background:#fff;font-family:var(--ff-body);font-weight:800;font-size:12px;cursor:pointer;transition:all .2s;color:#7b2ff7;white-space:nowrap}
     .topic-chip.active{background:linear-gradient(135deg,#7b2ff7,#4D96FF);color:#fff;border-color:transparent}
+    .topic-chip.custom-chip{border-color:#FF6B6B;color:#FF6B6B}
+    .topic-chip.custom-chip.active{background:linear-gradient(135deg,#FF6B6B,#ff9f43)}
+    .scenario-panel{background:#FFF8F0;border:2px solid #FFD4B2;border-radius:16px;padding:14px 16px;margin-bottom:14px;display:none;flex-direction:column;gap:10px}
+    .scenario-panel.open{display:flex}
+    .scenario-panel label{font-size:12px;font-weight:800;color:#8B4513;margin-bottom:2px}
+    .scenario-panel textarea,.scenario-panel input[type=text]{width:100%;border:1.5px solid #FFB38E;border-radius:10px;padding:8px 11px;font-family:var(--ff-body);font-size:13px;font-weight:600;color:#333;background:#fff;resize:vertical;box-sizing:border-box;outline:none}
+    .scenario-panel textarea:focus,.scenario-panel input[type=text]:focus{border-color:#FF6B6B;box-shadow:0 0 0 3px rgba(255,107,107,.15)}
+    .scenario-panel textarea{min-height:72px}
+    .scenario-start-btn{align-self:flex-end;padding:8px 20px;border-radius:50px;border:none;background:linear-gradient(135deg,#FF6B6B,#ff9f43);color:#fff;font-family:var(--ff-body);font-weight:800;font-size:13px;cursor:pointer;transition:all .2s;box-shadow:0 3px 10px rgba(255,107,107,.3)}
+    .scenario-start-btn:hover{transform:scale(1.04)}
 
     .voice-chat-box{background:#fff;border-radius:24px;min-height:260px;max-height:380px;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.08);margin-bottom:16px;border:2px solid #F0E8FF}
     .vm{display:flex;gap:10px;align-items:flex-end}
@@ -550,6 +560,25 @@
 
     <!-- Pilih topik -->
     <div class="voice-topic-row" id="voice-topic-row"></div>
+
+    <!-- Panel skenario kustom -->
+    <div class="scenario-panel" id="scenario-panel">
+      <div>
+        <label id="scenario-desc-label">📝 Tulis skenario (contoh: kita sedang wawancara kerja, kamu adalah HRD)</label>
+        <textarea id="scenario-desc" rows="3" placeholder="Contoh: Kamu adalah HRD di perusahaan teknologi yang sedang mewawancarai saya untuk posisi software engineer. Mulai wawancara secara profesional."></textarea>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div style="flex:1;min-width:130px">
+          <label id="scenario-ai-label">🤖 AI berperan sebagai</label>
+          <input type="text" id="scenario-ai-role" placeholder="Contoh: HRD / Pewawancara">
+        </div>
+        <div style="flex:1;min-width:130px">
+          <label id="scenario-user-label">🙋 Kamu berperan sebagai</label>
+          <input type="text" id="scenario-user-role" placeholder="Contoh: Pelamar kerja">
+        </div>
+      </div>
+      <button class="scenario-start-btn" onclick="mulaiSkenario()">🎬 Mulai Skenario</button>
+    </div>
 
     <!-- Notis jika browser tidak support -->
     <div class="no-speech-notice" id="no-speech-notice">
@@ -1515,6 +1544,7 @@ const VOICE_TOPICS = {
 let voiceLang   = 'id';
 let voiceGender = 'female'; // 'female' | 'male'
 let voiceTopic  = 0;
+let voiceCustomScenario = null; // { aiRole, userRole, description } | null
 let voiceChatHistory  = [];
 let voiceRecognition  = null;
 let voiceListening    = false;
@@ -1790,20 +1820,120 @@ function pilihBahasa(lang) {
 
 function renderVoiceTopics() {
   const topics = VOICE_TOPICS[voiceLang];
-  document.getElementById('voice-topic-row').innerHTML = topics.map((t, i) =>
-    `<button class="topic-chip ${i === voiceTopic ? 'active' : ''}" onclick="pilihTopicVoice(${i})">${t.label}</button>`
+  const isCustomActive = voiceCustomScenario !== null;
+  const customLabel = voiceLang === 'id' ? '🎭 Skenario Sendiri' : '🎭 Custom Scenario';
+  const chips = topics.map((t, i) =>
+    `<button class="topic-chip ${!isCustomActive && i === voiceTopic ? 'active' : ''}" onclick="pilihTopicVoice(${i})">${t.label}</button>`
   ).join('');
+  const customChip = `<button class="topic-chip custom-chip ${isCustomActive ? 'active' : ''}" onclick="bukaScenarioPanel()">${customLabel}</button>`;
+  document.getElementById('voice-topic-row').innerHTML = chips + customChip;
 }
 
 function pilihTopicVoice(idx) {
   voiceTopic = idx;
+  voiceCustomScenario = null;
   voiceChatHistory = [];
+  document.getElementById('scenario-panel').classList.remove('open');
   renderVoiceTopics();
   const topics = VOICE_TOPICS[voiceLang];
   const msg = voiceLang === 'id'
     ? `Oke, sekarang kita latihan: <strong>${topics[idx].label}</strong>. Silakan mulai bicara atau ketik!`
     : `Alright, let's practice: <strong>${topics[idx].label}</strong>. Go ahead and speak or type!`;
   voiceAddMsg('bot', msg);
+}
+
+function bukaScenarioPanel() {
+  const panel = document.getElementById('scenario-panel');
+  const isOpen = panel.classList.contains('open');
+  if (isOpen) {
+    panel.classList.remove('open');
+    return;
+  }
+  panel.classList.add('open');
+  // Update placeholder & label sesuai bahasa
+  const isEn = voiceLang === 'en';
+  document.getElementById('scenario-desc-label').textContent = isEn
+    ? '📝 Describe the scenario (e.g., we are in a job interview, you are the interviewer)'
+    : '📝 Tulis skenario (contoh: kita sedang wawancara kerja, kamu adalah HRD)';
+  document.getElementById('scenario-desc').placeholder = isEn
+    ? 'Example: You are an HR manager at a tech company interviewing me for a software engineer position. Start the interview professionally.'
+    : 'Contoh: Kamu adalah HRD di perusahaan teknologi yang sedang mewawancarai saya untuk posisi software engineer. Mulai wawancara secara profesional.';
+  document.getElementById('scenario-ai-label').textContent = isEn ? '🤖 AI plays as' : '🤖 AI berperan sebagai';
+  document.getElementById('scenario-ai-role').placeholder = isEn ? 'e.g., Interviewer / Teacher' : 'Contoh: HRD / Pewawancara';
+  document.getElementById('scenario-user-label').textContent = isEn ? '🙋 You play as' : '🙋 Kamu berperan sebagai';
+  document.getElementById('scenario-user-role').placeholder = isEn ? 'e.g., Job applicant' : 'Contoh: Pelamar kerja';
+  document.querySelector('.scenario-start-btn').textContent = isEn ? '🎬 Start Scenario' : '🎬 Mulai Skenario';
+  document.getElementById('scenario-desc').focus();
+}
+
+function mulaiSkenario() {
+  const desc    = document.getElementById('scenario-desc').value.trim();
+  const aiRole  = document.getElementById('scenario-ai-role').value.trim();
+  const userRole= document.getElementById('scenario-user-role').value.trim();
+  const isEn    = voiceLang === 'en';
+
+  if (!desc) {
+    document.getElementById('scenario-desc').focus();
+    return;
+  }
+
+  voiceCustomScenario = { description: desc, aiRole: aiRole || (isEn ? 'AI' : 'AI'), userRole: userRole || (isEn ? 'User' : 'User') };
+  voiceChatHistory = [];
+  document.getElementById('scenario-panel').classList.remove('open');
+  renderVoiceTopics();
+
+  const box = document.getElementById('voice-chat-box');
+  const aiRoleDisplay = aiRole || (isEn ? 'AI' : 'AI');
+  const userRoleDisplay = userRole || (isEn ? 'you' : 'kamu');
+  const welcomeMsg = isEn
+    ? `Got it! I'll play as <strong>${aiRoleDisplay}</strong> and you're <strong>${userRoleDisplay}</strong>. Let's begin — I'll go first!`
+    : `Siap! Aku akan berperan sebagai <strong>${aiRoleDisplay}</strong> dan kamu sebagai <strong>${userRoleDisplay}</strong>. Ayo mulai — aku duluan ya!`;
+  box.innerHTML = `<div class="vm bot"><div class="vm-avatar">🎭</div><div class="vm-bubble">${welcomeMsg}</div></div>`;
+
+  // AI langsung mulai skenario tanpa menunggu user
+  kirimScenarioOpener();
+}
+
+async function kirimScenarioOpener() {
+  // Kirim pesan pembuka dari AI sesuai skenario (AI yang mulai duluan)
+  if (!voiceCustomScenario) return;
+  showWaves('');
+  setMicStatus(voiceLang === 'id' ? 'AI sedang memulai skenario...' : 'AI is starting the scenario...', 'thinking');
+
+  const { description, aiRole, userRole } = voiceCustomScenario;
+  const isEn = voiceLang === 'en';
+  const openerPrompt = isEn
+    ? `You are roleplaying as: ${aiRole || 'a character'}. The user is roleplaying as: ${userRole || 'themselves'}. Scenario: ${description}. Now open the scene naturally — say your first line as the character. Keep it short (1-3 sentences), stay in character completely.`
+    : `Kamu berperan sebagai: ${aiRole || 'karakter'}. User berperan sebagai: ${userRole || 'diri mereka sendiri'}. Skenario: ${description}. Sekarang buka percakapan secara natural — ucapkan kalimat pertamamu sebagai karakter tersebut. Singkat saja (1-3 kalimat), tetap dalam karakter.`;
+
+  try {
+    const res = await fetch(VOICE_API + '/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getVoiceToken() },
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: openerPrompt }
+        ],
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 200
+      })
+    });
+    const data = await res.json();
+    const reply = data?.data?.choices?.[0]?.message?.content || '';
+    if (reply) {
+      voiceChatHistory.push({ role: 'assistant', content: reply });
+      const html = reply.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+      voiceAddMsg('bot', html);
+      voiceSpeak(reply);
+      setMicStatus(voiceLang === 'id' ? 'AI sedang berbicara...' : 'AI is speaking...', 'speaking');
+    } else {
+      hideWaves();
+      setMicStatus('', '');
+    }
+  } catch(e) {
+    hideWaves();
+    setMicStatus('', '');
+  }
 }
 
 function bukaLatihanBicara() {
@@ -2140,7 +2270,57 @@ function kirimVoiceText() {
   kirimVoiceMsg(text);
 }
 
-async function kirimVoiceMsg(text) {
+// Koreksi umum kesalahan STT (speech-to-text noise)
+function fixSTTNoise(text) {
+  // Normalisasi typo umum dari STT
+  const fixes = [
+    // English common STT errors
+    [/\bcaffe\b/gi, 'café'],
+    [/\bcoffe\b/gi, 'coffee'],
+    [/\bcoffe+\b/gi, 'coffee'],
+    [/\bgonna\b/gi, 'going to'],
+    [/\bwanna\b/gi, 'want to'],
+    [/\bgotta\b/gi, 'got to'],
+    [/\bkinda\b/gi, 'kind of'],
+    [/\byeah\b/gi, 'yes'],
+    [/\bam I\b/gi, 'I am'],
+    // Indonesian common STT errors
+    [/\bngga\b/gi, 'tidak'],
+    [/\bnggak\b/gi, 'tidak'],
+    [/\bgimana\b/gi, 'bagaimana'],
+    [/\bgimana\b/gi, 'bagaimana'],
+    [/\budah\b/gi, 'sudah'],
+    [/\benggak\b/gi, 'tidak'],
+  ];
+  let result = text;
+  fixes.forEach(([pattern, replacement]) => {
+    result = result.replace(pattern, replacement);
+  });
+  return result;
+}
+
+// Deteksi apakah user sedang mengoreksi ucapannya sendiri
+function detectSelfCorrection(text, history) {
+  const enCorrectionPhrases = [
+    /^i mean[,\s]/i, /^i meant[,\s]/i, /^actually[,\s]/i,
+    /^no[,\s]i mean/i, /^sorry[,\s]i mean/i, /^correction[:\s]/i,
+    /^i said[,\s]/i, /^not .+? but/i, /^wait[,\s]/i,
+    /^let me correct/i, /^let me rephrase/i
+  ];
+  const idCorrectionPhrases = [
+    /^maksud(nya| saya)[,\s]/i, /^bukan[,\s]/i, /^maksud ku/i,
+    /^maaf[,\s]maksud/i, /^ralat[,\s:]/i, /^koreksi[,\s:]/i,
+    /^eh[,\s]bukan/i, /^tunggu[,\s]/i, /^yang benar/i,
+    /^saya tadi bilang/i
+  ];
+  const phrases = voiceLang === 'en' ? enCorrectionPhrases : idCorrectionPhrases;
+  return phrases.some(p => p.test(text.trim()));
+}
+
+async function kirimVoiceMsg(rawText) {
+  // Bersihkan STT noise ringan
+  const text = fixSTTNoise(rawText);
+
   voiceAddMsg('user', text.replace(/</g,'&lt;').replace(/>/g,'&gt;'));
   // Live mode: tampilkan wave thinking
   if (voiceLiveMode) {
@@ -2150,11 +2330,55 @@ async function kirimVoiceMsg(text) {
     setMicStatus(voiceLang === 'id' ? 'AI sedang berpikir...' : 'AI is thinking...', 'thinking');
   }
 
-  // Tambah ke history
+  // Deteksi self-correction — bungkus agar AI paham konteks
+  const isSelfCorrection = detectSelfCorrection(text, voiceChatHistory);
+  const contentToSend = isSelfCorrection
+    ? (voiceLang === 'id'
+        ? `[User mengoreksi ucapan sebelumnya] ${text}`
+        : `[User is correcting their previous message] ${text}`)
+    : text;
+
+  // Simpan ke history dengan teks bersih (tanpa tag), tag hanya untuk turn ini
   voiceChatHistory.push({ role: 'user', content: text });
 
+  // Jika ada skenario kustom, gunakan system prompt khusus roleplay
+  let systemPrompt;
+  if (voiceCustomScenario) {
+    const { description, aiRole, userRole } = voiceCustomScenario;
+    const isEn = voiceLang === 'en';
+    systemPrompt = isEn
+      ? `You are roleplaying as: ${aiRole || 'a character'}.
+The user is roleplaying as: ${userRole || 'themselves'}.
+Scenario: ${description}
+
+RULES:
+- Stay fully in character at all times. Never break character unless the user says "stop" or "end scenario".
+- Reply naturally as your character would — use the tone, vocabulary, and personality appropriate for ${aiRole || 'your role'}.
+- Keep responses SHORT (1-4 sentences) unless the scene demands more.
+- If the user makes a grammar mistake, gently correct it in character OR add a brief note: [Correction: ...]
+- Do NOT add meta-commentary like "Great job!" or "As an AI..." — stay in the scene.
+- No asterisks, markdown, or stage directions.
+
+IMPORTANT — VOICE INPUT: Input may contain speech-to-text errors. Infer the meaning from context if a word looks garbled.
+If the message starts with [User is correcting their previous message], understand the correction and respond to the corrected version.`
+      : `Kamu berperan sebagai: ${aiRole || 'karakter'}.
+User berperan sebagai: ${userRole || 'diri mereka sendiri'}.
+Skenario: ${description}
+
+ATURAN:
+- Tetap dalam karakter sepenuhnya. Jangan keluar dari karakter kecuali user berkata "stop" atau "selesai".
+- Balas secara natural sesuai karakter — gunakan nada, kosakata, dan kepribadian yang sesuai dengan peran ${aiRole || 'kamu'}.
+- Jawaban SINGKAT (1-4 kalimat) kecuali skenario menuntut lebih.
+- Kalau user salah tata bahasa, koreksi secara halus dalam karakter ATAU tambahkan: [Koreksi: ...]
+- JANGAN keluar dari karakter dengan komentar seperti "Hebat!" atau "Sebagai AI..." — tetap di dalam adegan.
+- Tidak ada asterisk, markdown, atau narasi sutradara.
+
+PENTING — INPUT SUARA: Input mungkin mengandung kesalahan speech-to-text. Tebak maksudnya dari konteks.
+Kalau ada tag [User mengoreksi ucapan sebelumnya], pahami koreksinya dan balas sesuai versi yang dikoreksi.`;
+  } else {
+
   const topicPrompt = VOICE_TOPICS[voiceLang][voiceTopic]?.prompt || '';
-  const systemPrompt = voiceLang === 'id'
+  systemPrompt = voiceLang === 'id'
     ? `Kamu adalah Rina, teman ngobrol yang fasih Bahasa Indonesia baku. Kamu BUKAN robot — kamu seperti kakak yang asyik, santai, dan pintar.
 
 KEPRIBADIAN:
@@ -2182,6 +2406,10 @@ Rina: "Wah seru! Belanja apa atau nonton? [Koreksi: 'udah' → 'sudah', 'sama te
 
 User: "Saya suka makan pizza"
 Rina: "Enak banget ya! Suka topping apa biasanya?" (tidak ada koreksi karena sudah benar)
+
+PENTING — INPUT DARI VOICE/SPEECH:
+- Input user berasal dari speech-to-text yang bisa salah tangkap kata. Jika ada kata aneh atau tidak masuk akal, coba tebak maksudnya dari konteks. Misal: "caffe" → "café", "coffe" → "coffee", "makasih" → "terima kasih"
+- Jika ada tag [User mengoreksi ucapan sebelumnya], artinya user sedang meluruskan kata yang salah ditangkap mic. Pahami koreksinya dan balas sesuai maksud yang sudah dikoreksi, BUKAN versi lama yang salah.
 
 INGAT: Kamu berbicara (TTS), JANGAN pakai simbol *, #, atau markdown apapun.`
 
@@ -2218,7 +2446,13 @@ Jamie: "That's awesome, keep it up! What's your favorite way to practice?" (no c
 User: "She don't like spicy food"
 Jamie: "Ha, more for the rest of us! [Correction: 'she don't' → 'she doesn't' — third person singular needs 'doesn't']"
 
+IMPORTANT — VOICE INPUT:
+- The user's input comes from speech-to-text which may mishear words. If a word looks wrong or garbled, infer the meaning from context. Examples: "caffe" → "café", "coffe" → "coffee", "gonna" → "going to", "wanna" → "want to".
+- If the message starts with [User is correcting their previous message], the user is fixing a word that was misheard by the mic. Understand what they meant and respond to the corrected version — completely ignore the earlier wrong version.
+
 REMEMBER: You are speaking (TTS), NO asterisks, hashtags, or markdown symbols.`;
+
+  } // end else (non-custom scenario)
 
   try {
     const res = await fetch(VOICE_API + '/ai/chat', {
@@ -2230,7 +2464,10 @@ REMEMBER: You are speaking (TTS), NO asterisks, hashtags, or markdown symbols.`;
       body: JSON.stringify({
         messages: [
           { role: 'system', content: systemPrompt },
-          ...voiceChatHistory.slice(-8)
+          // Semua history kecuali turn terakhir (pakai versi clean)
+          ...voiceChatHistory.slice(-9, -1),
+          // Turn terakhir pakai contentToSend (mungkin ada tag koreksi)
+          { role: 'user', content: contentToSend }
         ],
         model: 'llama-3.3-70b-versatile',  // lebih natural & pintar untuk percakapan
         max_tokens: 350
