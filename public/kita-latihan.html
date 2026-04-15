@@ -1700,11 +1700,14 @@ function tampilkanInfoSuara() {
   const el = document.getElementById('voice-info-bar');
   if (!el) return;
   const isEn = voiceLang === 'en';
-  const voiceName = isEn ? (voiceGender === 'male' ? 'Brian' : 'Amy') : (voiceGender === 'male' ? 'Pria' : 'Rina');
-  const modelLabel = isEn ? 'Amazon Polly' : 'Google TTS';
-  const icon = voiceGender === 'female' ? '👩' : '👨';
-  el.textContent = `🔊 Suara AI: ${icon} ${voiceName} — ${modelLabel} ✨`;
-  el.style.color = voiceGender === 'female' ? '#7b2ff7' : '#4D96FF';
+  if (isEn) {
+    el.textContent = '🔊 Suara AI: Jamie — Google TTS ✨';
+    el.style.color = '#7b2ff7';
+  } else {
+    const icon = voiceGender === 'female' ? '👩' : '👨';
+    el.textContent = `🔊 Suara AI: ${icon} Rina — Google TTS ✨`;
+    el.style.color = voiceGender === 'female' ? '#7b2ff7' : '#4D96FF';
+  }
 }
 
 function pilihBahasa(lang) {
@@ -1718,6 +1721,10 @@ function pilihBahasa(lang) {
 
   document.getElementById('lang-btn-id').classList.toggle('active', lang === 'id');
   document.getElementById('lang-btn-en').classList.toggle('active', lang === 'en');
+
+  // Sembunyikan pilihan gender untuk English (hanya 1 suara tersedia)
+  const genderRow = document.getElementById('voice-gender-row');
+  if (genderRow) genderRow.style.display = lang === 'en' ? 'none' : 'flex';
 
   // Reset speech recognition bahasa
   if (voiceRecognition) voiceRecognition.lang = lang === 'id' ? 'id-ID' : 'en-US';
@@ -2047,8 +2054,13 @@ function _playGoogleTTS(chunks, idx = 0) {
 
 function _playTTSChunks(chunks, idx = 0) {
   if (idx >= chunks.length) { _voiceSpeakOnEnd(); return; }
-  // Semua bahasa → HuggingFace backend proxy, fallback Google TTS
-  _playHFTTS(chunks, idx);
+  // Indonesia → HF backend proxy (MMS), fallback Google TTS
+  // Inggris   → Google Translate TTS langsung (konsisten, tidak ada masalah model)
+  if (voiceLang === 'en') {
+    _playGoogleTTS(chunks, idx);
+  } else {
+    _playHFTTS(chunks, idx);
+  }
 }
 
 function voiceSpeak(text) {
