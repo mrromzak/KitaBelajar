@@ -3489,7 +3489,7 @@ async function loadKelasStream(kelasId) {
       } else if (m.jenis === 'gambar' && m.konten) {
         bodyHtml = `<img src="${m.konten}" style="max-width:100%;border-radius:12px" onerror="this.style.display='none'">`;
       } else {
-        const raw = m.konten || m.deskripsi || '';
+        const raw = m.konten || '';
         const rendered = renderMarkdown(raw);
         const postId = 'post-' + (m.id || Math.random().toString(36).slice(2));
         const isLong = raw.length > 400;
@@ -3511,6 +3511,7 @@ async function loadKelasStream(kelasId) {
             <button class="btn-icon btn-delete" data-id="${m.id}" data-judul="${m.judul.replace(/"/g,'&quot;')}" onclick="deleteMateriBtn(this)" title="Hapus">🗑️</button>
           </div>` : ''}
         </div>
+        ${m.deskripsi ? `<div style="padding:0 20px 10px;font-size:13px;color:var(--muted);line-height:1.5">${m.deskripsi}</div>` : ''}
         <div class="stream-post-body">
           ${bodyHtml}
         </div>
@@ -7103,11 +7104,11 @@ function renderKuisCard(q, isGuru) {
       <div class="qsc-icon" style="background:${iconBg}">${icon}</div>
       <div class="qsc-meta">
         <div class="qsc-title">${q.judul}</div>
+        ${q.deskripsi ? `<div style="font-size:13px;color:var(--text);margin:3px 0 4px;line-height:1.4;font-weight:600">${q.deskripsi}</div>` : ''}
         <div class="qsc-sub">
           <span>${isFun ? '⚡ Fun Quiz' : '📝 Tugas / PR'}</span>
           <span>·</span>
           <span>${tglBuat}</span>
-          ${q.deskripsi ? `<span>· ${q.deskripsi}</span>` : ''}
         </div>
       </div>
       ${isGuru ? actionHtml : ''}
