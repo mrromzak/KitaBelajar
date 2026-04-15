@@ -1552,6 +1552,10 @@ let voiceSpeaking     = false;
 let voiceSpeechSupported = false;
 let voiceLiveMode     = false;
 let voiceLiveActive   = false;
+let _micSilenceTimer   = null;
+let _micWatchdog       = null;  // interval watchdog live mode
+let _lastSpeechTime    = 0;     // timestamp terakhir ada suara
+const MIC_SILENCE_MS   = 60_000; // 60 detik tanpa suara → matikan mic
 
 // Suara pria terbaik yang tersedia (dikunci saat init, tidak ganti-ganti)
 let _lockedMaleVoice = null;
@@ -1559,6 +1563,52 @@ let _lockedMaleVoice = null;
 // Token dari localStorage (sama seperti belajar-seru)
 function getVoiceToken() {
   return localStorage.getItem('kb_token') || '';
+}
+
+// Catat waktu terakhir ada suara & reset countdown
+function _onSpeechDetected() {
+  _lastSpeechTime = Date.now();
+  clearTimeout(_micSilenceTimer);
+  _micSilenceTimer = setTimeout(_autoStopSilence, MIC_SILENCE_MS);
+}
+
+function _autoStopSilence() {
+  if (!voiceListening && !voiceLiveActive) return;
+  const elapsed = Date.now() - _lastSpeechTime;
+  if (elapsed < MIC_SILENCE_MS) {
+    // Masih ada sisa waktu (mis. suara baru saja masuk via jalan lain)
+    _micSilenceTimer = setTimeout(_autoStopSilence, MIC_SILENCE_MS - elapsed);
+    return;
+  }
+  const isId = voiceLang === 'id';
+  const msg = isId
+    ? '🎙️ Mic dimatikan otomatis karena tidak ada suara selama 1 menit.'
+    : '🎙️ Mic turned off automatically — no speech detected for 1 minute.';
+  if (voiceLiveActive) stopLiveSession();
+  else stopListening();
+  voiceAddMsg('bot', `<span style="color:#888;font-style:italic">${msg}</span>`);
+}
+
+function _clearMicSilenceTimer() {
+  clearTimeout(_micSilenceTimer);
+  _micSilenceTimer = null;
+}
+
+// Watchdog: pastikan mic tetap hidup selama live mode aktif
+function _startMicWatchdog() {
+  clearInterval(_micWatchdog);
+  _micWatchdog = setInterval(() => {
+    if (!voiceLiveActive) { clearInterval(_micWatchdog); return; }
+    if (!voiceSpeaking && !voiceListening) {
+      // Live aktif tapi mic mati — restart
+      try { startListening(); } catch(e) {}
+    }
+  }, 3000);
+}
+
+function _stopMicWatchdog() {
+  clearInterval(_micWatchdog);
+  _micWatchdog = null;
 }
 
 // Inisialisasi speech recognition
@@ -1579,6 +1629,31 @@ function initSpeechRecognition() {
   let _liveAccumulated = '';  // teks terkumpul di live mode
   let _liveSendTimer   = null; // timer kirim setelah jeda
 
+  // Gabungkan chunk baru ke accumulated dengan deteksi overlap kata
+  // Mencegah kata dobel ketika user berbelit/mengulang
+  function mergeChunk(accumulated, newChunk) {
+    const acc  = accumulated.trim().replace(/[.,!?؟]+$/, '');
+    const next = newChunk.trim();
+    if (!acc)  return next;
+    if (!next) return acc;
+
+    const accWords  = acc.split(/\s+/);
+    const nextWords = next.split(/\s+/);
+    const maxOverlap = Math.min(accWords.length, nextWords.length, 10);
+
+    for (let n = maxOverlap; n >= 2; n--) {
+      const tail = accWords.slice(-n).join(' ').toLowerCase().replace(/[.,!?؟]/g, '');
+      const head = nextWords.slice(0, n).join(' ').toLowerCase().replace(/[.,!?؟]/g, '');
+      if (tail === head) {
+        // Overlap ditemukan: buang bagian akhir accumulated yang overlap, pakai chunk baru
+        const base = accWords.slice(0, accWords.length - n).join(' ');
+        return (base ? base + ' ' : '') + next;
+      }
+    }
+    // Tidak ada overlap — sambung biasa dengan spasi
+    return acc + ' ' + next;
+  }
+
   voiceRecognition.onresult = (e) => {
     let interim = '';
     let finalChunk = '';
@@ -1591,10 +1666,13 @@ function initSpeechRecognition() {
 
     const inp = document.getElementById('voice-text-input');
 
+    // Ada suara masuk → reset timer silence (berbasis timestamp, bukan mic restart)
+    if (interim || finalChunk) _onSpeechDetected();
+
     if (voiceLiveMode && voiceLiveActive) {
       // Live mode: kumpulkan teks, kirim setelah jeda 1.8 detik tanpa suara
-      if (finalChunk) _liveAccumulated += finalChunk;
-      if (inp) inp.value = (_liveAccumulated + interim).trim();
+      if (finalChunk) _liveAccumulated = mergeChunk(_liveAccumulated, finalChunk);
+      if (inp) inp.value = mergeChunk(_liveAccumulated, interim) || _liveAccumulated;
 
       clearTimeout(_liveSendTimer);
       if (_liveAccumulated.trim() || finalChunk.trim()) {
@@ -1739,6 +1817,9 @@ function toggleLiveMode(on) {
 function startLiveSession() {
   if (!voiceSpeechSupported) return;
   voiceLiveActive = true;
+  _lastSpeechTime = Date.now(); // anggap baru mulai = ada "suara" agar timer mulai fresh
+  _micSilenceTimer = setTimeout(_autoStopSilence, MIC_SILENCE_MS);
+  _startMicWatchdog();
   const micBtn = document.getElementById('mic-btn');
   micBtn.classList.add('live-idle');
   micBtn.textContent = '⏹️';
@@ -1750,6 +1831,8 @@ function startLiveSession() {
 
 function stopLiveSession() {
   voiceLiveActive = false;
+  _clearMicSilenceTimer();
+  _stopMicWatchdog();
   stopListening();
   window.speechSynthesis?.cancel();
   const micBtn = document.getElementById('mic-btn');
@@ -1985,7 +2068,14 @@ function startListening() {
   window.speechSynthesis?.cancel();
   voiceListening = true;
   voiceRecognition.lang = voiceLang === 'id' ? 'id-ID' : 'en-US';
-  try { voiceRecognition.start(); } catch(e) { voiceListening = false; return; }
+  try {
+    voiceRecognition.start();
+  } catch(e) {
+    voiceListening = false;
+    // Jika browser masih dalam state transisi, coba lagi setelah delay
+    if (voiceLiveActive) setTimeout(() => { if (voiceLiveActive && !voiceListening && !voiceSpeaking) startListening(); }, 600);
+    return;
+  }
   if (!voiceLiveMode) {
     document.getElementById('mic-btn').classList.add('listening');
     document.getElementById('mic-btn').textContent = '⏹️';
@@ -1996,6 +2086,8 @@ function startListening() {
 
 function stopListening() {
   voiceListening = false;
+  // Silence timer hanya di-clear saat session penuh berhenti (bukan tiap restart internal)
+  if (!voiceLiveActive) _clearMicSilenceTimer();
   if (voiceRecognition) { try { voiceRecognition.stop(); } catch(e) {} }
   if (!voiceLiveMode) {
     document.getElementById('mic-btn').classList.remove('listening');
@@ -2110,15 +2202,15 @@ function _voiceSpeakFallback(clean) {
   if (voiceGender === 'male' && _lockedMaleVoice) {
     utter.voice = _lockedMaleVoice;
     utter.lang  = _lockedMaleVoice.lang;
-    utter.rate  = 0.92;
-    utter.pitch = 0.9;
+    utter.rate  = 1.1;
+    utter.pitch = 0.95;
   } else {
     // female fallback: pakai suara terbaik wanita yang tersedia
     const femaleVoice = getVoice(voiceLang);
     if (femaleVoice) { utter.voice = femaleVoice; utter.lang = femaleVoice.lang; }
     else { utter.lang = voiceLang === 'id' ? 'id-ID' : 'en-GB'; }
-    utter.rate  = 0.93;
-    utter.pitch = 1.0;
+    utter.rate  = 1.1;
+    utter.pitch = 1.05;
   }
   utter.volume = 1.0;
   utter.onstart = () => {
@@ -2197,6 +2289,7 @@ async function _playHFTTS(chunks, idx = 0) {
     console.log('[TTS] HF backend OK, size:', blob.size);
     const url  = URL.createObjectURL(blob);
     const audio = new Audio(url);
+    audio.playbackRate = 1.15; // sedikit lebih cepat agar terdengar natural
     audio.onended = () => { URL.revokeObjectURL(url); _playHFTTS(chunks, idx + 1); };
     audio.onerror = () => { URL.revokeObjectURL(url); _playGoogleTTS(chunks, idx); };
     audio.play().catch(() => { URL.revokeObjectURL(url); _playGoogleTTS(chunks, idx); });
@@ -2219,7 +2312,7 @@ function _playGoogleTTS(chunks, idx = 0) {
   const tl  = voiceLang === 'en' ? 'en' : 'id';
   const url = 'https://translate.google.com/translate_tts?ie=UTF-8' +
     '&q=' + encodeURIComponent(chunks[idx]) +
-    '&tl=' + tl + '&client=tw-ob&ttsspeed=0.9';
+    '&tl=' + tl + '&client=tw-ob&ttsspeed=1.0';
 
   const audio = new Audio(url);
   audio.onended = () => _playGoogleTTS(chunks, idx + 1);
