@@ -1989,17 +1989,23 @@ function _playStreamElements(chunks, idx = 0) {
   const url = 'https://api.streamelements.com/kappa/v2/speech?voice=' + seVoice +
     '&text=' + encodeURIComponent(chunks[idx]);
 
+  console.log('[TTS] Mencoba StreamElements:', seVoice, chunks[idx].slice(0, 30));
+
   const audio = new Audio(url);
+  audio.oncanplaythrough = () => console.log('[TTS] StreamElements audio siap diputar');
   audio.onended = () => _playStreamElements(chunks, idx + 1);
-  audio.onerror = () => {
-    // Fallback ke Google TTS jika StreamElements gagal
+  audio.onerror = (e) => {
+    console.warn('[TTS] StreamElements GAGAL, fallback Web Speech. Error:', e.type);
     voiceSpeaking = false;
     _voiceSpeakFallback(chunks.slice(idx).join(' '));
   };
-  audio.play().catch(() => {
-    voiceSpeaking = false;
-    _voiceSpeakFallback(chunks.slice(idx).join(' '));
-  });
+  audio.play()
+    .then(() => console.log('[TTS] StreamElements play() berhasil'))
+    .catch((e) => {
+      console.warn('[TTS] StreamElements play() ditolak:', e.message);
+      voiceSpeaking = false;
+      _voiceSpeakFallback(chunks.slice(idx).join(' '));
+    });
 }
 
 // Google Translate TTS (Indonesian + fallback English)
