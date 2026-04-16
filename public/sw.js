@@ -1,61 +1,16 @@
 // =====================================================
-//  KitaBelajar Service Worker
-//  - Push Notifications
-//  - PWA Offline Cache (shell + static assets)
+//  KitaBelajar Service Worker — Push Notifications
+//  File: public/sw.js
 // =====================================================
 
-const CACHE_NAME    = 'kitabelajar-v3';
-const SHELL_ASSETS  = [
-  '/',
-  '/belajar-seru.html',
-  '/kita-latihan.html',
-  '/kita-materi.html',
-  '/zep-world.html',
-  '/manifest.json',
-  '/assets/icon.svg',
-  '/assets/maskot.png',
-];
+const CACHE_NAME = 'kitabelajar-v1';
 
-// ── Install: pre-cache shell ──────────────────────
 self.addEventListener('install', (event) => {
   self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(SHELL_ASSETS)).catch(() => {})
-  );
 });
 
-// ── Activate: hapus cache lama ────────────────────
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    ).then(() => clients.claim())
-  );
-});
-
-// ── Fetch: hanya cache aset lokal, JANGAN sentuh cross-origin (Google Fonts, CDN, API) ──
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-
-  // Lewati: non-GET, API, WebSocket, cross-origin (Google Fonts, CDN, dll.)
-  if (event.request.method !== 'GET') return;
-  if (url.pathname.startsWith('/api/')) return;
-  if (url.protocol !== 'https:' && url.protocol !== 'http:') return;
-  if (url.origin !== self.location.origin) return; // jangan sentuh Google Fonts / CDN
-
-  // Aset lokal → Cache-first, fallback network
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(res => {
-        if (res.ok && res.type === 'basic') {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
-        }
-        return res;
-      });
-    })
-  );
+  event.waitUntil(clients.claim());
 });
 
 // ── Push Notification Handler ─────────────────────
@@ -70,15 +25,17 @@ self.addEventListener('push', (event) => {
   const title = data.judul || 'KitaBelajar';
   const options = {
     body: data.pesan || 'Ada pesan baru untuk kamu!',
-    icon: '/assets/icon.svg',
-    badge: '/assets/icon.svg',
+    icon: '/assets/icon-192.png',
+    badge: '/assets/icon-96.png',
     tag: data.tag || 'kitabelajar-notif',
     data: { url: data.url || '/', dari: data.dari || null },
     vibrate: [200, 100, 200],
     requireInteraction: false
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
 });
 
 // ── Notification Click Handler ────────────────────
@@ -87,12 +44,21 @@ self.addEventListener('notificationclick', (event) => {
   const url = event.notification.data?.url || '/';
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Coba fokus ke tab yang sudah terbuka
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
           return client.focus();
         }
       }
+      // Kalau tidak ada tab yang terbuka, buka tab baru
       if (clients.openWindow) return clients.openWindow(url);
     })
   );
+});
+
+// ── Background Sync (opsional, untuk kirim pesan saat online kembali) ──
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-messages') {
+    // Handled by the main app
+  }
 });
