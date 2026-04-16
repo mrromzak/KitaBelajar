@@ -4,7 +4,7 @@
 //  - PWA Offline Cache (shell + static assets)
 // =====================================================
 
-const CACHE_NAME    = 'kitabelajar-v2';
+const CACHE_NAME    = 'kitabelajar-v3';
 const SHELL_ASSETS  = [
   '/',
   '/belajar-seru.html',
@@ -33,38 +33,22 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// ── Fetch: Network-first untuk API, Cache-first untuk aset ──
+// ── Fetch: hanya cache aset lokal, JANGAN sentuh cross-origin (Google Fonts, CDN, API) ──
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Lewati request non-GET, WebSocket, dan API calls (biarkan network handle)
+  // Lewati: non-GET, API, WebSocket, cross-origin (Google Fonts, CDN, dll.)
   if (event.request.method !== 'GET') return;
   if (url.pathname.startsWith('/api/')) return;
-  if (url.protocol === 'chrome-extension:') return;
-
-  // Untuk font Google, CDN, dsb. → stale-while-revalidate
-  if (!url.origin.includes(self.location.origin)) {
-    event.respondWith(
-      caches.match(event.request).then(cached => {
-        const network = fetch(event.request).then(res => {
-          if (res.ok) {
-            const clone = res.clone();
-            caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
-          }
-          return res;
-        }).catch(() => cached);
-        return cached || network;
-      })
-    );
-    return;
-  }
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') return;
+  if (url.origin !== self.location.origin) return; // jangan sentuh Google Fonts / CDN
 
   // Aset lokal → Cache-first, fallback network
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
       return fetch(event.request).then(res => {
-        if (res.ok) {
+        if (res.ok && res.type === 'basic') {
           const clone = res.clone();
           caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
         }
