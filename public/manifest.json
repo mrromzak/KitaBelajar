@@ -1,48 +1,83 @@
 {
   "name": "KitaBelajar",
   "short_name": "KitaBelajar",
-  "description": "Platform belajar menyenangkan untuk murid dan guru",
+  "description": "Platform belajar menyenangkan untuk murid dan guru — latihan soal, materi, kuis live, dan latihan bicara AI",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "portrait",
   "background_color": "#FFF9F0",
   "theme_color": "#7b2ff7",
   "lang": "id",
+  "dir": "ltr",
+  "id": "/",
   "icons": [
     {
       "src": "/assets/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/assets/maskot.png",
+      "src": "/assets/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/assets/maskot.png",
+      "src": "/assets/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "screenshots": [],
-  "categories": ["education"],
+  "screenshots": [
+    {
+      "src": "/assets/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Halaman utama KitaBelajar"
+    },
+    {
+      "src": "/assets/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "KitaBelajar di mobile"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "iarc_rating_id": "",
+  "prefer_related_applications": false,
   "shortcuts": [
     {
       "name": "Mulai Belajar",
       "short_name": "Belajar",
+      "description": "Buka halaman utama belajar",
       "url": "/belajar-seru.html",
-      "icons": [{ "src": "/assets/icon.svg", "sizes": "any" }]
+      "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Latihan Soal",
       "short_name": "Latihan",
+      "description": "Latihan soal dan voice AI",
       "url": "/kita-latihan.html",
-      "icons": [{ "src": "/assets/icon.svg", "sizes": "any" }]
+      "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Materi",
+      "short_name": "Materi",
+      "description": "Buka materi belajar",
+      "url": "/kita-materi.html",
+      "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
