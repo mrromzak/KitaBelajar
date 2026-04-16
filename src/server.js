@@ -104,27 +104,6 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../public', 'belajar-seru.html'));
 });
 
-// ── PWA Manifest (untuk PWABuilder / install ke homescreen) ──
-app.get('/manifest.json', (req, res) => {
-  res.setHeader('Content-Type', 'application/manifest+json');
-  res.json({
-    name: 'KitaBelajar',
-    short_name: 'KitaBelajar',
-    description: 'Platform belajar menyenangkan untuk murid dan guru',
-    start_url: '/',
-    scope: '/',
-    display: 'standalone',
-    orientation: 'portrait',
-    background_color: '#FFF9F0',
-    theme_color: '#7b2ff7',
-    lang: 'id',
-    icons: [
-      { src: '/assets/maskot.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-      { src: '/assets/maskot.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
-    ]
-  });
-});
-
 // Routes — login pakai loginLimiter khusus
 app.use('/api/auth/login',           loginLimiter);
 app.use('/api/auth/register',        loginLimiter);
