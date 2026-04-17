@@ -106,13 +106,18 @@ async function checkMisi(murid_id, { tipe_aktivitas, nilai = 0, xpDapat = 0 } = 
         : null; // achievement = null
 
       // Ambil atau buat record misi_murid
-      const { data: existing } = await supabase
+      // Achievement: periode = null → harus pakai .is() bukan .eq() karena NULL != NULL di SQL
+      let existingQuery = supabase
         .from('misi_murid')
         .select('*')
         .eq('murid_id', murid_id)
-        .eq('misi_id', misi.id)
-        .eq('periode', periode)
-        .maybeSingle();
+        .eq('misi_id', misi.id);
+
+      existingQuery = periode === null
+        ? existingQuery.is('periode', null)
+        : existingQuery.eq('periode', periode);
+
+      const { data: existing } = await existingQuery.maybeSingle();
 
       // Achievement yang sudah pernah selesai — skip
       if (misi.tipe === 'achievement' && existing?.selesai) continue;

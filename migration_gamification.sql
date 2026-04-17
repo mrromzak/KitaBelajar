@@ -62,14 +62,24 @@ CREATE TABLE IF NOT EXISTS misi_murid (
   -- mingguan: tanggal Senin minggu ini
   -- achievement: NULL
   selesai_at      timestamptz,
-  created_at      timestamptz DEFAULT now(),
-  UNIQUE(murid_id, misi_id, periode)
+  created_at      timestamptz DEFAULT now()
+  -- Unique constraint dihandle via index di bawah (karena NULL periode)
 );
 
 -- ── Index untuk performa query ──────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_misi_murid_user    ON misi_murid(murid_id);
 CREATE INDEX IF NOT EXISTS idx_misi_murid_periode ON misi_murid(murid_id, periode);
 CREATE INDEX IF NOT EXISTS idx_murid_badges_user  ON murid_badges(murid_id);
+
+-- Unique index terpisah untuk harian/mingguan (periode NOT NULL)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_misi_murid_unique_periode
+  ON misi_murid(murid_id, misi_id, periode)
+  WHERE periode IS NOT NULL;
+
+-- Unique index terpisah untuk achievement (periode IS NULL)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_misi_murid_unique_achievement
+  ON misi_murid(murid_id, misi_id)
+  WHERE periode IS NULL;
 
 -- ── 6. Seed: data badges awal ──────────────────────────────
 INSERT INTO badges (id, nama, deskripsi, icon, tipe) VALUES

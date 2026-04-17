@@ -3,6 +3,18 @@
 -- Jalankan di Supabase SQL Editor setelah migration_gamification.sql
 -- ============================================================
 
+-- ── Fix UNIQUE constraint untuk achievement (periode NULL) ──
+-- Hapus constraint lama jika ada, ganti dengan partial index
+ALTER TABLE misi_murid DROP CONSTRAINT IF EXISTS misi_murid_murid_id_misi_id_periode_key;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_misi_murid_unique_periode
+  ON misi_murid(murid_id, misi_id, periode)
+  WHERE periode IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_misi_murid_unique_achievement
+  ON misi_murid(murid_id, misi_id)
+  WHERE periode IS NULL;
+
 -- ── Tambah badge baru ──────────────────────────────────────
 INSERT INTO badges (id, nama, deskripsi, icon, tipe) VALUES
 

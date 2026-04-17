@@ -142,6 +142,17 @@
 .badge-card.locked{opacity:.35;filter:grayscale(1)}
 .badge-icon{font-size:28px;margin-bottom:4px}
 .badge-nama{font-size:10px;font-weight:800;color:#444;line-height:1.2}
+/* Badge celebration modal */
+.badge-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;animation:fadeIn .25s}
+.badge-modal-box{background:#fff;border-radius:28px;padding:36px 32px;text-align:center;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(123,47,247,.25);animation:popIn .35s cubic-bezier(.34,1.56,.64,1)}
+.badge-modal-icon{font-size:72px;margin-bottom:8px;animation:bounce 0.6s ease infinite alternate}
+.badge-modal-title{font-size:22px;font-weight:900;color:#7b2ff7;margin-bottom:6px}
+.badge-modal-sub{font-size:14px;color:#666;margin-bottom:6px}
+.badge-modal-desc{font-size:13px;color:#999;margin-bottom:20px}
+.badge-modal-btn{padding:10px 28px;border-radius:50px;background:linear-gradient(135deg,#7b2ff7,#e040fb);border:none;color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;cursor:pointer;transition:transform .2s}
+.badge-modal-btn:hover{transform:scale(1.05)}
+@keyframes popIn{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-12px)}}
 </style>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="https://meet.ffmuc.net/external_api.js"></script>
@@ -3501,7 +3512,95 @@ async function loadMisi() {
     renderMisiGroup('harian',      json.data.harian);
     renderMisiGroup('mingguan',    json.data.mingguan);
     renderMisiGroup('achievement', json.data.achievement);
+
+    // Tampilkan notif jika ada XP dari auto-claim
+    if (json.auto_xp && json.auto_xp > 0) {
+      toast(`⚡ +${json.auto_xp} XP dari misi yang selesai!`);
+    }
+
+    // Tampilkan perayaan badge baru
+    if (json.badge_baru && json.badge_baru.length > 0) {
+      showBadgeCelebration(json.badge_baru);
+    }
   } catch(e) { toast('Gagal memuat misi.'); }
+}
+
+// ── Tampilkan modal perayaan badge baru ──────────────────
+function showBadgeCelebration(badges) {
+  if (!badges || badges.length === 0) return;
+
+  let idx = 0;
+
+  function showNext() {
+    const b = badges[idx];
+    if (!b) return;
+
+    // Hapus overlay lama jika ada
+    const existing = document.getElementById('badge-celebration-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'badge-modal-overlay';
+    overlay.id = 'badge-celebration-overlay';
+
+    const isLast = idx === badges.length - 1;
+    const btnLabel = isLast ? 'Sip, Terima Kasih! 🎉' : `Selanjutnya (${idx+1}/${badges.length})`;
+
+    overlay.innerHTML = `
+      <div class="badge-modal-box">
+        <div style="font-size:13px;font-weight:800;color:#aaa;letter-spacing:1px;margin-bottom:8px">BADGE BARU DIRAIH!</div>
+        <div class="badge-modal-icon">${b.icon || '🏅'}</div>
+        <div class="badge-modal-title">${b.nama}</div>
+        <div class="badge-modal-desc">${b.deskripsi || ''}</div>
+        <button class="badge-modal-btn" onclick="badgeCelebrationNext()">
+          ${btnLabel}
+        </button>
+      </div>`;
+
+    document.body.appendChild(overlay);
+
+    // Tap anywhere on overlay background to close
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) badgeCelebrationNext();
+    });
+  }
+
+  window._badgeCelebQueue  = badges;
+  window._badgeCelebIdx    = 0;
+
+  window.badgeCelebrationNext = function() {
+    window._badgeCelebIdx++;
+    if (window._badgeCelebIdx < window._badgeCelebQueue.length) {
+      const overlay = document.getElementById('badge-celebration-overlay');
+      if (overlay) overlay.remove();
+      // Show next after short delay
+      setTimeout(() => {
+        const b    = window._badgeCelebQueue[window._badgeCelebIdx];
+        const isLast = window._badgeCelebIdx === window._badgeCelebQueue.length - 1;
+        const btnLabel = isLast ? 'Sip, Terima Kasih! 🎉' : `Selanjutnya (${window._badgeCelebIdx+1}/${window._badgeCelebQueue.length})`;
+        const newOverlay = document.createElement('div');
+        newOverlay.className = 'badge-modal-overlay';
+        newOverlay.id = 'badge-celebration-overlay';
+        newOverlay.innerHTML = `
+          <div class="badge-modal-box">
+            <div style="font-size:13px;font-weight:800;color:#aaa;letter-spacing:1px;margin-bottom:8px">BADGE BARU DIRAIH!</div>
+            <div class="badge-modal-icon">${b.icon || '🏅'}</div>
+            <div class="badge-modal-title">${b.nama}</div>
+            <div class="badge-modal-desc">${b.deskripsi || ''}</div>
+            <button class="badge-modal-btn" onclick="badgeCelebrationNext()">${btnLabel}</button>
+          </div>`;
+        newOverlay.addEventListener('click', e => { if (e.target === newOverlay) badgeCelebrationNext(); });
+        document.body.appendChild(newOverlay);
+      }, 150);
+    } else {
+      const overlay = document.getElementById('badge-celebration-overlay');
+      if (overlay) overlay.remove();
+      // Refresh badges tab if visible
+      loadBadges();
+    }
+  };
+
+  showNext();
 }
 
 // Mapping kondisi_tipe → fungsi navigasi
@@ -3593,9 +3692,9 @@ async function klaimMisi(misiMuridId, btn) {
     const res  = await fetch(`/api/misi/${misiMuridId}/klaim`, { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
     const json = await res.json();
     if (json.success) {
-      toast(`🎉 +${json.xp_dapat} XP! "${json.misi_judul}" selesai!`);
-      if (json.badge_id) toast('🏅 Badge baru diraih!');
-      loadMisi(); // refresh
+      if (json.xp_dapat > 0) toast(`🎉 +${json.xp_dapat} XP! "${json.misi_judul}" selesai!`);
+      else toast(`🎉 "${json.misi_judul}" selesai!`);
+      loadMisi(); // refresh — badge_baru will be shown via loadMisi response
     } else {
       toast(json.pesan || 'Gagal klaim.');
       btn.disabled = false;
