@@ -9,9 +9,8 @@
 <script src="https://accounts.google.com/gsi/client" async></script>
 <!-- KaTeX: render notasi matematika LaTeX -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
-  onload="window.katexReady = true;"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
+  onload="window._katexLoaded=true;window._gchatRenderPending&&window._gchatRenderPending()"></script>
 <!-- Error Logger — kirim error JS ke server KitaBelajar sendiri -->
 <script>
   (function() {
@@ -3619,6 +3618,7 @@ const MISI_AKSI = {
   streak:        { label: 'Tetap Aktif 🔥',     fn: () => toast('Login setiap hari untuk menjaga streak kamu! 🔥') },
   level:         { label: 'Naikkan Level 📈',   fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
   latihan_count: { label: 'Buka Kita Latihan 🚀', fn: () => { window.location.href = 'kita-latihan.html'; } },
+  belajar_count: { label: 'Buka AyoBelajar 📚',   fn: () => { window.location.href = 'kita-materi.html'; } },
 };
 
 function renderMisiGroup(tipe, list) {
@@ -5864,7 +5864,10 @@ Format JSON (campur pilihan_ganda dan benar_salah):
           })
         });
         const dataSoalJson = await resSoal.json();
-        const rawSoal = JSON.parse(dataSoalJson.data?.choices?.[0]?.message?.content || '{}');
+        let rawContent = dataSoalJson.data?.choices?.[0]?.message?.content || '{}';
+        // Bersihkan markdown code block jika AI membalut JSON dengan ```json ... ```
+        rawContent = rawContent.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
+        const rawSoal = JSON.parse(rawContent);
         aiHasilSoal = (rawSoal.soal || rawSoal.questions || []).map(s => {
           if (s.jenis === 'benar_salah') {
             s.opsi = ['Benar', 'Salah'];
@@ -10594,10 +10597,8 @@ function gchatAddMsg(role, html) {
   }
   wrap.appendChild(div);
   wrap.scrollTop = wrap.scrollHeight;
-  // Render ulang KaTeX jika ada elemen yang belum dirender (saat KaTeX belum siap saat gchatFormatReply dipanggil)
-  if (window.renderMathInElement) {
-    try { renderMathInElement(div, { delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}], throwOnError: false }); } catch(e) {}
-  }
+  // Render span.gchat-math-pending yang disisipkan saat KaTeX belum siap
+  _gchatRenderPendingMath(div);
   return div;
 }
 
@@ -10616,24 +10617,46 @@ function gchatHideTyping() {
   if (el) el.remove();
 }
 
+// Render semua span.gchat-math-pending yang belum dirender
+function _gchatRenderPendingMath(root) {
+  if (!window.katex) return;
+  const spans = (root || document).querySelectorAll('.gchat-math-pending');
+  spans.forEach(span => {
+    try {
+      const expr = decodeURIComponent(span.dataset.expr || '');
+      const display = span.dataset.display === '1';
+      const wrapper = document.createElement(display ? 'div' : 'span');
+      wrapper.innerHTML = katex.renderToString(expr, { displayMode: display, throwOnError: false });
+      span.replaceWith(wrapper);
+    } catch(e) {
+      span.textContent = span.dataset.display === '1'
+        ? `[${decodeURIComponent(span.dataset.expr||'')}]`
+        : decodeURIComponent(span.dataset.expr||'');
+      span.classList.remove('gchat-math-pending');
+    }
+  });
+}
+// Dipanggil oleh onload KaTeX — render semua yang pending di seluruh chat
+window._gchatRenderPending = () => _gchatRenderPendingMath(document);
+
 function gchatFormatReply(reply) {
-  // Simpan blok math LaTeX ($$...$$  dan $...$) ke placeholder sebelum diproses
+  // 1) Ekstrak blok math SEBELUM formatting agar \n→<br> tidak memecah multiline math
   const mathBlocks = [];
   let processed = reply
-    // Display math $$...$$
+    // Display math $$...$$ (multiline)
     .replace(/\$\$([\s\S]+?)\$\$/g, (_, expr) => {
       const idx = mathBlocks.length;
-      mathBlocks.push({ expr, display: true });
+      mathBlocks.push({ expr: expr.trim(), display: true });
       return `%%MATH_${idx}%%`;
     })
-    // Inline math $...$
+    // Inline math $...$ (satu baris)
     .replace(/\$([^$\n]+?)\$/g, (_, expr) => {
       const idx = mathBlocks.length;
-      mathBlocks.push({ expr, display: false });
+      mathBlocks.push({ expr: expr.trim(), display: false });
       return `%%MATH_${idx}%%`;
     });
 
-  // Pisahkan markdown link [teks](url) ke placeholder agar tidak ikut di-escape
+  // 2) Pisahkan markdown link ke placeholder
   const links = [];
   processed = processed.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, (_, label, url) => {
     const idx = links.length;
@@ -10641,14 +10664,14 @@ function gchatFormatReply(reply) {
     return `%%LINK_${idx}%%`;
   });
 
-  // Escape HTML
+  // 3) Escape HTML
   processed = processed
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
-  // Kembalikan link sebagai tag <a>
+  // 4) Kembalikan link
   processed = processed.replace(/%%LINK_(\d+)%%/g, (_, i) => {
     const { label, url } = links[parseInt(i)];
     const safeUrl = url.replace(/"/g, '%22');
@@ -10656,13 +10679,13 @@ function gchatFormatReply(reply) {
     return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color:#7b2ff7;font-weight:700;text-decoration:underline">${safeLabel}</a>`;
   });
 
-  // Ubah URL mentah (bukan dari markdown link) jadi link klik
+  // 5) URL mentah → link
   processed = processed.replace(/(^|[\s\n(])((https?:\/\/)[^\s<>"&]+)/g, (_, pre, url) => {
     const safeUrl = url.replace(/"/g, '%22');
     return `${pre}<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color:#7b2ff7;font-weight:700;word-break:break-all;text-decoration:underline">${url}</a>`;
   });
 
-  // Format markdown dasar
+  // 6) Format markdown dasar + newline
   processed = processed
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/(^|\n)\* /g, '$1• ')
@@ -10670,27 +10693,22 @@ function gchatFormatReply(reply) {
     .replace(/\*(\S[^*]*?\S|\S)\*/g, '<em>$1</em>')
     .replace(/\n/g, '<br>');
 
-  // Kembalikan blok math — render dengan KaTeX jika tersedia, fallback ke teks biasa
-  // Placeholder yang dikelilingi <br> (dari konversi \n) dibersihkan agar tidak ada spasi ganda
+  // 7) Kembalikan blok math
   processed = processed.replace(/(<br>)*%%MATH_(\d+)%%(<br>)*/g, (_, pre, i, post) => {
     const { expr, display } = mathBlocks[parseInt(i)];
-    let rendered;
-    try {
-      if (window.katex) {
-        rendered = katex.renderToString(expr, { displayMode: display, throwOnError: false });
-      }
-    } catch(e) { /* fallback */ }
-    if (!rendered) {
-      // Fallback: tampilkan dalam kode agar terbaca
-      rendered = display
-        ? `<div style="text-align:center;padding:4px 0;font-family:monospace;overflow-x:auto">${expr}</div>`
-        : `<code style="background:#f0e8ff;padding:1px 5px;border-radius:4px;font-family:monospace">${expr}</code>`;
+    // Jika KaTeX sudah siap, render langsung
+    if (window.katex) {
+      try {
+        const rendered = katex.renderToString(expr, { displayMode: display, throwOnError: false });
+        return display ? `${pre || '<br>'}${rendered}${post || '<br>'}` : rendered;
+      } catch(e) {}
     }
-    // Untuk display math: bungkus dengan div + spasi sebelum/sesudah
+    // KaTeX belum siap → span pending, akan dirender oleh _gchatRenderPending
+    const safeExpr = encodeURIComponent(expr);
     if (display) {
-      return `${pre || '<br>'}${rendered}${post || '<br>'}`;
+      return `${pre || '<br>'}<span class="gchat-math-pending" data-expr="${safeExpr}" data-display="1"></span>${post || '<br>'}`;
     }
-    return rendered;
+    return `<span class="gchat-math-pending" data-expr="${safeExpr}" data-display="0"></span>`;
   });
 
   return processed;

@@ -143,6 +143,9 @@ async function checkMisi(murid_id, { tipe_aktivitas, nilai = 0, xpDapat = 0 } = 
         case 'latihan_count':
           tambahan = tipe_aktivitas === 'latihan' ? 1 : 0;
           break;
+        case 'belajar_count':
+          tambahan = tipe_aktivitas === 'belajar' ? 1 : 0;
+          break;
         case 'xp_gained':
           tambahan = xpDapat;
           break;

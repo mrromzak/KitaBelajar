@@ -341,6 +341,28 @@
 <!-- Toast notif -->
 <div id="kl-toast" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a1a2e;color:#fff;padding:12px 22px;border-radius:50px;font-size:14px;font-weight:800;z-index:9999;opacity:0;transition:all .35s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center"></div>
 
+<!-- Custom Confirm Dialog -->
+<div id="kl-confirm-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10000;backdrop-filter:blur(3px);align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:24px;padding:28px 28px 20px;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center;animation:klConfirmIn .25s ease">
+    <div style="font-size:48px;margin-bottom:8px" id="kl-confirm-icon">⚠️</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:20px;color:#1a1a2e;margin-bottom:8px" id="kl-confirm-title">Yakin keluar?</div>
+    <div style="font-size:14px;color:#666;font-weight:600;line-height:1.5;margin-bottom:20px" id="kl-confirm-msg">Progress latihan akan hilang.</div>
+    <div style="display:flex;gap:10px">
+      <button id="kl-confirm-cancel" style="flex:1;padding:12px;border-radius:50px;border:2px solid #eee;background:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;cursor:pointer;color:#666;transition:all .2s">Lanjut Latihan</button>
+      <button id="kl-confirm-ok" style="flex:1;padding:12px;border-radius:50px;border:none;background:linear-gradient(135deg,#FF6B35,#FF9A5C);color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;cursor:pointer;transition:all .2s">Ya, Keluar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Misi Selesai Popup -->
+<div id="kl-misi-popup" style="display:none;position:fixed;top:80px;right:16px;z-index:10001;display:flex;flex-direction:column;gap:8px;pointer-events:none" aria-live="polite"></div>
+
+<style>
+@keyframes klConfirmIn{from{transform:scale(.85) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+@keyframes klMisiIn{from{transform:translateX(120px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes klMisiOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(120px)}}
+</style>
+
 <!-- NAVBAR -->
 <nav class="navbar">
   <div class="nav-brand">
@@ -1420,10 +1442,44 @@ function submitEssay() {
 }
 
 function konfirmasiKeluar() {
-  if (confirm('Keluar dari latihan? Progress akan hilang.')) {
-    stopTimer();
-    showView('kelas');
-  }
+  klConfirm({
+    icon: '🚪',
+    title: 'Yakin mau keluar?',
+    msg: 'Progress latihan kamu akan hilang jika keluar sekarang.',
+    okLabel: 'Ya, Keluar',
+    cancelLabel: 'Lanjut Latihan',
+    onOk: () => { stopTimer(); showView('kelas'); }
+  });
+}
+
+// ── Custom confirm dialog ──
+function klConfirm({ icon='⚠️', title='Yakin?', msg='', okLabel='Ya', cancelLabel='Batal', onOk }) {
+  const overlay = document.getElementById('kl-confirm-overlay');
+  document.getElementById('kl-confirm-icon').textContent = icon;
+  document.getElementById('kl-confirm-title').textContent = title;
+  document.getElementById('kl-confirm-msg').textContent = msg;
+  document.getElementById('kl-confirm-ok').textContent = okLabel;
+  document.getElementById('kl-confirm-cancel').textContent = cancelLabel;
+  overlay.style.display = 'flex';
+  const ok = document.getElementById('kl-confirm-ok');
+  const cancel = document.getElementById('kl-confirm-cancel');
+  const close = () => { overlay.style.display = 'none'; ok.onclick = null; cancel.onclick = null; };
+  ok.onclick = () => { close(); onOk && onOk(); };
+  cancel.onclick = close;
+  overlay.onclick = (e) => { if (e.target === overlay) close(); };
+}
+
+// ── Popup notifikasi misi selesai ──
+function klMisiPopup(judul, xp, badge) {
+  const container = document.getElementById('kl-misi-popup');
+  const el = document.createElement('div');
+  el.style.cssText = 'background:linear-gradient(135deg,#7b2ff7,#4D96FF);color:#fff;border-radius:16px;padding:12px 16px;font-family:"Nunito",sans-serif;font-weight:800;font-size:13px;box-shadow:0 8px 24px rgba(123,47,247,.4);pointer-events:all;animation:klMisiIn .4s ease;max-width:260px;line-height:1.4';
+  el.innerHTML = `<div style="font-size:18px;margin-bottom:4px">🎯 Misi Selesai!</div><div style="opacity:.9">${judul}</div>${xp > 0 ? `<div style="margin-top:4px;font-size:12px;opacity:.8">+${xp} XP diperoleh 🌟</div>` : ''}${badge ? `<div style="margin-top:2px;font-size:12px;opacity:.8">🏅 Badge baru!</div>` : ''}`;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.style.animation = 'klMisiOut .4s ease forwards';
+    setTimeout(() => el.remove(), 400);
+  }, 4000);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1514,10 +1570,10 @@ async function simpanHasilKeServer(xpDapat, skor) {
       updateXP();
     }
 
-    // Tampilkan notif misi selesai
+    // Tampilkan popup misi selesai
     if (json.misi_selesai && json.misi_selesai.length > 0) {
       json.misi_selesai.forEach((m, i) => {
-        setTimeout(() => klToast(`🎯 Misi selesai: "${m.judul}"${m.xp > 0 ? ' +' + m.xp + ' XP' : ''}${m.badge_id ? ' 🏅' : ''}`), i * 1800);
+        setTimeout(() => klMisiPopup(m.judul, m.xp || 0, !!m.badge_id), i * 1500);
       });
     }
   } catch (e) { /* silent */ }

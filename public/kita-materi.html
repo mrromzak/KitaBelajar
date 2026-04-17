@@ -1304,7 +1304,45 @@ function bukaTopik(grade, mapel, tidx) {
   document.getElementById('s-topik').textContent = total;
   // Defer BG shapes
   requestAnimationFrame(() => setTimeout(buatShapes, 0));
+  // Catat kunjungan AyoBelajar untuk misi
+  _trackBukaBelajar();
 })();
+
+async function _trackBukaBelajar() {
+  try {
+    const token = localStorage.getItem('kb_token') || localStorage.getItem('token') || '';
+    if (!token) return;
+    const res = await fetch('/api/belajar/buka', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }
+    });
+    const json = await res.json();
+    if (json.misi_selesai && json.misi_selesai.length > 0) {
+      json.misi_selesai.forEach((m, i) => {
+        setTimeout(() => _materiToast(`🎯 Misi selesai: "${m.judul}"${m.xp > 0 ? ' +' + m.xp + ' XP' : ''}`), i * 1800);
+      });
+    }
+  } catch(e) { /* silent */ }
+}
+
+let _materiToastTimer = null;
+function _materiToast(msg, dur = 4000) {
+  let el = document.getElementById('materi-toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'materi-toast';
+    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:linear-gradient(135deg,#7b2ff7,#4D96FF);color:#fff;padding:13px 22px;border-radius:50px;font-size:14px;font-weight:800;z-index:9999;opacity:0;transition:all .35s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;box-shadow:0 8px 24px rgba(123,47,247,.4)';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = '1';
+  el.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(_materiToastTimer);
+  _materiToastTimer = setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(-50%) translateY(80px)';
+  }, dur);
+}
 
 function buatShapes() {
   const wrap = document.getElementById('bg-wrap');

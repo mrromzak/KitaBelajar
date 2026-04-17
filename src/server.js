@@ -120,6 +120,7 @@ app.use('/api/notifikasi', require('./routes/notifikasi'));
 app.use('/api/orangtua',  require('./routes/orangtua'));
 app.use('/api/misi',      require('./routes/misi'));
 app.use('/api/latihan',   require('./routes/latihan'));
+app.use('/api/belajar',   require('./routes/belajar'));
 
 const quizRoutes = require('./routes/quiz');
 app.use('/api/quiz', quizRoutes);
@@ -308,7 +309,7 @@ app.post('/api/ai/chat', aiLimiter, async (req, res) => {
     if (!process.env.GROQ_API_KEY)
       return res.status(500).json({ success: false, pesan: 'GROQ_API_KEY belum diset di server.' });
 
-    const { messages, max_tokens, model, temperature, top_p } = req.body;
+    const { messages, max_tokens, model, temperature, top_p, response_format } = req.body;
     if (!messages || !Array.isArray(messages))
       return res.status(400).json({ success: false, pesan: 'messages wajib berupa array.' });
 
@@ -324,6 +325,7 @@ app.post('/api/ai/chat', aiLimiter, async (req, res) => {
     };
     if (temperature !== undefined) payload.temperature = Math.min(Math.max(parseFloat(temperature) || 0.7, 0), 2);
     if (top_p !== undefined) payload.top_p = Math.min(Math.max(parseFloat(top_p) || 1, 0), 1);
+    if (response_format?.type === 'json_object') payload.response_format = { type: 'json_object' };
 
     const data = await callGroq(payload);
     res.json({ success: true, data });
