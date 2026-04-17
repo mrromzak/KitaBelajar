@@ -119,6 +119,7 @@ app.use('/api/chat',      require('./routes/chat'));
 app.use('/api/notifikasi', require('./routes/notifikasi'));
 app.use('/api/orangtua',  require('./routes/orangtua'));
 app.use('/api/misi',      require('./routes/misi'));
+app.use('/api/latihan',   require('./routes/latihan'));
 
 const quizRoutes = require('./routes/quiz');
 app.use('/api/quiz', quizRoutes);

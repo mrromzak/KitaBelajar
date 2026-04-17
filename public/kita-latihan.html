@@ -338,6 +338,9 @@
 
 <div id="bg-wrap"></div>
 
+<!-- Toast notif -->
+<div id="kl-toast" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a1a2e;color:#fff;padding:12px 22px;border-radius:50px;font-size:14px;font-weight:800;z-index:9999;opacity:0;transition:all .35s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center"></div>
+
 <!-- NAVBAR -->
 <nav class="navbar">
   <div class="nav-brand">
@@ -1473,6 +1476,51 @@ function tampilHasil() {
 
   if (pct >= 70) buatConfetti();
   loadLocalStats();
+
+  // Kirim hasil ke server untuk XP + misi
+  simpanHasilKeServer(sessionXP, pct);
+}
+
+let _klToastTimer = null;
+function klToast(msg, dur = 3000) {
+  const el = document.getElementById('kl-toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.opacity = '1';
+  el.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(_klToastTimer);
+  _klToastTimer = setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(-50%) translateY(80px)';
+  }, dur);
+}
+
+async function simpanHasilKeServer(xpDapat, skor) {
+  try {
+    const t = localStorage.getItem('kb_token') || localStorage.getItem('token') || '';
+    if (!t) return;
+    const res  = await fetch('/api/latihan/selesai', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t },
+      body:    JSON.stringify({ xpDapat, skor })
+    });
+    const json = await res.json();
+    if (!json.success) return;
+
+    // Update XP di navbar dari server
+    if (json.stats) {
+      if (currentUser) currentUser.xp = json.stats.newXp;
+      try { const u = JSON.parse(localStorage.getItem('user')||'{}'); u.xp = json.stats.newXp; u.level = json.stats.newLevel; localStorage.setItem('user', JSON.stringify(u)); } catch {}
+      updateXP();
+    }
+
+    // Tampilkan notif misi selesai
+    if (json.misi_selesai && json.misi_selesai.length > 0) {
+      json.misi_selesai.forEach((m, i) => {
+        setTimeout(() => klToast(`🎯 Misi selesai: "${m.judul}"${m.xp > 0 ? ' +' + m.xp + ' XP' : ''}${m.badge_id ? ' 🏅' : ''}`), i * 1800);
+      });
+    }
+  } catch (e) { /* silent */ }
 }
 
 function ulangLatihan() { mulaiLatihan(currentMapel, currentKelas); }

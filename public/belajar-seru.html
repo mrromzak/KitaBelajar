@@ -3605,12 +3605,13 @@ function showBadgeCelebration(badges) {
 
 // Mapping kondisi_tipe → fungsi navigasi
 const MISI_AKSI = {
-  quiz_count:   { label: 'Mulai Quiz ⚡',   fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
-  akurasi:      { label: 'Mulai Quiz 🎯',   fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
-  xp_gained:    { label: 'Mulai Quiz ⭐',   fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
-  materi_count: { label: 'Buka Materi 📖',  fn: () => bukaKelasUntukMateri() },
-  streak:       { label: 'Tetap Aktif 🔥',  fn: () => toast('Login setiap hari untuk menjaga streak kamu! 🔥') },
-  level:        { label: 'Naikkan Level 📈', fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
+  quiz_count:    { label: 'Mulai Quiz ⚡',      fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
+  akurasi:       { label: 'Mulai Quiz 🎯',      fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
+  xp_gained:     { label: 'Mulai Quiz ⭐',      fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
+  materi_count:  { label: 'Buka Materi 📖',     fn: () => bukaKelasUntukMateri() },
+  streak:        { label: 'Tetap Aktif 🔥',     fn: () => toast('Login setiap hari untuk menjaga streak kamu! 🔥') },
+  level:         { label: 'Naikkan Level 📈',   fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
+  latihan_count: { label: 'Buka Kita Latihan 🚀', fn: () => { window.location.href = 'kita-latihan.html'; } },
 };
 
 function renderMisiGroup(tipe, list) {

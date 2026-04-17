@@ -50,24 +50,29 @@ async function updateUserStats(murid_id, { xpDapat = 0, skor = null, tipe = 'qui
     const newLevel = Math.floor(newXp / 1000) + 1;
 
     // Hitung quiz_count & avg_skor (hanya untuk aktivitas quiz)
-    let newQuizCount = user.quiz_count || 0;
-    let newAvgSkor   = parseFloat(user.avg_skor) || 0;
+    let newQuizCount    = user.quiz_count    || 0;
+    let newAvgSkor      = parseFloat(user.avg_skor) || 0;
+    let newLatihanCount = user.latihan_count || 0;
     if (tipe === 'quiz' && skor !== null) {
       newQuizCount += 1;
       newAvgSkor = ((newAvgSkor * (newQuizCount - 1)) + skor) / newQuizCount;
       newAvgSkor = Math.round(newAvgSkor * 10) / 10;
     }
+    if (tipe === 'latihan') {
+      newLatihanCount += 1;
+    }
 
     await supabase.from('users').update({
-      xp:          newXp,
-      level:       newLevel,
-      streak:      newStreak,
-      last_active: today,
-      quiz_count:  newQuizCount,
-      avg_skor:    newAvgSkor
+      xp:             newXp,
+      level:          newLevel,
+      streak:         newStreak,
+      last_active:    today,
+      quiz_count:     newQuizCount,
+      avg_skor:       newAvgSkor,
+      latihan_count:  newLatihanCount
     }).eq('id', murid_id);
 
-    return { newXp, newLevel, newStreak, newQuizCount, newAvgSkor };
+    return { newXp, newLevel, newStreak, newQuizCount, newAvgSkor, newLatihanCount };
   } catch (err) {
     console.error('[gamification] updateUserStats error:', err.message);
     return null;
@@ -134,6 +139,9 @@ async function checkMisi(murid_id, { tipe_aktivitas, nilai = 0, xpDapat = 0 } = 
         case 'akurasi':
           // Cek sekali: apakah nilai saat ini memenuhi target?
           if (tipe_aktivitas === 'quiz' && nilai >= misi.kondisi_target) tambahan = misi.kondisi_target;
+          break;
+        case 'latihan_count':
+          tambahan = tipe_aktivitas === 'latihan' ? 1 : 0;
           break;
         case 'xp_gained':
           tambahan = xpDapat;
