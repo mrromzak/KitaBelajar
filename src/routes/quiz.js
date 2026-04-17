@@ -12,6 +12,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { v4: uuidv4 } = require('uuid');
 const multer = require('multer');
 const { decrypt } = require('../utils/crypto');
+const { updateUserStats, checkMisi } = require('../utils/gamification');
 
 // Multer untuk submission file (10MB max)
 const uploadSubmission = multer({
@@ -325,17 +326,11 @@ router.post('/hasil', authMiddleware, async (req, res) => {
       return res.status(500).json({ success: false, pesan: 'Gagal menyimpan hasil: ' + error.message });
     }
 
-    // Update XP murid
+    // Update XP + stats + cek misi
     try {
       const xpGain = Math.round(skor / 10);
-      if (xpGain > 0) {
-        const { data: userData } = await supabase.from('users').select('xp, level').eq('id', murid_id).single();
-        if (userData) {
-          const newXp = (userData.xp || 0) + xpGain;
-          const newLevel = Math.floor(newXp / 1000) + 1;
-          await supabase.from('users').update({ xp: newXp, level: newLevel }).eq('id', murid_id);
-        }
-      }
+      await updateUserStats(murid_id, { xpDapat: xpGain, skor, tipe: 'quiz' });
+      await checkMisi(murid_id, { tipe_aktivitas: 'quiz', nilai: skor, xpDapat: xpGain });
     } catch(xpErr) { console.warn('[XP update]', xpErr.message); }
 
     return res.status(201).json({ success: true, pesan: 'Hasil tersimpan!', hasil, skor, benar, total_soal, totalPoin, detail });

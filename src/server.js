@@ -118,6 +118,7 @@ app.use('/api/zepquiz',   require('./routes/zepquiz'));
 app.use('/api/chat',      require('./routes/chat'));
 app.use('/api/notifikasi', require('./routes/notifikasi'));
 app.use('/api/orangtua',  require('./routes/orangtua'));
+app.use('/api/misi',      require('./routes/misi'));
 
 const quizRoutes = require('./routes/quiz');
 app.use('/api/quiz', quizRoutes);

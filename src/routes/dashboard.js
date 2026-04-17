@@ -113,24 +113,108 @@ async function dashboardMurid(req, res) {
 }
 
 // GET /api/dashboard/leaderboard
+// Query: ?mode=kelas&kelas_id=xxx  |  ?mode=global  |  ?periode=minggu
 router.get('/leaderboard', authMiddleware, async (req, res) => {
   try {
-    const { kelas_id } = req.query;
-    let query = supabase.from('users').select('nama, avatar, xp, level').eq('role', 'murid').order('xp', { ascending: false }).limit(20);
+    const { mode = 'kelas', kelas_id, periode } = req.query;
+    const murid_id = req.user.id;
 
-    if (kelas_id) {
-      const { data: members } = await supabase.from('kelas_murid').select('murid_id').eq('kelas_id', kelas_id);
-      const ids = members?.map(m => m.murid_id) || [];
-      query = supabase.from('users').select('nama, avatar, xp, level').in('id', ids).order('xp', { ascending: false });
+    let userIds = null;
+
+    if (mode === 'kelas') {
+      // Ambil semua kelas murid ini jika kelas_id tidak dikirim
+      const targetKelasId = kelas_id || null;
+      if (targetKelasId) {
+        const { data: members } = await supabase
+          .from('kelas_murid').select('murid_id').eq('kelas_id', targetKelasId);
+        userIds = members?.map(m => m.murid_id) || [];
+      } else {
+        // Otomatis ambil kelas pertama milik murid yang request
+        const { data: myKelas } = await supabase
+          .from('kelas_murid').select('kelas_id').eq('murid_id', murid_id).limit(1).single();
+        if (myKelas) {
+          const { data: members } = await supabase
+            .from('kelas_murid').select('murid_id').eq('kelas_id', myKelas.kelas_id);
+          userIds = members?.map(m => m.murid_id) || [];
+        }
+      }
+    }
+
+    // Leaderboard mingguan: hitung XP dari hasil_quiz minggu ini
+    if (periode === 'minggu') {
+      const senin = new Date();
+      const day   = senin.getDay();
+      senin.setDate(senin.getDate() - (day === 0 ? 6 : day - 1));
+      senin.setHours(0, 0, 0, 0);
+
+      let hasilQuery = supabase
+        .from('hasil_quiz')
+        .select('murid_id, skor')
+        .gte('created_at', senin.toISOString());
+
+      const { data: hasilMinggu } = await hasilQuery;
+
+      // Agregasi XP per murid
+      const xpMap = {};
+      (hasilMinggu || []).forEach(h => {
+        if (userIds && !userIds.includes(h.murid_id)) return;
+        xpMap[h.murid_id] = (xpMap[h.murid_id] || 0) + (h.skor || 0);
+      });
+
+      if (Object.keys(xpMap).length === 0) {
+        return res.json({ success: true, data: [], posisi_saya: null });
+      }
+
+      const ids = Object.keys(xpMap);
+      const { data: users } = await supabase
+        .from('users')
+        .select('id, nama, avatar, level, streak, avg_skor')
+        .in('id', ids);
+
+      const ranked = (users || [])
+        .map(u => ({
+          id:       u.id,
+          nama:     u.nama,
+          avatar:   u.avatar,
+          level:    u.level,
+          streak:   u.streak || 0,
+          avg_skor: parseFloat(u.avg_skor) || 0,
+          xp:       xpMap[u.id] || 0
+        }))
+        .sort((a, b) => b.xp - a.xp)
+        .map((u, i) => ({ ...u, peringkat: i + 1 }));
+
+      const posisiSaya = ranked.findIndex(u => u.id === murid_id) + 1;
+      return res.json({ success: true, data: ranked.slice(0, 50), posisi_saya: posisiSaya || null });
+    }
+
+    // Leaderboard all-time
+    let query = supabase
+      .from('users')
+      .select('id, nama, avatar, xp, level, streak, avg_skor')
+      .eq('role', 'murid')
+      .order('xp', { ascending: false })
+      .limit(50);
+
+    if (userIds) {
+      if (userIds.length === 0) return res.json({ success: true, data: [], posisi_saya: null });
+      query = supabase
+        .from('users')
+        .select('id, nama, avatar, xp, level, streak, avg_skor')
+        .in('id', userIds)
+        .order('xp', { ascending: false });
     }
 
     const { data, error } = await query;
     if (error) throw error;
 
     const ranked = (data || []).map((u, i) => ({ ...u, peringkat: i + 1 }));
-    res.json({ success: true, data: ranked });
+    const posisiSaya = ranked.findIndex(u => u.id === murid_id) + 1;
+
+    res.json({ success: true, data: ranked, posisi_saya: posisiSaya || null });
   } catch (err) {
-    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
+    console.error('[leaderboard]', err.message);
+    res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 });
 

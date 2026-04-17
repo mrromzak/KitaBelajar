@@ -4,6 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 const supabase = require('../supabase');
 const { authMiddleware, guruOnly } = require('../middleware/auth');
 const { encrypt, decrypt } = require('../utils/crypto');
+const { updateUserStats, checkMisi } = require('../utils/gamification');
 
 // =====================================================
 // POST /api/soal – Tambah soal baru
@@ -337,17 +338,21 @@ router.post('/quiz/:id/submit', authMiddleware, async (req, res) => {
       durasi_detik: durasi_detik || 0
     });
 
-    // Update XP + level murid
-    const xpDapat = skor || 0;
-    const { data: user } = await supabase.from('users').select('xp').eq('id', req.user.id).single();
-    const newXp = (user?.xp || 0) + xpDapat;
-    const newLevel = Math.floor(newXp / 1000) + 1;
-    await supabase.from('users').update({ xp: newXp, level: newLevel }).eq('id', req.user.id);
+    // Update XP + stats + cek misi
+    const xpDapat   = skor || 0;
+    const akurasi   = total_soal > 0 ? Math.round((benar / total_soal) * 100) : 0;
+    const statsResult = await updateUserStats(req.user.id, { xpDapat, skor: akurasi, tipe: 'quiz' });
+    const misiSelesai = await checkMisi(req.user.id, { tipe_aktivitas: 'quiz', nilai: akurasi, xpDapat });
 
     res.json({
       success: true,
       pesan: 'Hasil quiz tersimpan!',
-      data: { skor, benar, total_soal, xp_dapat: xpDapat, total_xp: newXp }
+      data: {
+        skor, benar, total_soal,
+        xp_dapat:     xpDapat,
+        total_xp:     statsResult?.newXp || 0,
+        misi_selesai: misiSelesai.map(m => ({ judul: m.misi.judul, icon: m.misi.icon, xp: m.xp }))
+      }
     });
   } catch (err) {
     console.error('Submit quiz error:', err.message);

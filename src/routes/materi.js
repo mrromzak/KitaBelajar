@@ -4,6 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 const multer = require('multer');
 const supabase = require('../supabase');
 const { authMiddleware, guruOnly } = require('../middleware/auth');
+const { updateUserStats, checkMisi } = require('../utils/gamification');
 
 // Multer – simpan di memory dulu, lalu upload ke Supabase Storage
 const upload = multer({
@@ -259,12 +260,10 @@ router.post('/:id/selesai', authMiddleware, async (req, res) => {
       murid_id: req.user.id, materi_id: req.params.id, selesai: true
     });
 
-    const { data: user } = await supabase.from('users').select('xp').eq('id', req.user.id).single();
-    const newXp = (user.xp || 0) + 20;
-    const newLevel = Math.floor(newXp / 100) + 1;
-    await supabase.from('users').update({ xp: newXp, level: newLevel }).eq('id', req.user.id);
+    const statsResult = await updateUserStats(req.user.id, { xpDapat: 20, tipe: 'materi' });
+    await checkMisi(req.user.id, { tipe_aktivitas: 'materi', xpDapat: 20 });
 
-    res.json({ success: true, pesan: '+20 XP! Materi berhasil diselesaikan.', xp_dapat: 20, total_xp: newXp });
+    res.json({ success: true, pesan: '+20 XP! Materi berhasil diselesaikan.', xp_dapat: 20, total_xp: statsResult?.newXp || 0 });
   } catch (err) {
     console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
