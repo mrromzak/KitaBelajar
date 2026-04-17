@@ -125,6 +125,18 @@
 .btn-klaim:hover{transform:scale(1.05)}
 .btn-mulai-misi{padding:6px 12px;border-radius:50px;background:linear-gradient(135deg,#7b2ff7,#4D96FF);border:none;color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:11px;cursor:pointer;flex-shrink:0;transition:all .2s;white-space:nowrap}
 .btn-mulai-misi:hover{transform:scale(1.05);box-shadow:0 4px 12px rgba(123,47,247,.4)}
+/* ── Materi Ceklis ───────────────────────────── */
+.materi-ceklis-footer{padding:10px 18px 14px;border-top:1px solid #F0EEFF;margin-top:4px}
+.materi-ceklis-btn{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:14px;border:2px dashed #C4B5FD;background:#FAFAFF;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;color:#7b2ff7;transition:all .2s;width:100%}
+.materi-ceklis-btn:hover:not(:disabled){background:#F3EEFF;border-style:solid;border-color:#7b2ff7}
+.materi-ceklis-btn.done{border:2px solid #00C851;background:#F0FFF5;color:#00C851;cursor:default}
+.materi-ceklis-btn:disabled{cursor:default}
+.ceklis-box{width:22px;height:22px;border-radius:6px;border:2px solid #C4B5FD;background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0;transition:all .2s}
+.materi-ceklis-btn.done .ceklis-box{border-color:#00C851;background:#00C851;color:#fff}
+.ceklis-label{flex:1;text-align:left}
+.ceklis-xp{font-size:11px;font-weight:900;background:linear-gradient(135deg,#7b2ff7,#4D96FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stream-post.materi-done{border-left:4px solid #00C851}
+.materi-ceklis-btn.loading{opacity:.6;pointer-events:none}
 .badge-card{width:80px;padding:12px 8px;border-radius:16px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.08);text-align:center;border:2px solid #F0E8FF;transition:all .2s;cursor:default}
 .badge-card.dimiliki{border-color:#7b2ff7;background:#F8F4FF}
 .badge-card.locked{opacity:.35;filter:grayscale(1)}
@@ -3856,7 +3868,28 @@ async function loadKelasStream(kelasId) {
       return;
     }
 
-    stream.innerHTML = list.map(m => {
+    // Progress bar materi untuk murid
+    if (!isGuru) {
+      const total    = list.length;
+      const selesai  = list.filter(m => m.sudah_dibaca).length;
+      const pct      = total > 0 ? Math.round((selesai / total) * 100) : 0;
+      const pctColor = pct === 100 ? '#00C851' : pct >= 50 ? '#7b2ff7' : '#4D96FF';
+      stream.innerHTML = `
+        <div style="background:#fff;border-radius:16px;padding:14px 18px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:2px solid #F0E8FF">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <span style="font-weight:800;font-size:13px;color:#444">📚 Progress Materi</span>
+            <span id="materi-prog-label" style="font-weight:900;font-size:13px;color:${pctColor}">${selesai}/${total} selesai</span>
+          </div>
+          <div style="height:8px;background:#F0E8FF;border-radius:50px;overflow:hidden">
+            <div id="materi-prog-bar" style="height:100%;width:${pct}%;background:linear-gradient(90deg,#7b2ff7,#4D96FF);border-radius:50px;transition:width .4s"></div>
+          </div>
+          ${pct === 100 ? '<div style="text-align:center;margin-top:8px;font-size:12px;font-weight:800;color:#00C851">🎉 Semua materi sudah selesai!</div>' : ''}
+        </div>`;
+    } else {
+      stream.innerHTML = '';
+    }
+
+    stream.innerHTML += list.map(m => {
       const icon = m.jenis === 'video' ? '🎬' : m.jenis === 'pdf' ? '📄' : m.jenis === 'gambar' ? '🖼️' : '📝';
       const iconBg = m.jenis === 'video' ? '#FFF0F5' : m.jenis === 'pdf' ? '#FFF3E8' : m.jenis === 'gambar' ? '#F0FFF4' : '#EEF5FF';
       const tgl = new Date(m.created_at).toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
@@ -3905,7 +3938,24 @@ async function loadKelasStream(kelasId) {
         `;
       }
 
-      return `<div class="stream-post">
+      const sudah = m.sudah_dibaca;
+
+      // Footer ceklis — hanya untuk murid
+      const ceklisHtml = !isGuru ? `
+        <div class="materi-ceklis-footer" id="ceklis-footer-${m.id}">
+          <button
+            class="materi-ceklis-btn ${sudah ? 'done' : ''}"
+            id="ceklis-btn-${m.id}"
+            onclick="tandaiMateriSelesai('${m.id}', '${(m.judul||'').replace(/'/g,"\\'")}', this)"
+            ${sudah ? 'disabled' : ''}
+            title="${sudah ? 'Sudah selesai dibaca' : 'Tandai sudah dibaca'}">
+            <span class="ceklis-box">${sudah ? '✓' : ''}</span>
+            <span class="ceklis-label">${sudah ? 'Sudah dibaca' : 'Tandai sudah dibaca'}</span>
+            ${sudah ? '' : '<span class="ceklis-xp">+20 XP</span>'}
+          </button>
+        </div>` : '';
+
+      return `<div class="stream-post ${sudah && !isGuru ? 'materi-done' : ''}" id="stream-post-${m.id}">
         <div class="stream-post-header">
           <div class="stream-post-icon" style="background:${iconBg}">${icon}</div>
           <div class="stream-post-meta">
@@ -3915,12 +3965,13 @@ async function loadKelasStream(kelasId) {
           ${isGuru ? `<div class="stream-post-actions">
             <button class="btn-icon btn-edit" data-id="${m.id}" data-judul="${m.judul.replace(/"/g,'&quot;')}" data-mapel="${m.mapel}" data-jenis="${m.jenis}" data-status="${m.status}" onclick="editMateriBtn(this)" title="Edit">✏️</button>
             <button class="btn-icon btn-delete" data-id="${m.id}" data-judul="${m.judul.replace(/"/g,'&quot;')}" onclick="deleteMateriBtn(this)" title="Hapus">🗑️</button>
-          </div>` : ''}
+          </div>` : (!isGuru && sudah ? '<span style="font-size:18px;color:#00C851;flex-shrink:0">✅</span>' : '')}
         </div>
         ${m.deskripsi ? `<div style="padding:0 20px 10px;font-size:13px;color:var(--muted);line-height:1.5">${m.deskripsi}</div>` : ''}
         <div class="stream-post-body">
           ${bodyHtml}
         </div>
+        ${ceklisHtml}
       </div>`;
     }).join('');
   } catch(e) {
@@ -3934,6 +3985,91 @@ function kembaliDashboard() {
   if (currentUser?.role === 'guru') loadGuruDashboard();
   else if (currentUser?.role === 'orangtua') loadOrangtuaDashboard();
   else loadMuridDashboard();
+}
+
+// ── Tandai materi sudah dibaca (ceklis) ────────────────────
+async function tandaiMateriSelesai(materiId, judulMateri, btnEl) {
+  if (btnEl.classList.contains('done') || btnEl.disabled) return;
+
+  btnEl.classList.add('loading');
+  btnEl.querySelector('.ceklis-label').textContent = 'Menyimpan...';
+
+  try {
+    const token = localStorage.getItem('kb_token') || '';
+    const res   = await fetch(`/api/materi/${materiId}/selesai`, {
+      method:  'POST',
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    const json = await res.json();
+
+    if (json.success) {
+      // Update tombol → done
+      btnEl.classList.remove('loading');
+      btnEl.classList.add('done');
+      btnEl.disabled = true;
+      btnEl.querySelector('.ceklis-box').textContent  = '✓';
+      btnEl.querySelector('.ceklis-label').textContent = 'Sudah dibaca';
+      const xpEl = btnEl.querySelector('.ceklis-xp');
+      if (xpEl) xpEl.remove();
+
+      // Update kartu → border hijau
+      const card = document.getElementById(`stream-post-${materiId}`);
+      if (card) {
+        card.classList.add('materi-done');
+        // Tambah ikon ✅ di header kalau belum ada
+        const header = card.querySelector('.stream-post-header');
+        if (header && !header.querySelector('.materi-done-icon')) {
+          const badge = document.createElement('span');
+          badge.className = 'materi-done-icon';
+          badge.style.cssText = 'font-size:18px;color:#00C851;flex-shrink:0';
+          badge.textContent = '✅';
+          header.appendChild(badge);
+        }
+      }
+
+      // Toast XP
+      const xp = json.xp_dapat || 20;
+      toast(`✅ "${judulMateri}" selesai! +${xp} XP`);
+
+      // Update progress bar di atas stream
+      updateMateriProgressBar();
+    } else if (json.pesan?.includes('sudah pernah')) {
+      // Materi sudah pernah diselesaikan — update UI saja
+      btnEl.classList.remove('loading');
+      btnEl.classList.add('done');
+      btnEl.disabled = true;
+      btnEl.querySelector('.ceklis-box').textContent  = '✓';
+      btnEl.querySelector('.ceklis-label').textContent = 'Sudah dibaca';
+    } else {
+      btnEl.classList.remove('loading');
+      btnEl.querySelector('.ceklis-label').textContent = 'Tandai sudah dibaca';
+      toast('Gagal menyimpan. Coba lagi.');
+    }
+  } catch(e) {
+    btnEl.classList.remove('loading');
+    btnEl.querySelector('.ceklis-label').textContent = 'Tandai sudah dibaca';
+    toast('Gagal terhubung ke server.');
+  }
+}
+
+// Update angka progress bar materi tanpa reload seluruh stream
+function updateMateriProgressBar() {
+  const stream   = document.getElementById('kelas-stream');
+  if (!stream) return;
+  const allCards = stream.querySelectorAll('[id^="stream-post-"]');
+  const total    = allCards.length;
+  const selesai  = stream.querySelectorAll('.stream-post.materi-done').length;
+  const pct      = total > 0 ? Math.round((selesai / total) * 100) : 0;
+  const pctColor = pct === 100 ? '#00C851' : pct >= 50 ? '#7b2ff7' : '#4D96FF';
+
+  const barEl    = stream.querySelector('[id="materi-prog-bar"]') ||
+                   stream.querySelector('div > div[style*="height:8px"]');
+  const labelEl  = stream.querySelector('[id="materi-prog-label"]');
+
+  if (barEl)   barEl.style.width    = pct + '%';
+  if (labelEl) labelEl.textContent  = `${selesai}/${total} selesai`;
+
+  if (pct === 100) toast('🎉 Semua materi sudah selesai!');
 }
 
 function copyKodeKelas() {
