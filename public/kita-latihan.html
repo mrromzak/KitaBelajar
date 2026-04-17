@@ -1655,6 +1655,9 @@ function initSpeechRecognition() {
   }
 
   voiceRecognition.onresult = (e) => {
+    // Abaikan semua hasil saat AI sedang berbicara — cegah suara AI masuk sebagai input
+    if (voiceSpeaking) return;
+
     let interim = '';
     let finalChunk = '';
 
@@ -2344,6 +2347,11 @@ function voiceSpeak(text) {
     .trim();
 
   if (!clean) return;
+
+  // Stop recognition dulu sebelum AI bicara — cegah suara AI masuk ke mic
+  stopListening();
+  _liveAccumulated = '';
+  clearTimeout(_liveSendTimer);
 
   // Tandai sedang berbicara & tampilkan wave
   voiceSpeaking = true;
