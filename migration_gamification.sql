@@ -82,7 +82,33 @@ INSERT INTO badges (id, nama, deskripsi, icon, tipe) VALUES
   ('b1000000-0000-0000-0000-000000000007', 'Bintang Kelas',    'Masuk top 3 leaderboard kelas',              '🌟', 'spesial'),
   ('b1000000-0000-0000-0000-000000000008', 'Pelajar Aktif',    'Capai level 5',                              '📚', 'level'),
   ('b1000000-0000-0000-0000-000000000009', 'Legenda',          'Capai level 10',                             '👑', 'level'),
-  ('b1000000-0000-0000-0000-000000000010', 'Petualang Materi', 'Selesaikan 10 materi',                       '🗺️', 'misi')
+  ('b1000000-0000-0000-0000-000000000010', 'Petualang Materi', 'Selesaikan 10 materi',                       '🗺️', 'misi'),
+  -- v2 badges
+  ('b2000000-0000-0000-0000-000000000001', 'Mulai Tumbuh',     'Capai level 3',                               '🌱', 'level'),
+  ('b2000000-0000-0000-0000-000000000002', 'Pejuang',          'Capai level 7',                               '⚔️', 'level'),
+  ('b2000000-0000-0000-0000-000000000003', 'Diamond',          'Capai level 15',                              '💎', 'level'),
+  ('b2000000-0000-0000-0000-000000000004', 'Grandmaster',      'Capai level 20',                              '🎖️', 'level'),
+  ('b2000000-0000-0000-0000-000000000005', 'Aktif',            'Selesaikan 10 quiz',                          '⚡', 'misi'),
+  ('b2000000-0000-0000-0000-000000000006', 'Quiz Mania',       'Selesaikan 50 quiz',                          '🔥', 'misi'),
+  ('b2000000-0000-0000-0000-000000000007', 'Legenda Quiz',     'Selesaikan 200 quiz',                         '🏆', 'misi'),
+  ('b2000000-0000-0000-0000-000000000008', 'Pertama Kali',     'Selesaikan quiz pertamamu',                   '🎉', 'misi'),
+  ('b2000000-0000-0000-0000-000000000009', 'Tepat Sasaran',    'Raih akurasi 90%+ sebanyak 5 kali',           '🎯', 'akurasi'),
+  ('b2000000-0000-0000-0000-000000000010', 'Ahli',             'Rata-rata akurasi 85%+',                      '🧠', 'akurasi'),
+  ('b2000000-0000-0000-0000-000000000011', 'Pantang Menyerah', 'Streak 3 hari berturut-turut',                '🌤️', 'streak'),
+  ('b2000000-0000-0000-0000-000000000012', 'Dua Minggu',       'Streak 14 hari berturut-turut',               '📆', 'streak'),
+  ('b2000000-0000-0000-0000-000000000013', 'Bulan Penuh',      'Streak 30 hari berturut-turut',               '🌕', 'streak'),
+  ('b2000000-0000-0000-0000-000000000014', 'Pembaca Muda',     'Selesaikan 5 materi',                         '📗', 'misi'),
+  ('b2000000-0000-0000-0000-000000000015', 'Kutu Buku',        'Selesaikan 20 materi',                        '🐛', 'misi'),
+  ('b2000000-0000-0000-0000-000000000016', 'Sarjana Muda',     'Selesaikan 50 materi',                        '🎓', 'misi'),
+  ('b2000000-0000-0000-0000-000000000017', 'Juara',            'Raih peringkat #1 di leaderboard kelas',      '🥇', 'spesial'),
+  ('b2000000-0000-0000-0000-000000000018', 'Speed Runner',     'Kerjakan 5 quiz dalam 1 hari',                '🏃', 'spesial'),
+  ('b2000000-0000-0000-0000-000000000019', 'Tak Terhentikan',  'Kerjakan quiz 7 hari berturut-turut',         '🌪️', 'spesial'),
+  ('b2000000-0000-0000-0000-000000000020', 'Multitasker',      'Selesaikan quiz & materi di hari yang sama',  '⚙️', 'spesial'),
+  ('b2000000-0000-0000-0000-000000000021', 'Pelopor',          'Murid pertama yang join kelas',               '🚀', 'spesial'),
+  ('b2000000-0000-0000-0000-000000000022', 'XP Hunter',        'Kumpulkan total 5000 XP',                     '💰', 'spesial'),
+  ('b2000000-0000-0000-0000-000000000023', 'XP Billionaire',   'Kumpulkan total 10000 XP',                    '💸', 'spesial'),
+  ('b2000000-0000-0000-0000-000000000024', 'Comeback',         'Kembali belajar setelah tidak aktif',         '🔄', 'spesial'),
+  ('b2000000-0000-0000-0000-000000000025', 'All Rounder',      'Selesaikan quiz di 3 mapel berbeda',          '🌈', 'spesial')
 ON CONFLICT (id) DO NOTHING;
 
 -- ── 7. Seed: data misi_template awal ───────────────────────

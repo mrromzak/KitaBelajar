@@ -123,6 +123,8 @@
 .misi-reward{font-size:11px;color:#7b2ff7;font-weight:800;margin-top:4px}
 .btn-klaim{padding:6px 14px;border-radius:50px;background:linear-gradient(135deg,#00C851,#38ef7d);border:none;color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;cursor:pointer;flex-shrink:0;transition:all .2s}
 .btn-klaim:hover{transform:scale(1.05)}
+.btn-mulai-misi{padding:6px 12px;border-radius:50px;background:linear-gradient(135deg,#7b2ff7,#4D96FF);border:none;color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:11px;cursor:pointer;flex-shrink:0;transition:all .2s;white-space:nowrap}
+.btn-mulai-misi:hover{transform:scale(1.05);box-shadow:0 4px 12px rgba(123,47,247,.4)}
 .badge-card{width:80px;padding:12px 8px;border-radius:16px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.08);text-align:center;border:2px solid #F0E8FF;transition:all .2s;cursor:default}
 .badge-card.dimiliki{border-color:#7b2ff7;background:#F8F4FF}
 .badge-card.locked{opacity:.35;filter:grayscale(1)}
@@ -3490,21 +3492,35 @@ async function loadMisi() {
   } catch(e) { toast('Gagal memuat misi.'); }
 }
 
+// Mapping kondisi_tipe → fungsi navigasi
+const MISI_AKSI = {
+  quiz_count:   { label: 'Mulai Quiz ⚡',   fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
+  akurasi:      { label: 'Mulai Quiz 🎯',   fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
+  xp_gained:    { label: 'Mulai Quiz ⭐',   fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
+  materi_count: { label: 'Buka Materi 📖',  fn: () => showPage('page-kelas') },
+  streak:       { label: 'Tetap Aktif 🔥',  fn: () => toast('Login setiap hari untuk menjaga streak kamu! 🔥') },
+  level:        { label: 'Naikkan Level 📈', fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
+};
+
 function renderMisiGroup(tipe, list) {
   const el = document.getElementById(`misi-${tipe}-list`);
   if (!list || list.length === 0) { el.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:10px">Tidak ada misi.</div>'; return; }
 
-  el.innerHTML = list.map(m => {
-    const pct     = Math.min(100, Math.round((m.progres / m.target) * 100));
-    const cls     = m.reward_claimed ? 'claimed' : m.selesai ? 'selesai' : '';
-    const badge   = m.reward_badge ? `+ badge ${m.reward_badge.icon}` : '';
-    const reward  = m.reward_xp > 0 ? `+${m.reward_xp} XP ${badge}` : badge || '';
+  el.innerHTML = list.map((m, idx) => {
+    const pct    = Math.min(100, Math.round((m.progres / m.target) * 100));
+    const cls    = m.reward_claimed ? 'claimed' : m.selesai ? 'selesai' : '';
+    const badge  = m.reward_badge ? ` + badge ${m.reward_badge.icon}` : '';
+    const reward = m.reward_xp > 0 ? `+${m.reward_xp} XP${badge}` : badge.trim() || '';
 
+    // Tombol kanan: claimed / klaim / mulai
     let rightEl = '';
     if (m.reward_claimed) {
-      rightEl = `<span style="font-size:11px;font-weight:800;color:#aaa">✓ Diklaim</span>`;
+      rightEl = `<span style="font-size:11px;font-weight:800;color:#aaa;flex-shrink:0">✓ Diklaim</span>`;
     } else if (m.selesai && m.id) {
-      rightEl = `<button class="btn-klaim" onclick="klaimMisi('${m.id}', this)">Klaim!</button>`;
+      rightEl = `<button class="btn-klaim" onclick="klaimMisi('${m.id}', this)">Klaim! 🎁</button>`;
+    } else if (!m.selesai) {
+      const aksi = MISI_AKSI[m.kondisi_tipe];
+      if (aksi) rightEl = `<button class="btn-mulai-misi" onclick="jalankanMisiAksi('${m.kondisi_tipe}')">${aksi.label}</button>`;
     }
 
     const progresText = tipe === 'achievement' && m.selesai
@@ -3524,9 +3540,14 @@ function renderMisiGroup(tipe, list) {
             ${reward ? `<div class="misi-reward">${reward}</div>` : ''}
           </div>
         </div>
-        ${rightEl}
+        <div style="flex-shrink:0;margin-left:8px">${rightEl}</div>
       </div>`;
   }).join('');
+}
+
+function jalankanMisiAksi(kondisiTipe) {
+  const aksi = MISI_AKSI[kondisiTipe];
+  if (aksi) aksi.fn();
 }
 
 async function klaimMisi(misiMuridId, btn) {
