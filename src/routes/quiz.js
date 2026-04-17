@@ -443,7 +443,13 @@ router.post('/:id/submission', authMiddleware, (req, res, next) => {
       }
     }
 
-    res.json({ success: true, pesan: 'Tugas berhasil dikumpulkan!', data: sub });
+    // Beri XP untuk mengumpulkan tugas
+    try {
+      await updateUserStats(murid_id, { xpDapat: 25, tipe: 'tugas' });
+      await checkMisi(murid_id, { tipe_aktivitas: 'tugas', xpDapat: 25 });
+    } catch(xpErr) { console.warn('[XP tugas]', xpErr.message); }
+
+    res.json({ success: true, pesan: 'Tugas berhasil dikumpulkan! +25 XP', data: sub });
   } catch(e) {
     console.error('[POST /quiz/:id/submission]', e.message);
     res.status(500).json({ success: false, pesan: 'Gagal mengumpulkan tugas.' });

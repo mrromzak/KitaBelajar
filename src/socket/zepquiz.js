@@ -11,6 +11,7 @@
 // =====================================================
 
 const supabase = require('../supabase');
+const { updateUserStats, checkMisi } = require('../utils/gamification');
 
 // ── Soal Cache: hindari generate berulang untuk kategori sama ──
 // Key: "mapel_jenjang_kelas", value: { soal[], expiry }
@@ -759,6 +760,26 @@ module.exports = function(io) {
     broadcast(kode, 'zep:game_selesai', {
       leaderboard: final,
       judul: room.quiz.judul
+    });
+
+    // Beri XP ke semua pemain berdasarkan skor + bonus juara
+    const totalSoal = room.soal.length;
+    const maxSkorPerSoal = 100;
+    const maxSkorTotal = totalSoal * maxSkorPerSoal || 1;
+
+    final.forEach((p, idx) => {
+      if (!p.id) return;
+      // XP proporsional: max 100 XP untuk skor penuh, min 5 XP untuk ikut saja
+      const xpBase  = Math.max(5, Math.round((p.skor / maxSkorTotal) * 100));
+      const xpBonus = idx === 0 ? 30 : idx === 1 ? 15 : idx === 2 ? 10 : 0; // bonus juara
+      const xpDapat = xpBase + xpBonus;
+
+      // Akurasi: berapa soal yang benar dari total (hitung dari scores)
+      const skorPct = totalSoal > 0 ? Math.round((p.skor / maxSkorTotal) * 100) : 0;
+
+      updateUserStats(p.id, { xpDapat, skor: skorPct, tipe: 'quiz' })
+        .then(() => checkMisi(p.id, { tipe_aktivitas: 'quiz', nilai: skorPct, xpDapat }))
+        .catch(err => console.warn('[ZepQuiz XP]', p.id, err.message));
     });
 
     // Bersihkan room setelah 5 menit

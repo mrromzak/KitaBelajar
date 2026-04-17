@@ -3497,7 +3497,7 @@ const MISI_AKSI = {
   quiz_count:   { label: 'Mulai Quiz ⚡',   fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
   akurasi:      { label: 'Mulai Quiz 🎯',   fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
   xp_gained:    { label: 'Mulai Quiz ⭐',   fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
-  materi_count: { label: 'Buka Materi 📖',  fn: () => showPage('page-kelas') },
+  materi_count: { label: 'Buka Materi 📖',  fn: () => bukaKelasUntukMateri() },
   streak:       { label: 'Tetap Aktif 🔥',  fn: () => toast('Login setiap hari untuk menjaga streak kamu! 🔥') },
   level:        { label: 'Naikkan Level 📈', fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
 };
@@ -3548,6 +3548,29 @@ function renderMisiGroup(tipe, list) {
 function jalankanMisiAksi(kondisiTipe) {
   const aksi = MISI_AKSI[kondisiTipe];
   if (aksi) aksi.fn();
+}
+
+// Buka kelas pertama yang diikuti murid, langsung ke tab Materi
+async function bukaKelasUntukMateri() {
+  try {
+    const token = localStorage.getItem('kb_token') || '';
+    const res   = await fetch('/api/kelas', { headers: { Authorization: 'Bearer ' + token } });
+    const json  = await res.json();
+    const list  = json.data || json.kelas || [];
+    if (list.length === 0) {
+      toast('Kamu belum bergabung di kelas manapun. Join kelas dulu!');
+      showPage('page-murid');
+      return;
+    }
+    // Buka kelas pertama langsung ke tab Materi
+    const k = list[0];
+    await openKelas(k.id, 0);
+    switchKelasTab('materi');
+  } catch(e) {
+    // Fallback: buka halaman kelas biasa
+    showPage('page-murid');
+    toast('Buka halaman kelas dan pilih tab Materi.');
+  }
 }
 
 async function klaimMisi(misiMuridId, btn) {
