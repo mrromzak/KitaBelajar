@@ -3410,18 +3410,28 @@ async function loadLeaderboard() {
   }
 }
 
+// Avatar bisa berupa URL atau emoji — render sesuai jenisnya
+function renderAvatar(avatar, size = 48, extraStyle = '') {
+  const isUrl = avatar && (avatar.startsWith('http') || avatar.startsWith('/') || avatar.startsWith('data:'));
+  if (isUrl) {
+    return `<img src="${avatar}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;${extraStyle}">`;
+  }
+  const isi = avatar || '👤';
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:#E8E0FF;display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.45)}px;flex-shrink:0;${extraStyle}">${isi}</div>`;
+}
+
 function renderPodiumLb(top3) {
   const el = document.getElementById('lb-podium');
   if (!top3 || top3.length === 0) { el.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;width:100%">Belum ada data</div>'; return; }
 
-  const medals = ['🥇','🥈','🥉'];
+  const medals  = ['🥇','🥈','🥉'];
   const heights = ['90px','70px','60px'];
   const order   = [1, 0, 2]; // tampil: #2, #1, #3
 
   const cols = order.map(i => {
     const u = top3[i];
     if (!u) return '';
-    const av = u.avatar ? `<img src="${u.avatar}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:3px solid #fff">` : `<div style="width:48px;height:48px;border-radius:50%;background:#E8E0FF;display:flex;align-items:center;justify-content:center;font-size:22px;border:3px solid #fff">👤</div>`;
+    const av = renderAvatar(u.avatar, 48, 'border:3px solid #fff;');
     return `
       <div class="lb-podium-col" style="flex:1">
         <div style="text-align:center;margin-bottom:6px">
@@ -3445,8 +3455,8 @@ function renderListLb(data) {
   const topMap = { 1: 'top1', 2: 'top2', 3: 'top3' };
 
   el.innerHTML = data.map(u => {
-    const cls   = u.id === myId ? 'saya' : (topMap[u.peringkat] || '');
-    const av    = u.avatar ? `<img src="${u.avatar}" class="lb-avatar">` : `<div class="lb-avatar">👤</div>`;
+    const cls    = u.id === myId ? 'saya' : (topMap[u.peringkat] || '');
+    const av     = renderAvatar(u.avatar, 40, 'flex-shrink:0;');
     const streak = u.streak > 0 ? `🔥${u.streak} ` : '';
     const avg    = u.avg_skor > 0 ? `avg ${parseFloat(u.avg_skor).toFixed(0)}%` : '';
     return `
