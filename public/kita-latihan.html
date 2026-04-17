@@ -1556,6 +1556,8 @@ let _micSilenceTimer   = null;
 let _micWatchdog       = null;  // interval watchdog live mode
 let _lastSpeechTime    = 0;     // timestamp terakhir ada suara
 const MIC_SILENCE_MS   = 60_000; // 60 detik tanpa suara → matikan mic
+let _liveAccumulated   = '';   // teks terkumpul di live mode
+let _liveSendTimer     = null; // timer kirim setelah jeda
 
 // Suara pria terbaik yang tersedia (dikunci saat init, tidak ganti-ganti)
 let _lockedMaleVoice = null;
@@ -1625,9 +1627,6 @@ function initSpeechRecognition() {
   voiceRecognition.interimResults = true;
   voiceRecognition.maxAlternatives = 1;
   voiceRecognition.lang = voiceLang === 'id' ? 'id-ID' : 'en-US';
-
-  let _liveAccumulated = '';  // teks terkumpul di live mode
-  let _liveSendTimer   = null; // timer kirim setelah jeda
 
   // Gabungkan chunk baru ke accumulated dengan deteksi overlap kata
   // Mencegah kata dobel ketika user berbelit/mengulang
