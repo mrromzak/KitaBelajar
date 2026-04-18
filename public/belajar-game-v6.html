@@ -1762,13 +1762,13 @@ const CBG_PICTURES = [
     regions:[
       {id:'sun',label:'1',name:'Matahari',correct:'1',
        path:'<circle cx="200" cy="180" r="65" class="cbg-region" id="cbg-sun" fill="#e8e8e8" data-id="sun"/>'},
-      {id:'ray1',label:'1',name:'Sinar',correct:'1',
+      {id:'ray1',label:'1',name:'Sinar',correct:'1',lx:200,ly:95,
        path:'<polygon points="200,80 210,110 190,110" class="cbg-region" id="cbg-ray1" fill="#e8e8e8" data-id="ray1"/>'},
-      {id:'ray2',label:'1',name:'Sinar',correct:'1',
+      {id:'ray2',label:'1',name:'Sinar',correct:'1',lx:200,ly:258,
        path:'<polygon points="200,270 210,240 190,240" class="cbg-region" id="cbg-ray2" fill="#e8e8e8" data-id="ray2"/>'},
-      {id:'ray3',label:'1',name:'Sinar',correct:'1',
+      {id:'ray3',label:'1',name:'Sinar',correct:'1',lx:118,ly:180,
        path:'<polygon points="105,180 135,190 135,170" class="cbg-region" id="cbg-ray3" fill="#e8e8e8" data-id="ray3"/>'},
-      {id:'ray4',label:'1',name:'Sinar',correct:'1',
+      {id:'ray4',label:'1',name:'Sinar',correct:'1',lx:282,ly:180,
        path:'<polygon points="295,180 265,190 265,170" class="cbg-region" id="cbg-ray4" fill="#e8e8e8" data-id="ray4"/>'},
       {id:'cloud1',label:'2',name:'Awan Biru',correct:'2',
        path:'<ellipse cx="80" cy="100" rx="50" ry="30" class="cbg-region" id="cbg-cloud1" fill="#e8e8e8" data-id="cloud1"/><ellipse cx="115" cy="88" rx="35" ry="25" class="cbg-region" id="cbg-cloud1b" fill="#e8e8e8" data-id="cloud1"/>'},
@@ -1785,7 +1785,7 @@ const CBG_PICTURES = [
     colors:{'1':'#FF6B6B','2':'#FFD93D','3':'#6BCB77','4':'#a29bfe','5':'#FF9F43'},
     colorNames:{'1':'Merah','2':'Kuning','3':'Hijau','4':'Ungu','5':'Oranye'},
     regions:[
-      {id:'roof',label:'1',name:'Atap',correct:'1',
+      {id:'roof',label:'1',name:'Atap',correct:'1',lx:200,ly:140,
        path:'<polygon points="200,60 50,200 350,200" class="cbg-region" id="cbg-roof" fill="#e8e8e8" data-id="roof"/>'},
       {id:'wall',label:'2',name:'Dinding',correct:'2',
        path:'<rect x="80" y="200" width="240" height="150" class="cbg-region" id="cbg-wall" fill="#e8e8e8" data-id="wall"/>'},
@@ -1810,13 +1810,13 @@ const CBG_PICTURES = [
        path:'<rect x="0" y="0" width="400" height="370" class="cbg-region" id="cbg-sea" fill="#e8e8e8" data-id="sea"/>'},
       {id:'fish1body',label:'2',name:'Badan Ikan',correct:'2',
        path:'<ellipse cx="200" cy="180" rx="80" ry="45" class="cbg-region" id="cbg-fish1" fill="#e8e8e8" data-id="fish1body"/>'},
-      {id:'fish1tail',label:'2',name:'Ekor Ikan',correct:'2',
+      {id:'fish1tail',label:'2',name:'Ekor Ikan',correct:'2',lx:308,ly:180,
        path:'<polygon points="280,180 320,150 320,210" class="cbg-region" id="cbg-fish1t" fill="#e8e8e8" data-id="fish1tail"/>'},
       {id:'fish2',label:'5',name:'Ikan Kecil',correct:'5',
        path:'<ellipse cx="90" cy="100" rx="40" ry="22" class="cbg-region" id="cbg-fish2" fill="#e8e8e8" data-id="fish2"/>'},
       {id:'seaweed',label:'3',name:'Rumput Laut',correct:'3',
        path:'<ellipse cx="50" cy="340" rx="18" ry="50" class="cbg-region" id="cbg-weed1" fill="#e8e8e8" data-id="seaweed"/><ellipse cx="350" cy="345" rx="15" ry="45" class="cbg-region" id="cbg-weed2" fill="#e8e8e8" data-id="seaweed"/>'},
-      {id:'star',label:'4',name:'Bintang Laut',correct:'4',
+      {id:'star',label:'4',name:'Bintang Laut',correct:'4',lx:335,ly:295,
        path:'<polygon points="320,310 335,280 350,310 320,295 350,295" class="cbg-region" id="cbg-star" fill="#e8e8e8" data-id="star"/>'},
       {id:'sand',label:'4',name:'Pasir',correct:'4',
        path:'<rect x="0" y="350" width="400" height="50" class="cbg-region" id="cbg-sand" fill="#e8e8e8" data-id="sand"/>'},
@@ -1856,22 +1856,44 @@ function loadCbgPicture(){
   renderCbgSvg();
 }
 
+function getCbgShapeCenter(pathStr){
+  // Circle / Ellipse: cx, cy
+  const cx=pathStr.match(/\bcx="([\d.]+)"/);
+  const cy=pathStr.match(/\bcy="([\d.]+)"/);
+  if(cx&&cy) return [parseFloat(cx[1]),parseFloat(cy[1])];
+  // Rect: x+w/2, y+h/2
+  const rx=pathStr.match(/(?<![a-z])\bx="([\d.]+)"/i);
+  const ry=pathStr.match(/(?<![a-z])\by="([\d.]+)"/i);
+  const rw=pathStr.match(/\bwidth="([\d.]+)"/);
+  const rh=pathStr.match(/\bheight="([\d.]+)"/);
+  if(rx&&ry&&rw&&rh) return [parseFloat(rx[1])+parseFloat(rw[1])/2, parseFloat(ry[1])+parseFloat(rh[1])/2];
+  // Polygon / Polyline: centroid of points
+  const pts=pathStr.match(/\bpoints="([^"]+)"/);
+  if(pts){
+    const nums=pts[1].trim().split(/[\s,]+/).map(Number).filter(n=>!isNaN(n));
+    let sx=0,sy=0,n=0;
+    for(let i=0;i<nums.length-1;i+=2){sx+=nums[i];sy+=nums[i+1];n++;}
+    if(n>0) return [sx/n,sy/n];
+  }
+  return [200,180];
+}
+
 function renderCbgSvg(){
   const pic=cbgCurrentPic;
   const paths=pic.regions.map(r=>{
     const filled=cbgColoredRegions[r.id];
     const color=filled?pic.colors[r.correct]:'#e8e8e8';
-    // Replace fill color in paths
     const p=r.path.replace(/fill="#e8e8e8"/g,`fill="${color}"`);
-    // Add click handler wrapper
     return `<g onclick="clickCbgRegion('${r.id}')" style="cursor:pointer" title="${r.name} (${pic.colorNames[r.correct]})">${p}</g>`;
   }).join('');
-  // Number labels
+  // Number labels — pakai center yang benar untuk semua tipe shape
   const labels=pic.regions.map(r=>{
-    // parse cx/cy or x/y from first shape
-    const cx=r.path.match(/cx="(\d+)"/)?.[1]||r.path.match(/x="(\d+)"/)?.[1]||'200';
-    const cy=r.path.match(/cy="(\d+)"/)?.[1]||r.path.match(/y="(\d+)"/)?.[1]||'180';
-    return `<text x="${cx}" y="${parseInt(cy)+5}" text-anchor="middle" font-family="Baloo 2" font-size="18" font-weight="900" fill="${cbgColoredRegions[r.id]?'rgba(255,255,255,0.8)':'#555'}" pointer-events="none">${r.label}</text>`;
+    const [lx,ly]=r.lx!=null?[r.lx,r.ly]:getCbgShapeCenter(r.path);
+    const filled=cbgColoredRegions[r.id];
+    const txtColor=filled?'rgba(255,255,255,0.9)':'#444';
+    const bgColor=filled?'rgba(0,0,0,0.25)':'rgba(255,255,255,0.75)';
+    return `<circle cx="${lx}" cy="${ly}" r="13" fill="${bgColor}" pointer-events="none"/>
+<text x="${lx}" y="${ly+5}" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="900" fill="${txtColor}" pointer-events="none">${r.label}</text>`;
   }).join('');
   document.getElementById('cbg-svg-wrap').innerHTML=
     `<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;border-radius:12px;border:2px solid #e8e8e8">
@@ -2346,19 +2368,22 @@ const FLAG_DATA = {
 
 const ALL_FLAGS = Object.values(FLAG_DATA).flat();
 
-// Helper: buat elemen <img> bendera dari ISO code
-function flagImg(iso, size=120){
-  return `<img src="https://flagcdn.com/w${size}/${iso}.png" 
-    srcset="https://flagcdn.com/w${size*2}/${iso}.png 2x"
-    alt="${iso}" style="width:${size}px;max-width:100%;border-radius:6px;box-shadow:0 2px 12px rgba(0,0,0,.2);display:inline-block"
-    onerror="this.style.display='none'">`;
+// Konversi ISO code ke emoji bendera Unicode (selalu tersedia tanpa CDN)
+function isoToFlagEmoji(iso){
+  return [...iso.toUpperCase()].map(c=>String.fromCodePoint(0x1F1E0+c.charCodeAt(0)-65)).join('');
 }
 
-// Helper: buat elemen img kecil untuk pilihan
+// Helper: tampilkan bendera — emoji dulu, CDN image jika berhasil load
+function flagImg(iso, size=120){
+  const emoji=isoToFlagEmoji(iso);
+  const emojiSize=Math.round(size*0.65);
+  return `<span class="flag-emoji-span" style="font-size:${emojiSize}px;line-height:1.2;display:inline-block">${emoji}</span><img src="https://flagcdn.com/w${size}/${iso}.png" alt="${iso}" style="display:none;width:${size}px;max-width:100%;border-radius:6px;box-shadow:0 2px 12px rgba(0,0,0,.2)" onload="this.previousElementSibling.style.display='none';this.style.display='inline-block'" onerror="this.style.display='none'">`;
+}
+
+// Helper: bendera kecil untuk pilihan
 function flagImgSmall(iso){
-  return `<img src="https://flagcdn.com/w80/${iso}.png" alt="${iso}" 
-    style="width:60px;height:auto;border-radius:4px;box-shadow:0 1px 6px rgba(0,0,0,.18);flex-shrink:0;display:block"
-    onerror="this.style.background='#eee'">`;
+  const emoji=isoToFlagEmoji(iso);
+  return `<span style="font-size:34px;line-height:1.1;display:block;text-align:center">${emoji}</span><img src="https://flagcdn.com/w80/${iso}.png" alt="${iso}" style="display:none;width:56px;height:auto;border-radius:4px;box-shadow:0 1px 6px rgba(0,0,0,.18);margin:0 auto;display:none" onload="this.previousElementSibling.style.display='none';this.style.display='block'" onerror="this.style.display='none'">`;
 }
 
 function initFlagQuiz(){
@@ -2434,10 +2459,12 @@ function showFlagQuestion(){
     document.getElementById('flag-question').textContent = 'Klik bendera yang benar!';
     document.getElementById('flag-hint-badge').textContent = `\u{1F3D9}\ufe0f Ibu kota: ${item.capital}`;
     document.getElementById('flag-options').innerHTML = opts.map(o =>
-      `<button class="flag-opt flag-opt-img" data-iso="${o.iso}" data-correct-iso="${item.iso}" data-chosen-name="${o.name}" data-correct-name="${item.name}" style="padding:8px 6px">
+      `<button class="flag-opt flag-opt-img" data-iso="${o.iso}" data-correct-iso="${item.iso}" data-chosen-name="${o.name}" data-correct-name="${item.name}" style="padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:4px">
+        <span style="font-size:40px;line-height:1.2;display:block">${isoToFlagEmoji(o.iso)}</span>
         <img src="https://flagcdn.com/w120/${o.iso}.png"
-          style="width:100%;max-width:110px;height:auto;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.15)"
-          onerror="this.style.background='#eee'">
+          style="display:none;width:100%;max-width:100px;height:auto;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.15)"
+          onload="this.previousElementSibling.style.display='none';this.style.display='block'"
+          onerror="this.style.display='none'">
       </button>`
     ).join('');
     document.querySelectorAll('#flag-options .flag-opt').forEach(btn => {
@@ -2488,7 +2515,7 @@ function answerFlagByIso(chosenIso, correctIso, chosenName, correctName){
   } else {
     flagWrong++; resetStreak();
     document.getElementById('flag-wrong-cnt').textContent = flagWrong;
-    fb.innerHTML = 'â Salah! Bendera <strong>' + correctName + '</strong>: <img src="https://flagcdn.com/w80/' + correctIso + '.png" style="height:28px;vertical-align:middle;border-radius:3px;margin-left:6px">';
+    fb.innerHTML = '❌ Salah! Bendera <strong>' + correctName + '</strong>: <span style="font-size:24px;vertical-align:middle;margin-left:6px">' + isoToFlagEmoji(correctIso) + '</span>';
     fb.style.background = '#FFE8E8'; fb.style.color = '#c0392b'; fb.className = 'flag-feedback show';
     document.querySelectorAll('.flag-opt').forEach(b => {
       if(b.dataset.iso===correctIso) b.classList.add('correct');
