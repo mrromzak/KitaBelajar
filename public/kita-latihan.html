@@ -1652,6 +1652,7 @@ function tampilHasil() {
              ${!j.benar ? `<span style="color:#00C851">· Benar: ${j.soal.ans}</span>` : ''}`
         }
       </div>
+      ${j.soal.r ? `<div style="margin-top:6px;padding:6px 10px;background:#fffbe6;border-left:3px solid #f6c000;border-radius:6px;font-size:0.85rem;color:#555">💡 <b>Penjelasan:</b> ${j.soal.r}</div>` : ''}
     </div>`).join('');
 
   if (pct >= 70) buatConfetti();

@@ -428,7 +428,7 @@
     <div class="games-grid">
       <div class="game-card gc1" onclick="startQuiz()"><div class="game-icon">⚡</div><h4>Quiz Kilat</h4><p>Jawab secepat mungkin!</p></div>
       <div class="game-card gc2" onclick="bukaZepQuizMurid()" style="background:linear-gradient(135deg,#7b2ff7,#a64cff)"><div class="game-icon">🎯</div><h4>KitaQuiz</h4><p>Main bareng teman!</p></div>
-      <div class="game-card gc3" onclick="window.open('zep-world.html','_blank')" style="background:linear-gradient(135deg,#1a6b3a,#2ecc71)"><div class="game-icon">🌍</div><h4>Belajar World</h4><p>Jelajahi dunia belajar!</p></div>
+      <div class="game-card gc3" onclick="window.open('belajar-game-v6.html','_blank')" style="background:linear-gradient(135deg,#7b2ff7,#f64f59)"><div class="game-icon">🎮</div><h4>BelajarYuk!</h4><p>15+ mini game seru!</p></div>
       <div class="game-card gc4" onclick="loadLeaderboardPage()"><div class="game-icon">🏆</div><h4>Leaderboard</h4><p>Peringkat kelasmu</p></div>
     </div>
 
@@ -7105,8 +7105,8 @@ function bukaStageMap(kategoriId) {
   document.getElementById('qk-stage-xp-label').textContent = `${totalXP} XP`;
   document.getElementById('qk-stage-progress-bar').style.width = (stagesDone / QK_STAGES_PER_KATEGORI * 100) + '%';
 
-  renderStagePath();
   showPage('page-quiz-stages');
+  requestAnimationFrame(() => renderStagePath());
 }
 
 function renderStagePath() {
@@ -7114,17 +7114,56 @@ function renderStagePath() {
   const kat  = qkActiveKategori;
   const stagesDone = getStagesDone(kat.id);
 
-  // Zigzag offsets (px from center) — creates winding Duolingo-style path
-  const offsets = [55, -55, 55, -55, 55];
-  // Ambient decorations between each pair of stages
-  const connDecos = [
-    ['🌟','⚡','✨'],
-    ['💫','🎯','💥'],
-    ['⭐','🌈','✨'],
-    ['💎','🌟','⚡'],
-  ];
+  const W  = (path.clientWidth - 40) || 340; // subtract left+right padding (20+20)
+  const cx = W / 2;
+  const OX = Math.min(118, cx - 68); // max offset so button+label stay on screen
+  const offsets = [OX, -OX, OX, -OX, OX];
 
-  let html = '';
+  const STEP   = 190; // vertical px between stage centers
+  const BTN    = 48;  // button is 96×96 (BTN = half = 48)
+  const TOTAL_H = STEP * (QK_STAGES_PER_KATEGORI - 1) + BTN * 2 + 80;
+
+  // Build SVG defs + path segments
+  let svgDefs = '', svgPaths = '';
+  for (let i = 0; i < QK_STAGES_PER_KATEGORI - 1; i++) {
+    const done   = i < stagesDone;
+    const active = i === stagesDone;
+    const locked = i > stagesDone;
+    const color  = QK_STAGE_COLORS[i];
+    const nColor = QK_STAGE_COLORS[i + 1];
+    const sx = cx + offsets[i],       sy = i * STEP + BTN;
+    const ex = cx + offsets[i + 1],   ey = (i + 1) * STEP + BTN;
+    const cp1y = sy + STEP * 0.38, cp2y = ey - STEP * 0.38;
+    const d = `M ${sx} ${sy} C ${sx} ${cp1y} ${ex} ${cp2y} ${ex} ${ey}`;
+
+    svgDefs += `<linearGradient id="pcg${i}" gradientUnits="userSpaceOnUse" x1="${sx}" y1="${sy}" x2="${ex}" y2="${ey}">
+      <stop offset="0%" stop-color="${color}"/><stop offset="100%" stop-color="${nColor}"/>
+    </linearGradient>`;
+    const stroke = done ? `url(#pcg${i})` : active ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.18)';
+    const dash   = locked ? 'stroke-dasharray="14 9"' : '';
+    const glow   = done ? `filter="drop-shadow(0 0 7px ${color}cc)"` : '';
+    svgPaths += `<path d="${d}" stroke="${stroke}" stroke-width="11" stroke-linecap="round" fill="none" ${dash} ${glow}/>`;
+  }
+
+  // Mid-path decoration emojis
+  const midDecos = [
+    ['🌟','⚡'], ['💫','🎯'], ['⭐','✨'], ['💎','🌟']
+  ];
+  let decoHtml = '';
+  for (let i = 0; i < QK_STAGES_PER_KATEGORI - 1; i++) {
+    const done = i < stagesDone;
+    const opa  = done ? 0.85 : 0.22;
+    const sx   = cx + offsets[i], ex = cx + offsets[i + 1];
+    const sy   = i * STEP + BTN,  ey = (i + 1) * STEP + BTN;
+    // Two emoji decorations at t≈0.35 and t≈0.68 along the segment
+    [[0.35, midDecos[i][0]], [0.68, midDecos[i][1]]].forEach(([t, em]) => {
+      const bx = sx + (ex - sx) * t, by = sy + (ey - sy) * t;
+      decoHtml += `<div style="position:absolute;top:${by - 12}px;left:${bx - 12}px;font-size:16px;opacity:${opa};pointer-events:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4))">${em}</div>`;
+    });
+  }
+
+  // Stage node buttons + labels
+  let nodesHtml = '';
   for (let i = 0; i < QK_STAGES_PER_KATEGORI; i++) {
     const done   = i < stagesDone;
     const active = i === stagesDone;
@@ -7132,90 +7171,56 @@ function renderStagePath() {
     const color  = QK_STAGE_COLORS[i];
     const xp     = QK_STAGE_XP[i];
     const ox     = offsets[i];
-    // Label sits on the side opposite the zigzag lean
-    const labelSide = ox > 0 ? 'left' : 'right';
+    const bx     = cx + ox; // button center x
+    const by     = i * STEP; // button top y
 
     const btnBg = done
-      ? `linear-gradient(145deg,${color},${color}cc)`
-      : active
-        ? `linear-gradient(145deg,${color},${color}99)`
-        : 'linear-gradient(145deg,#3a3a5c,#2a2a4c)';
+      ? `linear-gradient(145deg,${color},${color}bb)`
+      : active ? `linear-gradient(145deg,${color},${color}88)` : 'linear-gradient(145deg,#3a3a5c,#2a2a4a)';
     const btnShadow = active
-      ? `0 0 0 6px ${color}40,0 8px 32px ${color}80`
-      : done
-        ? `0 4px 18px ${color}60`
-        : '0 4px 12px rgba(0,0,0,0.3)';
-    const labelColor = done ? color : active ? '#fff' : 'rgba(255,255,255,0.4)';
-    const subColor   = done ? 'rgba(255,255,255,0.8)' : active ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.3)';
+      ? `0 0 0 8px ${color}44,0 10px 36px ${color}88`
+      : done ? `0 6px 22px ${color}77` : '0 4px 14px rgba(0,0,0,0.35)';
+    const nameCol = done ? color : active ? '#ffffff' : 'rgba(255,255,255,0.42)';
+    const subCol  = done ? 'rgba(255,255,255,0.9)' : active ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.28)';
 
-    html += `
-      <div style="display:flex;justify-content:center;padding:6px 0">
-        <div style="position:relative;flex-shrink:0;transform:translateX(${ox}px);transition:transform 0.4s">
-          <!-- Floating label on opposite side -->
-          <div style="position:absolute;${labelSide==='right'?'left':'right'}:calc(100% + 10px);top:50%;transform:translateY(-50%);text-align:${labelSide==='right'?'right':'left'};min-width:88px;pointer-events:none">
-            <div style="font-family:'Fredoka One',cursive;font-size:15px;color:${labelColor};text-shadow:0 2px 8px rgba(0,0,0,0.5);line-height:1.2">${QK_STAGE_NAMES[i]}</div>
-            <div style="font-size:10px;font-weight:800;color:${subColor};margin-top:3px">
-              ${done ? `✅ +${xp} XP` : active ? `⚡ ${QK_SOAL_PER_STAGE} soal` : '🔒 Terkunci'}
-            </div>
-          </div>
-          <!-- Stage button -->
-          <button onclick="${locked ? "toast('Selesaikan stage sebelumnya dulu! 🔒','error')" : `mulaiStage(${i})`}"
-            style="width:96px;height:96px;border-radius:28px;border:none;
-                   cursor:${locked ? 'not-allowed' : 'pointer'};
-                   background:${btnBg};box-shadow:${btnShadow};
-                   transition:all 0.25s;position:relative;
-                   ${active ? 'transform:scale(1.12);animation:qkPulseRing 1.6s ease-in-out infinite' : ''};
-                   opacity:${locked ? '0.6' : '1'}">
-            <div style="font-size:38px;display:flex;align-items:center;justify-content:center;height:100%">
-              ${done ? QK_STAGE_ICONS[i] : locked ? '🔒' : QK_STAGE_ICONS[i]}
-            </div>
-            ${done ? `<div style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:${color};color:white;font-size:10px;font-weight:900;padding:3px 9px;border-radius:50px;font-family:Nunito;white-space:nowrap;border:2px solid rgba(255,255,255,0.4)">✓ SELESAI</div>` : ''}
-            ${active ? `<div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#FF6B35,#FF0080);color:white;font-size:10px;font-weight:900;padding:3px 10px;border-radius:50px;font-family:Nunito;white-space:nowrap;box-shadow:0 2px 8px rgba(255,107,53,0.6)">▶ MULAI</div>` : ''}
-          </button>
-        </div>
-      </div>`;
+    const scaleStyle = active ? 'transform:scale(1.12);transform-origin:center top;' : '';
 
-    // Diagonal winding connector between stages
-    if (i < QK_STAGES_PER_KATEGORI - 1) {
-      const nextOx    = offsets[i + 1];
-      const nextColor = QK_STAGE_COLORS[i + 1];
-      const dx  = nextOx - ox;
-      const dy  = 72;
-      const len = Math.round(Math.sqrt(dx * dx + dy * dy));
-      const ang = Math.round(Math.atan2(dx, dy) * 180 / Math.PI);
-      const lineStyle = done
-        ? `background:linear-gradient(180deg,${color},${nextColor});box-shadow:0 0 10px ${color}70`
-        : active
-          ? `background:rgba(255,255,255,0.28)`
-          : `background:repeating-linear-gradient(0deg,rgba(255,255,255,0.3) 0px,rgba(255,255,255,0.3) 6px,transparent 6px,transparent 12px)`;
-
-      // Scatter decorative emojis along the connector path
-      const decos = connDecos[i] || [];
-      const decoHtml = decos.map((d, j) => {
-        const t = (j + 1) / (decos.length + 1);
-        const sx = Math.round(ox + dx * t);
-        const sy = Math.round(dy * t - 6);
-        return `<div style="position:absolute;left:calc(50% + ${sx}px);top:${sy}px;font-size:${12 + (j % 2) * 5}px;opacity:${done ? 0.65 : 0.25};transform:translateX(-50%) rotate(${j * 25 - 20}deg);pointer-events:none;transition:opacity 0.4s">${d}</div>`;
-      }).join('');
-
-      html += `
-        <div style="position:relative;height:${dy + 14}px;overflow:visible">
-          ${decoHtml}
-          <div style="position:absolute;top:0;left:calc(50% + ${ox}px - 3.5px);width:7px;height:${len}px;border-radius:4px;transform-origin:top center;transform:rotate(${ang}deg);${lineStyle};transition:all 0.4s"></div>
-        </div>`;
-    }
+    nodesHtml += `
+    <div style="position:absolute;top:${by}px;left:${bx - BTN}px;width:${BTN * 2}px;${scaleStyle}">
+      ${active ? `<div style="text-align:center;margin-bottom:5px">
+        <span style="display:inline-block;background:linear-gradient(135deg,#FF6B35,#FF0080);color:#fff;font-size:11px;font-weight:900;padding:4px 14px;border-radius:50px;font-family:Nunito;white-space:nowrap;box-shadow:0 3px 12px rgba(255,107,53,0.75);animation:qkBounce 1s ease-in-out infinite">▶ MULAI</span>
+      </div>` : `<div style="height:24px"></div>`}
+      <button onclick="${locked ? "toast('Selesaikan stage sebelumnya dulu! 🔒','error')" : `mulaiStage(${i})`}"
+        style="width:${BTN * 2}px;height:${BTN * 2}px;border-radius:28px;border:none;cursor:${locked ? 'not-allowed' : 'pointer'};background:${btnBg};box-shadow:${btnShadow};transition:all 0.25s;opacity:${locked ? '0.5' : '1'}${active ? ';animation:qkPulseRing 1.6s ease-in-out infinite' : ''}">
+        <div style="font-size:38px;display:flex;align-items:center;justify-content:center;height:100%">${locked ? '🔒' : QK_STAGE_ICONS[i]}</div>
+      </button>
+      <div style="text-align:center;margin-top:8px">
+        <div style="font-family:'Fredoka One',cursive;font-size:15px;color:${nameCol};text-shadow:0 2px 8px rgba(0,0,0,0.55);line-height:1.2">${QK_STAGE_NAMES[i]}</div>
+        <div style="font-size:11px;font-weight:800;color:${subCol};margin-top:3px">${done ? `✅ +${xp} XP` : active ? `⚡ ${QK_SOAL_PER_STAGE} soal` : '🔒 Terkunci'}</div>
+      </div>
+    </div>`;
   }
 
-  path.innerHTML = html;
+  path.innerHTML = `
+  <div style="position:relative;height:${TOTAL_H}px;overflow:visible">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${TOTAL_H}"
+         style="position:absolute;inset:0;width:100%;height:100%;overflow:visible" preserveAspectRatio="none">
+      <defs>${svgDefs}</defs>
+      ${svgPaths}
+    </svg>
+    ${decoHtml}
+    ${nodesHtml}
+  </div>`;
 
   if (!document.getElementById('qk-keyframes')) {
     const s = document.createElement('style');
     s.id = 'qk-keyframes';
     s.textContent = `
       @keyframes qkPulseRing {
-        0%,100% { box-shadow: 0 0 0 6px rgba(255,255,255,0.25), 0 8px 32px rgba(255,255,255,0.3) }
-        50%      { box-shadow: 0 0 0 14px rgba(255,255,255,0.08), 0 8px 40px rgba(255,255,255,0.5) }
-      }`;
+        0%,100%{box-shadow:0 0 0 8px rgba(255,255,255,0.2),0 10px 36px rgba(255,255,255,0.25)}
+        50%    {box-shadow:0 0 0 18px rgba(255,255,255,0.05),0 10px 44px rgba(255,255,255,0.45)}
+      }
+      @keyframes qkBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}`;
     document.head.appendChild(s);
   }
 
