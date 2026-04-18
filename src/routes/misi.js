@@ -194,6 +194,139 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
+// ── Konfigurasi hadiah harian (7 hari) ──────────────────────
+const DAILY_REWARDS = [
+  { hari: 1, xp: 30 },
+  { hari: 2, xp: 50 },
+  { hari: 3, xp: 75 },
+  { hari: 4, xp: 100 },
+  { hari: 5, xp: 150 },
+  { hari: 6, xp: 200 },
+  { hari: 7, xp: 300, badge_id: 'b0000000-0000-0000-0000-000000000010' }
+];
+
+// ── GET /api/misi/daily-reward — status hadiah harian ────────
+router.get('/daily-reward', authMiddleware, async (req, res) => {
+  try {
+    const murid_id = req.user.id;
+    const today    = getTodayDate();
+
+    const { data: lastKlaim } = await supabase
+      .from('daily_reward_klaim')
+      .select('*')
+      .eq('murid_id', murid_id)
+      .order('tanggal', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const sudahKlaim = lastKlaim?.tanggal === today;
+
+    let hari_ke = 1;
+    if (lastKlaim) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const kemarin = yesterday.toISOString().split('T')[0];
+
+      if (lastKlaim.tanggal === today) {
+        hari_ke = lastKlaim.hari_ke;
+      } else if (lastKlaim.tanggal === kemarin) {
+        hari_ke = lastKlaim.hari_ke >= 7 ? 1 : lastKlaim.hari_ke + 1;
+      }
+      // else: streak putus → hari_ke tetap 1
+    }
+
+    const reward = DAILY_REWARDS[hari_ke - 1];
+
+    res.json({
+      success: true,
+      data: {
+        sudah_klaim: sudahKlaim,
+        hari_ke,
+        xp_reward:  reward.xp,
+        ada_badge:  !!reward.badge_id,
+        rewards:    DAILY_REWARDS
+      }
+    });
+  } catch (err) {
+    console.error('[GET /misi/daily-reward]', err.message);
+    res.status(500).json({ success: false, pesan: 'Terjadi kesalahan.' });
+  }
+});
+
+// ── POST /api/misi/daily-reward/klaim — klaim hadiah harian ──
+router.post('/daily-reward/klaim', authMiddleware, async (req, res) => {
+  try {
+    const murid_id = req.user.id;
+    const today    = getTodayDate();
+
+    // Cek sudah klaim hari ini
+    const { data: existing } = await supabase
+      .from('daily_reward_klaim')
+      .select('id')
+      .eq('murid_id', murid_id)
+      .eq('tanggal', today)
+      .maybeSingle();
+
+    if (existing) return res.status(400).json({ success: false, pesan: 'Sudah diklaim hari ini!' });
+
+    // Hitung hari_ke
+    const { data: lastKlaim } = await supabase
+      .from('daily_reward_klaim')
+      .select('*')
+      .eq('murid_id', murid_id)
+      .order('tanggal', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let hari_ke = 1;
+    if (lastKlaim) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const kemarin = yesterday.toISOString().split('T')[0];
+      if (lastKlaim.tanggal === kemarin) {
+        hari_ke = lastKlaim.hari_ke >= 7 ? 1 : lastKlaim.hari_ke + 1;
+      }
+    }
+
+    const reward = DAILY_REWARDS[hari_ke - 1];
+
+    // Berikan XP
+    const { data: user } = await supabase.from('users').select('xp').eq('id', murid_id).single();
+    const newXp    = (user?.xp || 0) + reward.xp;
+    const newLevel = Math.floor(newXp / 1000) + 1;
+    await supabase.from('users').update({ xp: newXp, level: newLevel }).eq('id', murid_id);
+
+    // Berikan badge jika hari ke-7
+    let badge = null;
+    if (reward.badge_id) {
+      const { error: badgeErr } = await supabase.from('murid_badges').insert({
+        murid_id,
+        badge_id:     reward.badge_id,
+        diperoleh_at: new Date().toISOString()
+      });
+      if (!badgeErr) {
+        const { data: b } = await supabase
+          .from('badges').select('id, nama, deskripsi, icon').eq('id', reward.badge_id).single();
+        badge = b || null;
+      }
+    }
+
+    // Simpan record klaim
+    await supabase.from('daily_reward_klaim').insert({
+      murid_id,
+      tanggal:  today,
+      hari_ke,
+      xp_dapat: reward.xp,
+      badge_id: reward.badge_id || null
+    });
+
+    res.json({ success: true, hari_ke, xp_dapat: reward.xp, badge });
+  } catch (err) {
+    console.error('[POST /misi/daily-reward/klaim]', err.message);
+    res.status(500).json({ success: false, pesan: 'Terjadi kesalahan.' });
+  }
+});
+
 // ── POST /api/misi/:id/klaim — klaim reward misi ────────────
 router.post('/:id/klaim', authMiddleware, async (req, res) => {
   try {
