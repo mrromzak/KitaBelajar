@@ -7114,8 +7114,15 @@ function renderStagePath() {
   const kat  = qkActiveKategori;
   const stagesDone = getStagesDone(kat.id);
 
-  // Label alternates left/right each stage
-  const labelSide = ['right','left','right','left','right'];
+  // Zigzag offsets (px from center) — creates winding Duolingo-style path
+  const offsets = [55, -55, 55, -55, 55];
+  // Ambient decorations between each pair of stages
+  const connDecos = [
+    ['🌟','⚡','✨'],
+    ['💫','🎯','💥'],
+    ['⭐','🌈','✨'],
+    ['💎','🌟','⚡'],
+  ];
 
   let html = '';
   for (let i = 0; i < QK_STAGES_PER_KATEGORI; i++) {
@@ -7124,47 +7131,40 @@ function renderStagePath() {
     const locked = i > stagesDone;
     const color  = QK_STAGE_COLORS[i];
     const xp     = QK_STAGE_XP[i];
-    const side   = labelSide[i];
+    const ox     = offsets[i];
+    // Label sits on the side opposite the zigzag lean
+    const labelSide = ox > 0 ? 'left' : 'right';
 
-    // Glow & style for button
     const btnBg = done
-      ? `linear-gradient(145deg, ${color}, ${color}cc)`
+      ? `linear-gradient(145deg,${color},${color}cc)`
       : active
-        ? `linear-gradient(145deg, ${color}, ${color}99)`
-        : 'linear-gradient(145deg, #3a3a5c, #2a2a4c)';
+        ? `linear-gradient(145deg,${color},${color}99)`
+        : 'linear-gradient(145deg,#3a3a5c,#2a2a4c)';
     const btnShadow = active
-      ? `0 0 0 6px ${color}40, 0 8px 32px ${color}80`
+      ? `0 0 0 6px ${color}40,0 8px 32px ${color}80`
       : done
         ? `0 4px 18px ${color}60`
         : '0 4px 12px rgba(0,0,0,0.3)';
-    const btnScale = active ? 'transform:scale(1.12)' : '';
-    const btnPulse = active ? 'animation:qkPulseRing 1.6s ease-in-out infinite' : '';
-
     const labelColor = done ? color : active ? '#fff' : 'rgba(255,255,255,0.4)';
     const subColor   = done ? 'rgba(255,255,255,0.8)' : active ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.3)';
 
-    const labelBlock = `
-      <div style="min-width:110px;text-align:${side === 'right' ? 'left' : 'right'}">
-        <div style="font-family:'Fredoka One',cursive;font-size:16px;color:${labelColor};text-shadow:0 2px 8px rgba(0,0,0,0.4)">${QK_STAGE_NAMES[i]}</div>
-        <div style="font-size:11px;font-weight:800;color:${subColor};margin-top:2px">
-          ${done ? `✅ +${xp} XP` : active ? `⚡ ${QK_SOAL_PER_STAGE} soal` : '🔒 Terkunci'}
-        </div>
-      </div>`;
-
-    const emptyBlock = `<div style="min-width:110px"></div>`;
-
-    // Stage row
     html += `
-      <div style="display:flex;align-items:center;justify-content:center;gap:16px">
-        ${side === 'left' ? labelBlock : emptyBlock}
-        <div style="position:relative;flex-shrink:0">
+      <div style="display:flex;justify-content:center;padding:6px 0">
+        <div style="position:relative;flex-shrink:0;transform:translateX(${ox}px);transition:transform 0.4s">
+          <!-- Floating label on opposite side -->
+          <div style="position:absolute;${labelSide==='right'?'left':'right'}:calc(100% + 10px);top:50%;transform:translateY(-50%);text-align:${labelSide==='right'?'right':'left'};min-width:88px;pointer-events:none">
+            <div style="font-family:'Fredoka One',cursive;font-size:15px;color:${labelColor};text-shadow:0 2px 8px rgba(0,0,0,0.5);line-height:1.2">${QK_STAGE_NAMES[i]}</div>
+            <div style="font-size:10px;font-weight:800;color:${subColor};margin-top:3px">
+              ${done ? `✅ +${xp} XP` : active ? `⚡ ${QK_SOAL_PER_STAGE} soal` : '🔒 Terkunci'}
+            </div>
+          </div>
+          <!-- Stage button -->
           <button onclick="${locked ? "toast('Selesaikan stage sebelumnya dulu! 🔒','error')" : `mulaiStage(${i})`}"
             style="width:96px;height:96px;border-radius:28px;border:none;
                    cursor:${locked ? 'not-allowed' : 'pointer'};
-                   background:${btnBg};
-                   box-shadow:${btnShadow};
+                   background:${btnBg};box-shadow:${btnShadow};
                    transition:all 0.25s;position:relative;
-                   ${btnScale};${btnPulse};
+                   ${active ? 'transform:scale(1.12);animation:qkPulseRing 1.6s ease-in-out infinite' : ''};
                    opacity:${locked ? '0.6' : '1'}">
             <div style="font-size:38px;display:flex;align-items:center;justify-content:center;height:100%">
               ${done ? QK_STAGE_ICONS[i] : locked ? '🔒' : QK_STAGE_ICONS[i]}
@@ -7173,30 +7173,41 @@ function renderStagePath() {
             ${active ? `<div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#FF6B35,#FF0080);color:white;font-size:10px;font-weight:900;padding:3px 10px;border-radius:50px;font-family:Nunito;white-space:nowrap;box-shadow:0 2px 8px rgba(255,107,53,0.6)">▶ MULAI</div>` : ''}
           </button>
         </div>
-        ${side === 'right' ? labelBlock : emptyBlock}
       </div>`;
 
-    // Connector between stages
+    // Diagonal winding connector between stages
     if (i < QK_STAGES_PER_KATEGORI - 1) {
+      const nextOx    = offsets[i + 1];
       const nextColor = QK_STAGE_COLORS[i + 1];
-      const connGrad  = done
-        ? `linear-gradient(180deg, ${color}, ${nextColor})`
-        : `linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08))`;
-      const connGlow  = done ? `box-shadow:0 0 10px ${color}80` : '';
-      const connDash  = !done && !active ? `background:repeating-linear-gradient(180deg,rgba(255,255,255,0.2) 0px,rgba(255,255,255,0.2) 8px,transparent 8px,transparent 16px)` : '';
+      const dx  = nextOx - ox;
+      const dy  = 72;
+      const len = Math.round(Math.sqrt(dx * dx + dy * dy));
+      const ang = Math.round(Math.atan2(dx, dy) * 180 / Math.PI);
+      const lineStyle = done
+        ? `background:linear-gradient(180deg,${color},${nextColor});box-shadow:0 0 10px ${color}70`
+        : active
+          ? `background:rgba(255,255,255,0.28)`
+          : `background:repeating-linear-gradient(0deg,rgba(255,255,255,0.3) 0px,rgba(255,255,255,0.3) 6px,transparent 6px,transparent 12px)`;
+
+      // Scatter decorative emojis along the connector path
+      const decos = connDecos[i] || [];
+      const decoHtml = decos.map((d, j) => {
+        const t = (j + 1) / (decos.length + 1);
+        const sx = Math.round(ox + dx * t);
+        const sy = Math.round(dy * t - 6);
+        return `<div style="position:absolute;left:calc(50% + ${sx}px);top:${sy}px;font-size:${12 + (j % 2) * 5}px;opacity:${done ? 0.65 : 0.25};transform:translateX(-50%) rotate(${j * 25 - 20}deg);pointer-events:none;transition:opacity 0.4s">${d}</div>`;
+      }).join('');
 
       html += `
-        <div style="display:flex;justify-content:center;padding:0 0 0 0">
-          <div style="width:7px;height:56px;border-radius:4px;
-                      ${done ? `background:${connGrad};${connGlow}` : connDash || `background:rgba(255,255,255,0.15)`};
-                      transition:all 0.4s;margin:6px 0"></div>
+        <div style="position:relative;height:${dy + 14}px;overflow:visible">
+          ${decoHtml}
+          <div style="position:absolute;top:0;left:calc(50% + ${ox}px - 3.5px);width:7px;height:${len}px;border-radius:4px;transform-origin:top center;transform:rotate(${ang}deg);${lineStyle};transition:all 0.4s"></div>
         </div>`;
     }
   }
 
   path.innerHTML = html;
 
-  // Inject keyframes once
   if (!document.getElementById('qk-keyframes')) {
     const s = document.createElement('style');
     s.id = 'qk-keyframes';
@@ -7208,27 +7219,28 @@ function renderStagePath() {
     document.head.appendChild(s);
   }
 
-  // Spawn stars background
   spawnQkStars();
 }
 
 function spawnQkStars() {
   const bg = document.getElementById('qk-stars-bg');
   if (!bg || bg.children.length > 0) return;
-  const chars = ['⭐','✨','💫','🌟','⚡'];
-  for (let i = 0; i < 20; i++) {
+  const chars = ['⭐','✨','💫','🌟','⚡','💎','🌈','🎯','🏅','💥','🎪','🌺','🦋','🎵','🔥','🌙','🪐','🎀','🍀','🎆'];
+  for (let i = 0; i < 40; i++) {
     const el = document.createElement('div');
-    const size = Math.random() * 16 + 10;
-    el.style.cssText = `position:absolute;font-size:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;
-      opacity:${Math.random()*0.35+0.1};animation:qkFloat ${Math.random()*8+6}s ease-in-out infinite;
-      animation-delay:${Math.random()*6}s;pointer-events:none`;
-    el.textContent = chars[Math.floor(Math.random()*chars.length)];
+    const size = Math.random() * 22 + 8;
+    const dur  = Math.random() * 10 + 6;
+    const anim = Math.random() > 0.5 ? 'qkFloat' : 'qkFloat2';
+    el.style.cssText = `position:absolute;font-size:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;opacity:${Math.random()*0.38+0.06};animation:${anim} ${dur}s ease-in-out infinite;animation-delay:${Math.random()*8}s;pointer-events:none`;
+    el.textContent = chars[Math.floor(Math.random() * chars.length)];
     bg.appendChild(el);
   }
   if (!document.getElementById('qk-float-kf')) {
     const s = document.createElement('style');
     s.id = 'qk-float-kf';
-    s.textContent = `@keyframes qkFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-18px) scale(1.1)}}`;
+    s.textContent = `
+      @keyframes qkFloat{0%,100%{transform:translateY(0) scale(1) rotate(0deg)}50%{transform:translateY(-22px) scale(1.12) rotate(6deg)}}
+      @keyframes qkFloat2{0%,100%{transform:translateY(0) scale(1) rotate(0deg)}50%{transform:translateY(-12px) scale(0.88) rotate(-8deg)}}`;
     document.head.appendChild(s);
   }
 }
