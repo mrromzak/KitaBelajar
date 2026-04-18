@@ -1,2567 +1,5136 @@
 <!DOCTYPE html>
+
 <html lang="id">
+
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>BelajarYuk! — Game Edukatif</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
+
 <style>
+
 *{box-sizing:border-box;margin:0;padding:0}
+
 :root{
+
   --c1:#FF6B6B;--c2:#FFD93D;--c3:#6BCB77;--c4:#4D96FF;--c5:#C77DFF;--c6:#FF9F43;--c7:#00D2D3;--c8:#ff6b81;--c9:#a29bfe;
+
   --c10:#43e97b;--c11:#f093fb;--c12:#4facfe;--c13:#fa709a;
+
   --bg:#FFF8F0;--card:#fff;--txt:#2D2D2D;--muted:#888;
+
   --shadow:0 4px 20px rgba(0,0,0,.1);
+
 }
+
 body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden}
+
 .blobs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+
 .blob{position:absolute;border-radius:50%;opacity:.12;filter:blur(60px)}
+
 .blob1{width:400px;height:400px;background:var(--c1);top:-100px;left:-100px}
+
 .blob2{width:350px;height:350px;background:var(--c4);bottom:-80px;right:-80px}
+
 .blob3{width:300px;height:300px;background:var(--c3);top:50%;left:50%;transform:translate(-50%,-50%)}
+
 .container{position:relative;z-index:1;max-width:800px;margin:0 auto;padding:20px}
-.header{text-align:center;padding:28px 0 18px}
+
+.header{text-align:center;padding:28px 0 18px;position:relative}
+
 .logo{font-family:'Baloo 2',cursive;font-size:2.5rem;font-weight:800;background:linear-gradient(135deg,var(--c1),var(--c5));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+
 .tagline{font-size:.9rem;color:var(--muted);margin-top:5px;font-weight:600}
+
 .score-bar{display:flex;justify-content:center;gap:16px;margin-top:12px;flex-wrap:wrap}
+
 .score-pill{background:var(--card);border-radius:50px;padding:6px 18px;font-size:.85rem;font-weight:700;box-shadow:var(--shadow);display:flex;align-items:center;gap:5px}
 
+
+
 /* HOME */
+
 .section-label{font-family:'Baloo 2',cursive;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin:18px 0 10px;padding-left:4px}
+
 .home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:14px}
+
 .game-card{background:var(--card);border-radius:22px;padding:24px 16px;text-align:center;cursor:pointer;box-shadow:var(--shadow);border:3px solid transparent;transition:all .22s;position:relative;overflow:hidden}
+
 .game-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .22s}
+
 .game-card:hover{transform:translateY(-5px) scale(1.03);box-shadow:0 10px 28px rgba(0,0,0,.14)}
+
 .game-card.c1{border-color:var(--c1)}.game-card.c1::before{background:linear-gradient(135deg,#FF6B6B18,transparent)}
+
 .game-card.c2{border-color:var(--c2)}.game-card.c2::before{background:linear-gradient(135deg,#FFD93D18,transparent)}
+
 .game-card.c3{border-color:var(--c3)}.game-card.c3::before{background:linear-gradient(135deg,#6BCB7718,transparent)}
+
 .game-card.c4{border-color:var(--c4)}.game-card.c4::before{background:linear-gradient(135deg,#4D96FF18,transparent)}
+
 .game-card.c5{border-color:var(--c5)}.game-card.c5::before{background:linear-gradient(135deg,#C77DFF18,transparent)}
+
 .game-card.c6{border-color:var(--c6)}.game-card.c6::before{background:linear-gradient(135deg,#FF9F4318,transparent)}
+
 .game-card.c7{border-color:var(--c7)}.game-card.c7::before{background:linear-gradient(135deg,#00D2D318,transparent)}
+
 .game-card.c8{border-color:var(--c8)}.game-card.c8::before{background:linear-gradient(135deg,#ff6b8118,transparent)}
+
 .game-card.c9{border-color:var(--c9)}.game-card.c9::before{background:linear-gradient(135deg,#a29bfe18,transparent)}
+
 .game-card.c10{border-color:var(--c10)}.game-card.c10::before{background:linear-gradient(135deg,#43e97b18,transparent)}
+
 .game-card.c11{border-color:var(--c11)}.game-card.c11::before{background:linear-gradient(135deg,#f093fb18,transparent)}
+
 .game-card.c12{border-color:var(--c12)}.game-card.c12::before{background:linear-gradient(135deg,#4facfe18,transparent)}
+
 .game-card.c13{border-color:var(--c13)}.game-card.c13::before{background:linear-gradient(135deg,#fa709a18,transparent)}
+
 .game-card:hover::before{opacity:1}
+
 .gc-icon{font-size:2.6rem;margin-bottom:10px;display:block}
+
 .gc-title{font-family:'Baloo 2',cursive;font-size:1.05rem;font-weight:700;margin-bottom:3px}
+
 .gc-desc{font-size:.73rem;color:var(--muted);font-weight:600;line-height:1.4}
+
 .gc-badge{position:absolute;top:8px;right:8px;background:var(--c2);color:#7a5c00;font-size:.6rem;font-weight:800;padding:2px 7px;border-radius:50px;text-transform:uppercase}
+
 .gc-new{position:absolute;top:8px;right:8px;background:var(--c1);color:#fff;font-size:.6rem;font-weight:800;padding:2px 7px;border-radius:50px;text-transform:uppercase}
 
+
+
 /* GAME SCREEN */
+
 .game-screen{display:none}.game-screen.active{display:block}
+
 .back-btn{display:inline-flex;align-items:center;gap:7px;background:var(--card);border:none;border-radius:50px;padding:9px 18px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.88rem;cursor:pointer;box-shadow:var(--shadow);color:var(--txt);margin-bottom:18px;transition:all .2s}
+
 .back-btn:hover{transform:translateX(-3px)}
+
 .game-title{font-family:'Baloo 2',cursive;font-size:1.55rem;font-weight:800;margin-bottom:5px}
+
 .progress-bar{height:8px;background:#e8e8e8;border-radius:50px;margin:10px 0 22px;overflow:hidden}
+
 .progress-fill{height:100%;border-radius:50px;transition:width .5s ease;background:linear-gradient(90deg,var(--c4),var(--c5))}
+
 .cat-picker{display:flex;justify-content:center;gap:9px;margin-bottom:18px;flex-wrap:wrap}
+
 .cat-pill{border:2px solid #e8e8e8;border-radius:50px;padding:6px 16px;background:var(--card);font-family:'Nunito',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer;transition:all .2s}
+
 .cat-pill.active{border-color:var(--c4);background:#EEF4FF;color:var(--c4)}
+
 .cat-pill:hover:not(.active){border-color:#bbb}
 
+
+
 /* FLASHCARD */
+
 .flashcard-wrap{perspective:1000px;margin:0 auto;max-width:440px;height:250px;cursor:pointer}
+
 .flashcard{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .6s cubic-bezier(.4,.2,.2,1)}
+
 .flashcard.flipped{transform:rotateY(180deg)}
+
 .fc-face{position:absolute;inset:0;border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;backface-visibility:hidden;padding:28px;box-shadow:var(--shadow)}
+
 .fc-front{background:var(--card);border:3px solid var(--c4)}
+
 .fc-back{background:linear-gradient(135deg,var(--c3),#3aba52);transform:rotateY(180deg);color:#fff}
+
 .fc-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;opacity:.5;margin-bottom:9px}
+
 .fc-word{font-family:'Baloo 2',cursive;font-size:1.9rem;font-weight:800;text-align:center}
+
 .fc-sub{font-size:.85rem;opacity:.7;margin-top:7px;text-align:center}
+
 .fc-controls{display:flex;justify-content:center;align-items:center;gap:14px;margin-top:20px}
+
 .fc-btn{border:none;border-radius:50px;padding:11px 26px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.88rem;cursor:pointer;transition:all .2s}
+
 .fc-btn:hover{transform:scale(1.05)}
+
 .btn-know{background:var(--c3);color:#fff}.btn-unknown{background:#f0f0f0;color:var(--txt)}.btn-flip{background:var(--c4);color:#fff}
+
 .fc-counter{font-size:.88rem;font-weight:600;color:var(--muted);text-align:center;margin-top:10px}
+
 .fc-hint{font-size:.78rem;color:var(--muted);text-align:center;margin-top:7px}
 
+
+
 /* QUIZ */
+
 .quiz-question{background:var(--card);border-radius:20px;padding:26px;margin-bottom:18px;box-shadow:var(--shadow);border-left:5px solid var(--c5)}
+
 .q-num{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--c5);margin-bottom:9px}
+
 .q-text{font-family:'Baloo 2',cursive;font-size:1.2rem;font-weight:700;line-height:1.4}
+
 .quiz-options{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+
 .q-opt{background:var(--card);border:2px solid #e8e8e8;border-radius:14px;padding:13px 16px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:.88rem;transition:all .2s;text-align:left}
+
 .q-opt:hover:not(:disabled){border-color:var(--c5);background:#F5EEFF;transform:translateX(3px)}
+
 .q-opt.correct{background:#E8FAE8;border-color:var(--c3);color:#1a7a2a}
+
 .q-opt.wrong{background:#FFE8E8;border-color:var(--c1);color:#c0392b}
+
 .q-opt:disabled{cursor:default}
+
 .q-feedback{text-align:center;padding:13px;border-radius:12px;margin-top:13px;font-weight:700;font-size:.92rem;display:none}
+
 .q-feedback.show{display:block}
+
 .feedback-correct{background:#E8FAE8;color:#1a7a2a}.feedback-wrong{background:#FFE8E8;color:#c0392b}
+
 .next-btn{display:none;margin:18px auto 0;background:var(--c5);color:#fff;border:none;border-radius:50px;padding:12px 34px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.95rem;cursor:pointer;transition:all .2s}
+
 .next-btn.show{display:block}.next-btn:hover{transform:scale(1.05)}
 
+
+
 /* SCRAMBLE */
+
 .scramble-target{font-family:'Baloo 2',cursive;font-size:1.05rem;font-weight:700;text-align:center;color:var(--muted);margin-bottom:5px}
+
 .scramble-hint{font-size:.82rem;color:var(--muted);text-align:center;margin-bottom:18px}
+
 .scramble-answer{display:flex;justify-content:center;gap:7px;min-height:60px;padding:10px;background:var(--card);border-radius:14px;border:2px dashed #ddd;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+
 .scramble-letters{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin-bottom:18px}
+
 .letter-tile{width:46px;height:50px;background:var(--card);border-radius:11px;display:flex;align-items:center;justify-content:center;font-family:'Baloo 2',cursive;font-size:1.25rem;font-weight:800;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.1);transition:all .18s;border:2px solid transparent;user-select:none}
+
 .letter-tile:hover:not(.used):not(.placed){transform:translateY(-4px);border-color:var(--c4)}
+
 .letter-tile.used{opacity:.25;pointer-events:none}
+
 .letter-tile.placed{background:var(--c4);color:#fff;cursor:pointer}
+
 .letter-tile.placed:hover{transform:translateY(-4px);background:#3580ee}
+
 .letter-tile.correct-all{background:var(--c3);color:#fff;cursor:default;transform:none}
+
 .scramble-actions{display:flex;justify-content:center;gap:11px}
+
 .sa-btn{border:none;border-radius:50px;padding:10px 22px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.88rem;cursor:pointer;transition:all .2s}
+
 .sa-btn:hover{transform:scale(1.05)}
+
 .btn-check{background:var(--c3);color:#fff}.btn-reset{background:#f0f0f0;color:var(--txt)}.btn-skip{background:var(--c2);color:#7a5c00}
+
 .scramble-feedback{text-align:center;padding:11px;border-radius:12px;font-weight:700;margin-top:11px;display:none}
+
 .scramble-feedback.show{display:block}
 
+
+
 /* MEMORY */
+
 .mem-grid{display:grid;gap:9px;margin:0 auto}
+
 .mem-grid.g16{grid-template-columns:repeat(4,1fr);max-width:360px}
+
 .mem-card{height:78px;border-radius:15px;cursor:pointer;position:relative;transform-style:preserve-3d;transition:transform .38s}
+
 .mem-card.flipped,.mem-card.matched{transform:rotateY(180deg)}
+
 .mem-face{position:absolute;inset:0;border-radius:15px;backface-visibility:hidden;display:flex;align-items:center;justify-content:center;font-size:1.9rem}
+
 .mem-back{background:linear-gradient(135deg,var(--c4),var(--c5));box-shadow:0 3px 10px rgba(77,150,255,.28)}
+
 .mem-back::after{content:'?';color:#fff;font-family:'Baloo 2',cursive;font-weight:800;font-size:1.35rem}
+
 .mem-front{background:var(--card);border:2px solid #eee;transform:rotateY(180deg);box-shadow:0 3px 10px rgba(0,0,0,.07)}
+
 .mem-card.matched .mem-front{background:#E8FAE8;border-color:var(--c3)}
+
 .mem-stats{display:flex;justify-content:center;gap:22px;margin-bottom:14px}
+
 .mem-stat{text-align:center}.mem-stat-num{font-family:'Baloo 2',cursive;font-size:1.45rem;font-weight:800}
+
 .mem-stat-label{font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px}
 
+
+
 /* HANGMAN */
+
 .hangman-wrap{max-width:460px;margin:0 auto}
+
 .hangman-figure{text-align:center;font-size:4.5rem;margin-bottom:8px;min-height:76px}
+
 .hm-word{display:flex;justify-content:center;gap:9px;margin:18px 0;flex-wrap:wrap}
+
 .hm-letter{width:34px;height:42px;border-bottom:3px solid var(--txt);display:flex;align-items:flex-end;justify-content:center;font-family:'Baloo 2',cursive;font-size:1.35rem;font-weight:800;transition:all .3s}
+
 .hm-letter.revealed{color:var(--c3)}.hm-letter.wrong-reveal{color:var(--c1)}
+
 .hm-keyboard{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:14px}
+
 .hm-key{width:38px;height:38px;border-radius:9px;border:2px solid #e8e8e8;background:var(--card);font-family:'Baloo 2',cursive;font-weight:700;font-size:.88rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center}
+
 .hm-key:hover:not(:disabled){background:var(--c4);color:#fff;border-color:var(--c4)}
+
 .hm-key.hit{background:var(--c3);color:#fff;border-color:var(--c3);opacity:.6;pointer-events:none}
+
 .hm-key.miss{background:var(--c1);color:#fff;border-color:var(--c1);opacity:.6;pointer-events:none}
+
 .hm-hint{text-align:center;font-size:.82rem;color:var(--muted);font-weight:600;margin-bottom:7px}
+
 .hm-lives{display:flex;justify-content:center;gap:5px;margin-bottom:10px}
+
 .hm-heart{font-size:1.3rem;transition:all .3s}.hm-heart.lost{opacity:.2;transform:scale(.8)}
 
+
+
 /* SPEED MATH */
+
 .sm-arena{max-width:440px;margin:0 auto;text-align:center}
+
 .sm-timer-ring{width:100px;height:100px;margin:0 auto 20px;position:relative}
+
 .sm-timer-svg{transform:rotate(-90deg)}
+
 .sm-timer-bg{fill:none;stroke:#e8e8e8;stroke-width:8}
+
 .sm-timer-arc{fill:none;stroke:var(--c1);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .95s linear,stroke .3s}
+
 .sm-timer-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Baloo 2',cursive;font-size:1.6rem;font-weight:800}
+
 .sm-question{font-family:'Baloo 2',cursive;font-size:3rem;font-weight:800;margin:12px 0;line-height:1}
+
 .sm-ops{font-size:.85rem;color:var(--muted);font-weight:600;margin-bottom:20px}
+
 .sm-input-row{display:flex;justify-content:center;gap:10px;margin-bottom:12px}
+
 .sm-input{font-family:'Baloo 2',cursive;font-size:1.8rem;font-weight:800;text-align:center;width:130px;border:3px solid #e8e8e8;border-radius:16px;padding:10px;outline:none;transition:border-color .2s;color:var(--txt);background:var(--card)}
+
 .sm-input:focus{border-color:var(--c4)}
+
 .sm-submit{background:var(--c4);color:#fff;border:none;border-radius:50px;padding:12px 30px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.95rem;cursor:pointer;transition:all .2s}
+
 .sm-submit:hover{transform:scale(1.05)}
+
 .sm-score-row{display:flex;justify-content:center;gap:28px;margin-bottom:6px}
+
 .sm-s{text-align:center}.sm-s-num{font-family:'Baloo 2',cursive;font-size:1.6rem;font-weight:800}
+
 .sm-s-lbl{font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px}
+
 .sm-streak-anim{position:absolute;font-family:'Baloo 2',cursive;font-size:1.4rem;font-weight:800;color:var(--c6);pointer-events:none;animation:floatUp .8s ease forwards}
+
 @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(1.4)}}
+
 .sm-feedback{font-weight:700;font-size:1rem;min-height:28px;text-align:center;margin-bottom:8px;transition:all .2s}
+
 .sm-level{display:flex;justify-content:center;gap:9px;margin-bottom:18px}
+
 .sm-lv{border:2px solid #e8e8e8;border-radius:50px;padding:6px 16px;background:var(--card);font-family:'Nunito',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer;transition:all .2s}
+
 .sm-lv.active{border-color:var(--c6);background:#FFF3E0;color:var(--c6)}
 
+
+
 /* TRUE / FALSE */
+
 .tf-card{background:var(--card);border-radius:22px;padding:36px 28px;text-align:center;box-shadow:var(--shadow);margin:0 auto 20px;max-width:500px;border-top:5px solid var(--c7);min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+
 .tf-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--c7);margin-bottom:14px}
+
 .tf-statement{font-family:'Baloo 2',cursive;font-size:1.3rem;font-weight:700;line-height:1.45}
+
 .tf-btns{display:flex;justify-content:center;gap:16px}
+
 .tf-btn{flex:1;max-width:170px;border:none;border-radius:18px;padding:18px 10px;font-family:'Baloo 2',cursive;font-size:1.1rem;font-weight:800;cursor:pointer;transition:all .22s;box-shadow:0 4px 14px rgba(0,0,0,.1)}
+
 .tf-btn:hover:not(:disabled){transform:translateY(-4px) scale(1.05)}
+
 .tf-true{background:var(--c3);color:#fff}.tf-false{background:var(--c1);color:#fff}
+
 .tf-btn:disabled{opacity:.6;cursor:default;transform:none}
+
 .tf-result{text-align:center;padding:12px;border-radius:12px;margin-top:14px;font-weight:700;font-size:.92rem;display:none;max-width:500px;margin-left:auto;margin-right:auto}
+
 .tf-result.show{display:block}
+
 .tf-timer{height:6px;background:#e8e8e8;border-radius:50px;margin:0 auto 14px;max-width:500px;overflow:hidden}
+
 .tf-timer-fill{height:100%;background:var(--c7);border-radius:50px;transition:width linear}
+
 .tf-counter{text-align:center;font-size:.88rem;font-weight:600;color:var(--muted);margin-bottom:14px}
 
+
+
 /* EMOJI MATCH */
+
 .em-card{background:var(--card);border-radius:22px;padding:30px 24px;text-align:center;box-shadow:var(--shadow);margin:0 auto 20px;max-width:520px;border-top:5px solid var(--c8)}
+
 .em-emojis{font-size:2.8rem;letter-spacing:6px;margin:10px 0 18px;line-height:1.3}
+
 .em-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--c8);margin-bottom:8px}
+
 .em-qnum{font-size:.82rem;color:var(--muted);font-weight:600;margin-bottom:4px}
+
 .em-options{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+
 .em-opt{background:var(--card);border:2px solid #e8e8e8;border-radius:14px;padding:13px 14px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:.88rem;transition:all .2s;text-align:left}
+
 .em-opt:hover:not(:disabled){border-color:var(--c8);background:#FFF0F3;transform:translateX(3px)}
+
 .em-opt.correct{background:#E8FAE8;border-color:var(--c3);color:#1a7a2a}
+
 .em-opt.wrong{background:#FFE8E8;border-color:var(--c1);color:#c0392b}
+
 .em-opt:disabled{cursor:default}
+
 .em-feedback{text-align:center;padding:12px;border-radius:12px;margin-top:12px;font-weight:700;font-size:.92rem;display:none;max-width:520px;margin-left:auto;margin-right:auto}
+
 .em-feedback.show{display:block}
 
-/* FILL IN THE BLANK â FIXED */
+
+
+/* FILL IN THE BLANK — FIXED */
+
 .fib-card{background:var(--card);border-radius:22px;padding:28px;box-shadow:var(--shadow);margin:0 auto 18px;max-width:540px;border-top:5px solid var(--c9)}
+
 .fib-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--c9);margin-bottom:12px}
+
 .fib-sentence{font-family:'Baloo 2',cursive;font-size:1.2rem;font-weight:700;line-height:1.7;text-align:center;margin-bottom:16px}
+
 .fib-blank{display:inline-block;min-width:90px;border-bottom:3px solid var(--c9);margin:0 4px;font-family:'Baloo 2',cursive;font-size:1.2rem;font-weight:800;color:var(--c9);text-align:center}
+
 .fib-options{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:14px}
+
 .fib-opt{border:2px solid #e8e8e8;border-radius:12px;padding:11px 10px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:.9rem;background:var(--card);transition:all .2s;text-align:center}
+
 .fib-opt:hover:not(:disabled):not(.used-opt){border-color:var(--c9);background:#F3EEFF;transform:translateY(-2px)}
+
 .fib-opt.correct{background:#E8FAE8;border-color:var(--c3);color:#1a7a2a}
+
 .fib-opt.wrong{background:#FFE8E8;border-color:var(--c1);color:#c0392b}
+
 .fib-opt.used-opt{opacity:.35;pointer-events:none}
+
 .fib-opt:disabled{cursor:default}
+
 .fib-feedback{text-align:center;padding:11px;border-radius:12px;font-weight:700;font-size:.9rem;display:none}
+
 .fib-feedback.show{display:block}
 
+
+
 /* ============ GAME BARU: KETIK CEPAT ============ */
+
 .typing-arena{max-width:540px;margin:0 auto;text-align:center}
+
 .typing-text-box{background:var(--card);border-radius:18px;padding:22px;box-shadow:var(--shadow);margin-bottom:18px;font-size:1.1rem;line-height:1.8;text-align:left;border:2px solid #e8e8e8}
+
 .typing-char{display:inline}
+
 .typing-char.correct{color:var(--c3);font-weight:700}
+
 .typing-char.wrong{color:var(--c1);background:#FFE8E8;border-radius:3px}
+
 .typing-char.current{background:var(--c4);color:#fff;border-radius:3px;animation:blink .8s ease infinite}
+
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.5}}
+
 .typing-input{width:100%;border:3px solid #e8e8e8;border-radius:14px;padding:14px;font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;outline:none;transition:border-color .2s;resize:none;height:90px}
+
 .typing-input:focus{border-color:var(--c10)}
+
 .typing-stats{display:flex;justify-content:center;gap:24px;margin-bottom:14px}
+
 .typing-stat{text-align:center}
+
 .typing-stat-num{font-family:'Baloo 2',cursive;font-size:1.5rem;font-weight:800;color:var(--c10)}
+
 .typing-stat-lbl{font-size:.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px}
+
 .typing-timer-bar{height:8px;background:#e8e8e8;border-radius:50px;overflow:hidden;margin-bottom:18px}
+
 .typing-timer-fill{height:100%;background:linear-gradient(90deg,var(--c10),var(--c3));border-radius:50px;transition:width linear}
+
 .typing-start-wrap{text-align:center;padding:30px 0}
+
 .typing-start-btn{background:linear-gradient(135deg,var(--c10),var(--c3));color:#fff;border:none;border-radius:50px;padding:14px 40px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1.1rem;cursor:pointer;transition:all .2s}
+
 .typing-start-btn:hover{transform:scale(1.05)}
 
+
+
 /* ============ GAME BARU: TEBAK POLA ============ */
+
 .pattern-arena{max-width:500px;margin:0 auto;text-align:center}
+
 .pattern-seq{display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;margin:20px 0;background:var(--card);border-radius:18px;padding:22px;box-shadow:var(--shadow)}
+
 .pattern-item{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.7rem;font-weight:800;border:2px solid #e8e8e8;background:#f9f9f9;transition:all .25s}
+
 .pattern-item.known{border-color:var(--c5);background:linear-gradient(135deg,#F5EEFF,#EDE0FF)}
+
 .pattern-item.question{border:3px dashed var(--c5);background:#FFF;color:var(--c5);font-size:1.5rem;font-weight:800}
+
 .pattern-opts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+
 .pattern-opt{border:2px solid #e8e8e8;border-radius:14px;padding:14px 6px;cursor:pointer;font-size:1.5rem;background:var(--card);transition:all .2s;text-align:center}
+
 .pattern-opt:hover:not(:disabled){border-color:var(--c5);background:#F5EEFF;transform:translateY(-3px)}
+
 .pattern-opt.correct{background:#E8FAE8;border-color:var(--c3)}
+
 .pattern-opt.wrong{background:#FFE8E8;border-color:var(--c1)}
+
 .pattern-opt:disabled{cursor:default}
+
 .pattern-desc{font-size:.85rem;color:var(--muted);font-weight:600;margin-bottom:14px;padding:10px 16px;background:var(--card);border-radius:12px;box-shadow:var(--shadow)}
+
 .pattern-feedback{text-align:center;padding:12px;border-radius:12px;font-weight:700;font-size:.92rem;display:none}
+
 .pattern-feedback.show{display:block}
+
 .pattern-level-badge{display:inline-block;background:var(--c5);color:#fff;border-radius:50px;padding:4px 14px;font-size:.75rem;font-weight:800;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
 
+
+
 /* ============ GAME BARU: TEMUKAN BEDA ============ */
+
 .diff-arena{max-width:540px;margin:0 auto}
+
 .diff-timer-ring{width:80px;height:80px;margin:0 auto 16px;position:relative}
+
 .diff-timer-svg{transform:rotate(-90deg)}
+
 .diff-timer-bg{fill:none;stroke:#e8e8e8;stroke-width:7}
+
 .diff-timer-arc{fill:none;stroke:var(--c12);stroke-width:7;stroke-linecap:round;transition:stroke-dashoffset 0.95s linear}
+
 .diff-timer-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Baloo 2',cursive;font-size:1.4rem;font-weight:800}
+
 .diff-grids{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+
 .diff-grid-wrap{border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+
 .diff-grid-label{text-align:center;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px}
+
 .diff-grid{display:grid;gap:3px}
+
 .diff-cell{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;cursor:pointer;transition:all .2s;border:2px solid transparent}
+
 .diff-cell:hover{transform:scale(1.08);border-color:rgba(255,255,255,.5)}
+
 .diff-cell.wrong-pick{animation:shake .3s ease}
+
 .diff-cell.found{border-color:#FFD93D!important;box-shadow:0 0 0 3px #FFD93D}
+
 .diff-found-badge{text-align:center;margin-bottom:10px;font-size:.9rem;font-weight:700;color:var(--c12)}
+
 .diff-score-row{display:flex;justify-content:center;gap:22px;margin-bottom:8px}
+
 .diff-s{text-align:center}
+
 .diff-s-num{font-family:'Baloo 2',cursive;font-size:1.4rem;font-weight:800}
+
 .diff-s-lbl{font-size:.68rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px}
+
 .diff-start-wrap{text-align:center;padding:30px 0}
+
 .diff-start-btn{background:linear-gradient(135deg,var(--c12),var(--c4));color:#fff;border:none;border-radius:50px;padding:14px 40px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1.1rem;cursor:pointer;transition:all .2s}
+
 .diff-start-btn:hover{transform:scale(1.05)}
+
 .diff-hint-text{text-align:center;font-size:.82rem;color:var(--muted);font-weight:600;margin-bottom:12px}
 
+
+
 /* ============ GAME BARU: MEWARNAI PANDUAN ============ */
+
 .cbg-arena{max-width:560px;margin:0 auto}
+
 .cbg-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+
 .cbg-title-badge{background:linear-gradient(135deg,var(--c11),var(--c5));color:#fff;border-radius:50px;padding:5px 16px;font-size:.78rem;font-weight:800}
+
 .cbg-progress-text{font-size:.82rem;font-weight:700;color:var(--muted)}
+
 .cbg-legend{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;padding:12px 14px;background:var(--card);border-radius:14px;box-shadow:var(--shadow)}
+
 .cbg-legend-item{display:flex;align-items:center;gap:5px;font-size:.78rem;font-weight:700}
+
 .cbg-legend-dot{width:20px;height:20px;border-radius:6px;border:2px solid rgba(0,0,0,.1);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:900;color:#fff}
+
 .cbg-svg-wrap{background:var(--card);border-radius:18px;padding:18px;box-shadow:var(--shadow);margin-bottom:14px;text-align:center;position:relative}
+
 .cbg-svg-wrap svg{max-width:100%;cursor:pointer}
+
 .cbg-region{transition:all .2s;stroke:#2D2D2D;stroke-width:2.5}
+
 .cbg-region.colored-correct{stroke-width:2.5;filter:drop-shadow(0 0 4px rgba(107,203,119,.5))}
+
 .cbg-region.colored-wrong{animation:shake .3s ease;stroke-width:3;stroke:#FF6B6B}
+
 .cbg-palette-wrap{background:var(--card);border-radius:14px;padding:12px 16px;box-shadow:var(--shadow);margin-bottom:14px}
+
 .cbg-palette-label{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;text-align:center}
+
 .cbg-palette{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+
 .cbg-swatch{width:44px;height:44px;border-radius:12px;cursor:pointer;border:3px solid transparent;transition:all .2s;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:900;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+
 .cbg-swatch:hover{transform:scale(1.15);border-color:#2D2D2D}
+
 .cbg-swatch.selected{transform:scale(1.2);border-color:#2D2D2D;box-shadow:0 0 0 3px rgba(0,0,0,.15)}
+
 .cbg-hint-text{text-align:center;font-size:.82rem;color:var(--muted);font-weight:600;margin-bottom:10px}
+
 .cbg-score-row{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
+
 .cbg-s{text-align:center}
+
 .cbg-s-num{font-family:'Baloo 2',cursive;font-size:1.5rem;font-weight:800}
+
 .cbg-s-lbl{font-size:.68rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px}
+
 .cbg-feedback{text-align:center;padding:10px 14px;border-radius:12px;font-weight:700;font-size:.88rem;min-height:36px;margin-bottom:8px}
+
 .cbg-next-btn{background:linear-gradient(135deg,var(--c11),var(--c5));color:#fff;border:none;border-radius:50px;padding:12px 30px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.95rem;cursor:pointer;transition:all .2s;display:none;margin:0 auto}
+
 .cbg-next-btn.show{display:block}.cbg-next-btn:hover{transform:scale(1.05)}
 
+
+
 /* ============ GAME BARU: PUZZLE GESER ============ */
+
 .puzzle-arena{max-width:420px;margin:0 auto;text-align:center}
+
 .puzzle-info{display:flex;justify-content:center;gap:28px;margin-bottom:14px}
+
 .puzzle-s{text-align:center}
+
 .puzzle-s-num{font-family:'Baloo 2',cursive;font-size:1.5rem;font-weight:800;color:var(--c4)}
+
 .puzzle-s-lbl{font-size:.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px}
+
 .puzzle-board{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;max-width:320px;margin:0 auto 16px;background:linear-gradient(135deg,#e8f4fd,#f0eaff);border-radius:18px;padding:10px;box-shadow:var(--shadow)}
+
 .puzzle-tile{height:94px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;cursor:pointer;transition:all .2s;background:var(--card);box-shadow:0 2px 8px rgba(0,0,0,.1);border:2px solid transparent;user-select:none;font-family:'Baloo 2',cursive;font-weight:800}
+
 .puzzle-tile:hover:not(.empty-tile){transform:scale(1.04);border-color:var(--c4)}
+
 .puzzle-tile.empty-tile{background:transparent;box-shadow:none;border:2px dashed #d8d8d8;cursor:default}
+
 .puzzle-tile.correct-pos{border-color:var(--c3);background:#f0fff4}
+
 .puzzle-tile.animating{transition:all .15s ease}
+
 .puzzle-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;max-width:80px;margin:0 auto 14px;border-radius:8px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+
 .puzzle-preview-tile{height:24px;display:flex;align-items:center;justify-content:center;font-size:.65rem;background:#f0f0f0}
+
 .puzzle-level-btns{display:flex;justify-content:center;gap:9px;margin-bottom:16px;flex-wrap:wrap}
+
 .puzzle-lv{border:2px solid #e8e8e8;border-radius:50px;padding:6px 16px;background:var(--card);font-family:'Nunito',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer;transition:all .2s}
+
 .puzzle-lv.active{border-color:var(--c4);background:#EEF4FF;color:var(--c4)}
+
 .puzzle-start-wrap{text-align:center;padding:20px 0}
+
 .puzzle-start-btn{background:linear-gradient(135deg,var(--c4),var(--c5));color:#fff;border:none;border-radius:50px;padding:14px 40px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1.05rem;cursor:pointer;transition:all .2s}
+
 .puzzle-start-btn:hover{transform:scale(1.05)}
+
 .puzzle-feedback{font-family:'Baloo 2',cursive;font-size:1.05rem;font-weight:700;text-align:center;min-height:32px;margin-bottom:8px}
+
 .puzzle-shuffle-btn{background:#f0f0f0;color:var(--txt);border:none;border-radius:50px;padding:9px 22px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;transition:all .2s;margin-right:8px}
+
 .puzzle-shuffle-btn:hover{background:#e0e0e0}
 
+
+
 /* ============ GAME BARU: TEKA-TEKI SILANG ============ */
+
 .cw-arena{max-width:560px;margin:0 auto}
+
 .cw-grid-wrap{overflow-x:auto;margin-bottom:14px}
+
 .cw-grid{display:inline-grid;gap:2px;background:#2D2D2D;border-radius:10px;padding:4px;box-shadow:var(--shadow)}
+
 .cw-cell{width:38px;height:38px;background:var(--card);display:flex;align-items:center;justify-content:center;font-family:'Baloo 2',cursive;font-size:1.1rem;font-weight:800;position:relative;cursor:pointer;border-radius:4px;transition:all .15s}
+
 .cw-cell.black{background:#2D2D2D;cursor:default}
+
 .cw-cell.active{background:#EEF4FF;outline:2px solid var(--c4)}
+
 .cw-cell.word-active{background:#f5eeff}
+
 .cw-cell.correct{background:#E8FAE8;color:var(--c3)}
+
 .cw-cell.wrong{background:#FFE8E8;color:var(--c1)}
+
 .cw-cell-num{position:absolute;top:1px;left:3px;font-size:.48rem;font-weight:800;color:var(--c4);line-height:1}
+
 .cw-input{position:absolute;inset:0;opacity:0;width:100%;border:none;background:transparent;font-family:'Baloo 2',cursive;font-size:1.1rem;font-weight:800;text-align:center;text-transform:uppercase;cursor:pointer}
+
 .cw-clues{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+
 .cw-clue-section{background:var(--card);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
+
 .cw-clue-title{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--c5);margin-bottom:9px}
+
 .cw-clue-item{font-size:.8rem;font-weight:600;margin-bottom:6px;padding:5px 8px;border-radius:8px;cursor:pointer;transition:all .15s;line-height:1.4}
+
 .cw-clue-item:hover{background:#f5eeff}
+
 .cw-clue-item.active-clue{background:#F5EEFF;color:var(--c5);font-weight:700}
+
 .cw-clue-item.solved-clue{color:var(--c3);text-decoration:line-through;opacity:.7}
+
 .cw-actions{display:flex;justify-content:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+
 .cw-action-btn{border:2px solid #e8e8e8;border-radius:50px;padding:8px 18px;background:var(--card);font-family:'Nunito',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;transition:all .2s}
+
 .cw-action-btn:hover{border-color:var(--c5);background:#F5EEFF}
+
 .cw-score-bar{display:flex;justify-content:center;gap:22px;margin-bottom:12px}
+
 .cw-score-s{text-align:center}
+
 .cw-score-num{font-family:'Baloo 2',cursive;font-size:1.4rem;font-weight:800}
+
 .cw-score-lbl{font-size:.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px}
 
+
+
 /* ============ TEBAK BENDERA ============ */
+
 .flag-arena{max-width:540px;margin:0 auto;text-align:center}
+
 .flag-display{background:var(--card);border-radius:22px;padding:28px 20px 20px;box-shadow:var(--shadow);margin-bottom:18px;border-top:5px solid var(--c2);position:relative}
+
 .flag-emoji{line-height:1;margin-bottom:10px;min-height:110px;display:flex;align-items:center;justify-content:center}
+
 .flag-qnum{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--c2);margin-bottom:6px}
+
 .flag-question{font-family:'Baloo 2',cursive;font-size:1.15rem;font-weight:700;color:var(--muted);line-height:1.4}
+
 .flag-hint-badge{display:inline-block;background:#FFF8E1;color:#b7740a;border-radius:50px;padding:4px 14px;font-size:.72rem;font-weight:800;margin-top:8px}
+
 .flag-options{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:16px}
+
 .flag-opt{background:var(--card);border:2px solid #e8e8e8;border-radius:16px;padding:12px 10px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:.85rem;transition:all .2s;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+
 .flag-opt:hover:not(:disabled){border-color:var(--c2);background:#FFFBEE;transform:translateY(-2px)}
+
 .flag-opt.correct{background:#E8FAE8;border-color:var(--c3);color:#1a7a2a}
+
 .flag-opt.wrong{background:#FFE8E8;border-color:var(--c1);color:#c0392b}
+
 .flag-opt:disabled{cursor:default}
+
 .flag-opt-img{padding:8px 6px!important}
+
 .flag-opt-img:hover:not(:disabled){border-color:var(--c2);background:#FFFBEE;transform:translateY(-3px)}
+
 .flag-feedback{text-align:center;padding:12px;border-radius:12px;margin-top:4px;font-weight:700;font-size:.92rem;display:none;max-width:540px;margin-left:auto;margin-right:auto}
+
 .flag-feedback.show{display:block}
+
 .flag-stats{display:flex;justify-content:center;gap:24px;margin-bottom:14px}
+
 .flag-s{text-align:center}
+
 .flag-s-num{font-family:'Baloo 2',cursive;font-size:1.5rem;font-weight:800}
+
 .flag-s-lbl{font-size:.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px}
+
 .flag-cat-tabs{display:flex;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+
 .flag-tab{border:2px solid #e8e8e8;border-radius:50px;padding:6px 16px;background:var(--card);font-family:'Nunito',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer;transition:all .2s}
+
 .flag-tab.active{border-color:var(--c2);background:#FFFBEE;color:#b7740a}
+
 .flag-mode-row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+
 .flag-mode-btn{border:2px solid #e8e8e8;border-radius:50px;padding:7px 18px;background:var(--card);font-family:'Nunito',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;transition:all .2s}
+
 .flag-mode-btn.active{border-color:var(--c5);background:#F5EEFF;color:var(--c5)}
+
 .flag-streak-flash{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Baloo 2',cursive;font-size:2.5rem;font-weight:900;pointer-events:none;animation:flagPop .7s ease forwards;z-index:999}
+
 @keyframes flagPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}40%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}100%{opacity:0;transform:translate(-50%,-60%) scale(1)}}
 
+
+
 /* RESULT */
+
 .result-screen{display:none;text-align:center;padding:40px 20px}
+
 .result-screen.active{display:block}
+
 .result-emoji{font-size:5rem;animation:bounce 1s ease infinite alternate}
+
 @keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-16px)}}
+
 .result-title{font-family:'Baloo 2',cursive;font-size:1.9rem;font-weight:800;margin:14px 0 7px}
+
 .result-score{font-size:1rem;color:var(--muted);margin-bottom:22px;font-weight:600}
+
 .result-actions{display:flex;justify-content:center;gap:11px;flex-wrap:wrap}
+
 .ra-btn{border:none;border-radius:50px;padding:12px 26px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.92rem;cursor:pointer;transition:all .2s}
+
 .ra-btn:hover{transform:scale(1.05)}
+
 .btn-home{background:#f0f0f0;color:var(--txt)}.btn-retry{background:var(--c4);color:#fff}
 
+
+
 /* CONFETTI */
+
 .confetti-piece{position:fixed;width:10px;height:10px;border-radius:2px;animation:fall 3s ease-in forwards;pointer-events:none;z-index:999}
+
 @keyframes fall{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
 
+
+
 /* SHAKE */
+
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+
 .shake{animation:shake .4s ease}
+
 </style>
+
 </head>
+
 <body>
+
 <div class="blobs"><div class="blob blob1"></div><div class="blob blob2"></div><div class="blob blob3"></div></div>
+
 <div class="container">
 
+
+
 <!-- HEADER -->
+
 <div class="header">
-  <div class="logo">ð BelajarYuk!</div>
+
+  <button onclick="window.location.href='belajar-seru.html'" style="position:absolute;left:16px;top:16px;background:rgba(255,255,255,0.85);border:none;border-radius:50px;padding:8px 16px;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;color:#555;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.1);transition:all .2s" onmouseover="this.style.background='#fff';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(255,255,255,0.85)';this.style.transform=''">🏠 Beranda</button>
+
+  <div class="logo">🎓 BelajarYuk!</div>
+
   <div class="tagline">Game edukatif yang seru & menyenangkan</div>
+
   <div class="score-bar">
-    <div class="score-pill">â­ <span id="total-score">0</span> Poin</div>
-    <div class="score-pill">ð¥ <span id="streak">0</span> Streak</div>
-    <div class="score-pill">ð® <span id="games-played">0</span> Game</div>
+
+    <div class="score-pill">⭐ <span id="total-score">0</span> Poin</div>
+
+    <div class="score-pill">🔥 <span id="streak">0</span> Streak</div>
+
+    <div class="score-pill">🎮 <span id="games-played">0</span> Game</div>
+
   </div>
+
 </div>
+
+
 
 <!-- HOME SCREEN -->
+
 <div id="home" class="game-screen active">
-  <div class="section-label">ð¯ Game Klasik</div>
+
+  <div class="section-label">🎯 Game Klasik</div>
+
   <div class="home-grid">
+
     <div class="game-card c1" onclick="startGame('flashcard')">
+
       <span class="gc-icon">🃏</span>
+
       <div class="gc-title">Flashcard</div>
+
       <div class="gc-desc">Hafal kosakata dengan kartu bolak-balik</div>
+
     </div>
+
     <div class="game-card c5" onclick="startGame('quiz')">
+
       <span class="gc-badge">Populer</span>
+
       <span class="gc-icon">🧠</span>
+
       <div class="gc-title">Kuis Cerdas</div>
+
       <div class="gc-desc">Pilihan ganda, uji pengetahuanmu!</div>
+
     </div>
+
     <div class="game-card c2" onclick="startGame('scramble')">
+
       <span class="gc-icon">🔤</span>
+
       <div class="gc-title">Acak Kata</div>
+
       <div class="gc-desc">Susun huruf menjadi kata yang benar</div>
+
     </div>
+
     <div class="game-card c3" onclick="startGame('memory')">
+
       <span class="gc-icon">🧩</span>
+
       <div class="gc-title">Memori Match</div>
+
       <div class="gc-desc">Temukan pasangan kartu yang sama</div>
+
     </div>
+
     <div class="game-card c4" onclick="startGame('hangman')">
+
       <span class="gc-icon">🔍</span>
+
       <div class="gc-title">Tebak Kata</div>
+
       <div class="gc-desc">Tebak kata huruf demi huruf</div>
+
     </div>
+
   </div>
 
-  <div class="section-label">â¨ Game Tambahan</div>
+
+
+  <div class="section-label">✨ Game Tambahan</div>
+
   <div class="home-grid">
+
     <div class="game-card c6" onclick="startGame('speedmath')">
+
       <span class="gc-new">Baru</span>
+
       <span class="gc-icon">⚡</span>
+
       <div class="gc-title">Hitung Cepat</div>
+
       <div class="gc-desc">Jawab soal matematika secepat mungkin!</div>
+
     </div>
+
     <div class="game-card c7" onclick="startGame('truefalse')">
+
       <span class="gc-new">Baru</span>
+
       <span class="gc-icon">✅</span>
+
       <div class="gc-title">Benar atau Salah</div>
+
       <div class="gc-desc">Tebak apakah pernyataan itu benar!</div>
+
     </div>
+
     <div class="game-card c8" onclick="startGame('emojimatch')">
+
       <span class="gc-new">Baru</span>
+
       <span class="gc-icon">🎭</span>
+
       <div class="gc-title">Tebak Emoji</div>
+
       <div class="gc-desc">Tebak arti deretan emoji yang lucu!</div>
+
     </div>
+
     <div class="game-card c9" onclick="startGame('fillblank')">
+
       <span class="gc-new">Perbaikan</span>
+
       <span class="gc-icon">📝</span>
+
       <div class="gc-title">Isi Titik-titik</div>
+
       <div class="gc-desc">Lengkapi kalimat yang rumpang!</div>
+
     </div>
+
   </div>
 
-  <div class="section-label">ð Game Spesial</div>
+
+
+  <div class="section-label">🚀 Game Spesial</div>
+
   <div class="home-grid">
+
     <div class="game-card c10" onclick="startGame('typingspeed')">
+
       <span class="gc-new">Baru</span>
+
       <span class="gc-icon">⌨️</span>
+
       <div class="gc-title">Ketik Cepat</div>
+
       <div class="gc-desc">Latih kecepatan & akurasi mengetik!</div>
+
     </div>
+
     <div class="game-card c11" onclick="startGame('patterniq')">
+
       <span class="gc-new">Baru</span>
+
       <span class="gc-icon">🧮</span>
+
       <div class="gc-title">Tebak Pola</div>
+
       <div class="gc-desc">Latih kecerdasan logika & pola!</div>
+
     </div>
+
     <div class="game-card c12" onclick="startGame('spotdiff')">
+
       <span class="gc-new">Baru</span>
+
       <span class="gc-icon">👁️</span>
+
       <div class="gc-title">Temukan Beda</div>
+
       <div class="gc-desc">Latih ketajaman visual & mata!</div>
+
     </div>
+
     <div class="game-card c13" onclick="startGame('colorbynumber')">
+
       <span class="gc-new">Baru</span>
+
       <span class="gc-icon">🎨</span>
+
       <div class="gc-title">Mewarnai Panduan</div>
+
       <div class="gc-desc">Warnai gambar sesuai nomor panduan!</div>
+
     </div>
+
     <div class="game-card c1" onclick="startGame('slidepuzzle')">
+
       <span class="gc-new">Baru</span>
+
       <span class="gc-icon">🧩</span>
+
       <div class="gc-title">Puzzle Geser</div>
+
       <div class="gc-desc">Susun gambar acak dengan geser kotak!</div>
+
     </div>
+
     <div class="game-card c4" onclick="startGame('crossword')">
+
       <span class="gc-new">Baru</span>
+
       <span class="gc-icon">📰</span>
+
       <div class="gc-title">Teka-Teki Silang</div>
+
       <div class="gc-desc">Isi kotak silang dari petunjuk kata!</div>
+
     </div>
+
     <div class="game-card c2" onclick="startGame('flagquiz')">
+
       <span class="gc-new">Baru</span>
+
       <span class="gc-icon">🚩</span>
+
       <div class="gc-title">Tebak Bendera</div>
+
       <div class="gc-desc">Tebak negara dari benderanya!</div>
+
     </div>
+
   </div>
+
 </div>
+
+
 
 <!-- FLASHCARD -->
+
 <div id="flashcard" class="game-screen">
-  <button class="back-btn" onclick="goHome()">â Kembali</button>
-  <div class="game-title">ð Flashcard</div>
+
+  <button class="back-btn" onclick="goHome()">← Kembali</button>
+
+  <div class="game-title">🃏 Flashcard</div>
+
   <div class="cat-picker" id="fc-cats"></div>
+
   <div class="progress-bar"><div class="progress-fill" id="fc-progress"></div></div>
+
   <div class="flashcard-wrap" onclick="flipCard()">
+
     <div class="flashcard" id="flashcard-el">
+
       <div class="fc-face fc-front">
+
         <div class="fc-label">Bahasa Inggris</div>
+
         <div class="fc-word" id="fc-word"></div>
+
         <div class="fc-sub" id="fc-type"></div>
+
       </div>
+
       <div class="fc-face fc-back">
+
         <div class="fc-label" style="opacity:.7">Artinya</div>
+
         <div class="fc-word" id="fc-meaning"></div>
+
         <div class="fc-sub" id="fc-example"></div>
+
       </div>
+
     </div>
+
   </div>
-  <div class="fc-hint">ð Klik kartu untuk melihat arti</div>
+
+  <div class="fc-hint">👆 Klik kartu untuk melihat arti</div>
+
   <div class="fc-counter" id="fc-counter"></div>
+
   <div class="fc-controls" id="fc-controls" style="display:none">
-    <button class="fc-btn btn-unknown" onclick="fcAnswer(false)">ð Belum Hafal</button>
-    <button class="fc-btn btn-know" onclick="fcAnswer(true)">â Sudah Hafal!</button>
+
+    <button class="fc-btn btn-unknown" onclick="fcAnswer(false)">😕 Belum Hafal</button>
+
+    <button class="fc-btn btn-know" onclick="fcAnswer(true)">✅ Sudah Hafal!</button>
+
   </div>
+
   <div class="fc-controls" id="fc-flip-btn">
-    <button class="fc-btn btn-flip" onclick="flipCard()">ð Balik Kartu</button>
+
+    <button class="fc-btn btn-flip" onclick="flipCard()">🔄 Balik Kartu</button>
+
   </div>
+
 </div>
+
+
 
 <!-- QUIZ -->
+
 <div id="quiz" class="game-screen">
-  <button class="back-btn" onclick="goHome()">â Kembali</button>
-  <div class="game-title">ð§  Kuis Cerdas</div>
+
+  <button class="back-btn" onclick="goHome()">← Kembali</button>
+
+  <div class="game-title">🧠 Kuis Cerdas</div>
+
   <div class="cat-picker" id="qz-cats"></div>
+
   <div class="progress-bar"><div class="progress-fill" id="qz-progress"></div></div>
+
   <div class="quiz-question">
+
     <div class="q-num" id="q-num"></div>
+
     <div class="q-text" id="q-text"></div>
+
   </div>
+
   <div class="quiz-options" id="q-options"></div>
+
   <div class="q-feedback" id="q-feedback"></div>
-  <button class="next-btn" id="q-next" onclick="nextQuestion()">Lanjut â</button>
+
+  <button class="next-btn" id="q-next" onclick="nextQuestion()">Lanjut →</button>
+
 </div>
+
+
 
 <!-- SCRAMBLE -->
+
 <div id="scramble" class="game-screen">
-  <button class="back-btn" onclick="goHome()">â Kembali</button>
-  <div class="game-title">ð¤ Acak Kata</div>
+
+  <button class="back-btn" onclick="goHome()">← Kembali</button>
+
+  <div class="game-title">🔤 Acak Kata</div>
+
   <div class="progress-bar"><div class="progress-fill" id="sc-progress"></div></div>
+
   <div class="scramble-target" id="sc-clue"></div>
+
   <div class="scramble-hint" id="sc-hint"></div>
+
   <div class="scramble-answer" id="sc-answer"></div>
+
   <div class="scramble-letters" id="sc-letters"></div>
+
   <div class="scramble-actions">
-    <button class="sa-btn btn-reset" onclick="resetScramble()">â© Reset</button>
-    <button class="sa-btn btn-check" onclick="checkScramble()">â Cek</button>
-    <button class="sa-btn btn-skip" onclick="skipScramble()">â© Lewati</button>
+
+    <button class="sa-btn btn-reset" onclick="resetScramble()">↩ Reset</button>
+
+    <button class="sa-btn btn-check" onclick="checkScramble()">✓ Cek</button>
+
+    <button class="sa-btn btn-skip" onclick="skipScramble()">⟩ Lewati</button>
+
   </div>
+
   <div class="scramble-feedback" id="sc-feedback"></div>
+
 </div>
+
+
 
 <!-- MEMORY -->
+
 <div id="memory" class="game-screen">
-  <button class="back-btn" onclick="goHome()">â Kembali</button>
-  <div class="game-title">ð§© Memori Match</div>
+
+  <button class="back-btn" onclick="goHome()">← Kembali</button>
+
+  <div class="game-title">🧩 Memori Match</div>
+
   <div class="cat-picker" id="mem-cats"></div>
+
   <div class="mem-stats">
+
     <div class="mem-stat"><div class="mem-stat-num" id="mem-moves">0</div><div class="mem-stat-label">Langkah</div></div>
+
     <div class="mem-stat"><div class="mem-stat-num" id="mem-pairs">0/0</div><div class="mem-stat-label">Pasangan</div></div>
+
     <div class="mem-stat"><div class="mem-stat-num" id="mem-time">0</div><div class="mem-stat-label">Detik</div></div>
+
   </div>
+
   <div class="mem-grid g16" id="mem-grid"></div>
+
 </div>
+
+
 
 <!-- HANGMAN -->
+
 <div id="hangman" class="game-screen">
-  <button class="back-btn" onclick="goHome()">â Kembali</button>
-  <div class="game-title">ð Tebak Kata</div>
+
+  <button class="back-btn" onclick="goHome()">← Kembali</button>
+
+  <div class="game-title">🔍 Tebak Kata</div>
+
   <div class="progress-bar"><div class="progress-fill" id="hm-progress"></div></div>
+
   <div class="hangman-wrap">
+
     <div class="hm-lives" id="hm-lives"></div>
+
     <div class="hangman-figure" id="hm-figure"></div>
+
     <div class="hm-hint" id="hm-hint"></div>
+
     <div class="hm-word" id="hm-word"></div>
+
     <div class="hm-keyboard" id="hm-keyboard"></div>
+
   </div>
+
 </div>
+
+
 
 <!-- SPEED MATH -->
+
 <div id="speedmath" class="game-screen">
-  <button class="back-btn" onclick="goHome()">â Kembali</button>
-  <div class="game-title">â¡ Hitung Cepat</div>
+
+  <button class="back-btn" onclick="goHome()">← Kembali</button>
+
+  <div class="game-title">⚡ Hitung Cepat</div>
+
   <div class="sm-level" id="sm-level">
+
     <div class="sm-lv active" onclick="setSmLevel('mudah',this)">Mudah (+/-)</div>
-    <div class="sm-lv" onclick="setSmLevel('sedang',this)">Sedang (Ã)</div>
-    <div class="sm-lv" onclick="setSmLevel('sulit',this)">Sulit (Ã·)</div>
+
+    <div class="sm-lv" onclick="setSmLevel('sedang',this)">Sedang (×)</div>
+
+    <div class="sm-lv" onclick="setSmLevel('sulit',this)">Sulit (÷)</div>
+
   </div>
+
   <div class="sm-arena">
+
     <div id="sm-start-wrap" style="text-align:center;padding:20px 0">
+
       <div style="font-family:'Baloo 2',cursive;font-size:1.2rem;font-weight:700;margin-bottom:10px;color:var(--muted)">Jawab sebanyak mungkin dalam 60 detik!</div>
-      <button class="sm-submit" onclick="startSpeedMath()" style="font-size:1.1rem;padding:14px 40px">â¶ Mulai!</button>
+
+      <button class="sm-submit" onclick="startSpeedMath()" style="font-size:1.1rem;padding:14px 40px">▶ Mulai!</button>
+
     </div>
+
     <div id="sm-game-wrap" style="display:none">
+
       <div class="sm-score-row">
+
         <div class="sm-s"><div class="sm-s-num" id="sm-correct">0</div><div class="sm-s-lbl">Benar</div></div>
+
         <div class="sm-s"><div class="sm-s-num" id="sm-wrong-cnt">0</div><div class="sm-s-lbl">Salah</div></div>
+
         <div class="sm-s"><div class="sm-s-num" id="sm-total-cnt">0</div><div class="sm-s-lbl">Total</div></div>
+
       </div>
+
       <div class="sm-timer-ring" id="sm-ring">
+
         <svg class="sm-timer-svg" width="100" height="100" viewBox="0 0 100 100">
+
           <circle class="sm-timer-bg" cx="50" cy="50" r="42"/>
+
           <circle class="sm-timer-arc" id="sm-arc" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="0"/>
+
         </svg>
+
         <div class="sm-timer-num" id="sm-time-num">60</div>
+
       </div>
+
       <div class="sm-question" id="sm-question"></div>
+
       <div class="sm-feedback" id="sm-feedback"></div>
+
       <div class="sm-input-row">
+
         <input class="sm-input" type="number" id="sm-input" placeholder="?" autocomplete="off" onkeydown="if(event.key==='Enter')submitSm()">
-        <button class="sm-submit" onclick="submitSm()">â</button>
+
+        <button class="sm-submit" onclick="submitSm()">✓</button>
+
       </div>
+
     </div>
+
   </div>
+
 </div>
+
+
 
 <!-- TRUE / FALSE -->
+
 <div id="truefalse" class="game-screen">
-  <button class="back-btn" onclick="goHome()">â Kembali</button>
-  <div class="game-title">â Benar atau Salah</div>
+
+  <button class="back-btn" onclick="goHome()">← Kembali</button>
+
+  <div class="game-title">✅ Benar atau Salah</div>
+
   <div class="cat-picker" id="tf-cats"></div>
+
   <div class="progress-bar"><div class="progress-fill" id="tf-progress"></div></div>
+
   <div class="tf-counter" id="tf-counter"></div>
+
   <div class="tf-timer"><div class="tf-timer-fill" id="tf-timer-fill" style="width:100%"></div></div>
+
   <div class="tf-card">
+
     <div class="tf-label">Pernyataan</div>
+
     <div class="tf-statement" id="tf-statement"></div>
+
   </div>
+
   <div class="tf-btns">
-    <button class="tf-btn tf-true" id="tf-true-btn" onclick="answerTf(true)">â BENAR</button>
-    <button class="tf-btn tf-false" id="tf-false-btn" onclick="answerTf(false)">â SALAH</button>
+
+    <button class="tf-btn tf-true" id="tf-true-btn" onclick="answerTf(true)">✅ BENAR</button>
+
+    <button class="tf-btn tf-false" id="tf-false-btn" onclick="answerTf(false)">❌ SALAH</button>
+
   </div>
+
   <div class="tf-result" id="tf-result"></div>
-  <button class="next-btn" id="tf-next" onclick="nextTf()" style="margin-top:14px">Lanjut â</button>
+
+  <button class="next-btn" id="tf-next" onclick="nextTf()" style="margin-top:14px">Lanjut →</button>
+
 </div>
+
+
 
 <!-- EMOJI MATCH -->
+
 <div id="emojimatch" class="game-screen">
-  <button class="back-btn" onclick="goHome()">â Kembali</button>
-  <div class="game-title">ð­ Tebak Emoji</div>
+
+  <button class="back-btn" onclick="goHome()">← Kembali</button>
+
+  <div class="game-title">🎭 Tebak Emoji</div>
+
   <div class="progress-bar"><div class="progress-fill" id="em-progress"></div></div>
+
   <div class="em-card">
+
     <div class="em-label">Apa yang dimaksud?</div>
+
     <div class="em-qnum" id="em-qnum"></div>
+
     <div class="em-emojis" id="em-emojis"></div>
+
   </div>
+
   <div class="em-options" id="em-options"></div>
+
   <div class="em-feedback" id="em-feedback"></div>
-  <button class="next-btn" id="em-next" onclick="nextEmoji()">Lanjut â</button>
+
+  <button class="next-btn" id="em-next" onclick="nextEmoji()">Lanjut →</button>
+
 </div>
+
+
 
 <!-- FILL IN THE BLANK (FIXED) -->
+
 <div id="fillblank" class="game-screen">
-  <button class="back-btn" onclick="goHome()">â Kembali</button>
-  <div class="game-title">ð Isi Titik-titik</div>
+
+  <button class="back-btn" onclick="goHome()">← Kembali</button>
+
+  <div class="game-title">📝 Isi Titik-titik</div>
+
   <div class="cat-picker" id="fib-cats"></div>
+
   <div class="progress-bar"><div class="progress-fill" id="fib-progress"></div></div>
+
   <div class="fib-card">
+
     <div class="fib-label" id="fib-label"></div>
+
     <div class="fib-sentence" id="fib-sentence"></div>
+
   </div>
+
   <div class="fib-options" id="fib-options"></div>
+
   <div class="fib-feedback" id="fib-feedback"></div>
-  <button class="next-btn" id="fib-next" onclick="nextFib()">Lanjut â</button>
+
+  <button class="next-btn" id="fib-next" onclick="nextFib()">Lanjut →</button>
+
 </div>
+
+
 
 <!-- KETIK CEPAT -->
+
 <div id="typingspeed" class="game-screen">
-  <button class="back-btn" onclick="goHome()">â Kembali</button>
-  <div class="game-title">â¨ï¸ Ketik Cepat</div>
+
+  <button class="back-btn" onclick="goHome()">← Kembali</button>
+
+  <div class="game-title">⌨️ Ketik Cepat</div>
+
   <div id="typing-start-wrap" class="typing-start-wrap">
+
     <div style="font-family:'Baloo 2',cursive;font-size:1.1rem;font-weight:700;color:var(--muted);margin-bottom:18px;line-height:1.5">
-      ð Ketik teks yang muncul secepat dan setepat mungkin!<br>
+
+      🏁 Ketik teks yang muncul secepat dan setepat mungkin!<br>
+
       <span style="font-size:.85rem">Waktumu: 60 detik</span>
+
     </div>
-    <button class="typing-start-btn" onclick="startTyping()">â¶ Mulai Mengetik!</button>
+
+    <button class="typing-start-btn" onclick="startTyping()">▶ Mulai Mengetik!</button>
+
   </div>
+
   <div id="typing-game-wrap" style="display:none">
+
     <div class="typing-stats">
+
       <div class="typing-stat"><div class="typing-stat-num" id="ty-wpm">0</div><div class="typing-stat-lbl">WPM</div></div>
+
       <div class="typing-stat"><div class="typing-stat-num" id="ty-acc">100%</div><div class="typing-stat-lbl">Akurasi</div></div>
+
       <div class="typing-stat"><div class="typing-stat-num" id="ty-time">60</div><div class="typing-stat-lbl">Detik</div></div>
+
     </div>
+
     <div class="typing-timer-bar"><div class="typing-timer-fill" id="ty-timer-fill" style="width:100%"></div></div>
+
     <div class="typing-arena">
+
       <div class="typing-text-box" id="ty-display"></div>
+
       <textarea class="typing-input" id="ty-input" placeholder="Mulai mengetik di sini..." spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
+
     </div>
+
   </div>
+
 </div>
+
+
 
 <!-- TEBAK POLA -->
+
 <div id="patterniq" class="game-screen">
-  <button class="back-btn" onclick="goHome()">â Kembali</button>
-  <div class="game-title">ð§® Tebak Pola</div>
+
+  <button class="back-btn" onclick="goHome()">← Kembali</button>
+
+  <div class="game-title">🧮 Tebak Pola</div>
+
   <div class="progress-bar"><div class="progress-fill" id="pt-progress"></div></div>
+
   <div class="pattern-arena">
+
     <div id="pt-level-badge" class="pattern-level-badge">Level 1</div>
+
     <div class="pattern-desc" id="pt-desc">Temukan pola dan pilih angka atau simbol yang tepat!</div>
+
     <div class="pattern-seq" id="pt-seq"></div>
+
     <div class="pattern-opts" id="pt-opts"></div>
+
     <div class="pattern-feedback" id="pt-feedback"></div>
-    <button class="next-btn" id="pt-next" onclick="nextPattern()">Lanjut â</button>
+
+    <button class="next-btn" id="pt-next" onclick="nextPattern()">Lanjut →</button>
+
   </div>
+
 </div>
+
+
 
 <!-- TEMUKAN BEDA -->
+
 <div id="spotdiff" class="game-screen">
-  <button class="back-btn" onclick="goHome()">â Kembali</button>
-  <div class="game-title">ðï¸ Temukan Beda</div>
+
+  <button class="back-btn" onclick="goHome()">← Kembali</button>
+
+  <div class="game-title">👁️ Temukan Beda</div>
+
   <div id="diff-start-wrap" class="diff-start-wrap">
-    <div style="font-size:4rem;margin-bottom:12px">ð</div>
+
+    <div style="font-size:4rem;margin-bottom:12px">👀</div>
+
     <div style="font-family:'Baloo 2',cursive;font-size:1.1rem;font-weight:700;color:var(--muted);margin-bottom:18px;line-height:1.5">
+
       Temukan perbedaan antara dua gambar!<br>
-      <span style="font-size:.85rem">Klik sel yang berbeda di gambar KANAN Â· 90 detik</span>
+
+      <span style="font-size:.85rem">Klik sel yang berbeda di gambar KANAN · 90 detik</span>
+
     </div>
-    <button class="diff-start-btn" onclick="startSpotDiff()">â¶ Mulai!</button>
+
+    <button class="diff-start-btn" onclick="startSpotDiff()">▶ Mulai!</button>
+
   </div>
+
   <div id="diff-game-wrap" style="display:none">
+
     <div class="diff-score-row">
+
       <div class="diff-s"><div class="diff-s-num" id="diff-found">0</div><div class="diff-s-lbl">Ditemukan</div></div>
+
       <div class="diff-s"><div class="diff-s-num" id="diff-total-diffs">0</div><div class="diff-s-lbl">Total Beda</div></div>
+
       <div class="diff-s"><div class="diff-s-num" id="diff-round">1</div><div class="diff-s-lbl">Ronde</div></div>
+
     </div>
+
     <div class="diff-timer-ring">
+
       <svg class="diff-timer-svg" width="80" height="80" viewBox="0 0 80 80">
+
         <circle class="diff-timer-bg" cx="40" cy="40" r="34"/>
+
         <circle class="diff-timer-arc" id="diff-arc" cx="40" cy="40" r="34" stroke-dasharray="214" stroke-dashoffset="0"/>
+
       </svg>
+
       <div class="diff-timer-num" id="diff-time">90</div>
+
     </div>
+
     <div class="diff-hint-text" id="diff-hint"></div>
+
     <div class="diff-grids">
-      <div><div class="diff-grid-label">ð¼ï¸ Gambar A (Asli)</div><div class="diff-grid" id="diff-grid-a"></div></div>
-      <div><div class="diff-grid-label">ð¼ï¸ Gambar B (Beda)</div><div class="diff-grid" id="diff-grid-b"></div></div>
+
+      <div><div class="diff-grid-label">🖼️ Gambar A (Asli)</div><div class="diff-grid" id="diff-grid-a"></div></div>
+
+      <div><div class="diff-grid-label">🖼️ Gambar B (Beda)</div><div class="diff-grid" id="diff-grid-b"></div></div>
+
     </div>
+
     <div class="diff-found-badge" id="diff-found-text"></div>
+
   </div>
+
 </div>
+
+
 
 <!-- MEWARNAI PANDUAN (Color by Number) -->
+
 <div id="colorbynumber" class="game-screen">
-  <button class="back-btn" onclick="goHome()">â Kembali</button>
-  <div class="game-title">ð¨ Mewarnai Panduan</div>
+
+  <button class="back-btn" onclick="goHome()">← Kembali</button>
+
+  <div class="game-title">🎨 Mewarnai Panduan</div>
+
   <div class="progress-bar"><div class="progress-fill" id="cbg-progress"></div></div>
+
   <div class="cbg-arena">
+
     <div class="cbg-header">
+
       <div class="cbg-title-badge" id="cbg-name-badge">Gambar 1</div>
+
       <div class="cbg-progress-text" id="cbg-progress-text">0 / 0 bagian</div>
+
     </div>
+
     <div class="cbg-score-row">
+
       <div class="cbg-s"><div class="cbg-s-num" id="cbg-correct">0</div><div class="cbg-s-lbl">Benar</div></div>
+
       <div class="cbg-s"><div class="cbg-s-num" id="cbg-wrong">0</div><div class="cbg-s-lbl">Salah</div></div>
+
       <div class="cbg-s"><div class="cbg-s-num" id="cbg-pic-num">1/0</div><div class="cbg-s-lbl">Gambar</div></div>
+
     </div>
+
     <div class="cbg-legend" id="cbg-legend"></div>
-    <div class="cbg-hint-text">ð Klik area gambar untuk mewarnainya!</div>
+
+    <div class="cbg-hint-text">👆 Klik area gambar untuk mewarnainya!</div>
+
     <div class="cbg-svg-wrap" id="cbg-svg-wrap"></div>
+
     <div class="cbg-palette-wrap">
-      <div class="cbg-palette-label">ð¨ Pilih Warna</div>
+
+      <div class="cbg-palette-label">🎨 Pilih Warna</div>
+
       <div class="cbg-palette" id="cbg-palette"></div>
+
     </div>
+
     <div class="cbg-feedback" id="cbg-feedback"></div>
+
     <div style="text-align:center">
-      <button class="cbg-next-btn" id="cbg-next-btn" onclick="nextCbgPicture()">Gambar Berikutnya â</button>
+
+      <button class="cbg-next-btn" id="cbg-next-btn" onclick="nextCbgPicture()">Gambar Berikutnya →</button>
+
     </div>
+
   </div>
+
 </div>
+
+
 
 <!-- PUZZLE GESER -->
+
 <div id="slidepuzzle" class="game-screen">
-  <button class="back-btn" onclick="goHome()">â Kembali</button>
-  <div class="game-title">ð§© Puzzle Geser</div>
+
+  <button class="back-btn" onclick="goHome()">← Kembali</button>
+
+  <div class="game-title">🧩 Puzzle Geser</div>
+
   <div class="puzzle-level-btns">
-    <div class="puzzle-lv active" onclick="setPuzzleLevel('mudah',this)">ð£ Mudah</div>
-    <div class="puzzle-lv" onclick="setPuzzleLevel('sedang',this)">ð¦ Sedang</div>
-    <div class="puzzle-lv" onclick="setPuzzleLevel('sulit',this)">ð¦ Sulit</div>
+
+    <div class="puzzle-lv active" onclick="setPuzzleLevel('mudah',this)">🐣 Mudah</div>
+
+    <div class="puzzle-lv" onclick="setPuzzleLevel('sedang',this)">🦊 Sedang</div>
+
+    <div class="puzzle-lv" onclick="setPuzzleLevel('sulit',this)">🦁 Sulit</div>
+
   </div>
+
   <div class="puzzle-arena">
+
     <div id="puzzle-start-wrap" class="puzzle-start-wrap">
-      <div style="font-size:3rem;margin-bottom:10px">ð§©</div>
+
+      <div style="font-size:3rem;margin-bottom:10px">🧩</div>
+
       <div style="font-family:'Baloo 2',cursive;font-size:1.1rem;font-weight:700;color:var(--muted);margin-bottom:18px;line-height:1.5">
+
         Susun potongan gambar yang teracak<br>ke posisi yang benar!
+
       </div>
-      <button class="puzzle-start-btn" onclick="startSlidePuzzle()">â¶ Mulai Puzzle!</button>
+
+      <button class="puzzle-start-btn" onclick="startSlidePuzzle()">▶ Mulai Puzzle!</button>
+
     </div>
+
     <div id="puzzle-game-wrap" style="display:none">
+
       <div class="puzzle-info">
+
         <div class="puzzle-s"><div class="puzzle-s-num" id="puzzle-moves">0</div><div class="puzzle-s-lbl">Langkah</div></div>
+
         <div class="puzzle-s"><div class="puzzle-s-num" id="puzzle-time">0</div><div class="puzzle-s-lbl">Detik</div></div>
+
         <div class="puzzle-s"><div class="puzzle-s-num" id="puzzle-correct-tiles">0</div><div class="puzzle-s-lbl">Benar</div></div>
+
       </div>
+
       <div style="text-align:center;font-size:.75rem;font-weight:700;color:var(--muted);margin-bottom:6px">PREVIEW TUJUAN</div>
+
       <div class="puzzle-preview" id="puzzle-preview"></div>
+
       <div class="puzzle-feedback" id="puzzle-feedback"></div>
+
       <div class="puzzle-board" id="puzzle-board"></div>
+
       <div style="text-align:center">
-        <button class="puzzle-shuffle-btn" onclick="shufflePuzzle()">ð Acak Ulang</button>
-        <button class="puzzle-start-btn" style="display:inline-block;padding:9px 22px;font-size:.85rem" onclick="startSlidePuzzle()">ð Gambar Baru</button>
+
+        <button class="puzzle-shuffle-btn" onclick="shufflePuzzle()">🔀 Acak Ulang</button>
+
+        <button class="puzzle-start-btn" style="display:inline-block;padding:9px 22px;font-size:.85rem" onclick="startSlidePuzzle()">🔄 Gambar Baru</button>
+
       </div>
+
     </div>
+
   </div>
+
 </div>
+
+
 
 <!-- TEKA-TEKI SILANG -->
+
 <div id="crossword" class="game-screen">
-  <button class="back-btn" onclick="goHome()">â Kembali</button>
-  <div class="game-title">ð° Teka-Teki Silang</div>
+
+  <button class="back-btn" onclick="goHome()">← Kembali</button>
+
+  <div class="game-title">📰 Teka-Teki Silang</div>
+
   <div class="progress-bar"><div class="progress-fill" id="cw-progress"></div></div>
+
   <div class="cw-arena">
+
     <div class="cw-score-bar">
+
       <div class="cw-score-s"><div class="cw-score-num" id="cw-solved">0</div><div class="cw-score-lbl">Terpecahkan</div></div>
+
       <div class="cw-score-s"><div class="cw-score-num" id="cw-total-words">0</div><div class="cw-score-lbl">Total Kata</div></div>
+
       <div class="cw-score-s"><div class="cw-score-num" id="cw-puzzle-num">1</div><div class="cw-score-lbl">Puzzle</div></div>
+
     </div>
+
     <div class="cw-actions">
-      <button class="cw-action-btn" onclick="cwHint()">ð¡ Petunjuk (-5 poin)</button>
-      <button class="cw-action-btn" onclick="cwCheck()">â Cek Jawaban</button>
-      <button class="cw-action-btn" onclick="cwNextPuzzle()">â¶ Puzzle Baru</button>
+
+      <button class="cw-action-btn" onclick="cwHint()">💡 Petunjuk (-5 poin)</button>
+
+      <button class="cw-action-btn" onclick="cwCheck()">✓ Cek Jawaban</button>
+
+      <button class="cw-action-btn" onclick="cwNextPuzzle()">▶ Puzzle Baru</button>
+
     </div>
+
     <div style="text-align:center;overflow-x:auto;padding-bottom:4px">
+
       <div class="cw-grid" id="cw-grid"></div>
+
     </div>
+
     <div class="cw-clues" id="cw-clues"></div>
+
   </div>
+
 </div>
+
+
 
 <!-- TEBAK BENDERA -->
+
 <div id="flagquiz" class="game-screen">
-  <button class="back-btn" onclick="goHome()">â Kembali</button>
-  <div class="game-title">ð© Tebak Bendera</div>
+
+  <button class="back-btn" onclick="goHome()">← Kembali</button>
+
+  <div class="game-title">🚩 Tebak Bendera</div>
+
   <div class="flag-cat-tabs" id="flag-cats"></div>
+
   <div class="flag-mode-row">
-    <button class="flag-mode-btn active" id="flagmode-country" onclick="setFlagMode('country',this)">ðºï¸ Tebak Negara</button>
-    <button class="flag-mode-btn" id="flagmode-flag" onclick="setFlagMode('flag',this)">ð© Tebak Bendera</button>
+
+    <button class="flag-mode-btn active" id="flagmode-country" onclick="setFlagMode('country',this)">🗺️ Tebak Negara</button>
+
+    <button class="flag-mode-btn" id="flagmode-flag" onclick="setFlagMode('flag',this)">🚩 Tebak Bendera</button>
+
   </div>
+
   <div class="progress-bar"><div class="progress-fill" id="flag-progress"></div></div>
+
   <div class="flag-stats">
+
     <div class="flag-s"><div class="flag-s-num" id="flag-correct-cnt">0</div><div class="flag-s-lbl">Benar</div></div>
+
     <div class="flag-s"><div class="flag-s-num" id="flag-wrong-cnt">0</div><div class="flag-s-lbl">Salah</div></div>
+
     <div class="flag-s"><div class="flag-s-num" id="flag-qnum-disp">1/0</div><div class="flag-s-lbl">Soal</div></div>
+
   </div>
+
   <div class="flag-arena">
+
     <div class="flag-display">
+
       <div class="flag-qnum" id="flag-qnum">Soal 1</div>
+
       <span class="flag-emoji" id="flag-emoji"></span>
+
       <div class="flag-question" id="flag-question">Negara mana yang memiliki bendera ini?</div>
-      <div class="flag-hint-badge" id="flag-hint-badge">ð¡ Kawasan: â</div>
+
+      <div class="flag-hint-badge" id="flag-hint-badge">💡 Kawasan: —</div>
+
     </div>
+
     <div class="flag-options" id="flag-options"></div>
+
     <div class="flag-feedback" id="flag-feedback"></div>
-    <button class="next-btn" id="flag-next" onclick="nextFlag()" style="display:none">Lanjut â</button>
+
+    <button class="next-btn" id="flag-next" onclick="nextFlag()" style="display:none">Lanjut →</button>
+
   </div>
+
 </div>
 
+
+
 <!-- RESULT -->
+
 <div id="result" class="result-screen">
+
   <div class="result-emoji" id="res-emoji"></div>
+
   <div class="result-title" id="res-title"></div>
+
   <div class="result-score" id="res-score"></div>
+
   <div class="result-actions">
-    <button class="ra-btn btn-home" onclick="goHome()">ð  Menu Utama</button>
-    <button class="ra-btn btn-retry" id="res-retry">ð Main Lagi</button>
+
+    <button class="ra-btn btn-home" onclick="goHome()">🏠 Menu Utama</button>
+
+    <button class="ra-btn btn-retry" id="res-retry">🔄 Main Lagi</button>
+
   </div>
+
 </div>
+
+
 
 </div><!-- /container -->
 
+
+
 <script>
+
 // ============================================================
+
 // DATA
+
 // ============================================================
+
 const DATA={
+
   flashcards:{
+
     'Dasar':[
+
       {word:'Apple',type:'Kata benda',meaning:'Apel',example:'I eat an apple.'},
+
       {word:'Beautiful',type:'Kata sifat',meaning:'Cantik / Indah',example:'The flower is beautiful.'},
+
       {word:'Run',type:'Kata kerja',meaning:'Berlari',example:'I run every morning.'},
+
       {word:'Happy',type:'Kata sifat',meaning:'Bahagia / Senang',example:'She is very happy.'},
+
       {word:'School',type:'Kata benda',meaning:'Sekolah',example:'I go to school.'},
+
       {word:'Friend',type:'Kata benda',meaning:'Teman',example:'He is my friend.'},
+
       {word:'Book',type:'Kata benda',meaning:'Buku',example:'I read a book.'},
+
       {word:'Water',type:'Kata benda',meaning:'Air',example:'Drink more water.'},
+
     ],
+
     'Alam':[
+
       {word:'Mountain',type:'Kata benda',meaning:'Gunung',example:'The mountain is tall.'},
+
       {word:'Ocean',type:'Kata benda',meaning:'Samudra / Laut',example:'The ocean is deep.'},
+
       {word:'Forest',type:'Kata benda',meaning:'Hutan',example:'The forest is green.'},
+
       {word:'River',type:'Kata benda',meaning:'Sungai',example:'The river flows fast.'},
+
       {word:'Cloud',type:'Kata benda',meaning:'Awan',example:'The cloud is white.'},
+
       {word:'Flower',type:'Kata benda',meaning:'Bunga',example:'The flower smells nice.'},
+
       {word:'Tree',type:'Kata benda',meaning:'Pohon',example:'The tree is tall.'},
+
       {word:'Rain',type:'Kata benda',meaning:'Hujan',example:'I love the rain.'},
+
     ],
+
     'Sains':[
+
       {word:'Gravity',type:'Kata benda',meaning:'Gravitasi',example:'Gravity keeps us on Earth.'},
+
       {word:'Atom',type:'Kata benda',meaning:'Atom',example:'Everything is made of atoms.'},
+
       {word:'Energy',type:'Kata benda',meaning:'Energi',example:'The sun gives us energy.'},
+
       {word:'Cell',type:'Kata benda',meaning:'Sel',example:'Our body has many cells.'},
+
       {word:'Chemical',type:'Kata sifat',meaning:'Kimia / Kimiawi',example:'A chemical reaction.'},
+
       {word:'Photosynthesis',type:'Kata benda',meaning:'Fotosintesis',example:'Plants use photosynthesis.'},
+
       {word:'Evolution',type:'Kata benda',meaning:'Evolusi',example:'Darwin studied evolution.'},
+
       {word:'Molecule',type:'Kata benda',meaning:'Molekul',example:'Water is a molecule.'},
+
     ]
+
   },
+
   quiz:{
+
     'IPA':[
+
       {q:'Berapa jumlah planet di tata surya kita?',opts:['7','8','9','10'],ans:1,exp:'Ada 8 planet: Merkurius, Venus, Bumi, Mars, Jupiter, Saturnus, Uranus, Neptunus.'},
+
       {q:'Gas apa yang paling banyak ada di atmosfer Bumi?',opts:['Oksigen','Karbon dioksida','Nitrogen','Hidrogen'],ans:2,exp:'Nitrogen sekitar 78% dari atmosfer Bumi.'},
-      {q:'Proses tumbuhan membuat makanan dari cahaya matahari disebut?',opts:['Respirasi','Fotosintesis','Fermentasi','Transpirasi'],ans:1,exp:'Fotosintesis menggunakan cahaya matahari, COâ, dan air untuk menghasilkan glukosa.'},
+
+      {q:'Proses tumbuhan membuat makanan dari cahaya matahari disebut?',opts:['Respirasi','Fotosintesis','Fermentasi','Transpirasi'],ans:1,exp:'Fotosintesis menggunakan cahaya matahari, CO₂, dan air untuk menghasilkan glukosa.'},
+
       {q:'Berapa kecepatan cahaya (km/detik)?',opts:['100.000','200.000','300.000','400.000'],ans:2,exp:'Kecepatan cahaya sekitar 300.000 km/s.'},
+
       {q:'Organ yang memompa darah ke seluruh tubuh?',opts:['Paru-paru','Ginjal','Hati','Jantung'],ans:3,exp:'Jantung adalah organ pemompa darah.'},
+
       {q:'Satuan dasar massa dalam sistem SI?',opts:['Gram','Kilogram','Miligram','Ton'],ans:1,exp:'Kilogram adalah satuan dasar massa dalam SI.'},
+
     ],
+
     'Matematika':[
-      {q:'Berapa hasil dari 7 Ã 8?',opts:['54','56','58','60'],ans:1,exp:'7 Ã 8 = 56'},
-      {q:'Luas lingkaran jari-jari 7 cm? (Ïâ3.14)',opts:['143.72 cmÂ²','153.86 cmÂ²','163.54 cmÂ²','134.56 cmÂ²'],ans:1,exp:'L = ÏÃrÂ² = 3.14Ã49 = 153.86 cmÂ²'},
-      {q:'Berapakah â144?',opts:['11','12','13','14'],ans:1,exp:'â144 = 12, karena 12Ã12 = 144'},
-      {q:'Jika x + 5 = 12, maka x = ?',opts:['6','7','8','9'],ans:1,exp:'x = 12 â 5 = 7'},
-      {q:'Sudut dalam segitiga sama sisi?',opts:['45Â°','60Â°','90Â°','120Â°'],ans:1,exp:'Setiap sudut = 180Â° Ã· 3 = 60Â°'},
-      {q:'Nilai 2âµ = ?',opts:['16','32','64','128'],ans:1,exp:'2âµ = 2Ã2Ã2Ã2Ã2 = 32'},
+
+      {q:'Berapa hasil dari 7 × 8?',opts:['54','56','58','60'],ans:1,exp:'7 × 8 = 56'},
+
+      {q:'Luas lingkaran jari-jari 7 cm? (π≈3.14)',opts:['143.72 cm²','153.86 cm²','163.54 cm²','134.56 cm²'],ans:1,exp:'L = π×r² = 3.14×49 = 153.86 cm²'},
+
+      {q:'Berapakah √144?',opts:['11','12','13','14'],ans:1,exp:'√144 = 12, karena 12×12 = 144'},
+
+      {q:'Jika x + 5 = 12, maka x = ?',opts:['6','7','8','9'],ans:1,exp:'x = 12 − 5 = 7'},
+
+      {q:'Sudut dalam segitiga sama sisi?',opts:['45°','60°','90°','120°'],ans:1,exp:'Setiap sudut = 180° ÷ 3 = 60°'},
+
+      {q:'Nilai 2⁵ = ?',opts:['16','32','64','128'],ans:1,exp:'2⁵ = 2×2×2×2×2 = 32'},
+
     ],
+
     'IPS':[
+
       {q:'Proklamator kemerdekaan Indonesia?',opts:['Soeharto & Try','Soekarno & Hatta','Habibie & Megawati','Wahid & Megawati'],ans:1,exp:'Ir. Soekarno & Drs. Mohammad Hatta, 17 Agustus 1945.'},
+
       {q:'Ibu kota Indonesia?',opts:['Surabaya','Bandung','Jakarta','Medan'],ans:2,exp:'Jakarta adalah ibu kota Indonesia.'},
+
       {q:'Jumlah provinsi di Indonesia?',opts:['33','34','36','38'],ans:3,exp:'Indonesia memiliki 38 provinsi.'},
+
       {q:'Mata uang Indonesia?',opts:['Ringgit','Rupiah','Peso','Baht'],ans:1,exp:'Rupiah (Rp) adalah mata uang resmi Indonesia.'},
+
       {q:'Sungai terpanjang di Pulau Jawa?',opts:['Bengawan Solo','Citarum','Brantas','Ciliwung'],ans:0,exp:'Bengawan Solo adalah sungai terpanjang di Pulau Jawa.'},
+
       {q:'Candi Borobudur berada di provinsi?',opts:['Jawa Timur','D.I. Yogyakarta','Jawa Tengah','Bali'],ans:2,exp:'Borobudur di Magelang, Jawa Tengah.'},
+
     ]
+
   },
+
   scramble:[
+
     {word:'RUMAH',clue:'Tempat kita tinggal',hint:'R _ _ _ _'},
+
     {word:'SEKOLAH',clue:'Tempat belajar',hint:'S _ _ _ _ _ _'},
+
     {word:'MATAHARI',clue:'Bintang di sistem tata surya kita',hint:'M _ _ _ _ _ _ _'},
+
     {word:'KUCING',clue:'Hewan peliharaan yang suka meoong',hint:'K _ _ _ _ _'},
+
     {word:'BUNGA',clue:'Bagian tanaman yang indah',hint:'B _ _ _ _'},
+
     {word:'INDONESIA',clue:'Negara kepulauan terbesar di dunia',hint:'I _ _ _ _ _ _ _ _'},
+
     {word:'KOMPUTER',clue:'Perangkat elektronik mengolah data',hint:'K _ _ _ _ _ _ _'},
+
     {word:'GUNUNG',clue:'Bentang alam yang menjulang tinggi',hint:'G _ _ _ _ _'},
+
     {word:'BUKU',clue:'Sumber ilmu dan pengetahuan',hint:'B _ _ _'},
+
     {word:'LAUTAN',clue:'Perairan yang sangat luas',hint:'L _ _ _ _ _'},
+
     {word:'HARIMAU',clue:'Kucing besar bermotif belang',hint:'H _ _ _ _ _ _'},
+
     {word:'MUSIK',clue:'Seni suara yang indah',hint:'M _ _ _ _'},
+
   ],
+
   memory:{
-    'Hewan':['ð¶','ð±','ð­','ð¹','ð°','ð¦','ð»','ð¼'],
-    'Makanan':['ð','ð','ð','ð','ð£','ð¦','ð','ð¥'],
-    'Alam':['ð¸','ð','ð','â','ð','ð','â­','ðº'],
-    'Benda':['ð','ð¸','ð¨','ð','ð¡','ð­','ð','ð¯'],
+
+    'Hewan':['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼'],
+
+    'Makanan':['🍎','🍌','🍕','🍔','🍣','🍦','🍓','🥑'],
+
+    'Alam':['🌸','🌊','🌋','⛄','🌈','🌙','⭐','🌺'],
+
+    'Benda':['📚','🎸','🎨','🚀','💡','🎭','🏆','🎯'],
+
   },
+
   hangman:[
+
     {word:'METAMORFOSIS',hint:'Proses perubahan bentuk pada makhluk hidup'},
+
     {word:'PANCASILA',hint:'Dasar negara Indonesia'},
+
     {word:'FOTOSINTESIS',hint:'Proses pembuatan makanan oleh tumbuhan'},
+
     {word:'DEMOKRASI',hint:'Sistem pemerintahan dari rakyat oleh rakyat'},
+
     {word:'EKOSISTEM',hint:'Hubungan makhluk hidup dengan lingkungannya'},
+
     {word:'GRAVITASI',hint:'Gaya tarik bumi'},
+
     {word:'ATMOSFER',hint:'Lapisan udara yang menyelimuti bumi'},
+
     {word:'REVOLUSI',hint:'Perubahan besar atau peredaran bumi mengelilingi matahari'},
+
     {word:'HIDROGEN',hint:'Unsur kimia nomor 1 di tabel periodik'},
+
     {word:'KROMOSOM',hint:'Pembawa informasi genetik dalam sel'},
+
   ],
+
   truefalse:{
+
     'IPA':[
+
       {s:'Matahari adalah planet terbesar di tata surya.',ans:false,exp:'Matahari adalah bintang, bukan planet.'},
-      {s:'Kecepatan cahaya sekitar 300.000 km/detik.',ans:true,exp:'Benar! Kecepatan cahaya â 299.792 km/detik.'},
-      {s:'Fotosintesis menghasilkan oksigen sebagai produk sampingan.',ans:true,exp:'Benar! Tumbuhan melepaskan Oâ saat berfotosintesis.'},
-      {s:'Air mendidih pada suhu 50Â°C di permukaan laut.',ans:false,exp:'Air mendidih pada 100Â°C di permukaan laut.'},
+
+      {s:'Kecepatan cahaya sekitar 300.000 km/detik.',ans:true,exp:'Benar! Kecepatan cahaya ≈ 299.792 km/detik.'},
+
+      {s:'Fotosintesis menghasilkan oksigen sebagai produk sampingan.',ans:true,exp:'Benar! Tumbuhan melepaskan O₂ saat berfotosintesis.'},
+
+      {s:'Air mendidih pada suhu 50°C di permukaan laut.',ans:false,exp:'Air mendidih pada 100°C di permukaan laut.'},
+
       {s:'Manusia memiliki 206 tulang saat dewasa.',ans:true,exp:'Benar! Orang dewasa memiliki 206 tulang.'},
+
       {s:'Bumi mengelilingi matahari dalam 365 hari.',ans:true,exp:'Benar! Revolusi bumi memakan 365,25 hari.'},
+
       {s:'Nitrogen adalah gas terbanyak di atmosfer bumi.',ans:true,exp:'Benar! Nitrogen sekitar 78% atmosfer bumi.'},
+
       {s:'Petir terjadi sebelum guntur terdengar.',ans:true,exp:'Benar! Cahaya lebih cepat dari suara.'},
+
     ],
+
     'Matematika':[
+
       {s:'Bilangan prima adalah bilangan yang hanya habis dibagi 1 dan dirinya sendiri.',ans:true,exp:'Benar! Contoh: 2, 3, 5, 7, 11, 13...'},
+
       {s:'Segitiga memiliki 4 sudut.',ans:false,exp:'Segitiga memiliki 3 sudut, bukan 4.'},
-      {s:'Hasil dari 12 Ã 12 adalah 144.',ans:true,exp:'Benar! 12 Ã 12 = 144.'},
-      {s:'Pi (Ï) nilainya tepat 3,14.',ans:false,exp:'Pi adalah bilangan irasional, nilainya â 3,14159265...'},
-      {s:'Bilangan negatif dikalikan negatif hasilnya positif.',ans:true,exp:'Benar! Contoh: (-3) Ã (-4) = 12.'},
-      {s:'Jumlah sudut dalam persegi adalah 360Â°.',ans:true,exp:'Benar! 4 Ã 90Â° = 360Â°.'},
+
+      {s:'Hasil dari 12 × 12 adalah 144.',ans:true,exp:'Benar! 12 × 12 = 144.'},
+
+      {s:'Pi (π) nilainya tepat 3,14.',ans:false,exp:'Pi adalah bilangan irasional, nilainya ≈ 3,14159265...'},
+
+      {s:'Bilangan negatif dikalikan negatif hasilnya positif.',ans:true,exp:'Benar! Contoh: (-3) × (-4) = 12.'},
+
+      {s:'Jumlah sudut dalam persegi adalah 360°.',ans:true,exp:'Benar! 4 × 90° = 360°.'},
+
       {s:'1 km = 100 meter.',ans:false,exp:'1 km = 1000 meter, bukan 100.'},
+
       {s:'Bilangan nol (0) adalah bilangan genap.',ans:true,exp:'Benar! 0 habis dibagi 2, jadi termasuk bilangan genap.'},
+
     ],
+
     'Umum':[
+
       {s:'Bahasa Indonesia adalah bahasa resmi negara Indonesia.',ans:true,exp:'Benar! Tercantum dalam UUD 1945 Pasal 36.'},
+
       {s:'Garuda Pancasila adalah lambang negara Indonesia.',ans:true,exp:'Benar! Garuda Pancasila ditetapkan sebagai lambang negara.'},
+
       {s:'Indonesia merdeka pada 17 Agustus 1944.',ans:false,exp:'Indonesia merdeka pada 17 Agustus 1945, bukan 1944.'},
+
       {s:'Pulau Jawa adalah pulau terbesar di Indonesia.',ans:false,exp:'Pulau Kalimantan adalah pulau terbesar di Indonesia.'},
+
       {s:'Bahasa Inggris digunakan di lebih dari 50 negara.',ans:true,exp:'Benar! Bahasa Inggris dipakai di sekitar 60+ negara.'},
+
       {s:'Dinosaurus punah sekitar 65 juta tahun yang lalu.',ans:true,exp:'Benar! Kepunahan massal terjadi di akhir periode Kretaseus.'},
+
       {s:'Candi Borobudur adalah candi Hindu.',ans:false,exp:'Borobudur adalah candi Buddha, bukan Hindu.'},
+
       {s:'Puncak tertinggi Indonesia adalah Puncak Jaya di Papua.',ans:true,exp:'Benar! Puncak Jaya setinggi 4.884 mdpl.'},
+
     ]
+
   },
+
   emojimatch:[
-    {emojis:'ððââï¸',ans:'Berselancar di laut',opts:['Berenang di kolam','Berselancar di laut','Naik perahu','Menyelam']},
-    {emojis:'ðâï¸ð«',ans:'Belajar di sekolah',opts:['Belajar di sekolah','Bermain di taman','Bekerja di kantor','Membaca di rumah']},
-    {emojis:'ð§ï¸âï¸ð',ans:'Hujan pakai payung & sepatu',opts:['Berjalan di terik','Hujan pakai payung & sepatu','Naik ojek hujan','Lari pagi cerah']},
-    {emojis:'ð³ð¥ð§',ans:'Memasak telur goreng',opts:['Makan sarapan','Memasak telur goreng','Membuat kue','Bikin omelet kejutan']},
-    {emojis:'ðâ­ð',ans:'Tidur malam di bawah bintang',opts:['Berkemah siang','Tidur malam di bawah bintang','Berjalan malam','Nonton meteor']},
-    {emojis:'ð¸ð¤ð¶',ans:'Bermain musik dan bernyanyi',opts:['Mendengarkan radio','Nonton konser','Bermain musik dan bernyanyi','Belajar partitur']},
-    {emojis:'ððð¨âð',ans:'Astronot pergi ke luar angkasa',opts:['Pilot pesawat','Astronot pergi ke luar angkasa','Pilot helikopter','Naik balon udara']},
-    {emojis:'ð¬ð§«ð§ª',ans:'Penelitian di laboratorium',opts:['Memasak kimia','Penelitian di laboratorium','Belajar IPA','Membuat obat']},
-    {emojis:'â½ð¥ð',ans:'Bermain sepak bola',opts:['Latihan basket','Bermain sepak bola','Tendang bola pantai','Olahraga futsal']},
-    {emojis:'ð±ð§âï¸',ans:'Menyirami tanaman',opts:['Berkebun pagi','Menyirami tanaman','Petani sawah','Menanam benih']},
-    {emojis:'ðð¯ï¸ð',ans:'Merayakan ulang tahun',opts:['Merayakan ulang tahun','Pesta pernikahan','Makan malam romantis','Syukuran rumah baru']},
-    {emojis:'ðï¸ðªð¥',ans:'Olahraga dan makan sehat',opts:['Diet ketat','Olahraga dan makan sehat','Lomba makan','Latihan binaraga']},
-    {emojis:'ð¦ð¿ð',ans:'Hewan liar di alam Afrika',opts:['Safari Asia','Hewan liar di alam Afrika','Kebun binatang','Hutan Amazon']},
-    {emojis:'ð±ð¬â¤ï¸',ans:'Chat dengan orang tersayang',opts:['Telepon penting','Chat dengan orang tersayang','Posting media sosial','Video call kerja']},
-    {emojis:'ðï¸ð¥¾ð',ans:'Mendaki gunung',opts:['Piknik santai','Mendaki gunung','Berkemah tepi sungai','Trekking hutan']},
+
+    {emojis:'🌊🏄‍♂️',ans:'Berselancar di laut',opts:['Berenang di kolam','Berselancar di laut','Naik perahu','Menyelam']},
+
+    {emojis:'📚✏️🏫',ans:'Belajar di sekolah',opts:['Belajar di sekolah','Bermain di taman','Bekerja di kantor','Membaca di rumah']},
+
+    {emojis:'🌧️☂️👟',ans:'Hujan pakai payung & sepatu',opts:['Berjalan di terik','Hujan pakai payung & sepatu','Naik ojek hujan','Lari pagi cerah']},
+
+    {emojis:'🍳🥚🧈',ans:'Memasak telur goreng',opts:['Makan sarapan','Memasak telur goreng','Membuat kue','Bikin omelet kejutan']},
+
+    {emojis:'🌙⭐🛌',ans:'Tidur malam di bawah bintang',opts:['Berkemah siang','Tidur malam di bawah bintang','Berjalan malam','Nonton meteor']},
+
+    {emojis:'🎸🎤🎶',ans:'Bermain musik dan bernyanyi',opts:['Mendengarkan radio','Nonton konser','Bermain musik dan bernyanyi','Belajar partitur']},
+
+    {emojis:'🚀🌍👨‍🚀',ans:'Astronot pergi ke luar angkasa',opts:['Pilot pesawat','Astronot pergi ke luar angkasa','Pilot helikopter','Naik balon udara']},
+
+    {emojis:'🔬🧫🧪',ans:'Penelitian di laboratorium',opts:['Memasak kimia','Penelitian di laboratorium','Belajar IPA','Membuat obat']},
+
+    {emojis:'⚽🥅👟',ans:'Bermain sepak bola',opts:['Latihan basket','Bermain sepak bola','Tendang bola pantai','Olahraga futsal']},
+
+    {emojis:'🌱💧☀️',ans:'Menyirami tanaman',opts:['Berkebun pagi','Menyirami tanaman','Petani sawah','Menanam benih']},
+
+    {emojis:'🎂🕯️🎉',ans:'Merayakan ulang tahun',opts:['Merayakan ulang tahun','Pesta pernikahan','Makan malam romantis','Syukuran rumah baru']},
+
+    {emojis:'🏋️💪🥗',ans:'Olahraga dan makan sehat',opts:['Diet ketat','Olahraga dan makan sehat','Lomba makan','Latihan binaraga']},
+
+    {emojis:'🦁🌿🌍',ans:'Hewan liar di alam Afrika',opts:['Safari Asia','Hewan liar di alam Afrika','Kebun binatang','Hutan Amazon']},
+
+    {emojis:'📱💬❤️',ans:'Chat dengan orang tersayang',opts:['Telepon penting','Chat dengan orang tersayang','Posting media sosial','Video call kerja']},
+
+    {emojis:'🏔️🥾🎒',ans:'Mendaki gunung',opts:['Piknik santai','Mendaki gunung','Berkemah tepi sungai','Trekking hutan']},
+
   ],
+
   fillblank:{
+
     'IPA':[
-      {sentence:'Proses perubahan air menjadi uap air disebut ___.', blank:'evaporasi', opts:['evaporasi','kondensasi','presipitasi','infiltrasi'], label:'Sains â Siklus Air'},
-      {sentence:'Planet yang paling dekat dengan matahari adalah ___.', blank:'Merkurius', opts:['Venus','Bumi','Merkurius','Mars'], label:'Sains â Tata Surya'},
+
+      {sentence:'Proses perubahan air menjadi uap air disebut ___.', blank:'evaporasi', opts:['evaporasi','kondensasi','presipitasi','infiltrasi'], label:'Sains — Siklus Air'},
+
+      {sentence:'Planet yang paling dekat dengan matahari adalah ___.', blank:'Merkurius', opts:['Venus','Bumi','Merkurius','Mars'], label:'Sains — Tata Surya'},
+
       {sentence:'Hewan yang dapat hidup di darat dan di air disebut ___.', blank:'amfibi', opts:['reptil','amfibi','mamalia','aves'], label:'Biologi'},
+
       {sentence:'Satuan gaya dalam fisika adalah ___.', blank:'Newton', opts:['Joule','Watt','Newton','Pascal'], label:'Fisika'},
-      {sentence:'Bagian sel yang mengatur semua kegiatan sel disebut ___.', blank:'nukleus', opts:['mitokondria','nukleus','ribosom','vakuola'], label:'Biologi â Sel'},
+
+      {sentence:'Bagian sel yang mengatur semua kegiatan sel disebut ___.', blank:'nukleus', opts:['mitokondria','nukleus','ribosom','vakuola'], label:'Biologi — Sel'},
+
       {sentence:'Perubahan wujud dari gas menjadi cair disebut ___.', blank:'kondensasi', opts:['sublimasi','evaporasi','kondensasi','membeku'], label:'Fisika'},
+
     ],
+
     'Bahasa':[
+
       {sentence:'Kata yang menjelaskan kata kerja disebut kata ___.', blank:'keterangan', opts:['sifat','benda','keterangan','ganti'], label:'Bahasa Indonesia'},
+
       {sentence:'Kalimat yang berisi pertanyaan diakhiri dengan tanda ___.', blank:'tanya (?)', opts:['titik (.)','seru (!)','tanya (?)','koma (,)'], label:'EYD'},
-      {sentence:'"She ___ to school every day." â kata yang tepat adalah', blank:'goes', opts:['go','goes','going','gone'], label:'Bahasa Inggris'},
+
+      {sentence:'"She ___ to school every day." — kata yang tepat adalah', blank:'goes', opts:['go','goes','going','gone'], label:'Bahasa Inggris'},
+
       {sentence:'Antonim dari kata "gelap" adalah ___.', blank:'terang', opts:['suram','malam','terang','redup'], label:'Bahasa Indonesia'},
+
       {sentence:'Sinonim dari kata "berani" adalah ___.', blank:'gagah', opts:['penakut','gagah','lemah','malas'], label:'Sinonim'},
+
       {sentence:'Kalimat pasif dari "Ibu memasak nasi" adalah "Nasi ___ oleh ibu."', blank:'dimasak', opts:['memasak','dimasak','masak','pemasak'], label:'Kalimat Pasif'},
+
     ],
+
     'IPS':[
+
       {sentence:'Bentuk pemerintahan Indonesia adalah republik ___.', blank:'presidensial', opts:['parlementer','presidensial','monarki','federasi'], label:'PKn'},
+
       {sentence:'Semboyan bangsa Indonesia adalah ___.', blank:'Bhinneka Tunggal Ika', opts:['Satu Nusa Satu Bangsa','Bhinneka Tunggal Ika','Garuda Pancasila','Merdeka atau Mati'], label:'IPS'},
+
       {sentence:'Kepulauan Indonesia terletak di antara dua samudra yaitu Hindia dan ___.', blank:'Pasifik', opts:['Atlantik','Arktik','Pasifik','Antartika'], label:'Geografi'},
+
       {sentence:'Tokoh yang merumuskan Pancasila pertama kali adalah ___.', blank:'Ir. Soekarno', opts:['Moh. Hatta','Ki Hajar Dewantara','Ir. Soekarno','Moh. Yamin'], label:'Sejarah'},
+
       {sentence:'Laut yang memisahkan Pulau Jawa dan Bali adalah Selat ___.', blank:'Bali', opts:['Sunda','Malaka','Bali','Lombok'], label:'Geografi'},
+
       {sentence:'Pancasila disahkan sebagai dasar negara pada tanggal ___.', blank:'18 Agustus 1945', opts:['17 Agustus 1945','18 Agustus 1945','1 Juni 1945','22 Juni 1945'], label:'Sejarah'},
+
     ]
+
   },
+
   typingTexts:[
+
     'Belajar itu menyenangkan jika kita lakukan dengan penuh semangat dan rasa ingin tahu yang besar.',
+
     'Teknologi informasi telah mengubah cara kita belajar dan berkomunikasi di era modern ini.',
+
     'Pancasila adalah dasar negara Indonesia yang terdiri dari lima sila yang saling berkaitan.',
+
     'Indonesia adalah negara kepulauan terbesar di dunia dengan lebih dari tujuh belas ribu pulau.',
+
     'Membaca buku setiap hari dapat meningkatkan wawasan dan kemampuan berpikir kritis kita.',
+
     'Matematika adalah bahasa universal yang digunakan oleh para ilmuwan di seluruh penjuru dunia.',
+
     'Alam Indonesia sangat kaya dengan berbagai jenis flora dan fauna yang unik dan langka.',
+
     'Matahari adalah bintang terdekat dengan bumi dan menjadi sumber energi bagi kehidupan.',
+
   ],
+
   patterns:[
+
     {seq:['2','4','6','8','?'],answer:'10',opts:['9','10','12','11'],desc:'Pola: Bilangan genap naik +2',level:'Mudah'},
-    {seq:['1','4','9','16','?'],answer:'25',opts:['20','25','36','24'],desc:'Pola: Kuadrat bilangan (1Â²,2Â²,3Â²...)',level:'Sedang'},
-    {seq:['ð´','ðµ','ð¡','ð´','ðµ','?'],answer:'ð¡',opts:['ð¡','ð´','ð¢','ðµ'],desc:'Pola: Warna berulang 3 kali',level:'Mudah'},
-    {seq:['1','1','2','3','5','?'],answer:'8',opts:['7','8','9','13'],desc:'Pola: Fibonacci â jumlah dua angka sebelumnya',level:'Sulit'},
-    {seq:['ð','ð','ð','ð','?'],answer:'ð',opts:['ð','ð','ð','ð'],desc:'Pola: Fase bulan teratur',level:'Mudah'},
+
+    {seq:['1','4','9','16','?'],answer:'25',opts:['20','25','36','24'],desc:'Pola: Kuadrat bilangan (1²,2²,3²...)',level:'Sedang'},
+
+    {seq:['🔴','🔵','🟡','🔴','🔵','?'],answer:'🟡',opts:['🟡','🔴','🟢','🔵'],desc:'Pola: Warna berulang 3 kali',level:'Mudah'},
+
+    {seq:['1','1','2','3','5','?'],answer:'8',opts:['7','8','9','13'],desc:'Pola: Fibonacci — jumlah dua angka sebelumnya',level:'Sulit'},
+
+    {seq:['🌑','🌒','🌓','🌔','?'],answer:'🌕',opts:['🌕','🌖','🌑','🌗'],desc:'Pola: Fase bulan teratur',level:'Mudah'},
+
     {seq:['3','6','12','24','?'],answer:'48',opts:['36','48','60','45'],desc:'Pola: Dikali 2 setiap langkah',level:'Sedang'},
-    {seq:['â¬','â¬','â¬','â¬','?'],answer:'â¬',opts:['â¬','â¬','ð²','ð©'],desc:'Pola: Hitam-putih bergantian',level:'Mudah'},
+
+    {seq:['⬛','⬜','⬛','⬜','?'],answer:'⬛',opts:['⬛','⬜','🔲','🟩'],desc:'Pola: Hitam-putih bergantian',level:'Mudah'},
+
     {seq:['100','50','25','?'],answer:'12.5',opts:['15','12.5','10','20'],desc:'Pola: Dibagi 2 setiap langkah',level:'Sedang'},
+
     {seq:['A','C','E','G','?'],answer:'I',opts:['H','I','J','K'],desc:'Pola: Huruf selang-seling (loncat 1)',level:'Sedang'},
-    {seq:['ð±','ð¿','ð³','ð²','?'],answer:'ðµ',opts:['ðµ','ð','ð´','ð¾'],desc:'Pola: Pertumbuhan tanaman dari kecil ke besar',level:'Mudah'},
+
+    {seq:['🌱','🌿','🌳','🌲','?'],answer:'🌵',opts:['🌵','🍀','🌴','🌾'],desc:'Pola: Pertumbuhan tanaman dari kecil ke besar',level:'Mudah'},
+
     {seq:['2','3','5','7','11','?'],answer:'13',opts:['12','13','15','17'],desc:'Pola: Bilangan prima',level:'Sulit'},
-    {seq:['ðº','ðºðº','ðºðºðº','?'],answer:'ðºðºðºðº',opts:['ðºðºðºðº','ðºðº','ðºðºðºðºðº','ðº'],desc:'Pola: Bertambah 1 segitiga setiap langkah',level:'Mudah'},
+
+    {seq:['🔺','🔺🔺','🔺🔺🔺','?'],answer:'🔺🔺🔺🔺',opts:['🔺🔺🔺🔺','🔺🔺','🔺🔺🔺🔺🔺','🔺'],desc:'Pola: Bertambah 1 segitiga setiap langkah',level:'Mudah'},
+
     {seq:['64','32','16','8','?'],answer:'4',opts:['2','4','6','8'],desc:'Pola: Dibagi 2 terus',level:'Sedang'},
-    {seq:['ð','ð¥ï¸','ð§ï¸','âï¸','?'],answer:'ð',opts:['ð','ð','ð§ï¸','âï¸'],desc:'Pola: Perubahan cuaca memburuk lalu membaik',level:'Sedang'},
-    {seq:['1','8','27','64','?'],answer:'125',opts:['100','125','150','216'],desc:'Pola: Kubik bilangan (1Â³,2Â³,3Â³...)',level:'Sulit'},
+
+    {seq:['🌞','🌥️','🌧️','⛈️','?'],answer:'🌈',opts:['🌈','🌞','🌧️','❄️'],desc:'Pola: Perubahan cuaca memburuk lalu membaik',level:'Sedang'},
+
+    {seq:['1','8','27','64','?'],answer:'125',opts:['100','125','150','216'],desc:'Pola: Kubik bilangan (1³,2³,3³...)',level:'Sulit'},
+
   ]
+
 };
 
+
+
 // ============================================================
+
 // STATE
+
 // ============================================================
+
 let totalScore=0,streak=0,gamesPlayed=0,currentGame=null;
+
 let fcCards=[],fcIdx=0,fcKnown=0,fcFlipped=false,fcCat='Dasar';
+
 let qzQuestions=[],qzIdx=0,qzScore=0,qzAnswered=false,qzCat='IPA';
+
 let scWords=[],scIdx=0,scScore=0,scAnswer=[],scLetters=[],scTileOrder=[];
+
 let memCards=[],memFlipped=[],memMatched=0,memMoves=0,memPairs=0,memTimer=null,memTime=0,memCat='Hewan',memLock=false;
+
 let hmWords=[],hmIdx=0,hmWord='',hmGuessed=[],hmWrong=0,hmMaxWrong=6,hmScore=0;
+
 let smTimer=null,smTime=60,smCorrect=0,smWrongCnt=0,smLevel='mudah',smAnswered=false;
+
 let tfItems=[],tfIdx=0,tfScore=0,tfCat='IPA',tfTimer=null,tfAnswered=false;
+
 let emItems=[],emIdx=0,emScore=0,emAnswered=false;
+
 let fibItems=[],fibIdx=0,fibScore=0,fibCat='IPA',fibAnswered=false;
+
 // New game states
+
 let tyTimer=null,tyTime=60,tyCorrect=0,tyTotal=0,tyTextArr=[],tyCurrentIdx=0,tyCurrentText='',tyStarted=false;
+
 let ptItems=[],ptIdx=0,ptScore=0,ptAnswered=false;
+
 let diffTimer=null,diffTime=90,diffRound=1,diffFoundCount=0,diffDiffs=[],diffFoundSet=new Set();
+
 // Color by number
+
 let cbgPictures=[],cbgPicIdx=0,cbgCurrentPic=null,cbgSelectedColor=null,cbgCorrectCount=0,cbgWrongCount=0,cbgTotalScore=0,cbgColoredRegions={};
+
 // Slide puzzle
+
 let puzzleState=[],puzzleGoal=[],puzzleEmptyIdx=8,puzzleMoves=0,puzzleTimer=null,puzzleTime=0,puzzleLevel='mudah',puzzleCurrentEmojis=[];
+
 // Crossword
+
 let cwPuzzles=[],cwPuzzleIdx=0,cwCurrentPuzzle=null,cwSolved=0,cwHintUsed=0,cwTotalScore=0;
+
 // Flag Quiz
+
 let flagItems=[],flagIdx=0,flagCorrect=0,flagWrong=0,flagAnswered=false,flagCat='Asia',flagMode='country';
 
+
+
 function addScore(pts){ totalScore+=pts; streak++; document.getElementById('total-score').textContent=totalScore; document.getElementById('streak').textContent=streak; }
+
 function resetStreak(){ streak=0; document.getElementById('streak').textContent=0; }
 
+
+
 // ============================================================
+
 // NAVIGATION
+
 // ============================================================
+
 function showScreen(id){
+
   document.querySelectorAll('.game-screen,.result-screen').forEach(s=>s.classList.remove('active'));
+
   document.getElementById(id).classList.add('active');
+
 }
+
 function goHome(){
+
   if(memTimer)clearInterval(memTimer);
+
   if(smTimer)clearInterval(smTimer);
+
   if(tfTimer)clearInterval(tfTimer);
+
   if(tyTimer)clearInterval(tyTimer);
+
   if(diffTimer)clearInterval(diffTimer);
+
   if(puzzleTimer)clearInterval(puzzleTimer);
+
   showScreen('home'); currentGame=null;
+
 }
+
 function startGame(game){
+
   currentGame=game; gamesPlayed++;
+
   document.getElementById('games-played').textContent=gamesPlayed;
+
   if(game==='flashcard') initFlashcard();
+
   else if(game==='quiz') initQuiz();
+
   else if(game==='scramble') initScramble();
+
   else if(game==='memory') initMemory();
+
   else if(game==='hangman') initHangman();
+
   else if(game==='speedmath') initSpeedMath();
+
   else if(game==='truefalse') initTrueFalse();
+
   else if(game==='emojimatch') initEmojiMatch();
+
   else if(game==='fillblank') initFillBlank();
+
   else if(game==='typingspeed') initTypingSpeed();
+
   else if(game==='patterniq') initPatternIQ();
+
   else if(game==='spotdiff') initSpotDiff();
+
   else if(game==='colorbynumber') initColorByNumber();
+
   else if(game==='slidepuzzle') initSlidePuzzle();
+
   else if(game==='crossword') initCrossword();
+
   else if(game==='flagquiz') initFlagQuiz();
+
   showScreen(game);
+
 }
 
+
+
 // ============================================================
+
 // FLASHCARD
+
 // ============================================================
+
 function initFlashcard(){
+
   const cats=Object.keys(DATA.flashcards);
+
   document.getElementById('fc-cats').innerHTML=cats.map(c=>`<div class="cat-pill ${c===fcCat?'active':''}" onclick="changeFcCat('${c}')">${c}</div>`).join('');
+
   loadFcDeck();
+
 }
+
 function changeFcCat(cat){ fcCat=cat; document.querySelectorAll('#fc-cats .cat-pill').forEach(p=>p.classList.toggle('active',p.textContent===cat)); loadFcDeck(); }
+
 function loadFcDeck(){ fcCards=[...DATA.flashcards[fcCat]].sort(()=>Math.random()-.5); fcIdx=0; fcKnown=0; fcFlipped=false; showFcCard(); }
+
 function showFcCard(){
+
   if(fcIdx>=fcCards.length){ showFcResult(); return; }
+
   const c=fcCards[fcIdx];
+
   document.getElementById('fc-word').textContent=c.word;
+
   document.getElementById('fc-type').textContent=c.type;
+
   document.getElementById('fc-meaning').textContent=c.meaning;
+
   document.getElementById('fc-example').textContent=c.example;
-  document.getElementById('fc-counter').textContent=`Kartu ${fcIdx+1} dari ${fcCards.length} Â· ${fcKnown} hafal`;
+
+  document.getElementById('fc-counter').textContent=`Kartu ${fcIdx+1} dari ${fcCards.length} · ${fcKnown} hafal`;
+
   document.getElementById('fc-progress').style.width=`${(fcIdx/fcCards.length)*100}%`;
+
   document.getElementById('flashcard-el').classList.remove('flipped');
+
   document.getElementById('fc-controls').style.display='none';
+
   document.getElementById('fc-flip-btn').style.display='flex';
+
   fcFlipped=false;
+
 }
+
 function flipCard(){ fcFlipped=!fcFlipped; document.getElementById('flashcard-el').classList.toggle('flipped',fcFlipped); document.getElementById('fc-controls').style.display=fcFlipped?'flex':'none'; document.getElementById('fc-flip-btn').style.display=fcFlipped?'none':'flex'; }
+
 function fcAnswer(k){ if(k){fcKnown++;addScore(10);}else resetStreak(); fcIdx++; showFcCard(); }
-function showFcResult(){ const p=Math.round((fcKnown/fcCards.length)*100); showResult('flashcard',fcKnown,fcCards.length,p>=80?'ð':p>=50?'ð':'ðª',p>=80?'Luar Biasa!':p>=50?'Bagus!':'Terus Semangat!',`Hafal ${fcKnown} dari ${fcCards.length} kartu`); }
+
+function showFcResult(){ const p=Math.round((fcKnown/fcCards.length)*100); showResult('flashcard',fcKnown,fcCards.length,p>=80?'🌟':p>=50?'😊':'💪',p>=80?'Luar Biasa!':p>=50?'Bagus!':'Terus Semangat!',`Hafal ${fcKnown} dari ${fcCards.length} kartu`); }
+
+
 
 // ============================================================
+
 // QUIZ
+
 // ============================================================
+
 function initQuiz(){
+
   const cats=Object.keys(DATA.quiz);
+
   document.getElementById('qz-cats').innerHTML=cats.map(c=>`<div class="cat-pill ${c===qzCat?'active':''}" onclick="changeQzCat('${c}')">${c}</div>`).join('');
+
   loadQzDeck();
+
 }
+
 function changeQzCat(cat){ qzCat=cat; document.querySelectorAll('#qz-cats .cat-pill').forEach(p=>p.classList.toggle('active',p.textContent===cat)); loadQzDeck(); }
+
 function loadQzDeck(){ qzQuestions=[...DATA.quiz[qzCat]].sort(()=>Math.random()-.5); qzIdx=0; qzScore=0; qzAnswered=false; showQzQuestion(); }
+
 function showQzQuestion(){
+
   if(qzIdx>=qzQuestions.length){ showQzResult(); return; }
+
   const q=qzQuestions[qzIdx];
+
   document.getElementById('q-num').textContent=`Soal ${qzIdx+1} dari ${qzQuestions.length}`;
+
   document.getElementById('q-text').textContent=q.q;
+
   document.getElementById('qz-progress').style.width=`${(qzIdx/qzQuestions.length)*100}%`;
+
   document.getElementById('q-options').innerHTML=q.opts.map((o,i)=>`<button class="q-opt" onclick="answerQuiz(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('');
+
   document.getElementById('q-feedback').className='q-feedback'; document.getElementById('q-feedback').textContent='';
+
   document.getElementById('q-next').className='next-btn'; qzAnswered=false;
+
 }
+
 function answerQuiz(i){
+
   if(qzAnswered)return; qzAnswered=true;
+
   const q=qzQuestions[qzIdx]; const opts=document.querySelectorAll('.q-opt'); opts.forEach(o=>o.disabled=true);
+
   const fb=document.getElementById('q-feedback');
-  if(i===q.ans){ opts[i].classList.add('correct'); qzScore++; addScore(20); fb.textContent='â Benar! '+q.exp; fb.className='q-feedback show feedback-correct'; }
-  else{ opts[i].classList.add('wrong'); opts[q.ans].classList.add('correct'); resetStreak(); fb.textContent='â Salah. '+q.exp; fb.className='q-feedback show feedback-wrong'; }
+
+  if(i===q.ans){ opts[i].classList.add('correct'); qzScore++; addScore(20); fb.textContent='✅ Benar! '+q.exp; fb.className='q-feedback show feedback-correct'; }
+
+  else{ opts[i].classList.add('wrong'); opts[q.ans].classList.add('correct'); resetStreak(); fb.textContent='❌ Salah. '+q.exp; fb.className='q-feedback show feedback-wrong'; }
+
   document.getElementById('q-next').className='next-btn show';
+
 }
+
 function nextQuestion(){ qzIdx++; showQzQuestion(); }
-function showQzResult(){ const p=Math.round((qzScore/qzQuestions.length)*100); showResult('quiz',qzScore,qzQuestions.length,p>=80?'ð':p>=50?'ð':'ð¡',p>=80?'Sempurna!':p>=50?'Keren!':'Jangan Menyerah!',`Benar ${qzScore} dari ${qzQuestions.length} soal`); }
+
+function showQzResult(){ const p=Math.round((qzScore/qzQuestions.length)*100); showResult('quiz',qzScore,qzQuestions.length,p>=80?'🏆':p>=50?'🌟':'💡',p>=80?'Sempurna!':p>=50?'Keren!':'Jangan Menyerah!',`Benar ${qzScore} dari ${qzQuestions.length} soal`); }
+
+
 
 // ============================================================
+
 // SCRAMBLE
+
 // ============================================================
+
 function initScramble(){ scWords=[...DATA.scramble].sort(()=>Math.random()-.5); scIdx=0; scScore=0; showScWord(); }
+
 function showScWord(){
+
   if(scIdx>=scWords.length){ showScResult(); return; }
+
   const item=scWords[scIdx];
+
   document.getElementById('sc-progress').style.width=`${(scIdx/scWords.length)*100}%`;
+
   document.getElementById('sc-clue').textContent=item.clue;
+
   document.getElementById('sc-hint').textContent=`Petunjuk: ${item.hint}`;
+
   scAnswer=[]; scTileOrder=[...item.word.split('')].sort(()=>Math.random()-.5);
+
   renderScramble(); document.getElementById('sc-feedback').className='scramble-feedback';
+
 }
+
 function renderScramble(){
+
   const ans=document.getElementById('sc-answer'), let_=document.getElementById('sc-letters');
+
   ans.innerHTML=scAnswer.map((l,i)=>`<div class="letter-tile placed" onclick="removeLetter(${i})">${l}</div>`).join('')||'<span style="color:#bbb;font-size:.82rem">Klik huruf di bawah</span>';
+
   const used=new Array(scTileOrder.length).fill(false);
+
   scAnswer.forEach(l=>{const idx=scTileOrder.findIndex((t,i)=>t===l&&!used[i]);if(idx>=0)used[idx]=true;});
+
   let_.innerHTML=scTileOrder.map((l,i)=>`<div class="letter-tile${used[i]?' used':''}" onclick="addLetter('${l}',${i})">${l}</div>`).join('');
+
 }
+
 function addLetter(l){ scAnswer.push(l); renderScramble(); }
+
 function removeLetter(i){ scAnswer.splice(i,1); renderScramble(); }
+
 function checkScramble(){
+
   const word=scWords[scIdx].word; const fb=document.getElementById('sc-feedback');
-  if(scAnswer.join('')===word){ fb.textContent='ð Benar! +30 Poin'; fb.style.background='#E8FAE8'; fb.style.color='#1a7a2a'; fb.className='scramble-feedback show'; scScore++; addScore(30); document.querySelectorAll('#sc-answer .letter-tile').forEach(t=>{t.style.background='var(--c3)';t.style.color='#fff';}); setTimeout(()=>{scIdx++;showScWord();},1100); }
-  else{ fb.textContent='ð Belum tepat, coba lagi!'; fb.style.background='#FFE8E8'; fb.style.color='#c0392b'; fb.className='scramble-feedback show'; resetStreak(); document.getElementById('sc-answer').classList.add('shake'); setTimeout(()=>document.getElementById('sc-answer').classList.remove('shake'),450); }
+
+  if(scAnswer.join('')===word){ fb.textContent='🎉 Benar! +30 Poin'; fb.style.background='#E8FAE8'; fb.style.color='#1a7a2a'; fb.className='scramble-feedback show'; scScore++; addScore(30); document.querySelectorAll('#sc-answer .letter-tile').forEach(t=>{t.style.background='var(--c3)';t.style.color='#fff';}); setTimeout(()=>{scIdx++;showScWord();},1100); }
+
+  else{ fb.textContent='😕 Belum tepat, coba lagi!'; fb.style.background='#FFE8E8'; fb.style.color='#c0392b'; fb.className='scramble-feedback show'; resetStreak(); document.getElementById('sc-answer').classList.add('shake'); setTimeout(()=>document.getElementById('sc-answer').classList.remove('shake'),450); }
+
 }
+
 function resetScramble(){ scAnswer=[]; renderScramble(); document.getElementById('sc-feedback').className='scramble-feedback'; }
+
 function skipScramble(){ scIdx++; if(scIdx<scWords.length)showScWord(); else showScResult(); }
-function showScResult(){ const p=Math.round((scScore/scWords.length)*100); showResult('scramble',scScore,scWords.length,p>=80?'ð¤':p>=50?'â¨':'ð',p>=80?'Jenius!':p>=50?'Hebat!':'Terus Berlatih!',`Susun ${scScore} dari ${scWords.length} kata`); }
+
+function showScResult(){ const p=Math.round((scScore/scWords.length)*100); showResult('scramble',scScore,scWords.length,p>=80?'🔤':p>=50?'✨':'📝',p>=80?'Jenius!':p>=50?'Hebat!':'Terus Berlatih!',`Susun ${scScore} dari ${scWords.length} kata`); }
+
+
 
 // ============================================================
+
 // MEMORY
+
 // ============================================================
+
 function initMemory(){
+
   if(memTimer)clearInterval(memTimer);
+
   memMoves=0;memMatched=0;memTime=0;memFlipped=[];memLock=false;
+
   const cats=Object.keys(DATA.memory);
+
   document.getElementById('mem-cats').innerHTML=cats.map(c=>`<div class="cat-pill ${c===memCat?'active':''}" onclick="changeMemCat('${c}')">${c}</div>`).join('');
+
   loadMemGrid();
+
 }
+
 function changeMemCat(cat){ memCat=cat; document.querySelectorAll('#mem-cats .cat-pill').forEach(p=>p.classList.toggle('active',p.textContent===cat)); initMemory(); }
+
 function loadMemGrid(){
+
   const emojis=DATA.memory[memCat]; memPairs=emojis.length;
+
   const pairs=[...emojis,...emojis].sort(()=>Math.random()-.5);
+
   memCards=pairs.map((e,i)=>({emoji:e,id:i,matched:false}));
+
   document.getElementById('mem-grid').innerHTML=memCards.map((c,i)=>`<div class="mem-card" id="mc-${i}" onclick="flipMem(${i})"><div class="mem-face mem-back"></div><div class="mem-face mem-front">${c.emoji}</div></div>`).join('');
+
   updateMemStats();
+
   memTimer=setInterval(()=>{memTime++;document.getElementById('mem-time').textContent=memTime;},1000);
+
 }
+
 function flipMem(i){
+
   if(memLock||memFlipped.includes(i)||memCards[i].matched)return;
+
   document.getElementById(`mc-${i}`).classList.add('flipped'); memFlipped.push(i);
+
   if(memFlipped.length===2){
+
     memMoves++; memLock=true;
+
     const [a,b]=memFlipped;
+
     if(memCards[a].emoji===memCards[b].emoji){
+
       memCards[a].matched=memCards[b].matched=true; memMatched++;
+
       setTimeout(()=>{ document.getElementById(`mc-${a}`).classList.add('matched'); document.getElementById(`mc-${b}`).classList.add('matched'); memFlipped=[]; memLock=false; updateMemStats(); if(memMatched===memPairs){clearInterval(memTimer);addScore(100);setTimeout(showMemResult,600);} },400);
+
     } else {
+
       setTimeout(()=>{ document.getElementById(`mc-${a}`).classList.remove('flipped'); document.getElementById(`mc-${b}`).classList.remove('flipped'); memFlipped=[]; memLock=false; },800);
+
     }
+
     updateMemStats();
+
   }
+
 }
+
 function updateMemStats(){ document.getElementById('mem-moves').textContent=memMoves; document.getElementById('mem-pairs').textContent=memMatched+'/'+memPairs; }
-function showMemResult(){ const r=memMoves<=memPairs*2?'ð':memMoves<=memPairs*3?'â­':'ð'; showResult('memory',memMatched,memPairs,r,memMoves<=memPairs*2?'Master Memori!':'Bagus Sekali!',`${memMatched} pasangan Â· ${memMoves} langkah Â· ${memTime}s`); }
+
+function showMemResult(){ const r=memMoves<=memPairs*2?'🏆':memMoves<=memPairs*3?'⭐':'😊'; showResult('memory',memMatched,memPairs,r,memMoves<=memPairs*2?'Master Memori!':'Bagus Sekali!',`${memMatched} pasangan · ${memMoves} langkah · ${memTime}s`); }
+
+
 
 // ============================================================
+
 // HANGMAN
+
 // ============================================================
-const HM_FIGURES=['ð','ð','ð°','ð±','ð¤','ð'];
+
+const HM_FIGURES=['😌','😟','😰','😱','🤕','💀'];
+
 function initHangman(){ hmWords=[...DATA.hangman].sort(()=>Math.random()-.5); hmIdx=0; hmScore=0; showHmWord(); }
+
 function showHmWord(){
+
   if(hmIdx>=hmWords.length){showHmResult();return;}
+
   const item=hmWords[hmIdx]; hmWord=item.word; hmGuessed=[]; hmWrong=0;
+
   document.getElementById('hm-progress').style.width=`${(hmIdx/hmWords.length)*100}%`;
-  document.getElementById('hm-hint').textContent='ð¡ '+item.hint;
+
+  document.getElementById('hm-hint').textContent='💡 '+item.hint;
+
   renderHm(); renderHmKeyboard();
+
 }
+
 function renderHm(){
-  document.getElementById('hm-lives').innerHTML=Array.from({length:hmMaxWrong},(_,i)=>`<span class="hm-heart${i>=hmMaxWrong-hmWrong?' lost':''}">â¤ï¸</span>`).join('');
-  document.getElementById('hm-figure').textContent=hmWrong>0?HM_FIGURES[Math.min(hmWrong-1,5)]:'ð';
+
+  document.getElementById('hm-lives').innerHTML=Array.from({length:hmMaxWrong},(_,i)=>`<span class="hm-heart${i>=hmMaxWrong-hmWrong?' lost':''}">❤️</span>`).join('');
+
+  document.getElementById('hm-figure').textContent=hmWrong>0?HM_FIGURES[Math.min(hmWrong-1,5)]:'😊';
+
   document.getElementById('hm-word').innerHTML=hmWord.split('').map(l=>`<div class="hm-letter${hmGuessed.includes(l)?' revealed':''}">${hmGuessed.includes(l)?l:''}</div>`).join('');
+
   if(hmWord.split('').every(l=>hmGuessed.includes(l))){addScore(50);hmScore++;setTimeout(()=>{if(++hmIdx<hmWords.length)showHmWord();else showHmResult();},1400);}
+
   if(hmWrong>=hmMaxWrong){resetStreak();setTimeout(()=>{document.getElementById('hm-word').innerHTML=hmWord.split('').map(l=>`<div class="hm-letter wrong-reveal">${l}</div>`).join('');setTimeout(()=>{if(++hmIdx<hmWords.length)showHmWord();else showHmResult();},1400);},400);}
+
 }
+
 function renderHmKeyboard(){ document.getElementById('hm-keyboard').innerHTML='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(l=>`<button class="hm-key" id="hkey-${l}" onclick="guessLetter('${l}')">${l}</button>`).join(''); }
+
 function guessLetter(l){
+
   if(hmGuessed.includes(l)||hmWrong>=hmMaxWrong)return;
+
   hmGuessed.push(l);
+
   const btn=document.getElementById(`hkey-${l}`);
+
   if(hmWord.includes(l)){btn.classList.add('hit');}else{hmWrong++;btn.classList.add('miss');}
+
   renderHm();
+
 }
-function showHmResult(){ const p=Math.round((hmScore/hmWords.length)*100); showResult('hangman',hmScore,hmWords.length,p>=70?'ð¯':p>=40?'ð':'ð',p>=70?'Detektif Kata!':p>=40?'Pintar!':'Jangan Berhenti!',`Tebak ${hmScore} dari ${hmWords.length} kata`); }
+
+function showHmResult(){ const p=Math.round((hmScore/hmWords.length)*100); showResult('hangman',hmScore,hmWords.length,p>=70?'🎯':p>=40?'🔍':'📖',p>=70?'Detektif Kata!':p>=40?'Pintar!':'Jangan Berhenti!',`Tebak ${hmScore} dari ${hmWords.length} kata`); }
+
+
 
 // ============================================================
+
 // SPEED MATH
+
 // ============================================================
+
 function setSmLevel(lv,el){ smLevel=lv; document.querySelectorAll('.sm-lv').forEach(e=>e.classList.remove('active')); el.classList.add('active'); }
+
 function initSpeedMath(){
+
   document.getElementById('sm-start-wrap').style.display='block';
+
   document.getElementById('sm-game-wrap').style.display='none';
+
   if(smTimer)clearInterval(smTimer);
+
 }
+
 function startSpeedMath(){
+
   smCorrect=0; smWrongCnt=0; smTime=60; smAnswered=false;
+
   document.getElementById('sm-start-wrap').style.display='none';
+
   document.getElementById('sm-game-wrap').style.display='block';
+
   document.getElementById('sm-correct').textContent='0';
+
   document.getElementById('sm-wrong-cnt').textContent='0';
+
   document.getElementById('sm-total-cnt').textContent='0';
+
   genSmQuestion();
+
   const arc=document.getElementById('sm-arc');
+
   arc.style.strokeDashoffset='0';
+
   arc.style.transition='none';
+
   smTimer=setInterval(()=>{
+
     smTime--;
+
     document.getElementById('sm-time-num').textContent=smTime;
+
     const pct=smTime/60;
+
     arc.style.strokeDashoffset=String((1-pct)*264);
+
     arc.style.transition='stroke-dashoffset 0.95s linear';
+
     arc.style.stroke=smTime>20?'var(--c3)':smTime>10?'var(--c2)':'var(--c1)';
+
     if(smTime<=0){ clearInterval(smTimer); endSpeedMath(); }
+
   },1000);
+
   document.getElementById('sm-input').focus();
+
 }
+
 function genSmQuestion(){
+
   let a,b,op,ans;
+
   if(smLevel==='mudah'){ a=Math.floor(Math.random()*20)+1; b=Math.floor(Math.random()*20)+1; op=Math.random()>.5?'+':'-'; if(op==='-'&&b>a){let t=a;a=b;b=t;} ans=op==='+'?a+b:a-b; }
-  else if(smLevel==='sedang'){ a=Math.floor(Math.random()*12)+1; b=Math.floor(Math.random()*12)+1; op='Ã'; ans=a*b; }
-  else{ b=Math.floor(Math.random()*9)+1; ans=Math.floor(Math.random()*9)+1; a=b*ans; op='Ã·'; }
+
+  else if(smLevel==='sedang'){ a=Math.floor(Math.random()*12)+1; b=Math.floor(Math.random()*12)+1; op='×'; ans=a*b; }
+
+  else{ b=Math.floor(Math.random()*9)+1; ans=Math.floor(Math.random()*9)+1; a=b*ans; op='÷'; }
+
   document.getElementById('sm-question').textContent=`${a} ${op} ${b}`;
+
   document.getElementById('sm-input').value='';
+
   document.getElementById('sm-input').dataset.ans=ans;
+
   document.getElementById('sm-feedback').textContent='';
+
   smAnswered=false;
+
 }
+
 function submitSm(){
+
   if(smAnswered)return;
+
   const input=document.getElementById('sm-input'); const val=parseInt(input.value);
+
   const ans=parseInt(input.dataset.ans); const fb=document.getElementById('sm-feedback');
+
   if(isNaN(val))return;
+
   smAnswered=true;
+
   const total=smCorrect+smWrongCnt+1;
-  if(val===ans){ smCorrect++; addScore(5); fb.textContent='â Benar!'; fb.style.color='var(--c3)'; floatScore('+5'); }
-  else{ smWrongCnt++; resetStreak(); fb.textContent=`â Jawaban: ${ans}`; fb.style.color='var(--c1)'; }
+
+  if(val===ans){ smCorrect++; addScore(5); fb.textContent='✅ Benar!'; fb.style.color='var(--c3)'; floatScore('+5'); }
+
+  else{ smWrongCnt++; resetStreak(); fb.textContent=`❌ Jawaban: ${ans}`; fb.style.color='var(--c1)'; }
+
   document.getElementById('sm-correct').textContent=smCorrect;
+
   document.getElementById('sm-wrong-cnt').textContent=smWrongCnt;
+
   document.getElementById('sm-total-cnt').textContent=total;
+
   setTimeout(genSmQuestion,600);
+
 }
+
 function floatScore(txt){
+
   const el=document.createElement('div'); el.className='sm-streak-anim'; el.textContent=txt;
+
   el.style.cssText='position:absolute;z-index:10;top:50%;left:50%;transform:translate(-50%,-50%)';
+
   document.getElementById('sm-ring').appendChild(el);
+
   setTimeout(()=>el.remove(),900);
+
 }
-function endSpeedMath(){ showResult('speedmath',smCorrect,Math.max(smCorrect+smWrongCnt,1),'â¡',smCorrect>=15?'Jenius Hitung!':smCorrect>=8?'Kalkulator Manusia!':'Terus Berlatih!',`Benar ${smCorrect} Â· Salah ${smWrongCnt} Â· dalam 60 detik`); }
+
+function endSpeedMath(){ showResult('speedmath',smCorrect,Math.max(smCorrect+smWrongCnt,1),'⚡',smCorrect>=15?'Jenius Hitung!':smCorrect>=8?'Kalkulator Manusia!':'Terus Berlatih!',`Benar ${smCorrect} · Salah ${smWrongCnt} · dalam 60 detik`); }
+
+
 
 // ============================================================
+
 // TRUE / FALSE
+
 // ============================================================
+
 function initTrueFalse(){
+
   const cats=Object.keys(DATA.truefalse);
+
   document.getElementById('tf-cats').innerHTML=cats.map(c=>`<div class="cat-pill ${c===tfCat?'active':''}" onclick="changeTfCat('${c}')">${c}</div>`).join('');
+
   loadTfDeck();
+
 }
+
 function changeTfCat(cat){ tfCat=cat; document.querySelectorAll('#tf-cats .cat-pill').forEach(p=>p.classList.toggle('active',p.textContent===cat)); loadTfDeck(); }
+
 function loadTfDeck(){ tfItems=[...DATA.truefalse[tfCat]].sort(()=>Math.random()-.5); tfIdx=0; tfScore=0; showTfItem(); }
+
 function showTfItem(){
+
   if(tfIdx>=tfItems.length){ showTfResult(); return; }
+
   const item=tfItems[tfIdx]; tfAnswered=false;
+
   document.getElementById('tf-statement').textContent=item.s;
+
   document.getElementById('tf-counter').textContent=`Pernyataan ${tfIdx+1} dari ${tfItems.length}`;
+
   document.getElementById('tf-progress').style.width=`${(tfIdx/tfItems.length)*100}%`;
+
   document.getElementById('tf-true-btn').disabled=false;
+
   document.getElementById('tf-false-btn').disabled=false;
+
   document.getElementById('tf-result').className='tf-result';
+
   document.getElementById('tf-next').className='next-btn';
+
   startTfTimer();
+
 }
+
 function startTfTimer(){
+
   if(tfTimer)clearInterval(tfTimer);
+
   let t=100;
+
   const fill=document.getElementById('tf-timer-fill');
+
   fill.style.transition='none'; fill.style.width='100%'; fill.style.background='var(--c7)';
+
   setTimeout(()=>{ fill.style.transition='width 8s linear'; fill.style.width='0%'; },30);
+
   tfTimer=setInterval(()=>{ t-=12.5; if(t<=0){clearInterval(tfTimer);if(!tfAnswered)answerTf(null);} },1000);
+
 }
+
 function answerTf(userAns){
+
   if(tfAnswered)return; tfAnswered=true;
+
   clearInterval(tfTimer);
+
   document.getElementById('tf-true-btn').disabled=true;
+
   document.getElementById('tf-false-btn').disabled=true;
+
   const item=tfItems[tfIdx]; const res=document.getElementById('tf-result');
-  if(userAns===null){ res.textContent='â° Waktu habis! '+item.exp; res.style.background='#FFF3CD'; res.style.color='#856404'; res.className='tf-result show'; resetStreak(); }
-  else if(userAns===item.ans){ tfScore++; addScore(15); res.textContent='â Benar! '+item.exp; res.style.background='#E8FAE8'; res.style.color='#1a7a2a'; res.className='tf-result show'; }
-  else{ res.textContent='â Salah. '+item.exp; res.style.background='#FFE8E8'; res.style.color='#c0392b'; res.className='tf-result show'; resetStreak(); }
+
+  if(userAns===null){ res.textContent='⏰ Waktu habis! '+item.exp; res.style.background='#FFF3CD'; res.style.color='#856404'; res.className='tf-result show'; resetStreak(); }
+
+  else if(userAns===item.ans){ tfScore++; addScore(15); res.textContent='✅ Benar! '+item.exp; res.style.background='#E8FAE8'; res.style.color='#1a7a2a'; res.className='tf-result show'; }
+
+  else{ res.textContent='❌ Salah. '+item.exp; res.style.background='#FFE8E8'; res.style.color='#c0392b'; res.className='tf-result show'; resetStreak(); }
+
   document.getElementById('tf-next').className='next-btn show';
+
 }
+
 function nextTf(){ tfIdx++; showTfItem(); }
-function showTfResult(){ const p=Math.round((tfScore/tfItems.length)*100); showResult('truefalse',tfScore,tfItems.length,p>=80?'ð':p>=50?'ð¤':'ð¡',p>=80?'Fakta Pakar!':p>=50?'Cerdas!':'Terus Belajar!',`Benar ${tfScore} dari ${tfItems.length} pernyataan`); }
+
+function showTfResult(){ const p=Math.round((tfScore/tfItems.length)*100); showResult('truefalse',tfScore,tfItems.length,p>=80?'🎓':p>=50?'🤔':'💡',p>=80?'Fakta Pakar!':p>=50?'Cerdas!':'Terus Belajar!',`Benar ${tfScore} dari ${tfItems.length} pernyataan`); }
+
+
 
 // ============================================================
+
 // EMOJI MATCH
+
 // ============================================================
+
 function initEmojiMatch(){ emItems=[...DATA.emojimatch].sort(()=>Math.random()-.5); emIdx=0; emScore=0; showEmoji(); }
+
 function showEmoji(){
+
   if(emIdx>=emItems.length){ showEmojiResult(); return; }
+
   const item=emItems[emIdx]; emAnswered=false;
+
   document.getElementById('em-emojis').textContent=item.emojis;
+
   document.getElementById('em-qnum').textContent=`Soal ${emIdx+1} dari ${emItems.length}`;
+
   document.getElementById('em-progress').style.width=`${(emIdx/emItems.length)*100}%`;
+
   const shuffled=[...item.opts].sort(()=>Math.random()-.5);
-  document.getElementById('em-options').innerHTML=shuffled.map(o=>`<button class="em-opt" onclick="answerEmoji('${o.replace(/'/g,"\\'")}','${item.ans.replace(/'/g,"\\'")}')">ð ${o}</button>`).join('');
+
+  document.getElementById('em-options').innerHTML=shuffled.map(o=>`<button class="em-opt" onclick="answerEmoji('${o.replace(/'/g,"\\'")}','${item.ans.replace(/'/g,"\\'")}')">👉 ${o}</button>`).join('');
+
   document.getElementById('em-feedback').className='em-feedback';
+
   document.getElementById('em-next').className='next-btn';
+
 }
+
 function answerEmoji(chosen,correct){
+
   if(emAnswered)return; emAnswered=true;
+
   document.querySelectorAll('.em-opt').forEach(o=>o.disabled=true);
+
   const fb=document.getElementById('em-feedback');
+
   document.querySelectorAll('.em-opt').forEach(o=>{ if(o.textContent.includes(correct))o.classList.add('correct'); else if(o.textContent.includes(chosen)&&chosen!==correct)o.classList.add('wrong'); });
-  if(chosen===correct){ emScore++; addScore(25); fb.textContent='ð Tepat sekali! +25 Poin'; fb.style.background='#E8FAE8'; fb.style.color='#1a7a2a'; }
-  else{ resetStreak(); fb.textContent=`ð¡ Jawabannya: ${correct}`; fb.style.background='#FFE8E8'; fb.style.color='#c0392b'; }
+
+  if(chosen===correct){ emScore++; addScore(25); fb.textContent='🎉 Tepat sekali! +25 Poin'; fb.style.background='#E8FAE8'; fb.style.color='#1a7a2a'; }
+
+  else{ resetStreak(); fb.textContent=`💡 Jawabannya: ${correct}`; fb.style.background='#FFE8E8'; fb.style.color='#c0392b'; }
+
   fb.className='em-feedback show';
+
   document.getElementById('em-next').className='next-btn show';
+
 }
+
 function nextEmoji(){ emIdx++; showEmoji(); }
-function showEmojiResult(){ const p=Math.round((emScore/emItems.length)*100); showResult('emojimatch',emScore,emItems.length,p>=80?'ð­':p>=50?'ð':'ð¤',p>=80?'Ahli Bahasa Emoji!':p>=50?'Kamu Kreatif!':'Asah Terus!',`Tebak ${emScore} dari ${emItems.length} emoji`); }
+
+function showEmojiResult(){ const p=Math.round((emScore/emItems.length)*100); showResult('emojimatch',emScore,emItems.length,p>=80?'🎭':p>=50?'😄':'🤔',p>=80?'Ahli Bahasa Emoji!':p>=50?'Kamu Kreatif!':'Asah Terus!',`Tebak ${emScore} dari ${emItems.length} emoji`); }
+
+
 
 // ============================================================
-// FILL IN THE BLANK â FIXED
+
+// FILL IN THE BLANK — FIXED
+
 // ============================================================
+
 function initFillBlank(){
+
   const cats=Object.keys(DATA.fillblank);
+
   fibCat=fibCat||cats[0];
+
   document.getElementById('fib-cats').innerHTML=cats.map(c=>`<div class="cat-pill ${c===fibCat?'active':''}" onclick="changeFibCat('${c}')">${c}</div>`).join('');
+
   loadFibDeck();
+
 }
+
 function changeFibCat(cat){ fibCat=cat; document.querySelectorAll('#fib-cats .cat-pill').forEach(p=>p.classList.toggle('active',p.textContent===cat)); loadFibDeck(); }
+
 function loadFibDeck(){ fibItems=[...DATA.fillblank[fibCat]].sort(()=>Math.random()-.5); fibIdx=0; fibScore=0; fibAnswered=false; showFib(); }
+
 function showFib(){
+
   if(fibIdx>=fibItems.length){ showFibResult(); return; }
+
   const item=fibItems[fibIdx]; fibAnswered=false;
+
   document.getElementById('fib-progress').style.width=`${(fibIdx/fibItems.length)*100}%`;
+
   document.getElementById('fib-label').textContent=item.label;
+
   const parts=item.sentence.split('___');
+
   document.getElementById('fib-sentence').innerHTML=parts[0]+`<span class="fib-blank" id="fib-blank-el">___</span>`+(parts[1]||'');
+
   const shuffled=[...item.opts].sort(()=>Math.random()-.5);
+
   // FIX: use item.blank as the correct answer
+
   document.getElementById('fib-options').innerHTML=shuffled.map(o=>`<button class="fib-opt" onclick="answerFib(this,'${o.replace(/'/g,"\\'")}','${item.blank.replace(/'/g,"\\'")}')"> ${o}</button>`).join('');
+
   document.getElementById('fib-feedback').className='fib-feedback';
+
   document.getElementById('fib-next').className='next-btn';
+
 }
+
 function answerFib(btn, chosen, correct){
+
   if(fibAnswered)return; fibAnswered=true;
+
   document.querySelectorAll('.fib-opt').forEach(o=>o.disabled=true);
+
   const fb=document.getElementById('fib-feedback');
+
   const blankEl=document.getElementById('fib-blank-el');
+
   // FIX: Compare trimmed values properly
+
   const chosenTrim=chosen.trim();
+
   const correctTrim=correct.trim();
+
   blankEl.textContent=chosenTrim; blankEl.style.background='none';
+
   document.querySelectorAll('.fib-opt').forEach(o=>{
+
     const txt=o.textContent.trim();
+
     if(txt===correctTrim) o.classList.add('correct');
+
     else if(txt===chosenTrim && chosenTrim!==correctTrim) o.classList.add('wrong');
+
   });
+
   if(chosenTrim===correctTrim){
+
     fibScore++; addScore(20);
+
     blankEl.style.color='var(--c3)'; blankEl.style.borderBottomColor='var(--c3)';
-    fb.textContent='â Tepat! +20 Poin'; fb.style.background='#E8FAE8'; fb.style.color='#1a7a2a';
+
+    fb.textContent='✅ Tepat! +20 Poin'; fb.style.background='#E8FAE8'; fb.style.color='#1a7a2a';
+
   } else {
+
     blankEl.textContent=correctTrim; blankEl.style.color='var(--c3)'; blankEl.style.borderBottomColor='var(--c3)';
+
     resetStreak();
-    fb.textContent=`â Jawabannya: "${correctTrim}"`; fb.style.background='#FFE8E8'; fb.style.color='#c0392b';
+
+    fb.textContent=`❌ Jawabannya: "${correctTrim}"`; fb.style.background='#FFE8E8'; fb.style.color='#c0392b';
+
   }
+
   fb.className='fib-feedback show';
+
   document.getElementById('fib-next').className='next-btn show';
+
 }
+
 function nextFib(){ fibIdx++; showFib(); }
-function showFibResult(){ const p=Math.round((fibScore/fibItems.length)*100); showResult('fillblank',fibScore,fibItems.length,p>=80?'ð':p>=50?'âï¸':'ð',p>=80?'Penulis Handal!':p>=50?'Kamu Pandai!':'Ayo Semangat!',`Benar ${fibScore} dari ${fibItems.length} soal`); }
+
+function showFibResult(){ const p=Math.round((fibScore/fibItems.length)*100); showResult('fillblank',fibScore,fibItems.length,p>=80?'📝':p>=50?'✏️':'📖',p>=80?'Penulis Handal!':p>=50?'Kamu Pandai!':'Ayo Semangat!',`Benar ${fibScore} dari ${fibItems.length} soal`); }
+
+
 
 // ============================================================
-// KETIK CEPAT â NEW
+
+// KETIK CEPAT — NEW
+
 // ============================================================
+
 function initTypingSpeed(){
+
   document.getElementById('typing-start-wrap').style.display='block';
+
   document.getElementById('typing-game-wrap').style.display='none';
+
   if(tyTimer)clearInterval(tyTimer);
+
   tyStarted=false;
+
 }
+
 function startTyping(){
+
   document.getElementById('typing-start-wrap').style.display='none';
+
   document.getElementById('typing-game-wrap').style.display='block';
+
   tyTime=60; tyCorrect=0; tyTotal=0; tyCurrentIdx=0; tyStarted=true;
+
   // Pick random text
+
   tyCurrentText=DATA.typingTexts[Math.floor(Math.random()*DATA.typingTexts.length)];
+
   tyTextArr=tyCurrentText.split('');
+
   renderTypingDisplay(0);
+
   const inp=document.getElementById('ty-input');
+
   inp.value=''; inp.focus();
+
   inp.oninput=onTypingInput;
+
   // Timer
+
   const fill=document.getElementById('ty-timer-fill');
+
   fill.style.transition='none'; fill.style.width='100%';
+
   setTimeout(()=>{ fill.style.transition=`width ${tyTime}s linear`; fill.style.width='0%'; },50);
+
   tyTimer=setInterval(()=>{
+
     tyTime--;
+
     document.getElementById('ty-time').textContent=tyTime;
+
     if(tyTime<=0){ clearInterval(tyTimer); endTyping(); }
+
   },1000);
+
 }
+
 function renderTypingDisplay(pos){
+
   const chars=tyTextArr.map((ch,i)=>{
+
     let cls='';
+
     if(i<pos) cls='correct';
+
     else if(i===pos) cls='current';
+
     return `<span class="typing-char ${cls}">${ch}</span>`;
+
   }).join('');
+
   document.getElementById('ty-display').innerHTML=chars;
+
 }
+
 function onTypingInput(e){
+
   if(!tyStarted)return;
+
   const inp=e.target; const typed=inp.value;
+
   tyTotal=typed.length;
+
   // Count correct chars
+
   let correct=0;
+
   for(let i=0;i<typed.length&&i<tyTextArr.length;i++){
+
     if(typed[i]===tyTextArr[i]) correct++;
+
   }
+
   tyCorrect=correct;
+
   renderTypingDisplay(typed.length);
+
   // WPM: words = correct chars / 5
+
   const elapsed=60-tyTime||1;
+
   const wpm=Math.round((tyCorrect/5)/(elapsed/60));
+
   const acc=tyTotal>0?Math.round((tyCorrect/tyTotal)*100):100;
+
   document.getElementById('ty-wpm').textContent=wpm;
+
   document.getElementById('ty-acc').textContent=acc+'%';
+
   // If finished text
+
   if(typed.length>=tyTextArr.length){
+
     clearInterval(tyTimer);
+
     addScore(Math.round(wpm/2)+acc);
+
     setTimeout(endTyping,600);
+
   }
+
 }
+
 function endTyping(){
+
   tyStarted=false;
+
   const elapsed=Math.max(1,60-tyTime);
+
   const wpm=Math.round((tyCorrect/5)/(elapsed/60));
+
   const acc=tyTotal>0?Math.round((tyCorrect/tyTotal)*100):0;
-  showResult('typingspeed',wpm,200,'â¨ï¸',wpm>=60?'Juru Ketik Kilat!':wpm>=30?'Pengetik Handal!':'Terus Berlatih!',`${wpm} WPM Â· Akurasi ${acc}% Â· ${tyCorrect} karakter benar`);
+
+  showResult('typingspeed',wpm,200,'⌨️',wpm>=60?'Juru Ketik Kilat!':wpm>=30?'Pengetik Handal!':'Terus Berlatih!',`${wpm} WPM · Akurasi ${acc}% · ${tyCorrect} karakter benar`);
+
 }
 
+
+
 // ============================================================
-// TEBAK POLA â NEW
+
+// TEBAK POLA — NEW
+
 // ============================================================
+
 function initPatternIQ(){
+
   ptItems=[...DATA.patterns].sort(()=>Math.random()-.5);
+
   ptIdx=0; ptScore=0; ptAnswered=false;
+
   showPattern();
+
 }
+
 function showPattern(){
+
   if(ptIdx>=ptItems.length){ showPatternResult(); return; }
+
   const item=ptItems[ptIdx]; ptAnswered=false;
+
   document.getElementById('pt-progress').style.width=`${(ptIdx/ptItems.length)*100}%`;
+
   document.getElementById('pt-level-badge').textContent=`Level: ${item.level}`;
+
   document.getElementById('pt-desc').textContent=item.desc;
+
   // Render sequence
+
   document.getElementById('pt-seq').innerHTML=item.seq.map((s,i)=>{
+
     if(s==='?') return `<div class="pattern-item question">?</div>`;
+
     return `<div class="pattern-item known">${s}</div>`;
-  }).join('<span style="font-size:1.3rem;color:var(--muted);align-self:center">â</span>');
+
+  }).join('<span style="font-size:1.3rem;color:var(--muted);align-self:center">→</span>');
+
   // Render options
+
   const shuffled=[...item.opts].sort(()=>Math.random()-.5);
+
   document.getElementById('pt-opts').innerHTML=shuffled.map(o=>`<button class="pattern-opt" onclick="answerPattern('${o.replace(/'/g,"\\'")}','${item.answer.replace(/'/g,"\\'")}')"><span style="font-size:1.4rem">${o}</span></button>`).join('');
+
   document.getElementById('pt-feedback').className='pattern-feedback';
+
   document.getElementById('pt-next').className='next-btn';
+
 }
+
 function answerPattern(chosen,correct){
+
   if(ptAnswered)return; ptAnswered=true;
+
   document.querySelectorAll('.pattern-opt').forEach(o=>o.disabled=true);
+
   const fb=document.getElementById('pt-feedback');
+
   document.querySelectorAll('.pattern-opt').forEach(o=>{
+
     const txt=o.querySelector('span').textContent;
+
     if(txt===correct) o.classList.add('correct');
+
     else if(txt===chosen&&chosen!==correct) o.classList.add('wrong');
+
   });
+
   if(chosen===correct){
+
     ptScore++; addScore(30);
-    fb.textContent='ð Luar Biasa! Pola ditemukan! +30 Poin'; fb.style.background='#E8FAE8'; fb.style.color='#1a7a2a';
+
+    fb.textContent='🎉 Luar Biasa! Pola ditemukan! +30 Poin'; fb.style.background='#E8FAE8'; fb.style.color='#1a7a2a';
+
     // Update the ? in sequence
+
     document.querySelectorAll('#pt-seq .pattern-item.question').forEach(el=>{el.textContent=chosen;el.style.background='linear-gradient(135deg,#E8FAE8,#d4f5d4)';el.style.borderColor='var(--c3)';});
+
   } else {
+
     resetStreak();
-    fb.textContent=`ð¡ Jawabannya: "${correct}" â ${ptItems[ptIdx].desc}`; fb.style.background='#FFE8E8'; fb.style.color='#c0392b';
+
+    fb.textContent=`💡 Jawabannya: "${correct}" — ${ptItems[ptIdx].desc}`; fb.style.background='#FFE8E8'; fb.style.color='#c0392b';
+
   }
+
   fb.className='pattern-feedback show';
+
   document.getElementById('pt-next').className='next-btn show';
+
 }
+
 function nextPattern(){ ptIdx++; showPattern(); }
-function showPatternResult(){ const p=Math.round((ptScore/ptItems.length)*100); showResult('patterniq',ptScore,ptItems.length,p>=80?'ð§®':p>=50?'ð§©':'ð¤',p>=80?'Jenius IQ!':p>=50?'Otak Tajam!':'Terus Berlatih!',`Benar ${ptScore} dari ${ptItems.length} pola`); }
+
+function showPatternResult(){ const p=Math.round((ptScore/ptItems.length)*100); showResult('patterniq',ptScore,ptItems.length,p>=80?'🧮':p>=50?'🧩':'🤔',p>=80?'Jenius IQ!':p>=50?'Otak Tajam!':'Terus Berlatih!',`Benar ${ptScore} dari ${ptItems.length} pola`); }
+
+
 
 // ============================================================
-// TEMUKAN BEDA â NEW
+
+// TEMUKAN BEDA — NEW
+
 // ============================================================
+
 const DIFF_LEVELS=[
+
   {
+
     size:4,
+
     grids:[
-      {base:['ð¶','ð±','ð°','ð¦','ð»','ð¼','ð¨','ð¯','ð¦','ð¸','ðµ','ð§','ð¦','ð¦','ð¦','ð¦'],
+
+      {base:['🐶','🐱','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐸','🐵','🐧','🐦','🦆','🦅','🦉'],
+
        diffs:[3,7,11],
-       altEmojis:['ð¦ð¡','ð¯ð¡','ð'],
-       alts:['ð¦','ð¯','ð']},
+
+       altEmojis:['🦊🟡','🐯🟡','🐔'],
+
+       alts:['🦊','🐯','🐔']},
+
     ]
+
   },
+
   {
+
     size:4,
+
     grids:[
-      {base:['ð','ð','ð','ð','ð','ð','ð¥','ð','ð¥­','ð','ð','ð','ð','ð','ð','ð«'],
+
+      {base:['🍎','🍌','🍇','🍓','🍒','🍑','🥝','🍍','🥭','🍋','🍊','🍉','🍈','🍐','🍏','🫐'],
+
        diffs:[0,5,12],
-       alts:['ð','ð¥','ð¥¥']},
+
+       alts:['🍅','🥑','🥥']},
+
     ]
+
   },
+
   {
+
     size:4,
+
     grids:[
-      {base:['ð','ð','ð','ð','ð','ð','ð','ð','ð','ð','ð','ð','ð','ð','ð ','ð¡'],
+
+      {base:['🚗','🚕','🚙','🚌','🚎','🚐','🚑','🚒','🚓','🚔','🚖','🚗','🚘','🚍','🚠','🚡'],
+
        diffs:[2,8,14],
-       alts:['ð»','ðï¸','ð']},
+
+       alts:['🛻','🏎️','🚞']},
+
     ]
+
   }
+
 ];
+
+
 
 let diffCurrentLevel=null, diffGridBase=[], diffCurrentDiffs=[];
 
+
+
 function initSpotDiff(){
+
   document.getElementById('diff-start-wrap').style.display='block';
+
   document.getElementById('diff-game-wrap').style.display='none';
+
   if(diffTimer)clearInterval(diffTimer);
+
   diffRound=1; diffFoundCount=0;
-}
-function startSpotDiff(){
-  document.getElementById('diff-start-wrap').style.display='none';
-  document.getElementById('diff-game-wrap').style.display='block';
-  loadDiffRound();
-}
-function loadDiffRound(){
-  diffFoundSet=new Set();
-  const lvl=DIFF_LEVELS[(diffRound-1)%DIFF_LEVELS.length];
-  const grid=lvl.grids[0];
-  diffGridBase=[...grid.base];
-  diffCurrentDiffs=grid.diffs;
-  const gridB=[...grid.base];
-  grid.diffs.forEach((idx,i)=>{ gridB[idx]=grid.alts[i]; });
-  document.getElementById('diff-total-diffs').textContent=grid.diffs.length;
-  document.getElementById('diff-round').textContent=diffRound;
-  document.getElementById('diff-found').textContent=0;
-  document.getElementById('diff-hint').textContent=`Temukan ${grid.diffs.length} perbedaan â klik sel yang berbeda di Gambar B!`;
-  document.getElementById('diff-found-text').textContent='';
-  // Render grids
-  const cols=lvl.size;
-  renderDiffGrid('diff-grid-a', grid.base, cols, false);
-  renderDiffGrid('diff-grid-b', gridB, cols, true);
-  // Timer
-  diffTime=90;
-  document.getElementById('diff-time').textContent=diffTime;
-  const arc=document.getElementById('diff-arc');
-  arc.style.strokeDashoffset='0'; arc.style.transition='none';
-  if(diffTimer)clearInterval(diffTimer);
-  setTimeout(()=>{ arc.style.transition='stroke-dashoffset 0.95s linear'; },50);
-  diffTimer=setInterval(()=>{
-    diffTime--;
-    document.getElementById('diff-time').textContent=diffTime;
-    const pct=diffTime/90;
-    arc.style.strokeDashoffset=String((1-pct)*214);
-    if(diffTime<=0){ clearInterval(diffTimer); endDiffRound(false); }
-  },1000);
-}
-function renderDiffGrid(id, cells, cols, clickable){
-  const el=document.getElementById(id);
-  el.style.gridTemplateColumns=`repeat(${cols},1fr)`;
-  el.innerHTML=cells.map((c,i)=>`<div class="diff-cell" style="background:${getCellBg(i)}" id="${id}-${i}" ${clickable?`onclick="clickDiffCell(${i})"`:''}>${c}</div>`).join('');
-}
-function getCellBg(i){ const colors=['#FFF5F5','#F5F5FF','#F5FFF5','#FFFFF5','#FFF5FF']; return colors[i%colors.length]; }
-function clickDiffCell(i){
-  if(diffFoundSet.has(i)) return;
-  if(diffCurrentDiffs.includes(i)){
-    diffFoundSet.add(i);
-    document.getElementById('diff-grid-b-'+i).classList.add('found');
-    document.getElementById('diff-grid-a-'+i).classList.add('found');
-    diffFoundCount++;
-    document.getElementById('diff-found').textContent=diffFoundCount;
-    document.getElementById('diff-found-text').textContent=`ð Beda ke-${diffFoundSet.size} ditemukan!`;
-    addScore(20);
-    if(diffFoundSet.size===diffCurrentDiffs.length){
-      clearInterval(diffTimer);
-      setTimeout(()=>endDiffRound(true),800);
-    }
-  } else {
-    const el=document.getElementById('diff-grid-b-'+i);
-    el.classList.add('wrong-pick');
-    setTimeout(()=>el.classList.remove('wrong-pick'),400);
-    resetStreak();
-  }
-}
-function endDiffRound(success){
-  if(success && diffRound<3){
-    diffRound++;
-    setTimeout(()=>{
-      document.getElementById('diff-found-text').textContent='ð Ronde berikutnya!';
-      setTimeout(loadDiffRound,1000);
-    },500);
-  } else {
-    showResult('spotdiff',diffFoundCount,DIFF_LEVELS.length*3,'ðï¸',diffFoundCount>=7?'Mata Elang!':diffFoundCount>=4?'Pengamat Handal!':'Terus Diasah!',`Temukan ${diffFoundCount} perbedaan dari ${DIFF_LEVELS.length} ronde`);
-  }
+
 }
 
-// ============================================================
-// MEWARNAI PANDUAN (Color By Number)
-// ============================================================
-const CBG_PICTURES = [
-  {
-    name:'ð Matahari & Awan',
-    colors:{'1':'#FFD93D','2':'#4D96FF','3':'#6BCB77','4':'#FF9F43'},
-    colorNames:{'1':'Kuning','2':'Biru','3':'Hijau','4':'Oranye'},
-    regions:[
-      {id:'sun',label:'1',name:'Matahari',correct:'1',
-       path:'<circle cx="200" cy="180" r="65" class="cbg-region" id="cbg-sun" fill="#e8e8e8" data-id="sun"/>'},
-      {id:'ray1',label:'1',name:'Sinar',correct:'1',lx:200,ly:95,
-       path:'<polygon points="200,80 210,110 190,110" class="cbg-region" id="cbg-ray1" fill="#e8e8e8" data-id="ray1"/>'},
-      {id:'ray2',label:'1',name:'Sinar',correct:'1',lx:200,ly:258,
-       path:'<polygon points="200,270 210,240 190,240" class="cbg-region" id="cbg-ray2" fill="#e8e8e8" data-id="ray2"/>'},
-      {id:'ray3',label:'1',name:'Sinar',correct:'1',lx:118,ly:180,
-       path:'<polygon points="105,180 135,190 135,170" class="cbg-region" id="cbg-ray3" fill="#e8e8e8" data-id="ray3"/>'},
-      {id:'ray4',label:'1',name:'Sinar',correct:'1',lx:282,ly:180,
-       path:'<polygon points="295,180 265,190 265,170" class="cbg-region" id="cbg-ray4" fill="#e8e8e8" data-id="ray4"/>'},
-      {id:'cloud1',label:'2',name:'Awan Biru',correct:'2',
-       path:'<ellipse cx="80" cy="100" rx="50" ry="30" class="cbg-region" id="cbg-cloud1" fill="#e8e8e8" data-id="cloud1"/><ellipse cx="115" cy="88" rx="35" ry="25" class="cbg-region" id="cbg-cloud1b" fill="#e8e8e8" data-id="cloud1"/>'},
-      {id:'cloud2',label:'2',name:'Awan Biru',correct:'2',
-       path:'<ellipse cx="320" cy="90" rx="52" ry="28" class="cbg-region" id="cbg-cloud2" fill="#e8e8e8" data-id="cloud2"/>'},
-      {id:'grass',label:'3',name:'Rumput',correct:'3',
-       path:'<rect x="0" y="300" width="400" height="70" rx="0" class="cbg-region" id="cbg-grass" fill="#e8e8e8" data-id="grass"/>'},
-      {id:'flower',label:'4',name:'Bunga',correct:'4',
-       path:'<circle cx="340" cy="295" r="18" class="cbg-region" id="cbg-flower" fill="#e8e8e8" data-id="flower"/><circle cx="370" cy="290" r="14" class="cbg-region" id="cbg-flower2" fill="#e8e8e8" data-id="flower"/>'},
-    ]
-  },
-  {
-    name:'ð  Rumah Kecil',
-    colors:{'1':'#FF6B6B','2':'#FFD93D','3':'#6BCB77','4':'#a29bfe','5':'#FF9F43'},
-    colorNames:{'1':'Merah','2':'Kuning','3':'Hijau','4':'Ungu','5':'Oranye'},
-    regions:[
-      {id:'roof',label:'1',name:'Atap',correct:'1',lx:200,ly:140,
-       path:'<polygon points="200,60 50,200 350,200" class="cbg-region" id="cbg-roof" fill="#e8e8e8" data-id="roof"/>'},
-      {id:'wall',label:'2',name:'Dinding',correct:'2',
-       path:'<rect x="80" y="200" width="240" height="150" class="cbg-region" id="cbg-wall" fill="#e8e8e8" data-id="wall"/>'},
-      {id:'door',label:'5',name:'Pintu',correct:'5',
-       path:'<rect x="170" y="270" width="60" height="80" rx="5" class="cbg-region" id="cbg-door" fill="#e8e8e8" data-id="door"/>'},
-      {id:'window1',label:'4',name:'Jendela',correct:'4',
-       path:'<rect x="100" y="220" width="55" height="55" rx="5" class="cbg-region" id="cbg-win1" fill="#e8e8e8" data-id="window1"/>'},
-      {id:'window2',label:'4',name:'Jendela',correct:'4',
-       path:'<rect x="245" y="220" width="55" height="55" rx="5" class="cbg-region" id="cbg-win2" fill="#e8e8e8" data-id="window2"/>'},
-      {id:'grass',label:'3',name:'Halaman',correct:'3',
-       path:'<rect x="0" y="350" width="400" height="50" class="cbg-region" id="cbg-lawn" fill="#e8e8e8" data-id="grass"/>'},
-      {id:'tree',label:'3',name:'Pohon',correct:'3',
-       path:'<circle cx="60" cy="310" r="40" class="cbg-region" id="cbg-tree" fill="#e8e8e8" data-id="tree"/>'},
-    ]
-  },
-  {
-    name:'ð Ikan di Laut',
-    colors:{'1':'#4D96FF','2':'#FF9F43','3':'#6BCB77','4':'#FFD93D','5':'#ff6b81'},
-    colorNames:{'1':'Biru','2':'Oranye','3':'Hijau','4':'Kuning','5':'Pink'},
-    regions:[
-      {id:'sea',label:'1',name:'Lautan',correct:'1',
-       path:'<rect x="0" y="0" width="400" height="370" class="cbg-region" id="cbg-sea" fill="#e8e8e8" data-id="sea"/>'},
-      {id:'fish1body',label:'2',name:'Badan Ikan',correct:'2',
-       path:'<ellipse cx="200" cy="180" rx="80" ry="45" class="cbg-region" id="cbg-fish1" fill="#e8e8e8" data-id="fish1body"/>'},
-      {id:'fish1tail',label:'2',name:'Ekor Ikan',correct:'2',lx:308,ly:180,
-       path:'<polygon points="280,180 320,150 320,210" class="cbg-region" id="cbg-fish1t" fill="#e8e8e8" data-id="fish1tail"/>'},
-      {id:'fish2',label:'5',name:'Ikan Kecil',correct:'5',
-       path:'<ellipse cx="90" cy="100" rx="40" ry="22" class="cbg-region" id="cbg-fish2" fill="#e8e8e8" data-id="fish2"/>'},
-      {id:'seaweed',label:'3',name:'Rumput Laut',correct:'3',
-       path:'<ellipse cx="50" cy="340" rx="18" ry="50" class="cbg-region" id="cbg-weed1" fill="#e8e8e8" data-id="seaweed"/><ellipse cx="350" cy="345" rx="15" ry="45" class="cbg-region" id="cbg-weed2" fill="#e8e8e8" data-id="seaweed"/>'},
-      {id:'star',label:'4',name:'Bintang Laut',correct:'4',lx:335,ly:295,
-       path:'<polygon points="320,310 335,280 350,310 320,295 350,295" class="cbg-region" id="cbg-star" fill="#e8e8e8" data-id="star"/>'},
-      {id:'sand',label:'4',name:'Pasir',correct:'4',
-       path:'<rect x="0" y="350" width="400" height="50" class="cbg-region" id="cbg-sand" fill="#e8e8e8" data-id="sand"/>'},
-    ]
+function startSpotDiff(){
+
+  document.getElementById('diff-start-wrap').style.display='none';
+
+  document.getElementById('diff-game-wrap').style.display='block';
+
+  loadDiffRound();
+
+}
+
+function loadDiffRound(){
+
+  diffFoundSet=new Set();
+
+  const lvl=DIFF_LEVELS[(diffRound-1)%DIFF_LEVELS.length];
+
+  const grid=lvl.grids[0];
+
+  diffGridBase=[...grid.base];
+
+  diffCurrentDiffs=grid.diffs;
+
+  const gridB=[...grid.base];
+
+  grid.diffs.forEach((idx,i)=>{ gridB[idx]=grid.alts[i]; });
+
+  document.getElementById('diff-total-diffs').textContent=grid.diffs.length;
+
+  document.getElementById('diff-round').textContent=diffRound;
+
+  document.getElementById('diff-found').textContent=0;
+
+  document.getElementById('diff-hint').textContent=`Temukan ${grid.diffs.length} perbedaan — klik sel yang berbeda di Gambar B!`;
+
+  document.getElementById('diff-found-text').textContent='';
+
+  // Render grids
+
+  const cols=lvl.size;
+
+  renderDiffGrid('diff-grid-a', grid.base, cols, false);
+
+  renderDiffGrid('diff-grid-b', gridB, cols, true);
+
+  // Timer
+
+  diffTime=90;
+
+  document.getElementById('diff-time').textContent=diffTime;
+
+  const arc=document.getElementById('diff-arc');
+
+  arc.style.strokeDashoffset='0'; arc.style.transition='none';
+
+  if(diffTimer)clearInterval(diffTimer);
+
+  setTimeout(()=>{ arc.style.transition='stroke-dashoffset 0.95s linear'; },50);
+
+  diffTimer=setInterval(()=>{
+
+    diffTime--;
+
+    document.getElementById('diff-time').textContent=diffTime;
+
+    const pct=diffTime/90;
+
+    arc.style.strokeDashoffset=String((1-pct)*214);
+
+    if(diffTime<=0){ clearInterval(diffTimer); endDiffRound(false); }
+
+  },1000);
+
+}
+
+function renderDiffGrid(id, cells, cols, clickable){
+
+  const el=document.getElementById(id);
+
+  el.style.gridTemplateColumns=`repeat(${cols},1fr)`;
+
+  el.innerHTML=cells.map((c,i)=>`<div class="diff-cell" style="background:${getCellBg(i)}" id="${id}-${i}" ${clickable?`onclick="clickDiffCell(${i})"`:''}>${c}</div>`).join('');
+
+}
+
+function getCellBg(i){ const colors=['#FFF5F5','#F5F5FF','#F5FFF5','#FFFFF5','#FFF5FF']; return colors[i%colors.length]; }
+
+function clickDiffCell(i){
+
+  if(diffFoundSet.has(i)) return;
+
+  if(diffCurrentDiffs.includes(i)){
+
+    diffFoundSet.add(i);
+
+    document.getElementById('diff-grid-b-'+i).classList.add('found');
+
+    document.getElementById('diff-grid-a-'+i).classList.add('found');
+
+    diffFoundCount++;
+
+    document.getElementById('diff-found').textContent=diffFoundCount;
+
+    document.getElementById('diff-found-text').textContent=`🎉 Beda ke-${diffFoundSet.size} ditemukan!`;
+
+    addScore(20);
+
+    if(diffFoundSet.size===diffCurrentDiffs.length){
+
+      clearInterval(diffTimer);
+
+      setTimeout(()=>endDiffRound(true),800);
+
+    }
+
+  } else {
+
+    const el=document.getElementById('diff-grid-b-'+i);
+
+    el.classList.add('wrong-pick');
+
+    setTimeout(()=>el.classList.remove('wrong-pick'),400);
+
+    resetStreak();
+
   }
+
+}
+
+function endDiffRound(success){
+
+  if(success && diffRound<3){
+
+    diffRound++;
+
+    setTimeout(()=>{
+
+      document.getElementById('diff-found-text').textContent='🚀 Ronde berikutnya!';
+
+      setTimeout(loadDiffRound,1000);
+
+    },500);
+
+  } else {
+
+    showResult('spotdiff',diffFoundCount,DIFF_LEVELS.length*3,'👁️',diffFoundCount>=7?'Mata Elang!':diffFoundCount>=4?'Pengamat Handal!':'Terus Diasah!',`Temukan ${diffFoundCount} perbedaan dari ${DIFF_LEVELS.length} ronde`);
+
+  }
+
+}
+
+
+
+// ============================================================
+
+// MEWARNAI PANDUAN (Color By Number)
+
+// ============================================================
+
+const CBG_PICTURES = [
+
+  {
+
+    name:'🌞 Matahari & Awan',
+
+    colors:{'1':'#FFD93D','2':'#4D96FF','3':'#6BCB77','4':'#FF9F43'},
+
+    colorNames:{'1':'Kuning','2':'Biru','3':'Hijau','4':'Oranye'},
+
+    regions:[
+
+      {id:'sun',label:'1',name:'Matahari',correct:'1',
+
+       path:'<circle cx="200" cy="180" r="65" class="cbg-region" id="cbg-sun" fill="#e8e8e8" data-id="sun"/>'},
+
+      {id:'ray1',label:'1',name:'Sinar',correct:'1',lx:200,ly:95,
+
+       path:'<polygon points="200,80 210,110 190,110" class="cbg-region" id="cbg-ray1" fill="#e8e8e8" data-id="ray1"/>'},
+
+      {id:'ray2',label:'1',name:'Sinar',correct:'1',lx:200,ly:258,
+
+       path:'<polygon points="200,270 210,240 190,240" class="cbg-region" id="cbg-ray2" fill="#e8e8e8" data-id="ray2"/>'},
+
+      {id:'ray3',label:'1',name:'Sinar',correct:'1',lx:118,ly:180,
+
+       path:'<polygon points="105,180 135,190 135,170" class="cbg-region" id="cbg-ray3" fill="#e8e8e8" data-id="ray3"/>'},
+
+      {id:'ray4',label:'1',name:'Sinar',correct:'1',lx:282,ly:180,
+
+       path:'<polygon points="295,180 265,190 265,170" class="cbg-region" id="cbg-ray4" fill="#e8e8e8" data-id="ray4"/>'},
+
+      {id:'cloud1',label:'2',name:'Awan Biru',correct:'2',
+
+       path:'<ellipse cx="80" cy="100" rx="50" ry="30" class="cbg-region" id="cbg-cloud1" fill="#e8e8e8" data-id="cloud1"/><ellipse cx="115" cy="88" rx="35" ry="25" class="cbg-region" id="cbg-cloud1b" fill="#e8e8e8" data-id="cloud1"/>'},
+
+      {id:'cloud2',label:'2',name:'Awan Biru',correct:'2',
+
+       path:'<ellipse cx="320" cy="90" rx="52" ry="28" class="cbg-region" id="cbg-cloud2" fill="#e8e8e8" data-id="cloud2"/>'},
+
+      {id:'grass',label:'3',name:'Rumput',correct:'3',
+
+       path:'<rect x="0" y="300" width="400" height="70" rx="0" class="cbg-region" id="cbg-grass" fill="#e8e8e8" data-id="grass"/>'},
+
+      {id:'flower',label:'4',name:'Bunga',correct:'4',
+
+       path:'<circle cx="340" cy="295" r="18" class="cbg-region" id="cbg-flower" fill="#e8e8e8" data-id="flower"/><circle cx="370" cy="290" r="14" class="cbg-region" id="cbg-flower2" fill="#e8e8e8" data-id="flower"/>'},
+
+    ]
+
+  },
+
+  {
+
+    name:'🏠 Rumah Kecil',
+
+    colors:{'1':'#FF6B6B','2':'#FFD93D','3':'#6BCB77','4':'#a29bfe','5':'#FF9F43'},
+
+    colorNames:{'1':'Merah','2':'Kuning','3':'Hijau','4':'Ungu','5':'Oranye'},
+
+    regions:[
+
+      {id:'roof',label:'1',name:'Atap',correct:'1',lx:200,ly:140,
+
+       path:'<polygon points="200,60 50,200 350,200" class="cbg-region" id="cbg-roof" fill="#e8e8e8" data-id="roof"/>'},
+
+      {id:'wall',label:'2',name:'Dinding',correct:'2',
+
+       path:'<rect x="80" y="200" width="240" height="150" class="cbg-region" id="cbg-wall" fill="#e8e8e8" data-id="wall"/>'},
+
+      {id:'door',label:'5',name:'Pintu',correct:'5',
+
+       path:'<rect x="170" y="270" width="60" height="80" rx="5" class="cbg-region" id="cbg-door" fill="#e8e8e8" data-id="door"/>'},
+
+      {id:'window1',label:'4',name:'Jendela',correct:'4',
+
+       path:'<rect x="100" y="220" width="55" height="55" rx="5" class="cbg-region" id="cbg-win1" fill="#e8e8e8" data-id="window1"/>'},
+
+      {id:'window2',label:'4',name:'Jendela',correct:'4',
+
+       path:'<rect x="245" y="220" width="55" height="55" rx="5" class="cbg-region" id="cbg-win2" fill="#e8e8e8" data-id="window2"/>'},
+
+      {id:'grass',label:'3',name:'Halaman',correct:'3',
+
+       path:'<rect x="0" y="350" width="400" height="50" class="cbg-region" id="cbg-lawn" fill="#e8e8e8" data-id="grass"/>'},
+
+      {id:'tree',label:'3',name:'Pohon',correct:'3',
+
+       path:'<circle cx="60" cy="310" r="40" class="cbg-region" id="cbg-tree" fill="#e8e8e8" data-id="tree"/>'},
+
+    ]
+
+  },
+
+  {
+
+    name:'🐟 Ikan di Laut',
+
+    colors:{'1':'#4D96FF','2':'#FF9F43','3':'#6BCB77','4':'#FFD93D','5':'#ff6b81'},
+
+    colorNames:{'1':'Biru','2':'Oranye','3':'Hijau','4':'Kuning','5':'Pink'},
+
+    regions:[
+
+      {id:'sea',label:'1',name:'Lautan',correct:'1',
+
+       path:'<rect x="0" y="0" width="400" height="370" class="cbg-region" id="cbg-sea" fill="#e8e8e8" data-id="sea"/>'},
+
+      {id:'fish1body',label:'2',name:'Badan Ikan',correct:'2',
+
+       path:'<ellipse cx="200" cy="180" rx="80" ry="45" class="cbg-region" id="cbg-fish1" fill="#e8e8e8" data-id="fish1body"/>'},
+
+      {id:'fish1tail',label:'2',name:'Ekor Ikan',correct:'2',lx:308,ly:180,
+
+       path:'<polygon points="280,180 320,150 320,210" class="cbg-region" id="cbg-fish1t" fill="#e8e8e8" data-id="fish1tail"/>'},
+
+      {id:'fish2',label:'5',name:'Ikan Kecil',correct:'5',
+
+       path:'<ellipse cx="90" cy="100" rx="40" ry="22" class="cbg-region" id="cbg-fish2" fill="#e8e8e8" data-id="fish2"/>'},
+
+      {id:'seaweed',label:'3',name:'Rumput Laut',correct:'3',
+
+       path:'<ellipse cx="50" cy="340" rx="18" ry="50" class="cbg-region" id="cbg-weed1" fill="#e8e8e8" data-id="seaweed"/><ellipse cx="350" cy="345" rx="15" ry="45" class="cbg-region" id="cbg-weed2" fill="#e8e8e8" data-id="seaweed"/>'},
+
+      {id:'star',label:'4',name:'Bintang Laut',correct:'4',lx:335,ly:295,
+
+       path:'<polygon points="320,310 335,280 350,310 320,295 350,295" class="cbg-region" id="cbg-star" fill="#e8e8e8" data-id="star"/>'},
+
+      {id:'sand',label:'4',name:'Pasir',correct:'4',
+
+       path:'<rect x="0" y="350" width="400" height="50" class="cbg-region" id="cbg-sand" fill="#e8e8e8" data-id="sand"/>'},
+
+    ]
+
+  }
+
 ];
+
+
 
 function initColorByNumber(){
+
   cbgPicIdx=0; cbgCorrectCount=0; cbgWrongCount=0; cbgTotalScore=0; cbgColoredRegions={};
+
   cbgPictures=[...CBG_PICTURES].sort(()=>Math.random()-.5);
+
   loadCbgPicture();
+
 }
+
+
 
 function loadCbgPicture(){
+
   if(cbgPicIdx>=cbgPictures.length){ showCbgResult(); return; }
+
   cbgCurrentPic=cbgPictures[cbgPicIdx];
+
   cbgSelectedColor=null;
+
   cbgColoredRegions={};
+
   document.getElementById('cbg-name-badge').textContent=cbgCurrentPic.name;
+
   document.getElementById('cbg-pic-num').textContent=`${cbgPicIdx+1}/${cbgPictures.length}`;
+
   document.getElementById('cbg-progress').style.width=`${(cbgPicIdx/cbgPictures.length)*100}%`;
+
   document.getElementById('cbg-feedback').textContent='';
+
   document.getElementById('cbg-feedback').style.background='';
+
   document.getElementById('cbg-next-btn').classList.remove('show');
+
   // Legend
+
   const col=cbgCurrentPic.colors; const nam=cbgCurrentPic.colorNames;
+
   document.getElementById('cbg-legend').innerHTML=Object.keys(col).map(k=>
+
     `<div class="cbg-legend-item"><div class="cbg-legend-dot" style="background:${col[k]}">${k}</div><span>${nam[k]}</span></div>`
+
   ).join('');
+
   // Palette
+
   document.getElementById('cbg-palette').innerHTML=Object.keys(col).map(k=>
+
     `<div class="cbg-swatch" style="background:${col[k]}" onclick="selectCbgColor('${k}')" title="${nam[k]}">${k}</div>`
+
   ).join('');
+
   // SVG
+
   const totalRegions = cbgCurrentPic.regions.length;
+
   document.getElementById('cbg-progress-text').textContent=`0 / ${totalRegions} bagian`;
+
   renderCbgSvg();
+
 }
+
+
 
 function getCbgShapeCenter(pathStr){
+
   // Circle / Ellipse: cx, cy
+
   const cx=pathStr.match(/\bcx="([\d.]+)"/);
+
   const cy=pathStr.match(/\bcy="([\d.]+)"/);
+
   if(cx&&cy) return [parseFloat(cx[1]),parseFloat(cy[1])];
+
   // Rect: x+w/2, y+h/2
+
   const rx=pathStr.match(/(?<![a-z])\bx="([\d.]+)"/i);
+
   const ry=pathStr.match(/(?<![a-z])\by="([\d.]+)"/i);
+
   const rw=pathStr.match(/\bwidth="([\d.]+)"/);
+
   const rh=pathStr.match(/\bheight="([\d.]+)"/);
+
   if(rx&&ry&&rw&&rh) return [parseFloat(rx[1])+parseFloat(rw[1])/2, parseFloat(ry[1])+parseFloat(rh[1])/2];
+
   // Polygon / Polyline: centroid of points
+
   const pts=pathStr.match(/\bpoints="([^"]+)"/);
+
   if(pts){
+
     const nums=pts[1].trim().split(/[\s,]+/).map(Number).filter(n=>!isNaN(n));
+
     let sx=0,sy=0,n=0;
+
     for(let i=0;i<nums.length-1;i+=2){sx+=nums[i];sy+=nums[i+1];n++;}
+
     if(n>0) return [sx/n,sy/n];
+
   }
+
   return [200,180];
+
 }
+
+
 
 function renderCbgSvg(){
+
   const pic=cbgCurrentPic;
+
   const paths=pic.regions.map(r=>{
+
     const filled=cbgColoredRegions[r.id];
+
     const color=filled?pic.colors[r.correct]:'#e8e8e8';
+
     const p=r.path.replace(/fill="#e8e8e8"/g,`fill="${color}"`);
+
     return `<g onclick="clickCbgRegion('${r.id}')" style="cursor:pointer" title="${r.name} (${pic.colorNames[r.correct]})">${p}</g>`;
+
   }).join('');
-  // Number labels — pakai center yang benar untuk semua tipe shape
+
+  // Number labels ? pakai center yang benar untuk semua tipe shape
+
   const labels=pic.regions.map(r=>{
+
     const [lx,ly]=r.lx!=null?[r.lx,r.ly]:getCbgShapeCenter(r.path);
+
     const filled=cbgColoredRegions[r.id];
+
     const txtColor=filled?'rgba(255,255,255,0.9)':'#444';
+
     const bgColor=filled?'rgba(0,0,0,0.25)':'rgba(255,255,255,0.75)';
+
     return `<circle cx="${lx}" cy="${ly}" r="13" fill="${bgColor}" pointer-events="none"/>
+
 <text x="${lx}" y="${ly+5}" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="900" fill="${txtColor}" pointer-events="none">${r.label}</text>`;
+
   }).join('');
+
   document.getElementById('cbg-svg-wrap').innerHTML=
+
     `<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;border-radius:12px;border:2px solid #e8e8e8">
+
       <rect width="400" height="400" fill="#fafafa"/>
+
       ${paths}${labels}
+
     </svg>`;
+
 }
+
+
 
 function selectCbgColor(key){
+
   cbgSelectedColor=key;
+
   document.querySelectorAll('.cbg-swatch').forEach((s,i)=>{
+
     const keys=Object.keys(cbgCurrentPic.colors);
+
     s.classList.toggle('selected',keys[i]===key);
+
   });
+
   const name=cbgCurrentPic.colorNames[key];
+
   const fb=document.getElementById('cbg-feedback');
-  fb.textContent=`âï¸ Warna dipilih: ${name} â klik area gambar!`;
+
+  fb.textContent=`✏️ Warna dipilih: ${name} — klik area gambar!`;
+
   fb.style.background='#F5EEFF'; fb.style.color='var(--c5)';
+
 }
+
+
 
 function clickCbgRegion(regionId){
+
   if(!cbgSelectedColor){
+
     const fb=document.getElementById('cbg-feedback');
-    fb.textContent='â¬ï¸ Pilih warna dulu dari palet di bawah!';
+
+    fb.textContent='⬅️ Pilih warna dulu dari palet di bawah!';
+
     fb.style.background='#FFF3CD'; fb.style.color='#856404';
+
     return;
+
   }
+
   if(cbgColoredRegions[regionId]) return; // already colored
+
   const region=cbgCurrentPic.regions.find(r=>r.id===regionId);
+
   if(!region) return;
+
   const fb=document.getElementById('cbg-feedback');
+
   if(cbgSelectedColor===region.correct){
+
     cbgColoredRegions[regionId]=true;
+
     cbgCorrectCount++; addScore(15);
+
     document.getElementById('cbg-correct').textContent=cbgCorrectCount;
-    fb.textContent=`ð Benar! ${cbgCurrentPic.colorNames[region.correct]} untuk ${region.name}! +15 Poin`;
+
+    fb.textContent=`🎉 Benar! ${cbgCurrentPic.colorNames[region.correct]} untuk ${region.name}! +15 Poin`;
+
     fb.style.background='#E8FAE8'; fb.style.color='#1a7a2a';
+
     renderCbgSvg();
+
     // check all done
+
     const totalRegions=cbgCurrentPic.regions.length;
+
     const coloredCount=Object.keys(cbgColoredRegions).length;
+
     document.getElementById('cbg-progress-text').textContent=`${coloredCount} / ${totalRegions} bagian`;
+
     if(coloredCount>=totalRegions){
+
       setTimeout(()=>{
-        fb.textContent='ð Gambar selesai diwarnai! Klik tombol untuk lanjut!';
+
+        fb.textContent='🌟 Gambar selesai diwarnai! Klik tombol untuk lanjut!';
+
         fb.style.background='#E8FAE8'; fb.style.color='#1a7a2a';
+
         document.getElementById('cbg-next-btn').classList.add('show');
+
         confetti();
+
       },400);
+
     }
+
   } else {
+
     cbgWrongCount++; resetStreak();
+
     document.getElementById('cbg-wrong').textContent=cbgWrongCount;
-    fb.textContent=`â Warna salah! Coba warna yang sesuai angka ${region.label}.`;
+
+    fb.textContent=`❌ Warna salah! Coba warna yang sesuai angka ${region.label}.`;
+
     fb.style.background='#FFE8E8'; fb.style.color='#c0392b';
+
   }
+
 }
+
+
 
 function nextCbgPicture(){
+
   cbgPicIdx++;
+
   if(cbgPicIdx>=cbgPictures.length) showCbgResult();
+
   else loadCbgPicture();
+
 }
+
+
 
 function showCbgResult(){
+
   const total=cbgPictures.reduce((a,p)=>a+p.regions.length,0);
+
   const pct=Math.round((cbgCorrectCount/Math.max(total,1))*100);
-  showResult('colorbynumber',cbgCorrectCount,total,pct>=80?'ð¨':pct>=50?'ðï¸':'âï¸',
+
+  showResult('colorbynumber',cbgCorrectCount,total,pct>=80?'🎨':pct>=50?'🖌️':'✏️',
+
     pct>=80?'Pelukis Handal!':pct>=50?'Seniman Berbakat!':'Terus Berlatih!',
-    `Benar ${cbgCorrectCount} Â· Salah ${cbgWrongCount} dari ${total} area`);
+
+    `Benar ${cbgCorrectCount} · Salah ${cbgWrongCount} dari ${total} area`);
+
 }
 
+
+
 // ============================================================
+
 // PUZZLE GESER (Sliding Puzzle)
+
 // ============================================================
+
 const PUZZLE_SETS = [
-  {emojis:['ð¶','ð±','ð­','ð¹','ð°','ð¦','ð»','ð¼'],label:'Hewan Lucu'},
-  {emojis:['ð','ð','ð','ð','ð','ð','ð¥','ð'],label:'Buah Segar'},
-  {emojis:['ð¸','ðº','ð¼','ð»','ð¹','ð','ð·','ð'],label:'Bunga Cantik'},
-  {emojis:['ð','âï¸','ð','ð¢','ð','ðï¸','ðº','ð'],label:'Kendaraan'},
+
+  {emojis:['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼'],label:'Hewan Lucu'},
+
+  {emojis:['🍎','🍊','🍋','🍇','🍓','🍒','🥝','🍑'],label:'Buah Segar'},
+
+  {emojis:['🌸','🌺','🌼','🌻','🌹','💐','🌷','🍀'],label:'Bunga Cantik'},
+
+  {emojis:['🚀','✈️','🚂','🚢','🚁','🏎️','🛺','🚀'],label:'Kendaraan'},
+
 ];
+
+
 
 function setPuzzleLevel(lv,el){
+
   puzzleLevel=lv;
+
   document.querySelectorAll('.puzzle-lv').forEach(e=>e.classList.remove('active'));
+
   el.classList.add('active');
+
 }
+
+
 
 function initSlidePuzzle(){
+
   document.getElementById('puzzle-start-wrap').style.display='block';
+
   document.getElementById('puzzle-game-wrap').style.display='none';
+
   if(puzzleTimer)clearInterval(puzzleTimer);
+
 }
+
+
 
 function startSlidePuzzle(){
+
   if(puzzleTimer)clearInterval(puzzleTimer);
+
   puzzleMoves=0; puzzleTime=0;
+
   const set=PUZZLE_SETS[Math.floor(Math.random()*PUZZLE_SETS.length)];
+
   const shuffled=[...set.emojis].sort(()=>Math.random()-.5).slice(0,8);
+
   puzzleGoal=[...shuffled,''];
+
   puzzleCurrentEmojis=[...puzzleGoal];
+
   // shuffle puzzle state
+
   puzzleState=[...puzzleGoal];
+
   let shuffles=puzzleLevel==='mudah'?30:puzzleLevel==='sedang'?80:150;
+
   puzzleEmptyIdx=8;
+
   for(let i=0;i<shuffles;i++){
+
     const neighbors=getPuzzleNeighbors(puzzleEmptyIdx);
+
     const n=neighbors[Math.floor(Math.random()*neighbors.length)];
+
     [puzzleState[puzzleEmptyIdx],puzzleState[n]]=[puzzleState[n],puzzleState[puzzleEmptyIdx]];
+
     puzzleEmptyIdx=n;
+
   }
+
   document.getElementById('puzzle-start-wrap').style.display='none';
+
   document.getElementById('puzzle-game-wrap').style.display='block';
+
   document.getElementById('puzzle-moves').textContent='0';
+
   document.getElementById('puzzle-time').textContent='0';
-  document.getElementById('puzzle-feedback').textContent='ð¯ Susun gambar ke urutan yang benar!';
+
+  document.getElementById('puzzle-feedback').textContent='🎯 Susun gambar ke urutan yang benar!';
+
   // Preview
+
   document.getElementById('puzzle-preview').innerHTML=puzzleGoal.map(e=>
+
     `<div class="puzzle-preview-tile">${e}</div>`).join('');
+
   renderPuzzleBoard();
+
   puzzleTimer=setInterval(()=>{
+
     puzzleTime++;
+
     document.getElementById('puzzle-time').textContent=puzzleTime;
+
   },1000);
+
 }
+
+
 
 function getPuzzleNeighbors(idx){
+
   const neighbors=[];
+
   const r=Math.floor(idx/3), c=idx%3;
+
   if(r>0)neighbors.push(idx-3);
+
   if(r<2)neighbors.push(idx+3);
+
   if(c>0)neighbors.push(idx-1);
+
   if(c<2)neighbors.push(idx+1);
+
   return neighbors;
+
 }
+
+
 
 function renderPuzzleBoard(){
+
   const correct=puzzleState.filter((t,i)=>t===puzzleGoal[i]&&t!=='').length;
+
   document.getElementById('puzzle-correct-tiles').textContent=correct;
+
   document.getElementById('puzzle-board').innerHTML=puzzleState.map((tile,i)=>{
+
     if(tile==='') return `<div class="puzzle-tile empty-tile" id="pt-${i}"></div>`;
+
     const isCorrect=tile===puzzleGoal[i];
+
     return `<div class="puzzle-tile${isCorrect?' correct-pos':''}" id="pt-${i}" onclick="clickPuzzleTile(${i})">${tile}</div>`;
+
   }).join('');
+
 }
+
+
 
 function shufflePuzzle(){
+
   startSlidePuzzle();
+
 }
+
+
 
 function clickPuzzleTile(idx){
+
   if(idx===puzzleEmptyIdx) return;
+
   const neighbors=getPuzzleNeighbors(puzzleEmptyIdx);
+
   if(!neighbors.includes(idx)) return;
+
   [puzzleState[puzzleEmptyIdx],puzzleState[idx]]=[puzzleState[idx],puzzleState[puzzleEmptyIdx]];
+
   puzzleEmptyIdx=idx;
+
   puzzleMoves++;
+
   document.getElementById('puzzle-moves').textContent=puzzleMoves;
+
   renderPuzzleBoard();
+
   // check win
+
   const won=puzzleState.every((t,i)=>t===puzzleGoal[i]);
+
   if(won){
+
     clearInterval(puzzleTimer);
+
     const pts=Math.max(200-puzzleMoves*2,50);
+
     addScore(pts);
-    document.getElementById('puzzle-feedback').textContent=`ð Selesai! +${pts} Poin Â· ${puzzleMoves} langkah Â· ${puzzleTime}s`;
+
+    document.getElementById('puzzle-feedback').textContent=`🎉 Selesai! +${pts} Poin · ${puzzleMoves} langkah · ${puzzleTime}s`;
+
     document.getElementById('puzzle-feedback').style.color='var(--c3)';
+
     confetti();
+
   }
+
 }
 
+
+
 // ============================================================
+
 // TEKA-TEKI SILANG (Crossword)
+
 // ============================================================
+
 // Each puzzle: grid=2D array ('.'=black, ' '=white), words with clues
+
 const CW_PUZZLES=[
+
   {
+
     title:'Alam Indonesia',
+
     size:7,
+
     // Grid positions: [row, col, direction, word, clue]
+
     words:[
-      {word:'GUNUNG',row:0,col:0,dir:'across',clue:'1â Bentang alam menjulang tinggi'},
-      {word:'LAUT',row:0,col:0,dir:'down',clue:'1â Perairan luas dan dalam'},
-      {word:'UDARA',row:2,col:0,dir:'across',clue:'3â Campuran gas di sekitar kita'},
-      {word:'ANGIN',row:4,col:0,dir:'across',clue:'4â Gerakan massa udara'},
-      {word:'TANAH',row:0,col:4,dir:'down',clue:'2â Permukaan bumi tempat kita pijak'},
-      {word:'HUJAN',row:2,col:2,dir:'down',clue:'5â Air yang turun dari langit'},
+
+      {word:'GUNUNG',row:0,col:0,dir:'across',clue:'1→ Bentang alam menjulang tinggi'},
+
+      {word:'LAUT',row:0,col:0,dir:'down',clue:'1↓ Perairan luas dan dalam'},
+
+      {word:'UDARA',row:2,col:0,dir:'across',clue:'3→ Campuran gas di sekitar kita'},
+
+      {word:'ANGIN',row:4,col:0,dir:'across',clue:'4→ Gerakan massa udara'},
+
+      {word:'TANAH',row:0,col:4,dir:'down',clue:'2↓ Permukaan bumi tempat kita pijak'},
+
+      {word:'HUJAN',row:2,col:2,dir:'down',clue:'5↓ Air yang turun dari langit'},
+
     ]
+
   },
+
   {
+
     title:'Hewan Nusantara',
+
     size:7,
+
     words:[
-      {word:'HARIMAU',row:0,col:0,dir:'across',clue:'1â Kucing besar berbulu belang'},
-      {word:'KOMODO',row:0,col:0,dir:'down',clue:'1â Kadal raksasa dari NTT'},
-      {word:'ELANG',row:2,col:0,dir:'across',clue:'3â Burung simbol kebanggaan'},
-      {word:'ORANG',row:4,col:0,dir:'across',clue:'4â ___ utan, kera besar Kalimantan'},
-      {word:'MONYET',row:0,col:4,dir:'down',clue:'2â Primata ekor panjang'},
-      {word:'BUAYA',row:2,col:2,dir:'down',clue:'5â Reptil bergigi tajam di rawa'},
+
+      {word:'HARIMAU',row:0,col:0,dir:'across',clue:'1→ Kucing besar berbulu belang'},
+
+      {word:'KOMODO',row:0,col:0,dir:'down',clue:'1↓ Kadal raksasa dari NTT'},
+
+      {word:'ELANG',row:2,col:0,dir:'across',clue:'3→ Burung simbol kebanggaan'},
+
+      {word:'ORANG',row:4,col:0,dir:'across',clue:'4→ ___ utan, kera besar Kalimantan'},
+
+      {word:'MONYET',row:0,col:4,dir:'down',clue:'2↓ Primata ekor panjang'},
+
+      {word:'BUAYA',row:2,col:2,dir:'down',clue:'5↓ Reptil bergigi tajam di rawa'},
+
     ]
+
   }
+
 ];
 
+
+
 // Build grid from words
+
 function buildCwGrid(puzzle){
+
   const size=puzzle.size;
+
   const cells=Array.from({length:size},()=>Array.from({length:size},()=>({char:'.',white:false,answer:'',userInput:'',number:0,words:[]})));
+
   puzzle.words.forEach(w=>{
+
     const letters=w.word.split('');
+
     letters.forEach((l,i)=>{
+
       const r=w.dir==='across'?w.row:w.row+i;
+
       const c=w.dir==='across'?w.col+i:w.col;
+
       if(r<size&&c<size){
+
         cells[r][c].white=true;
+
         cells[r][c].answer=l;
+
         cells[r][c].words.push(w.word);
+
       }
+
     });
+
     // number
+
     const r=w.row,c=w.col;
+
     if(r<size&&c<size&&!cells[r][c].number){
+
       const num=puzzle.words.indexOf(w)+1;
+
       cells[r][c].number=num;
+
     }
+
   });
+
   return cells;
+
 }
+
+
 
 function initCrossword(){
+
   cwPuzzleIdx=0; cwSolved=0; cwHintUsed=0; cwTotalScore=0;
+
   cwPuzzles=[...CW_PUZZLES].sort(()=>Math.random()-.5);
+
   loadCwPuzzle();
+
 }
+
+
 
 function loadCwPuzzle(){
+
   if(cwPuzzleIdx>=cwPuzzles.length){ showCwResult(); return; }
+
   cwCurrentPuzzle=cwPuzzles[cwPuzzleIdx];
+
   cwCurrentPuzzle._cells=buildCwGrid(cwCurrentPuzzle);
+
   cwCurrentPuzzle._activeWord=null;
+
   document.getElementById('cw-puzzle-num').textContent=cwPuzzleIdx+1;
+
   document.getElementById('cw-total-words').textContent=cwCurrentPuzzle.words.length;
+
   document.getElementById('cw-progress').style.width=`${(cwPuzzleIdx/cwPuzzles.length)*100}%`;
+
   renderCwGrid();
+
   renderCwClues();
+
 }
+
+
 
 function renderCwGrid(){
+
   const p=cwCurrentPuzzle; const cells=p._cells;
+
   const size=p.size;
+
   const el=document.getElementById('cw-grid');
+
   el.style.gridTemplateColumns=`repeat(${size},38px)`;
+
   el.innerHTML=cells.map((row,r)=>row.map((cell,c)=>{
+
     if(!cell.white) return `<div class="cw-cell black"></div>`;
+
     const num=cell.number?`<span class="cw-cell-num">${cell.number}</span>`:'';
+
     const val=cell.userInput||'';
+
     const isActive=p._activeWord && p._activeWord.some(([pr,pc])=>pr===r&&pc===c);
+
     return `<div class="cw-cell${isActive?' word-active':''}" onclick="cwClickCell(${r},${c})" id="cwc-${r}-${c}">
+
       ${num}<span style="font-size:1.05rem">${val}</span>
+
     </div>`;
+
   }).join('')).join('');
+
 }
+
+
 
 function cwClickCell(r,c){
+
   const p=cwCurrentPuzzle; const cell=p._cells[r][c];
+
   if(!cell.white) return;
+
   // find a word containing this cell, toggle direction
+
   const matchWords=p.words.filter(w=>{
+
     const len=w.word.length;
+
     if(w.dir==='across') return w.row===r&&c>=w.col&&c<w.col+len;
+
     else return w.col===c&&r>=w.row&&r<w.row+len;
+
   });
+
   if(!matchWords.length) return;
+
   const w=matchWords[0];
+
   const len=w.word.length;
+
   p._activeWord=w.dir==='across'?
+
     Array.from({length:len},(_,i)=>[w.row,w.col+i]):
+
     Array.from({length:len},(_,i)=>[w.row+i,w.col]);
+
   p._activeWordObj=w;
+
   p._activeCellIdx=p._activeWord.findIndex(([pr,pc])=>pr===r&&pc===c);
+
   renderCwGrid();
+
   // show input prompt
+
   const inp=document.createElement('input');
+
   inp.style.cssText='position:fixed;opacity:0;left:0;top:0;width:1px;height:1px';
+
   inp.setAttribute('maxlength','1');
+
   document.body.appendChild(inp);
+
   inp.focus();
+
   inp.addEventListener('keydown',(e)=>{
+
     const key=e.key.toUpperCase();
+
     if(key.match(/^[A-Z]$/)&&p._activeWord){
+
       const [cr,cc]=p._activeWord[p._activeCellIdx];
+
       p._cells[cr][cc].userInput=key;
+
       if(p._activeCellIdx<p._activeWord.length-1) p._activeCellIdx++;
+
       renderCwGrid();
+
     } else if(e.key==='Backspace'&&p._activeWord){
+
       const [cr,cc]=p._activeWord[p._activeCellIdx];
+
       if(p._cells[cr][cc].userInput) p._cells[cr][cc].userInput='';
+
       else if(p._activeCellIdx>0){ p._activeCellIdx--; const [pr,pc]=p._activeWord[p._activeCellIdx]; p._cells[pr][pc].userInput=''; }
+
       renderCwGrid();
+
     }
+
     e.preventDefault();
+
   });
+
   setTimeout(()=>inp.remove(),8000);
+
   // highlight clue
+
   document.querySelectorAll('.cw-clue-item').forEach(el=>el.classList.toggle('active-clue',el.dataset.word===w.word));
+
 }
+
+
 
 function cwCheck(){
+
   const p=cwCurrentPuzzle; let newSolved=0;
+
   p.words.forEach(w=>{
+
     const len=w.word.length;
+
     let correct=true;
+
     for(let i=0;i<len;i++){
+
       const r=w.dir==='across'?w.row:w.row+i;
+
       const c=w.dir==='across'?w.col+i:w.col;
+
       if((p._cells[r][c].userInput||'').toUpperCase()!==w.word[i]) correct=false;
+
     }
+
     if(correct){ w._solved=true; newSolved++; }
+
   });
+
   cwSolved=p.words.filter(w=>w._solved).length;
+
   addScore(newSolved*25);
+
   document.getElementById('cw-solved').textContent=cwSolved;
+
   renderCwGrid();
+
   renderCwClues();
+
   if(cwSolved>=p.words.length){
+
     confetti();
+
     setTimeout(()=>{cwPuzzleIdx++;loadCwPuzzle();},1500);
+
   }
+
 }
+
+
 
 function cwHint(){
+
   const p=cwCurrentPuzzle;
+
   if(!p._activeWordObj){ alert('Klik dulu kata yang ingin diberi petunjuk!'); return; }
+
   const w=p._activeWordObj;
+
   // reveal first empty letter
+
   for(let i=0;i<w.word.length;i++){
+
     const r=w.dir==='across'?w.row:w.row+i;
+
     const c=w.dir==='across'?w.col+i:w.col;
+
     if(!p._cells[r][c].userInput){
+
       p._cells[r][c].userInput=w.word[i];
+
       cwHintUsed++;
+
       totalScore=Math.max(0,totalScore-5);
+
       document.getElementById('total-score').textContent=totalScore;
+
       renderCwGrid();
+
       return;
+
     }
+
   }
+
 }
+
+
 
 function cwNextPuzzle(){
+
   cwPuzzleIdx++;
+
   if(cwPuzzleIdx>=cwPuzzles.length){ initCrossword(); }
+
   else loadCwPuzzle();
+
 }
+
+
 
 function renderCwClues(){
+
   const p=cwCurrentPuzzle;
+
   const across=p.words.filter(w=>w.dir==='across');
+
   const down=p.words.filter(w=>w.dir==='down');
+
   document.getElementById('cw-clues').innerHTML=`
+
     <div class="cw-clue-section">
-      <div class="cw-clue-title">â Mendatar</div>
+
+      <div class="cw-clue-title">→ Mendatar</div>
+
       ${across.map(w=>`<div class="cw-clue-item${w._solved?' solved-clue':''}" data-word="${w.word}" onclick="cwHighlightWord('${w.word}')">${w.clue}</div>`).join('')}
+
     </div>
+
     <div class="cw-clue-section">
-      <div class="cw-clue-title">â Menurun</div>
+
+      <div class="cw-clue-title">↓ Menurun</div>
+
       ${down.map(w=>`<div class="cw-clue-item${w._solved?' solved-clue':''}" data-word="${w.word}" onclick="cwHighlightWord('${w.word}')">${w.clue}</div>`).join('')}
+
     </div>`;
+
 }
+
+
 
 function cwHighlightWord(word){
+
   const p=cwCurrentPuzzle;
+
   const w=p.words.find(x=>x.word===word);
+
   if(!w) return;
+
   p._activeWordObj=w;
+
   const len=w.word.length;
+
   p._activeWord=w.dir==='across'?
+
     Array.from({length:len},(_,i)=>[w.row,w.col+i]):
+
     Array.from({length:len},(_,i)=>[w.row+i,w.col]);
+
   p._activeCellIdx=0;
+
   renderCwGrid();
+
   document.querySelectorAll('.cw-clue-item').forEach(el=>el.classList.toggle('active-clue',el.dataset.word===word));
+
 }
+
+
 
 function showCwResult(){
-  showResult('crossword',cwSolved,cwPuzzles.reduce((a,p)=>a+p.words.length,0),'ð°',
+
+  showResult('crossword',cwSolved,cwPuzzles.reduce((a,p)=>a+p.words.length,0),'📰',
+
     cwSolved>=4?'Maestro Crossword!':cwSolved>=2?'Kutu Buku!':'Terus Berlatih!',
-    `Pecahkan ${cwSolved} kata Â· ${cwHintUsed} petunjuk dipakai`);
+
+    `Pecahkan ${cwSolved} kata · ${cwHintUsed} petunjuk dipakai`);
+
 }
 
+
+
 // ============================================================
-// TEBAK BENDERA â menggunakan gambar SVG nyata via flagcdn.com
+
+// TEBAK BENDERA — menggunakan gambar SVG nyata via flagcdn.com
+
 // ============================================================
+
 // iso: kode ISO 3166-1 alpha-2 lowercase untuk flagcdn.com
+
 const FLAG_DATA = {
+
   'Asia': [
+
     {iso:'id',name:'Indonesia',capital:'Jakarta',region:'Asia Tenggara'},
+
     {iso:'jp',name:'Jepang',capital:'Tokyo',region:'Asia Timur'},
+
     {iso:'kr',name:'Korea Selatan',capital:'Seoul',region:'Asia Timur'},
+
     {iso:'cn',name:'China',capital:'Beijing',region:'Asia Timur'},
+
     {iso:'in',name:'India',capital:'New Delhi',region:'Asia Selatan'},
+
     {iso:'th',name:'Thailand',capital:'Bangkok',region:'Asia Tenggara'},
+
     {iso:'vn',name:'Vietnam',capital:'Hanoi',region:'Asia Tenggara'},
+
     {iso:'my',name:'Malaysia',capital:'Kuala Lumpur',region:'Asia Tenggara'},
+
     {iso:'sg',name:'Singapura',capital:'Singapura',region:'Asia Tenggara'},
+
     {iso:'ph',name:'Filipina',capital:'Manila',region:'Asia Tenggara'},
+
     {iso:'sa',name:'Arab Saudi',capital:'Riyadh',region:'Asia Barat'},
+
     {iso:'tr',name:'Turki',capital:'Ankara',region:'Asia Barat'},
+
     {iso:'ir',name:'Iran',capital:'Teheran',region:'Asia Barat'},
+
     {iso:'pk',name:'Pakistan',capital:'Islamabad',region:'Asia Selatan'},
+
     {iso:'bd',name:'Bangladesh',capital:'Dhaka',region:'Asia Selatan'},
+
     {iso:'kh',name:'Kamboja',capital:'Phnom Penh',region:'Asia Tenggara'},
+
     {iso:'mm',name:'Myanmar',capital:'Naypyidaw',region:'Asia Tenggara'},
+
     {iso:'np',name:'Nepal',capital:'Kathmandu',region:'Asia Selatan'},
+
   ],
+
   'Eropa': [
+
     {iso:'gb',name:'Inggris',capital:'London',region:'Eropa Barat'},
+
     {iso:'fr',name:'Prancis',capital:'Paris',region:'Eropa Barat'},
+
     {iso:'de',name:'Jerman',capital:'Berlin',region:'Eropa Tengah'},
+
     {iso:'it',name:'Italia',capital:'Roma',region:'Eropa Selatan'},
+
     {iso:'es',name:'Spanyol',capital:'Madrid',region:'Eropa Selatan'},
+
     {iso:'ru',name:'Rusia',capital:'Moskow',region:'Eropa Timur'},
+
     {iso:'pt',name:'Portugal',capital:'Lisbon',region:'Eropa Barat'},
+
     {iso:'nl',name:'Belanda',capital:'Amsterdam',region:'Eropa Barat'},
+
     {iso:'ch',name:'Swiss',capital:'Bern',region:'Eropa Tengah'},
+
     {iso:'se',name:'Swedia',capital:'Stockholm',region:'Eropa Utara'},
+
     {iso:'no',name:'Norwegia',capital:'Oslo',region:'Eropa Utara'},
+
     {iso:'dk',name:'Denmark',capital:'Kopenhagen',region:'Eropa Utara'},
+
     {iso:'pl',name:'Polandia',capital:'Warsawa',region:'Eropa Timur'},
+
     {iso:'gr',name:'Yunani',capital:'Athena',region:'Eropa Selatan'},
+
     {iso:'be',name:'Belgia',capital:'Brussels',region:'Eropa Barat'},
+
     {iso:'at',name:'Austria',capital:'Wina',region:'Eropa Tengah'},
+
     {iso:'cz',name:'Ceko',capital:'Praha',region:'Eropa Tengah'},
+
     {iso:'ua',name:'Ukraina',capital:'Kyiv',region:'Eropa Timur'},
+
   ],
+
   'Amerika': [
+
     {iso:'us',name:'Amerika Serikat',capital:'Washington D.C.',region:'Amerika Utara'},
+
     {iso:'ca',name:'Kanada',capital:'Ottawa',region:'Amerika Utara'},
+
     {iso:'mx',name:'Meksiko',capital:'Mexico City',region:'Amerika Utara'},
+
     {iso:'br',name:'Brasil',capital:'Brasilia',region:'Amerika Selatan'},
+
     {iso:'ar',name:'Argentina',capital:'Buenos Aires',region:'Amerika Selatan'},
+
     {iso:'co',name:'Kolombia',capital:'Bogota',region:'Amerika Selatan'},
+
     {iso:'cl',name:'Chile',capital:'Santiago',region:'Amerika Selatan'},
+
     {iso:'pe',name:'Peru',capital:'Lima',region:'Amerika Selatan'},
+
     {iso:'cu',name:'Kuba',capital:'Havana',region:'Amerika Tengah'},
+
     {iso:'ve',name:'Venezuela',capital:'Caracas',region:'Amerika Selatan'},
+
     {iso:'ec',name:'Ekuador',capital:'Quito',region:'Amerika Selatan'},
+
     {iso:'bo',name:'Bolivia',capital:'Sucre',region:'Amerika Selatan'},
+
   ],
+
   'Afrika': [
+
     {iso:'za',name:'Afrika Selatan',capital:'Pretoria',region:'Afrika Selatan'},
+
     {iso:'ng',name:'Nigeria',capital:'Abuja',region:'Afrika Barat'},
+
     {iso:'eg',name:'Mesir',capital:'Kairo',region:'Afrika Utara'},
+
     {iso:'ke',name:'Kenya',capital:'Nairobi',region:'Afrika Timur'},
+
     {iso:'et',name:'Ethiopia',capital:'Addis Ababa',region:'Afrika Timur'},
+
     {iso:'gh',name:'Ghana',capital:'Accra',region:'Afrika Barat'},
+
     {iso:'tz',name:'Tanzania',capital:'Dodoma',region:'Afrika Timur'},
+
     {iso:'sn',name:'Senegal',capital:'Dakar',region:'Afrika Barat'},
+
     {iso:'ma',name:'Maroko',capital:'Rabat',region:'Afrika Utara'},
+
     {iso:'ly',name:'Libya',capital:'Tripoli',region:'Afrika Utara'},
-    {iso:'cm',name:'Kamerun',capital:'YaoundÃ©',region:'Afrika Tengah'},
+
+    {iso:'cm',name:'Kamerun',capital:'Yaoundé',region:'Afrika Tengah'},
+
     {iso:'cd',name:'Kongo',capital:'Kinshasa',region:'Afrika Tengah'},
+
   ],
+
   'Oseania': [
+
     {iso:'au',name:'Australia',capital:'Canberra',region:'Oseania'},
+
     {iso:'nz',name:'Selandia Baru',capital:'Wellington',region:'Oseania'},
+
     {iso:'fj',name:'Fiji',capital:'Suva',region:'Oseania'},
+
     {iso:'pg',name:'Papua Nugini',capital:'Port Moresby',region:'Oseania'},
+
     {iso:'ws',name:'Samoa',capital:'Apia',region:'Oseania'},
+
     {iso:'to',name:'Tonga',capital:'Nukualofa',region:'Oseania'},
+
   ],
+
 };
+
+
 
 const ALL_FLAGS = Object.values(FLAG_DATA).flat();
 
+
+
 // Konversi ISO code ke emoji bendera Unicode (selalu tersedia tanpa CDN)
+
 function isoToFlagEmoji(iso){
+
   return [...iso.toUpperCase()].map(c=>String.fromCodePoint(0x1F1E0+c.charCodeAt(0)-65)).join('');
+
 }
 
-// Helper: tampilkan bendera — emoji dulu, CDN image jika berhasil load
+
+
+// Helper: tampilkan bendera ? emoji dulu, CDN image jika berhasil load
+
 function flagImg(iso, size=120){
+
   const emoji=isoToFlagEmoji(iso);
+
   const emojiSize=Math.round(size*0.65);
+
   return `<span class="flag-emoji-span" style="font-size:${emojiSize}px;line-height:1.2;display:inline-block">${emoji}</span><img src="https://flagcdn.com/w${size}/${iso}.png" alt="${iso}" style="display:none;width:${size}px;max-width:100%;border-radius:6px;box-shadow:0 2px 12px rgba(0,0,0,.2)" onload="this.previousElementSibling.style.display='none';this.style.display='inline-block'" onerror="this.style.display='none'">`;
+
 }
+
+
 
 // Helper: bendera kecil untuk pilihan
+
 function flagImgSmall(iso){
+
   const emoji=isoToFlagEmoji(iso);
+
   return `<span style="font-size:34px;line-height:1.1;display:block;text-align:center">${emoji}</span><img src="https://flagcdn.com/w80/${iso}.png" alt="${iso}" style="display:none;width:56px;height:auto;border-radius:4px;box-shadow:0 1px 6px rgba(0,0,0,.18);margin:0 auto;display:none" onload="this.previousElementSibling.style.display='none';this.style.display='block'" onerror="this.style.display='none'">`;
+
 }
+
+
 
 function initFlagQuiz(){
+
   const cats = Object.keys(FLAG_DATA);
+
   if(!cats.includes(flagCat)) flagCat = cats[0];
+
   document.getElementById('flag-cats').innerHTML = cats.map(c =>
+
     `<div class="flag-tab${c===flagCat?' active':''}" onclick="changeFlagCat('${c}')">${c}</div>`
+
   ).join('');
+
   loadFlagDeck();
+
 }
+
+
 
 function changeFlagCat(cat){
+
   flagCat = cat;
+
   document.querySelectorAll('.flag-tab').forEach(t => t.classList.toggle('active', t.textContent===cat));
+
   loadFlagDeck();
+
 }
+
+
 
 function setFlagMode(mode, el){
+
   flagMode = mode;
+
   document.querySelectorAll('.flag-mode-btn').forEach(b => b.classList.remove('active'));
+
   el.classList.add('active');
+
   loadFlagDeck();
+
 }
+
+
 
 function loadFlagDeck(){
+
   const pool = [...FLAG_DATA[flagCat]].sort(() => Math.random() - .5);
+
   flagItems = pool.slice(0, Math.min(pool.length, 12));
+
   flagIdx = 0; flagCorrect = 0; flagWrong = 0; flagAnswered = false;
+
   document.getElementById('flag-correct-cnt').textContent = '0';
+
   document.getElementById('flag-wrong-cnt').textContent = '0';
+
   showFlagQuestion();
+
 }
+
+
 
 function showFlagQuestion(){
+
   if(flagIdx >= flagItems.length){ showFlagResult(); return; }
+
   flagAnswered = false;
+
   const item = flagItems[flagIdx];
+
   const total = flagItems.length;
+
   document.getElementById('flag-progress').style.width = `${(flagIdx/total)*100}%`;
+
   document.getElementById('flag-qnum').textContent = `Soal ${flagIdx+1} dari ${total}`;
+
   document.getElementById('flag-qnum-disp').textContent = `${flagIdx+1}/${total}`;
+
   document.getElementById('flag-next').style.display = 'none';
+
   document.getElementById('flag-feedback').className = 'flag-feedback';
+
   document.getElementById('flag-feedback').textContent = '';
 
+
+
   const flagEl = document.getElementById('flag-emoji');
+
   const pool = ALL_FLAGS.filter(f => f.iso !== item.iso);
+
   const wrongs = pool.sort(() => Math.random()-.5).slice(0,3);
+
   const opts = [...wrongs, item].sort(() => Math.random()-.5);
 
+
+
   if(flagMode === 'country'){
+
     flagEl.innerHTML = flagImg(item.iso, 140);
+
     document.getElementById('flag-question').textContent = 'Negara mana yang memiliki bendera ini?';
+
     document.getElementById('flag-hint-badge').textContent = `\u{1F30D} Kawasan: ${item.region}`;
+
     document.getElementById('flag-options').innerHTML = opts.map(o =>
+
       `<button class="flag-opt" data-name="${o.name}" data-correct="${item.name}">
+
         <img src="https://flagcdn.com/w80/${o.iso}.png" style="width:56px;height:auto;border-radius:4px;box-shadow:0 1px 6px rgba(0,0,0,.18)" onerror="this.style.background='#eee'">
+
         <span>${o.name}</span>
+
       </button>`
+
     ).join('');
+
     document.querySelectorAll('#flag-options .flag-opt').forEach(btn => {
+
       btn.addEventListener('click', function(){
+
         answerFlag(this.dataset.name, this.dataset.correct);
+
       });
+
     });
+
   } else {
+
     flagEl.innerHTML = `
+
       <div style="text-align:center;padding:8px 0">
+
         <div style="font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Pilih Bendera Negara</div>
+
         <div style="font-family:'Baloo 2',cursive;font-size:2rem;font-weight:800;color:var(--txt);line-height:1.2">${item.name}</div>
+
         <div style="font-size:.8rem;color:var(--muted);margin-top:4px">\u{1F30D} ${item.region}</div>
+
       </div>`;
+
     document.getElementById('flag-question').textContent = 'Klik bendera yang benar!';
+
     document.getElementById('flag-hint-badge').textContent = `\u{1F3D9}\ufe0f Ibu kota: ${item.capital}`;
+
     document.getElementById('flag-options').innerHTML = opts.map(o =>
+
       `<button class="flag-opt flag-opt-img" data-iso="${o.iso}" data-correct-iso="${item.iso}" data-chosen-name="${o.name}" data-correct-name="${item.name}" style="padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:4px">
+
         <span style="font-size:40px;line-height:1.2;display:block">${isoToFlagEmoji(o.iso)}</span>
+
         <img src="https://flagcdn.com/w120/${o.iso}.png"
+
           style="display:none;width:100%;max-width:100px;height:auto;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.15)"
+
           onload="this.previousElementSibling.style.display='none';this.style.display='block'"
+
           onerror="this.style.display='none'">
+
       </button>`
+
     ).join('');
+
     document.querySelectorAll('#flag-options .flag-opt').forEach(btn => {
+
       btn.addEventListener('click', function(){
+
         answerFlagByIso(this.dataset.iso, this.dataset.correctIso, this.dataset.chosenName, this.dataset.correctName);
+
       });
+
     });
+
   }
+
 }
+
+
 
 function answerFlag(chosen, correct){
+
   if(flagAnswered) return; flagAnswered = true;
+
   document.querySelectorAll('.flag-opt').forEach(b => b.disabled = true);
+
   const fb = document.getElementById('flag-feedback');
+
   const correctItem = flagItems[flagIdx];
+
   if(chosen === correct){
+
     flagCorrect++; addScore(20);
+
     document.getElementById('flag-correct-cnt').textContent = flagCorrect;
-    fb.textContent = `ð Benar! Ibu kota: ${correctItem.capital} Â· +20 Poin`;
+
+    fb.textContent = `🎉 Benar! Ibu kota: ${correctItem.capital} · +20 Poin`;
+
     fb.style.background = '#E8FAE8'; fb.style.color = '#1a7a2a'; fb.className = 'flag-feedback show';
+
     document.querySelectorAll('.flag-opt').forEach(b => { if(b.dataset.name===correct) b.classList.add('correct'); });
-    showFlagStreak('ð');
+
+    showFlagStreak('🎉');
+
   } else {
+
     flagWrong++; resetStreak();
+
     document.getElementById('flag-wrong-cnt').textContent = flagWrong;
-    fb.textContent = `â Salah! Jawaban yang benar: ${correct}`;
+
+    fb.textContent = `❌ Salah! Jawaban yang benar: ${correct}`;
+
     fb.style.background = '#FFE8E8'; fb.style.color = '#c0392b'; fb.className = 'flag-feedback show';
+
     document.querySelectorAll('.flag-opt').forEach(b => {
+
       if(b.dataset.name===correct) b.classList.add('correct');
+
       else if(b.dataset.name===chosen) b.classList.add('wrong');
+
     });
+
   }
+
   document.getElementById('flag-next').style.display = 'block';
+
 }
+
+
 
 function answerFlagByIso(chosenIso, correctIso, chosenName, correctName){
+
   if(flagAnswered) return; flagAnswered = true;
+
   document.querySelectorAll('.flag-opt').forEach(b => b.disabled = true);
+
   const fb = document.getElementById('flag-feedback');
+
   const correctItem = flagItems[flagIdx];
+
   if(chosenIso === correctIso){
+
     flagCorrect++; addScore(20);
+
     document.getElementById('flag-correct-cnt').textContent = flagCorrect;
-    fb.textContent = 'ð Benar! Ibu kota: ' + correctItem.capital + ' Â· +20 Poin';
+
+    fb.textContent = '🎉 Benar! Ibu kota: ' + correctItem.capital + ' · +20 Poin';
+
     fb.style.background = '#E8FAE8'; fb.style.color = '#1a7a2a'; fb.className = 'flag-feedback show';
+
     document.querySelectorAll('.flag-opt').forEach(b => { if(b.dataset.iso===correctIso) b.classList.add('correct'); });
-    showFlagStreak('ð');
+
+    showFlagStreak('🎉');
+
   } else {
+
     flagWrong++; resetStreak();
+
     document.getElementById('flag-wrong-cnt').textContent = flagWrong;
+
     fb.innerHTML = '❌ Salah! Bendera <strong>' + correctName + '</strong>: <span style="font-size:24px;vertical-align:middle;margin-left:6px">' + isoToFlagEmoji(correctIso) + '</span>';
+
     fb.style.background = '#FFE8E8'; fb.style.color = '#c0392b'; fb.className = 'flag-feedback show';
+
     document.querySelectorAll('.flag-opt').forEach(b => {
+
       if(b.dataset.iso===correctIso) b.classList.add('correct');
+
       else if(b.dataset.iso===chosenIso) b.classList.add('wrong');
+
     });
+
   }
+
   document.getElementById('flag-next').style.display = 'block';
+
 }
 
+
+
 function showFlagStreak(emoji){
+
   const el = document.createElement('div');
+
   el.className = 'flag-streak-flash';
+
   el.textContent = emoji;
+
   document.body.appendChild(el);
+
   setTimeout(() => el.remove(), 800);
+
 }
+
+
 
 function nextFlag(){ flagIdx++; showFlagQuestion(); }
 
+
+
 function showFlagResult(){
+
   const pct = Math.round((flagCorrect/flagItems.length)*100);
+
   showResult('flagquiz', flagCorrect, flagItems.length,
-    pct>=80?'ð':pct>=60?'ð©':'ðºï¸',
+
+    pct>=80?'🌍':pct>=60?'🚩':'🗺️',
+
     pct>=80?'Ahli Geografi!':pct>=60?'Petualang Dunia!':'Terus Eksplorasi!',
+
     `Benar ${flagCorrect} dari ${flagItems.length} bendera`);
+
 }
 
+
+
 // ============================================================
+
 // RESULT & CONFETTI
+
 // ============================================================
+
 function showResult(game,score,total,emoji,title,detail){
+
   document.getElementById('res-emoji').textContent=emoji;
+
   document.getElementById('res-title').textContent=title;
-  document.getElementById('res-score').textContent=detail+` Â· Total Poin: ${totalScore}`;
+
+  document.getElementById('res-score').textContent=detail+` · Total Poin: ${totalScore}`;
+
   document.getElementById('res-retry').onclick=()=>startGame(game);
+
   if(score/total>=0.6||game==='typingspeed'||game==='colorbynumber'||game==='slidepuzzle'||game==='crossword'||game==='flagquiz')confetti();
+
   showScreen('result');
+
 }
+
 function confetti(){
+
   const colors=['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#C77DFF','#FF9F43','#00D2D3'];
+
   for(let i=0;i<70;i++){
+
     const el=document.createElement('div'); el.className='confetti-piece';
+
     el.style.cssText=`left:${Math.random()*100}vw;background:${colors[Math.floor(Math.random()*colors.length)]};width:${5+Math.random()*9}px;height:${5+Math.random()*9}px;border-radius:${Math.random()>.5?'50%':'2px'};animation-delay:${Math.random()*2.5}s;animation-duration:${2+Math.random()*2}s`;
+
     document.body.appendChild(el); setTimeout(()=>el.remove(),5000);
+
   }
+
 }
+
 </script>
+
 </body>
+
 </html>
+
