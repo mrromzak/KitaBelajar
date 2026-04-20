@@ -5102,11 +5102,9 @@ function showFlagQuestion(){
 
     document.getElementById('flag-options').innerHTML = opts.map(o =>
 
-      `<button class="flag-opt" data-name="${o.name}" data-correct="${item.name}">
+      `<button class="flag-opt" data-name="${o.name}" data-correct="${item.name}" style="font-size:1.05rem;font-weight:700;padding:14px 10px;justify-content:center">
 
-        <img src="https://flagcdn.com/w80/${o.iso}.png" style="width:56px;height:auto;border-radius:4px;box-shadow:0 1px 6px rgba(0,0,0,.18)" onerror="this.style.background='#eee'">
-
-        <span>${o.name}</span>
+        ${o.name}
 
       </button>`
 
