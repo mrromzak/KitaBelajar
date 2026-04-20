@@ -691,9 +691,23 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--txt);min-h
 
 .cw-clue-title{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--c5);margin-bottom:9px}
 
-.cw-clue-item{font-size:.8rem;font-weight:600;margin-bottom:6px;padding:5px 8px;border-radius:8px;cursor:pointer;transition:all .15s;line-height:1.4}
+.cw-clue-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:8px 10px;border-radius:10px;transition:background .15s;border:2px solid transparent}
 
-.cw-clue-item:hover{background:#f5eeff}
+.cw-clue-row.active-clue{background:#F5EEFF;border-color:var(--c5)}
+
+.cw-clue-row.solved-clue{background:#E8FAE8;border-color:var(--c3);opacity:.85}
+
+.cw-clue-text{font-size:.82rem;font-weight:600;flex:1;line-height:1.4;color:var(--txt)}
+
+.cw-word-input{border:2px solid #ddd;border-radius:8px;padding:6px 10px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;letter-spacing:3px;text-transform:uppercase;width:100%;max-width:160px;outline:none;transition:border-color .2s;text-align:center}
+
+.cw-word-input:focus{border-color:var(--c5)}
+
+.cw-word-input.cw-wrong{border-color:var(--c1);background:#FFE8E8;animation:shake .3s ease}
+
+.cw-answer-done{font-weight:900;font-size:.9rem;letter-spacing:3px;color:var(--c3);padding:4px 10px;background:#E8FAE8;border-radius:8px;text-align:center;min-width:80px}
+
+.cw-clue-item{font-size:.8rem;font-weight:600;margin-bottom:6px;padding:5px 8px;border-radius:8px;cursor:pointer;transition:all .15s;line-height:1.4}
 
 .cw-clue-item.active-clue{background:#F5EEFF;color:var(--c5);font-weight:700}
 
@@ -1719,19 +1733,17 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--txt);min-h
 
       <button class="cw-action-btn" onclick="cwHint()">💡 Petunjuk (-5 poin)</button>
 
-      <button class="cw-action-btn" onclick="cwCheck()">✓ Cek Jawaban</button>
-
       <button class="cw-action-btn" onclick="cwNextPuzzle()">▶ Puzzle Baru</button>
 
     </div>
 
-    <div style="text-align:center;overflow-x:auto;padding-bottom:4px">
-
-      <div id="cw-dir-hint" style="display:none;font-size:.82rem;font-weight:700;margin-bottom:6px;padding:4px 14px;border-radius:20px;background:#f0f0ff;color:#555;display:inline-block"></div>
+    <div style="text-align:center;overflow-x:auto;padding-bottom:8px">
 
       <div class="cw-grid" id="cw-grid"></div>
 
     </div>
+
+    <p style="text-align:center;font-size:.78rem;color:var(--muted);margin:0 0 10px">Klik petunjuk di bawah lalu ketik jawabannya</p>
 
     <div class="cw-clues" id="cw-clues"></div>
 
@@ -4579,7 +4591,9 @@ function cwClickCell(r,c){
 
   const p=cwCurrentPuzzle; const cell=p._cells[r][c];
 
-  if(!cell.white||cwIsCellLocked(p,r,c)) return;
+  if(!cell.white) return;
+
+  // Find an unsolved word containing this cell, prefer across
 
   const matchWords=p.words.filter(w=>{
 
@@ -4593,8 +4607,6 @@ function cwClickCell(r,c){
 
   if(!matchWords.length) return;
 
-  // toggle direction on same-cell double-click
-
   const sameCell=p._lastClickR===r&&p._lastClickC===c;
 
   const across=matchWords.find(x=>x.dir==='across');
@@ -4603,59 +4615,13 @@ function cwClickCell(r,c){
 
   let w;
 
-  if(sameCell&&matchWords.length>1){
+  if(sameCell&&matchWords.length>1) w=(p._activeWordObj&&p._activeWordObj.dir==='across')?down:across;
 
-    w=(p._activeWordObj&&p._activeWordObj.dir==='across')?down:across;
-
-  } else {
-
-    w=across||down;
-
-  }
+  else w=across||down;
 
   p._lastClickR=r; p._lastClickC=c;
 
-  const len=w.word.length;
-
-  p._activeWord=w.dir==='across'?
-
-    Array.from({length:len},(_,i)=>[w.row,w.col+i]):
-
-    Array.from({length:len},(_,i)=>[w.row+i,w.col]);
-
-  p._activeWordObj=w;
-
-  // set cursor to first unlocked cell from the clicked position
-
-  const clickedIdx=p._activeWord.findIndex(([pr,pc])=>pr===r&&pc===c);
-
-  let idx=clickedIdx;
-
-  while(idx<p._activeWord.length&&cwIsCellLocked(p,...p._activeWord[idx])) idx++;
-
-  if(idx>=p._activeWord.length) idx=clickedIdx; // fallback
-
-  p._activeCellIdx=idx;
-
-  const [sr,sc]=p._activeWord[idx];
-
-  p._selR=sr; p._selC=sc;
-
-  renderCwGrid();
-
-  const inp=getCwInput(); inp.value=''; inp.focus();
-
-  document.querySelectorAll('.cw-clue-item').forEach(el=>el.classList.toggle('active-clue',el.dataset.word===w.word));
-
-  const hint=document.getElementById('cw-dir-hint');
-
-  if(hint&&matchWords.length>1){
-
-    hint.style.display='inline-block';
-
-    hint.textContent=(w.dir==='across'?'→ Mendatar':'↓ Menurun')+' · klik lagi untuk ganti arah';
-
-  } else if(hint){ hint.style.display='none'; }
+  cwFocusInput(w.word);
 
 }
 
@@ -4757,6 +4723,38 @@ function cwNextPuzzle(){
 
 
 
+function cwGetCurrentTyped(w){
+
+  const p=cwCurrentPuzzle;
+
+  let s='';
+
+  for(let i=0;i<w.word.length;i++){
+
+    const r=w.dir==='across'?w.row:w.row+i;
+
+    const c=w.dir==='across'?w.col+i:w.col;
+
+    s+=p._cells[r][c].userInput||'';
+
+  }
+
+  return s;
+
+}
+
+function cwRenderClueRow(w){
+
+  const typed=cwGetCurrentTyped(w);
+
+  if(w._solved) return `<div class="cw-clue-row solved-clue" data-word="${w.word}"><span class="cw-clue-text">${w.clue}</span><span class="cw-answer-done">✓ ${w.word}</span></div>`;
+
+  const blanks=Array(w.word.length).fill('_').join(' ');
+
+  return `<div class="cw-clue-row" data-word="${w.word}" onclick="cwFocusInput('${w.word}')"><span class="cw-clue-text">${w.clue}</span><input class="cw-word-input" id="cwi-${w.word}" data-word="${w.word}" type="text" maxlength="${w.word.length}" placeholder="${blanks}" value="${typed}" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="cwHandleInput(this)" onfocus="cwHighlightWord('${w.word}')"></div>`;
+
+}
+
 function renderCwClues(){
 
   const p=cwCurrentPuzzle;
@@ -4771,7 +4769,7 @@ function renderCwClues(){
 
       <div class="cw-clue-title">→ Mendatar</div>
 
-      ${across.map(w=>`<div class="cw-clue-item${w._solved?' solved-clue':''}" data-word="${w.word}" onclick="cwHighlightWord('${w.word}')">${w.clue}</div>`).join('')}
+      ${across.map(w=>cwRenderClueRow(w)).join('')}
 
     </div>
 
@@ -4779,13 +4777,81 @@ function renderCwClues(){
 
       <div class="cw-clue-title">↓ Menurun</div>
 
-      ${down.map(w=>`<div class="cw-clue-item${w._solved?' solved-clue':''}" data-word="${w.word}" onclick="cwHighlightWord('${w.word}')">${w.clue}</div>`).join('')}
+      ${down.map(w=>cwRenderClueRow(w)).join('')}
 
     </div>`;
 
 }
 
+function cwFocusInput(word){
 
+  const el=document.getElementById('cwi-'+word);
+
+  if(el){ el.focus(); el.select(); }
+
+  cwHighlightWord(word);
+
+}
+
+function cwHandleInput(inp){
+
+  const p=cwCurrentPuzzle;
+
+  const wordStr=inp.dataset.word;
+
+  const w=p.words.find(x=>x.word===wordStr);
+
+  if(!w||w._solved) return;
+
+  const typed=inp.value.toUpperCase().replace(/[^A-Z]/g,'');
+
+  inp.value=typed;
+
+  // Fill grid cells
+
+  for(let i=0;i<w.word.length;i++){
+
+    const r=w.dir==='across'?w.row:w.row+i;
+
+    const c=w.dir==='across'?w.col+i:w.col;
+
+    p._cells[r][c].userInput=typed[i]||'';
+
+  }
+
+  renderCwGrid();
+
+  // Auto-check when fully typed
+
+  if(typed.length===w.word.length){
+
+    if(typed===w.word){
+
+      w._solved=true;
+
+      cwSolved=p.words.filter(x=>x._solved).length;
+
+      addScore(25);
+
+      document.getElementById('cw-solved').textContent=cwSolved;
+
+      renderCwClues();
+
+      renderCwGrid();
+
+      if(cwSolved>=p.words.length) setTimeout(()=>{cwPuzzleIdx++;loadCwPuzzle();},900);
+
+    } else {
+
+      inp.classList.add('cw-wrong');
+
+      setTimeout(()=>inp.classList.remove('cw-wrong'),700);
+
+    }
+
+  }
+
+}
 
 function cwHighlightWord(word){
 
@@ -4805,11 +4871,11 @@ function cwHighlightWord(word){
 
     Array.from({length:len},(_,i)=>[w.row+i,w.col]);
 
-  p._activeCellIdx=0;
+  p._selR=w.row; p._selC=w.col;
 
   renderCwGrid();
 
-  document.querySelectorAll('.cw-clue-item').forEach(el=>el.classList.toggle('active-clue',el.dataset.word===word));
+  document.querySelectorAll('.cw-clue-row').forEach(el=>el.classList.toggle('active-clue',el.dataset.word===word));
 
 }
 
