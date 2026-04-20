@@ -4382,13 +4382,13 @@ function renderCwGrid(){
 
     const val=cell.userInput||'';
 
-    const isActive=p._activeWord && p._activeWord.some(([pr,pc])=>pr===r&&pc===c);
-
     const locked=cell.words&&cell.words.length>0&&cell.words.every(w=>solvedWords.has(w));
+
+    const isSelected=p._selR===r&&p._selC===c;
 
     if(locked) return `<div class="cw-cell cw-locked" id="cwc-${r}-${c}">${num}<span style="font-size:1.05rem">${val}</span></div>`;
 
-    return `<div class="cw-cell${isActive?' word-active':''}" onclick="cwClickCell(${r},${c})" id="cwc-${r}-${c}">
+    return `<div class="cw-cell${isSelected?' word-active':''}" onclick="cwClickCell(${r},${c})" id="cwc-${r}-${c}">
 
       ${num}<span style="font-size:1.05rem">${val}</span>
 
@@ -4478,31 +4478,17 @@ function getCwInput(){
 
     _cwInput.addEventListener('keydown',(e)=>{
 
-      const p=cwCurrentPuzzle; if(!p||!p._activeWord) return;
+      const p=cwCurrentPuzzle; if(!p||p._selR==null) return;
+
+      const r=p._selR, c=p._selC;
 
       const key=e.key.toUpperCase();
 
       if(key.match(/^[A-Z]$/)){
 
-        // skip locked cells forward
+        if(!cwIsCellLocked(p,r,c)){
 
-        while(p._activeCellIdx<p._activeWord.length){
-
-          const [cr,cc]=p._activeWord[p._activeCellIdx];
-
-          if(!cwIsCellLocked(p,cr,cc)) break;
-
-          p._activeCellIdx++;
-
-        }
-
-        if(p._activeCellIdx<p._activeWord.length){
-
-          const [cr,cc]=p._activeWord[p._activeCellIdx];
-
-          p._cells[cr][cc].userInput=key;
-
-          if(p._activeCellIdx<p._activeWord.length-1) p._activeCellIdx++;
+          p._cells[r][c].userInput=key;
 
           cwAutoCheck(); renderCwGrid();
 
@@ -4512,23 +4498,9 @@ function getCwInput(){
 
       } else if(e.key==='Backspace'){
 
-        const [cr,cc]=p._activeWord[p._activeCellIdx];
+        if(!cwIsCellLocked(p,r,c)){
 
-        if(!cwIsCellLocked(p,cr,cc)){
-
-          if(p._cells[cr][cc].userInput) p._cells[cr][cc].userInput='';
-
-          else if(p._activeCellIdx>0){
-
-            // find prev unlocked
-
-            let prev=p._activeCellIdx-1;
-
-            while(prev>=0&&cwIsCellLocked(p,...p._activeWord[prev])) prev--;
-
-            if(prev>=0){ p._activeCellIdx=prev; const [pr,pc]=p._activeWord[prev]; p._cells[pr][pc].userInput=''; }
-
-          }
+          p._cells[r][c].userInput='';
 
           cwAutoCheck(); renderCwGrid();
 
@@ -4542,35 +4514,17 @@ function getCwInput(){
 
     _cwInput.addEventListener('input',(e)=>{
 
-      const p=cwCurrentPuzzle; if(!p||!p._activeWord) return;
+      const p=cwCurrentPuzzle; if(!p||p._selR==null) return;
+
+      const r=p._selR, c=p._selC;
 
       const val=_cwInput.value.replace(/[^a-zA-Z]/g,'');
 
-      if(val.length>0){
+      if(val.length>0&&!cwIsCellLocked(p,r,c)){
 
-        const key=val[val.length-1].toUpperCase();
+        p._cells[r][c].userInput=val[val.length-1].toUpperCase();
 
-        while(p._activeCellIdx<p._activeWord.length){
-
-          const [cr,cc]=p._activeWord[p._activeCellIdx];
-
-          if(!cwIsCellLocked(p,cr,cc)) break;
-
-          p._activeCellIdx++;
-
-        }
-
-        if(p._activeCellIdx<p._activeWord.length){
-
-          const [cr,cc]=p._activeWord[p._activeCellIdx];
-
-          p._cells[cr][cc].userInput=key;
-
-          if(p._activeCellIdx<p._activeWord.length-1) p._activeCellIdx++;
-
-          cwAutoCheck(); renderCwGrid();
-
-        }
+        cwAutoCheck(); renderCwGrid();
 
       }
 
@@ -4588,71 +4542,23 @@ function cwClickCell(r,c){
 
   const p=cwCurrentPuzzle; const cell=p._cells[r][c];
 
-  if(!cell.white) return;
+  if(!cell.white||cwIsCellLocked(p,r,c)) return;
 
-  const matchWords=p.words.filter(w=>{
-
-    if(w._solved) return false;
-
-    const len=w.word.length;
-
-    if(w.dir==='across') return w.row===r&&c>=w.col&&c<w.col+len;
-
-    else return w.col===c&&r>=w.row&&r<w.row+len;
-
-  });
-
-  if(!matchWords.length) return;
-
-  // Toggle direction when clicking the same cell again
-
-  let w;
-
-  const sameCell = p._lastClickR===r && p._lastClickC===c;
-
-  const across=matchWords.find(x=>x.dir==='across');
-
-  const down=matchWords.find(x=>x.dir==='down');
-
-  if(sameCell && matchWords.length>1){
-
-    // toggle: if currently on across → switch to down, and vice versa
-
-    const curDir=p._activeWordObj&&p._activeWordObj.dir;
-
-    w = curDir==='across' ? down : across;
-
-  } else {
-
-    // first click: prefer across, fallback down
-
-    w = across || down;
-
-  }
-
-  p._lastClickR=r; p._lastClickC=c;
-
-  const len=w.word.length;
-
-  p._activeWord=w.dir==='across'?
-
-    Array.from({length:len},(_,i)=>[w.row,w.col+i]):
-
-    Array.from({length:len},(_,i)=>[w.row+i,w.col]);
-
-  p._activeWordObj=w;
-
-  p._activeCellIdx=p._activeWord.findIndex(([pr,pc])=>pr===r&&pc===c);
+  p._selR=r; p._selC=c;
 
   renderCwGrid();
 
   const inp=getCwInput(); inp.value=''; inp.focus();
 
-  document.querySelectorAll('.cw-clue-item').forEach(el=>el.classList.toggle('active-clue',el.dataset.word===w.word));
+  // highlight all clues for words containing this cell
+
+  const cellWords=new Set(cell.words||[]);
+
+  document.querySelectorAll('.cw-clue-item').forEach(el=>el.classList.toggle('active-clue',cellWords.has(el.dataset.word)));
 
   const hint=document.getElementById('cw-dir-hint');
 
-  if(hint){ hint.style.display='inline-block'; hint.textContent=w.dir==='across'?'→ Mendatar'+(matchWords.length>1?' (klik lagi untuk ↓ Menurun)':''):' ↓ Menurun'+(matchWords.length>1?' (klik lagi untuk → Mendatar)':''); }
+  if(hint){ hint.style.display='none'; }
 
 }
 
