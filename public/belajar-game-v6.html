@@ -430,7 +430,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--txt);min-h
 
 .typing-arena{max-width:540px;margin:0 auto;text-align:center}
 
-.typing-text-box{background:var(--card);border-radius:18px;padding:22px;box-shadow:var(--shadow);margin-bottom:18px;font-size:1.1rem;line-height:1.8;text-align:left;border:2px solid #e8e8e8}
+.typing-text-box{background:var(--card);border-radius:18px;padding:22px;box-shadow:var(--shadow);margin-bottom:18px;font-size:1.1rem;line-height:1.8;text-align:left;border:2px solid #e8e8e8;overflow-wrap:break-word;word-break:break-word;white-space:pre-wrap}
 
 .typing-char{display:inline}
 
@@ -2245,7 +2245,7 @@ let fibItems=[],fibIdx=0,fibScore=0,fibCat='IPA',fibAnswered=false;
 
 // New game states
 
-let tyTimer=null,tyTime=60,tyCorrect=0,tyTotal=0,tyTextArr=[],tyCurrentIdx=0,tyCurrentText='',tyStarted=false;
+let tyTimer=null,tyTime=60,tyCorrect=0,tyTotal=0,tyTextArr=[],tyCurrentIdx=0,tyCurrentText='',tyStarted=false,tyStage=0,tyCumCorrect=0,tyCumTotal=0,tyStartTime=0;
 
 let ptItems=[],ptIdx=0,ptScore=0,ptAnswered=false;
 
@@ -3059,6 +3059,60 @@ function initTypingSpeed(){
 
 }
 
+function updateTimerBar(){
+
+  const fill=document.getElementById('ty-timer-fill');
+
+  fill.style.transition='width .95s linear';
+
+  fill.style.width=(Math.max(0,tyTime)/90*100)+'%';
+
+}
+
+function showTypingBonus(msg){
+
+  let el=document.getElementById('ty-bonus-msg');
+
+  if(!el){
+
+    el=document.createElement('div');
+
+    el.id='ty-bonus-msg';
+
+    el.style.cssText='position:fixed;top:28%;left:50%;transform:translateX(-50%) translateY(-20px);background:linear-gradient(135deg,#43c6ac,#191654);color:#fff;font-family:Nunito,sans-serif;font-weight:900;font-size:1.4rem;border-radius:50px;padding:12px 32px;z-index:9999;box-shadow:0 4px 24px rgba(0,0,0,.25);pointer-events:none;opacity:0;transition:opacity .25s,transform .25s';
+
+    document.body.appendChild(el);
+
+  }
+
+  el.textContent=msg;
+
+  el.style.opacity='1'; el.style.transform='translateX(-50%) translateY(0)';
+
+  clearTimeout(el._t);
+
+  el._t=setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateX(-50%) translateY(-20px)'; },1300);
+
+}
+
+function loadNextTypingText(){
+
+  const inp=document.getElementById('ty-input');
+
+  inp.value='';
+
+  let newText;
+
+  do { newText=DATA.typingTexts[Math.floor(Math.random()*DATA.typingTexts.length)]; }
+
+  while(newText===tyCurrentText&&DATA.typingTexts.length>1);
+
+  tyCurrentText=newText; tyTextArr=tyCurrentText.split('');
+
+  renderTypingDisplay('');
+
+}
+
 function startTyping(){
 
   document.getElementById('typing-start-wrap').style.display='none';
@@ -3067,13 +3121,15 @@ function startTyping(){
 
   tyTime=60; tyCorrect=0; tyTotal=0; tyCurrentIdx=0; tyStarted=true;
 
+  tyStage=0; tyCumCorrect=0; tyCumTotal=0; tyStartTime=Date.now();
+
   // Pick random text
 
   tyCurrentText=DATA.typingTexts[Math.floor(Math.random()*DATA.typingTexts.length)];
 
   tyTextArr=tyCurrentText.split('');
 
-  renderTypingDisplay(0);
+  renderTypingDisplay('');
 
   const inp=document.getElementById('ty-input');
 
@@ -3081,19 +3137,17 @@ function startTyping(){
 
   inp.oninput=onTypingInput;
 
-  // Timer
+  // Timer — JS-driven bar
 
-  const fill=document.getElementById('ty-timer-fill');
-
-  fill.style.transition='none'; fill.style.width='100%';
-
-  setTimeout(()=>{ fill.style.transition=`width ${tyTime}s linear`; fill.style.width='0%'; },50);
+  updateTimerBar();
 
   tyTimer=setInterval(()=>{
 
     tyTime--;
 
     document.getElementById('ty-time').textContent=tyTime;
+
+    updateTimerBar();
 
     if(tyTime<=0){ clearInterval(tyTimer); endTyping(); }
 
@@ -3139,31 +3193,41 @@ function onTypingInput(e){
 
   }
 
-  tyCorrect=correct;
+  tyCorrect=correct; tyTotal=typed.length;
 
   renderTypingDisplay(typed);
 
-  // WPM: words = correct chars / 5
+  // WPM based on cumulative + current stats
 
-  const elapsed=60-tyTime||1;
+  const elapsed=Math.max(1,(Date.now()-tyStartTime)/1000);
 
-  const wpm=Math.round((tyCorrect/5)/(elapsed/60));
+  const totalCorrect=tyCumCorrect+correct;
 
-  const acc=tyTotal>0?Math.round((tyCorrect/tyTotal)*100):100;
+  const wpm=Math.round((totalCorrect/5)/(elapsed/60));
+
+  const acc=(tyCumTotal+typed.length)>0?Math.round((totalCorrect/(tyCumTotal+typed.length))*100):100;
 
   document.getElementById('ty-wpm').textContent=wpm;
 
   document.getElementById('ty-acc').textContent=acc+'%';
 
-  // Finish only when all chars are typed AND all correct
+  // Stage complete: all chars typed AND all correct
 
   if(typed.length>=tyTextArr.length&&wrong===0){
 
-    clearInterval(tyTimer);
+    tyCumCorrect+=correct; tyCumTotal+=typed.length;
+
+    tyStage++;
+
+    tyTime=Math.min(tyTime+5,90);
+
+    updateTimerBar();
 
     addScore(Math.round(wpm/2)+acc);
 
-    setTimeout(endTyping,600);
+    showTypingBonus('✅ +5 Detik!');
+
+    loadNextTypingText();
 
   }
 
@@ -3173,13 +3237,17 @@ function endTyping(){
 
   tyStarted=false;
 
-  const elapsed=Math.max(1,60-tyTime);
+  const elapsed=Math.max(1,(Date.now()-tyStartTime)/1000);
 
-  const wpm=Math.round((tyCorrect/5)/(elapsed/60));
+  const totalCorrect=tyCumCorrect+tyCorrect;
 
-  const acc=tyTotal>0?Math.round((tyCorrect/tyTotal)*100):0;
+  const totalTyped=tyCumTotal+tyTotal;
 
-  showResult('typingspeed',wpm,200,'⌨️',wpm>=60?'Juru Ketik Kilat!':wpm>=30?'Pengetik Handal!':'Terus Berlatih!',`${wpm} WPM · Akurasi ${acc}% · ${tyCorrect} karakter benar`);
+  const wpm=Math.round((totalCorrect/5)/(elapsed/60));
+
+  const acc=totalTyped>0?Math.round((totalCorrect/totalTyped)*100):0;
+
+  showResult('typingspeed',wpm,200,'⌨️',wpm>=60?'Juru Ketik Kilat!':wpm>=30?'Pengetik Handal!':'Terus Berlatih!',`${wpm} WPM · Akurasi ${acc}% · ${tyStage} teks selesai`);
 
 }
 
