@@ -677,6 +677,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--txt);min-h
 
 .cw-cell.correct{background:#E8FAE8;color:var(--c3)}
 .cw-cell.cw-locked{background:#d4edda;color:#155724;font-weight:800;cursor:default;pointer-events:none}
+.cw-cell.cw-sel{background:var(--c4);color:#fff;font-weight:800}
 
 .cw-cell.wrong{background:#FFE8E8;color:var(--c1)}
 
@@ -4384,11 +4385,13 @@ function renderCwGrid(){
 
     const locked=cell.words&&cell.words.length>0&&cell.words.every(w=>solvedWords.has(w));
 
+    const inActiveWord=p._activeWord&&p._activeWord.some(([pr,pc])=>pr===r&&pc===c);
+
     const isSelected=p._selR===r&&p._selC===c;
 
     if(locked) return `<div class="cw-cell cw-locked" id="cwc-${r}-${c}">${num}<span style="font-size:1.05rem">${val}</span></div>`;
 
-    return `<div class="cw-cell${isSelected?' word-active':''}" onclick="cwClickCell(${r},${c})" id="cwc-${r}-${c}">
+    return `<div class="cw-cell${inActiveWord?' word-active':''}${isSelected?' cw-sel':''}" onclick="cwClickCell(${r},${c})" id="cwc-${r}-${c}">
 
       ${num}<span style="font-size:1.05rem">${val}</span>
 
@@ -4454,6 +4457,68 @@ function cwAutoCheck(){
 
 }
 
+function cwTypeChar(p, key){
+
+  // advance past locked cells from current idx
+
+  while(p._activeCellIdx<p._activeWord.length&&cwIsCellLocked(p,...p._activeWord[p._activeCellIdx])) p._activeCellIdx++;
+
+  if(p._activeCellIdx>=p._activeWord.length) return;
+
+  const [cr,cc]=p._activeWord[p._activeCellIdx];
+
+  p._cells[cr][cc].userInput=key;
+
+  p._selR=cr; p._selC=cc;
+
+  // advance cursor to next unlocked cell
+
+  let next=p._activeCellIdx+1;
+
+  while(next<p._activeWord.length&&cwIsCellLocked(p,...p._activeWord[next])) next++;
+
+  p._activeCellIdx=next<p._activeWord.length?next:p._activeCellIdx;
+
+  if(next<p._activeWord.length){ const [nr,nc]=p._activeWord[next]; p._selR=nr; p._selC=nc; }
+
+  cwAutoCheck(); renderCwGrid();
+
+}
+
+function cwBackspace(p){
+
+  const [cr,cc]=p._activeWord[p._activeCellIdx];
+
+  if(!cwIsCellLocked(p,cr,cc)&&p._cells[cr][cc].userInput){
+
+    p._cells[cr][cc].userInput='';
+
+  } else {
+
+    // move back to prev unlocked cell and clear it
+
+    let prev=p._activeCellIdx-1;
+
+    while(prev>=0&&cwIsCellLocked(p,...p._activeWord[prev])) prev--;
+
+    if(prev>=0){
+
+      p._activeCellIdx=prev;
+
+      const [pr,pc]=p._activeWord[prev];
+
+      p._cells[pr][pc].userInput='';
+
+      p._selR=pr; p._selC=pc;
+
+    }
+
+  }
+
+  cwAutoCheck(); renderCwGrid();
+
+}
+
 let _cwInput=null;
 
 function getCwInput(){
@@ -4478,35 +4543,17 @@ function getCwInput(){
 
     _cwInput.addEventListener('keydown',(e)=>{
 
-      const p=cwCurrentPuzzle; if(!p||p._selR==null) return;
-
-      const r=p._selR, c=p._selC;
+      const p=cwCurrentPuzzle; if(!p||!p._activeWord) return;
 
       const key=e.key.toUpperCase();
 
       if(key.match(/^[A-Z]$/)){
 
-        if(!cwIsCellLocked(p,r,c)){
-
-          p._cells[r][c].userInput=key;
-
-          cwAutoCheck(); renderCwGrid();
-
-        }
-
-        e.preventDefault();
+        cwTypeChar(p, key); e.preventDefault();
 
       } else if(e.key==='Backspace'){
 
-        if(!cwIsCellLocked(p,r,c)){
-
-          p._cells[r][c].userInput='';
-
-          cwAutoCheck(); renderCwGrid();
-
-        }
-
-        e.preventDefault();
+        cwBackspace(p); e.preventDefault();
 
       }
 
@@ -4514,19 +4561,11 @@ function getCwInput(){
 
     _cwInput.addEventListener('input',(e)=>{
 
-      const p=cwCurrentPuzzle; if(!p||p._selR==null) return;
-
-      const r=p._selR, c=p._selC;
+      const p=cwCurrentPuzzle; if(!p||!p._activeWord) return;
 
       const val=_cwInput.value.replace(/[^a-zA-Z]/g,'');
 
-      if(val.length>0&&!cwIsCellLocked(p,r,c)){
-
-        p._cells[r][c].userInput=val[val.length-1].toUpperCase();
-
-        cwAutoCheck(); renderCwGrid();
-
-      }
+      if(val.length>0) cwTypeChar(p, val[val.length-1].toUpperCase());
 
       _cwInput.value='';
 
@@ -4544,21 +4583,81 @@ function cwClickCell(r,c){
 
   if(!cell.white||cwIsCellLocked(p,r,c)) return;
 
-  p._selR=r; p._selC=c;
+  const matchWords=p.words.filter(w=>{
+
+    if(w._solved) return false;
+
+    const len=w.word.length;
+
+    return w.dir==='across'?(w.row===r&&c>=w.col&&c<w.col+len):(w.col===c&&r>=w.row&&r<w.row+len);
+
+  });
+
+  if(!matchWords.length) return;
+
+  // toggle direction on same-cell double-click
+
+  const sameCell=p._lastClickR===r&&p._lastClickC===c;
+
+  const across=matchWords.find(x=>x.dir==='across');
+
+  const down=matchWords.find(x=>x.dir==='down');
+
+  let w;
+
+  if(sameCell&&matchWords.length>1){
+
+    w=(p._activeWordObj&&p._activeWordObj.dir==='across')?down:across;
+
+  } else {
+
+    w=across||down;
+
+  }
+
+  p._lastClickR=r; p._lastClickC=c;
+
+  const len=w.word.length;
+
+  p._activeWord=w.dir==='across'?
+
+    Array.from({length:len},(_,i)=>[w.row,w.col+i]):
+
+    Array.from({length:len},(_,i)=>[w.row+i,w.col]);
+
+  p._activeWordObj=w;
+
+  // set cursor to first unlocked cell from the clicked position
+
+  const clickedIdx=p._activeWord.findIndex(([pr,pc])=>pr===r&&pc===c);
+
+  let idx=clickedIdx;
+
+  while(idx<p._activeWord.length&&cwIsCellLocked(p,...p._activeWord[idx])) idx++;
+
+  if(idx>=p._activeWord.length) idx=clickedIdx; // fallback
+
+  p._activeCellIdx=idx;
+
+  const [sr,sc]=p._activeWord[idx];
+
+  p._selR=sr; p._selC=sc;
 
   renderCwGrid();
 
   const inp=getCwInput(); inp.value=''; inp.focus();
 
-  // highlight all clues for words containing this cell
-
-  const cellWords=new Set(cell.words||[]);
-
-  document.querySelectorAll('.cw-clue-item').forEach(el=>el.classList.toggle('active-clue',cellWords.has(el.dataset.word)));
+  document.querySelectorAll('.cw-clue-item').forEach(el=>el.classList.toggle('active-clue',el.dataset.word===w.word));
 
   const hint=document.getElementById('cw-dir-hint');
 
-  if(hint){ hint.style.display='none'; }
+  if(hint&&matchWords.length>1){
+
+    hint.style.display='inline-block';
+
+    hint.textContent=(w.dir==='across'?'→ Mendatar':'↓ Menurun')+' · klik lagi untuk ganti arah';
+
+  } else if(hint){ hint.style.display='none'; }
 
 }
 
