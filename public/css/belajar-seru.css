@@ -300,16 +300,23 @@
   .chip-done { background: #F0FFF4; color: var(--green); }
   .chip-due { background: #FFF8E1; color: #E6A817; }
 
-  .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 32px; }
-  .game-card { border-radius: 18px; padding: 22px 16px; text-align: center; cursor: pointer; transition: all 0.2s; color: white; font-weight: 700; }
-  .game-card:hover { transform: translateY(-5px) scale(1.03); }
-  .game-card .game-icon { font-size: 42px; margin-bottom: 10px; }
-  .game-card h4 { font-size: 14px; font-weight: 800; }
-  .game-card p { font-size: 11px; opacity: 0.85; margin-top: 3px; }
-  .gc1 { background: linear-gradient(135deg, #FF6B35, #FF8C42); }
-  .gc2 { background: linear-gradient(135deg, #4D96FF, #6AADFF); }
-  .gc3 { background: linear-gradient(135deg, #6BCB77, #8EDA98); }
-  .gc4 { background: linear-gradient(135deg, #C77DFF, #D99CFF); }
+  .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .game-card { border-radius: 22px; padding: 22px 14px 18px; text-align: center; cursor: pointer; transition: all 0.28s cubic-bezier(.34,1.56,.64,1); color: white; font-weight: 700; position: relative; overflow: hidden; }
+  .game-card::before { content: ''; position: absolute; top: -25%; right: -18%; width: 110px; height: 110px; background: rgba(255,255,255,0.13); border-radius: 50%; pointer-events: none; }
+  .game-card::after { content: ''; position: absolute; bottom: -30%; left: -15%; width: 80px; height: 80px; background: rgba(255,255,255,0.07); border-radius: 50%; pointer-events: none; }
+  .game-card:hover { transform: translateY(-7px) scale(1.04); }
+  .game-card .game-icon-wrap { width: 58px; height: 58px; background: rgba(255,255,255,0.22); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; backdrop-filter: blur(4px); }
+  .game-card .game-icon { font-size: 30px; line-height: 1; }
+  .game-card h4 { font-size: 14px; font-weight: 900; margin-bottom: 3px; letter-spacing: 0.1px; }
+  .game-card p { font-size: 11px; opacity: 0.82; margin-top: 0; line-height: 1.4; }
+  .gc1 { background: linear-gradient(135deg, #FF6B35, #FF9A5C); box-shadow: 0 8px 24px rgba(255,107,53,0.38); }
+  .gc1:hover { box-shadow: 0 16px 36px rgba(255,107,53,0.48); }
+  .gc2 { background: linear-gradient(135deg, #7b2ff7, #a64cff); box-shadow: 0 8px 24px rgba(123,47,247,0.38); }
+  .gc2:hover { box-shadow: 0 16px 36px rgba(123,47,247,0.48); }
+  .gc3 { background: linear-gradient(135deg, #f64f59, #c471ed); box-shadow: 0 8px 24px rgba(246,79,89,0.35); }
+  .gc3:hover { box-shadow: 0 16px 36px rgba(246,79,89,0.45); }
+  .gc4 { background: linear-gradient(135deg, #9B4DFF, #C77DFF); box-shadow: 0 8px 24px rgba(155,77,255,0.35); }
+  .gc4:hover { box-shadow: 0 16px 36px rgba(155,77,255,0.45); }
 
   /* ===== KITABELAJAR LATIHAN BANNER ===== */
   .kb-latihan-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: linear-gradient(135deg, #6C3CE1, #FF6B35); border-radius: 22px; padding: 22px 28px; margin-bottom: 32px; cursor: pointer; transition: all 0.2s; box-shadow: 0 6px 24px rgba(108,60,225,0.3); color: white; }
