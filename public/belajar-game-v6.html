@@ -441,6 +441,11 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--txt);min-h
 .typing-char.current{background:var(--c4);color:#fff;border-radius:3px;animation:blink .8s ease infinite}
 
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.5}}
+#beranda-btn{position:absolute;left:16px;top:16px}
+@media(max-width:500px){
+  #beranda-btn{position:static;display:inline-block;margin-bottom:10px}
+  .header{padding-top:16px}
+}
 
 .typing-input{width:100%;border:3px solid #e8e8e8;border-radius:14px;padding:14px;font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;outline:none;transition:border-color .2s;resize:none;height:90px}
 
@@ -822,7 +827,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--txt);min-h
 
 <div class="header">
 
-  <button onclick="window.location.href='belajar-seru.html'" style="position:absolute;left:16px;top:16px;background:rgba(255,255,255,0.85);border:none;border-radius:50px;padding:8px 16px;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;color:#555;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.1);transition:all .2s" onmouseover="this.style.background='#fff';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(255,255,255,0.85)';this.style.transform=''">🏠 Beranda</button>
+  <button id="beranda-btn" onclick="window.location.href='belajar-seru.html'" style="background:rgba(255,255,255,0.85);border:none;border-radius:50px;padding:8px 16px;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;color:#555;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.1);transition:all .2s" onmouseover="this.style.background='#fff';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(255,255,255,0.85)';this.style.transform=''">🏠 Beranda</button>
 
   <div class="logo">🎓 BelajarYuk!</div>
 
@@ -3096,17 +3101,19 @@ function startTyping(){
 
 }
 
-function renderTypingDisplay(pos){
+function renderTypingDisplay(typed){
+
+  if(typeof typed==='number') typed=document.getElementById('ty-input').value;
 
   const chars=tyTextArr.map((ch,i)=>{
 
     let cls='';
 
-    if(i<pos) cls='correct';
+    if(i<typed.length) cls=typed[i]===ch?'correct':'wrong';
 
-    else if(i===pos) cls='current';
+    else if(i===typed.length) cls='current';
 
-    return `<span class="typing-char ${cls}">${ch}</span>`;
+    return `<span class="typing-char ${cls}">${ch===' '?'&nbsp;':ch}</span>`;
 
   }).join('');
 
@@ -3122,19 +3129,19 @@ function onTypingInput(e){
 
   tyTotal=typed.length;
 
-  // Count correct chars
+  // Count correct and wrong chars
 
-  let correct=0;
+  let correct=0; let wrong=0;
 
   for(let i=0;i<typed.length&&i<tyTextArr.length;i++){
 
-    if(typed[i]===tyTextArr[i]) correct++;
+    if(typed[i]===tyTextArr[i]) correct++; else wrong++;
 
   }
 
   tyCorrect=correct;
 
-  renderTypingDisplay(typed.length);
+  renderTypingDisplay(typed);
 
   // WPM: words = correct chars / 5
 
@@ -3148,9 +3155,9 @@ function onTypingInput(e){
 
   document.getElementById('ty-acc').textContent=acc+'%';
 
-  // If finished text
+  // Finish only when all chars are typed AND all correct
 
-  if(typed.length>=tyTextArr.length){
+  if(typed.length>=tyTextArr.length&&wrong===0){
 
     clearInterval(tyTimer);
 
@@ -4316,6 +4323,88 @@ function renderCwGrid(){
 
 
 
+let _cwInput=null;
+
+function getCwInput(){
+
+  if(!_cwInput||!document.body.contains(_cwInput)){
+
+    _cwInput=document.createElement('input');
+
+    _cwInput.type='text';
+
+    _cwInput.setAttribute('inputmode','text');
+
+    _cwInput.setAttribute('autocomplete','off');
+
+    _cwInput.setAttribute('autocorrect','off');
+
+    _cwInput.setAttribute('autocapitalize','characters');
+
+    _cwInput.style.cssText='position:fixed;opacity:0;left:0;top:0;width:1px;height:1px;pointer-events:none';
+
+    document.body.appendChild(_cwInput);
+
+    _cwInput.addEventListener('keydown',(e)=>{
+
+      const p=cwCurrentPuzzle; if(!p||!p._activeWord) return;
+
+      const key=e.key.toUpperCase();
+
+      if(key.match(/^[A-Z]$/)){
+
+        const [cr,cc]=p._activeWord[p._activeCellIdx];
+
+        p._cells[cr][cc].userInput=key;
+
+        if(p._activeCellIdx<p._activeWord.length-1) p._activeCellIdx++;
+
+        renderCwGrid(); e.preventDefault();
+
+      } else if(e.key==='Backspace'){
+
+        const [cr,cc]=p._activeWord[p._activeCellIdx];
+
+        if(p._cells[cr][cc].userInput) p._cells[cr][cc].userInput='';
+
+        else if(p._activeCellIdx>0){ p._activeCellIdx--; const [pr,pc]=p._activeWord[p._activeCellIdx]; p._cells[pr][pc].userInput=''; }
+
+        renderCwGrid(); e.preventDefault();
+
+      }
+
+    });
+
+    _cwInput.addEventListener('input',(e)=>{
+
+      const p=cwCurrentPuzzle; if(!p||!p._activeWord) return;
+
+      const val=_cwInput.value.replace(/[^a-zA-Z]/g,'');
+
+      if(val.length>0){
+
+        const key=val[val.length-1].toUpperCase();
+
+        const [cr,cc]=p._activeWord[p._activeCellIdx];
+
+        p._cells[cr][cc].userInput=key;
+
+        if(p._activeCellIdx<p._activeWord.length-1) p._activeCellIdx++;
+
+        renderCwGrid();
+
+      }
+
+      _cwInput.value='';
+
+    });
+
+  }
+
+  return _cwInput;
+
+}
+
 function cwClickCell(r,c){
 
   const p=cwCurrentPuzzle; const cell=p._cells[r][c];
@@ -4352,49 +4441,9 @@ function cwClickCell(r,c){
 
   renderCwGrid();
 
-  // show input prompt
+  // focus persistent hidden input (works on mobile too)
 
-  const inp=document.createElement('input');
-
-  inp.style.cssText='position:fixed;opacity:0;left:0;top:0;width:1px;height:1px';
-
-  inp.setAttribute('maxlength','1');
-
-  document.body.appendChild(inp);
-
-  inp.focus();
-
-  inp.addEventListener('keydown',(e)=>{
-
-    const key=e.key.toUpperCase();
-
-    if(key.match(/^[A-Z]$/)&&p._activeWord){
-
-      const [cr,cc]=p._activeWord[p._activeCellIdx];
-
-      p._cells[cr][cc].userInput=key;
-
-      if(p._activeCellIdx<p._activeWord.length-1) p._activeCellIdx++;
-
-      renderCwGrid();
-
-    } else if(e.key==='Backspace'&&p._activeWord){
-
-      const [cr,cc]=p._activeWord[p._activeCellIdx];
-
-      if(p._cells[cr][cc].userInput) p._cells[cr][cc].userInput='';
-
-      else if(p._activeCellIdx>0){ p._activeCellIdx--; const [pr,pc]=p._activeWord[p._activeCellIdx]; p._cells[pr][pc].userInput=''; }
-
-      renderCwGrid();
-
-    }
-
-    e.preventDefault();
-
-  });
-
-  setTimeout(()=>inp.remove(),8000);
+  const inp=getCwInput(); inp.value=''; inp.focus();
 
   // highlight clue
 
@@ -4740,37 +4789,25 @@ const ALL_FLAGS = Object.values(FLAG_DATA).flat();
 
 
 
-// Konversi ISO code ke emoji bendera Unicode (selalu tersedia tanpa CDN)
+// Helper: tampilkan bendera dari CDN (utama), fallback teks kode negara
 
-function isoToFlagEmoji(iso){
+function flagFallback(el, iso){
 
-  return [...iso.toUpperCase()].map(c=>String.fromCodePoint(0x1F1E0+c.charCodeAt(0)-65)).join('');
+  const code=iso.toUpperCase();
+
+  el.outerHTML=`<div style="display:inline-flex;align-items:center;justify-content:center;min-width:${el.dataset.size||80}px;height:${Math.round((el.dataset.size||80)*0.65)}px;background:linear-gradient(135deg,#6a82fb,#fc5c7d);border-radius:6px;font-weight:900;font-size:${Math.round((el.dataset.size||80)*0.28)}px;color:#fff;letter-spacing:2px">${code}</div>`;
 
 }
-
-
-
-// Helper: tampilkan bendera ? emoji dulu, CDN image jika berhasil load
 
 function flagImg(iso, size=120){
 
-  const emoji=isoToFlagEmoji(iso);
-
-  const emojiSize=Math.round(size*0.65);
-
-  return `<span class="flag-emoji-span" style="font-size:${emojiSize}px;line-height:1.2;display:inline-block">${emoji}</span><img src="https://flagcdn.com/w${size}/${iso}.png" alt="${iso}" style="display:none;width:${size}px;max-width:100%;border-radius:6px;box-shadow:0 2px 12px rgba(0,0,0,.2)" onload="this.previousElementSibling.style.display='none';this.style.display='inline-block'" onerror="this.style.display='none'">`;
+  return `<img src="https://flagcdn.com/w${size}/${iso}.png" alt="${iso.toUpperCase()}" data-size="${size}" style="width:${size}px;max-width:100%;border-radius:6px;box-shadow:0 2px 12px rgba(0,0,0,.2)" onerror="flagFallback(this,'${iso}')">`;
 
 }
 
-
-
-// Helper: bendera kecil untuk pilihan
-
 function flagImgSmall(iso){
 
-  const emoji=isoToFlagEmoji(iso);
-
-  return `<span style="font-size:34px;line-height:1.1;display:block;text-align:center">${emoji}</span><img src="https://flagcdn.com/w80/${iso}.png" alt="${iso}" style="display:none;width:56px;height:auto;border-radius:4px;box-shadow:0 1px 6px rgba(0,0,0,.18);margin:0 auto;display:none" onload="this.previousElementSibling.style.display='none';this.style.display='block'" onerror="this.style.display='none'">`;
+  return `<img src="https://flagcdn.com/w80/${iso}.png" alt="${iso.toUpperCase()}" data-size="56" style="width:56px;height:auto;border-radius:4px;box-shadow:0 1px 6px rgba(0,0,0,.18);margin:0 auto;display:block" onerror="flagFallback(this,'${iso}')">`;
 
 }
 
@@ -4924,15 +4961,11 @@ function showFlagQuestion(){
 
       `<button class="flag-opt flag-opt-img" data-iso="${o.iso}" data-correct-iso="${item.iso}" data-chosen-name="${o.name}" data-correct-name="${item.name}" style="padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:4px">
 
-        <span style="font-size:40px;line-height:1.2;display:block">${isoToFlagEmoji(o.iso)}</span>
+        <img src="https://flagcdn.com/w120/${o.iso}.png" alt="${o.iso.toUpperCase()}" data-size="100"
 
-        <img src="https://flagcdn.com/w120/${o.iso}.png"
+          style="width:100%;max-width:100px;height:auto;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.15)"
 
-          style="display:none;width:100%;max-width:100px;height:auto;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.15)"
-
-          onload="this.previousElementSibling.style.display='none';this.style.display='block'"
-
-          onerror="this.style.display='none'">
+          onerror="flagFallback(this,'${o.iso}')">
 
       </button>`
 
@@ -5034,7 +5067,7 @@ function answerFlagByIso(chosenIso, correctIso, chosenName, correctName){
 
     document.getElementById('flag-wrong-cnt').textContent = flagWrong;
 
-    fb.innerHTML = '❌ Salah! Bendera <strong>' + correctName + '</strong>: <span style="font-size:24px;vertical-align:middle;margin-left:6px">' + isoToFlagEmoji(correctIso) + '</span>';
+    fb.innerHTML = '❌ Salah! Bendera <strong>' + correctName + '</strong>: <img src="https://flagcdn.com/w40/' + correctIso + '.png" alt="' + correctIso.toUpperCase() + '" data-size="40" style="height:24px;width:auto;vertical-align:middle;margin-left:6px;border-radius:3px" onerror="flagFallback(this,\'' + correctIso + '\')">';
 
     fb.style.background = '#FFE8E8'; fb.style.color = '#c0392b'; fb.className = 'flag-feedback show';
 
