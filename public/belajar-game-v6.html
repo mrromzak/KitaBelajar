@@ -676,6 +676,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--txt);min-h
 .cw-cell.word-active{background:#f5eeff}
 
 .cw-cell.correct{background:#E8FAE8;color:var(--c3)}
+.cw-cell.cw-locked{background:#d4edda;color:#155724;font-weight:800;cursor:default;pointer-events:none}
 
 .cw-cell.wrong{background:#FFE8E8;color:var(--c1)}
 
@@ -4369,6 +4370,8 @@ function renderCwGrid(){
 
   el.style.gridTemplateColumns=`repeat(${size},38px)`;
 
+  const solvedWords=new Set((p.words||[]).filter(w=>w._solved).map(w=>w.word));
+
   el.innerHTML=cells.map((row,r)=>row.map((cell,c)=>{
 
     if(!cell.white) return `<div class="cw-cell black"></div>`;
@@ -4378,6 +4381,10 @@ function renderCwGrid(){
     const val=cell.userInput||'';
 
     const isActive=p._activeWord && p._activeWord.some(([pr,pc])=>pr===r&&pc===c);
+
+    const locked=cell.words&&cell.words.length>0&&cell.words.every(w=>solvedWords.has(w));
+
+    if(locked) return `<div class="cw-cell cw-locked" id="cwc-${r}-${c}">${num}<span style="font-size:1.05rem">${val}</span></div>`;
 
     return `<div class="cw-cell${isActive?' word-active':''}" onclick="cwClickCell(${r},${c})" id="cwc-${r}-${c}">
 
@@ -4390,6 +4397,60 @@ function renderCwGrid(){
 }
 
 
+
+function cwIsCellLocked(p,r,c){
+
+  const cell=p._cells[r][c];
+
+  return cell.words&&cell.words.length>0&&cell.words.every(wWord=>{
+
+    const w=p.words.find(pw=>pw.word===wWord); return w&&w._solved;
+
+  });
+
+}
+
+function cwAutoCheck(){
+
+  const p=cwCurrentPuzzle; if(!p) return;
+
+  let newSolved=0;
+
+  p.words.forEach(w=>{
+
+    if(w._solved) return;
+
+    const len=w.word.length;
+
+    let allCorrect=true;
+
+    for(let i=0;i<len;i++){
+
+      const r=w.dir==='across'?w.row:w.row+i;
+
+      const c=w.dir==='across'?w.col+i:w.col;
+
+      if((p._cells[r][c].userInput||'').toUpperCase()!==w.word[i]){ allCorrect=false; break; }
+
+    }
+
+    if(allCorrect){ w._solved=true; newSolved++; }
+
+  });
+
+  if(newSolved>0){
+
+    cwSolved=p.words.filter(w=>w._solved).length;
+
+    addScore(newSolved*25);
+
+    document.getElementById('cw-solved').textContent=cwSolved;
+
+    if(cwSolved>=p.words.length){ setTimeout(()=>{ cwPuzzleIdx++; loadCwPuzzle(); },800); }
+
+  }
+
+}
 
 let _cwInput=null;
 
@@ -4421,23 +4482,57 @@ function getCwInput(){
 
       if(key.match(/^[A-Z]$/)){
 
-        const [cr,cc]=p._activeWord[p._activeCellIdx];
+        // skip locked cells forward
 
-        p._cells[cr][cc].userInput=key;
+        while(p._activeCellIdx<p._activeWord.length){
 
-        if(p._activeCellIdx<p._activeWord.length-1) p._activeCellIdx++;
+          const [cr,cc]=p._activeWord[p._activeCellIdx];
 
-        renderCwGrid(); e.preventDefault();
+          if(!cwIsCellLocked(p,cr,cc)) break;
+
+          p._activeCellIdx++;
+
+        }
+
+        if(p._activeCellIdx<p._activeWord.length){
+
+          const [cr,cc]=p._activeWord[p._activeCellIdx];
+
+          p._cells[cr][cc].userInput=key;
+
+          if(p._activeCellIdx<p._activeWord.length-1) p._activeCellIdx++;
+
+          cwAutoCheck(); renderCwGrid();
+
+        }
+
+        e.preventDefault();
 
       } else if(e.key==='Backspace'){
 
         const [cr,cc]=p._activeWord[p._activeCellIdx];
 
-        if(p._cells[cr][cc].userInput) p._cells[cr][cc].userInput='';
+        if(!cwIsCellLocked(p,cr,cc)){
 
-        else if(p._activeCellIdx>0){ p._activeCellIdx--; const [pr,pc]=p._activeWord[p._activeCellIdx]; p._cells[pr][pc].userInput=''; }
+          if(p._cells[cr][cc].userInput) p._cells[cr][cc].userInput='';
 
-        renderCwGrid(); e.preventDefault();
+          else if(p._activeCellIdx>0){
+
+            // find prev unlocked
+
+            let prev=p._activeCellIdx-1;
+
+            while(prev>=0&&cwIsCellLocked(p,...p._activeWord[prev])) prev--;
+
+            if(prev>=0){ p._activeCellIdx=prev; const [pr,pc]=p._activeWord[prev]; p._cells[pr][pc].userInput=''; }
+
+          }
+
+          cwAutoCheck(); renderCwGrid();
+
+        }
+
+        e.preventDefault();
 
       }
 
@@ -4453,13 +4548,27 @@ function getCwInput(){
 
         const key=val[val.length-1].toUpperCase();
 
-        const [cr,cc]=p._activeWord[p._activeCellIdx];
+        while(p._activeCellIdx<p._activeWord.length){
 
-        p._cells[cr][cc].userInput=key;
+          const [cr,cc]=p._activeWord[p._activeCellIdx];
 
-        if(p._activeCellIdx<p._activeWord.length-1) p._activeCellIdx++;
+          if(!cwIsCellLocked(p,cr,cc)) break;
 
-        renderCwGrid();
+          p._activeCellIdx++;
+
+        }
+
+        if(p._activeCellIdx<p._activeWord.length){
+
+          const [cr,cc]=p._activeWord[p._activeCellIdx];
+
+          p._cells[cr][cc].userInput=key;
+
+          if(p._activeCellIdx<p._activeWord.length-1) p._activeCellIdx++;
+
+          cwAutoCheck(); renderCwGrid();
+
+        }
 
       }
 
@@ -4859,17 +4968,23 @@ const ALL_FLAGS = Object.values(FLAG_DATA).flat();
 
 // Helper: tampilkan bendera dari CDN (utama), fallback teks kode negara
 
+function flagCdnSize(px){ return [20,40,80,160,320].reduce((p,c)=>Math.abs(c-px)<Math.abs(p-px)?c:p); }
+
 function flagFallback(el, iso){
 
   const code=iso.toUpperCase();
 
-  el.outerHTML=`<div style="display:inline-flex;align-items:center;justify-content:center;min-width:${el.dataset.size||80}px;height:${Math.round((el.dataset.size||80)*0.65)}px;background:linear-gradient(135deg,#6a82fb,#fc5c7d);border-radius:6px;font-weight:900;font-size:${Math.round((el.dataset.size||80)*0.28)}px;color:#fff;letter-spacing:2px">${code}</div>`;
+  const sz=parseInt(el.dataset.size||80);
+
+  el.outerHTML=`<div style="display:inline-flex;align-items:center;justify-content:center;min-width:${sz}px;height:${Math.round(sz*0.65)}px;background:linear-gradient(135deg,#6a82fb,#fc5c7d);border-radius:6px;font-weight:900;font-size:${Math.round(sz*0.28)}px;color:#fff;letter-spacing:2px">${code}</div>`;
 
 }
 
-function flagImg(iso, size=120){
+function flagImg(iso, size=160){
 
-  return `<img src="https://flagcdn.com/w${size}/${iso}.png" alt="${iso.toUpperCase()}" data-size="${size}" style="width:${size}px;max-width:100%;border-radius:6px;box-shadow:0 2px 12px rgba(0,0,0,.2)" onerror="flagFallback(this,'${iso}')">`;
+  const cdn=flagCdnSize(size);
+
+  return `<img src="https://flagcdn.com/w${cdn}/${iso}.png" alt="${iso.toUpperCase()}" data-size="${size}" style="width:${size}px;max-width:100%;border-radius:6px;box-shadow:0 2px 12px rgba(0,0,0,.2)" onerror="flagFallback(this,'${iso}')">`;
 
 }
 
@@ -5029,7 +5144,7 @@ function showFlagQuestion(){
 
       `<button class="flag-opt flag-opt-img" data-iso="${o.iso}" data-correct-iso="${item.iso}" data-chosen-name="${o.name}" data-correct-name="${item.name}" style="padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:4px">
 
-        <img src="https://flagcdn.com/w120/${o.iso}.png" alt="${o.iso.toUpperCase()}" data-size="100"
+        <img src="https://flagcdn.com/w160/${o.iso}.png" alt="${o.iso.toUpperCase()}" data-size="100"
 
           style="width:100%;max-width:100px;height:auto;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.15)"
 
