@@ -1726,6 +1726,8 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--txt);min-h
 
     <div style="text-align:center;overflow-x:auto;padding-bottom:4px">
 
+      <div id="cw-dir-hint" style="display:none;font-size:.82rem;font-weight:700;margin-bottom:6px;padding:4px 14px;border-radius:20px;background:#f0f0ff;color:#555;display:inline-block"></div>
+
       <div class="cw-grid" id="cw-grid"></div>
 
     </div>
@@ -4588,9 +4590,9 @@ function cwClickCell(r,c){
 
   if(!cell.white) return;
 
-  // find a word containing this cell, toggle direction
-
   const matchWords=p.words.filter(w=>{
+
+    if(w._solved) return false;
 
     const len=w.word.length;
 
@@ -4602,7 +4604,33 @@ function cwClickCell(r,c){
 
   if(!matchWords.length) return;
 
-  const w=matchWords[0];
+  // Toggle direction when clicking the same cell again
+
+  let w;
+
+  const sameCell = p._lastClickR===r && p._lastClickC===c;
+
+  const across=matchWords.find(x=>x.dir==='across');
+
+  const down=matchWords.find(x=>x.dir==='down');
+
+  if(sameCell && matchWords.length>1){
+
+    // toggle: if currently on across → switch to down, and vice versa
+
+    const curDir=p._activeWordObj&&p._activeWordObj.dir;
+
+    w = curDir==='across' ? down : across;
+
+  } else {
+
+    // first click: prefer across, fallback down
+
+    w = across || down;
+
+  }
+
+  p._lastClickR=r; p._lastClickC=c;
 
   const len=w.word.length;
 
@@ -4618,13 +4646,13 @@ function cwClickCell(r,c){
 
   renderCwGrid();
 
-  // focus persistent hidden input (works on mobile too)
-
   const inp=getCwInput(); inp.value=''; inp.focus();
 
-  // highlight clue
-
   document.querySelectorAll('.cw-clue-item').forEach(el=>el.classList.toggle('active-clue',el.dataset.word===w.word));
+
+  const hint=document.getElementById('cw-dir-hint');
+
+  if(hint){ hint.style.display='inline-block'; hint.textContent=w.dir==='across'?'→ Mendatar'+(matchWords.length>1?' (klik lagi untuk ↓ Menurun)':''):' ↓ Menurun'+(matchWords.length>1?' (klik lagi untuk → Mendatar)':''); }
 
 }
 
