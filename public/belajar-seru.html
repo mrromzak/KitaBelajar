@@ -2888,7 +2888,7 @@ async function _handleGoogleCredential(response) {
       toast(`Selamat datang, ${currentUser.nama}! 🎉`, 'success');
       if (currentUser.role === 'guru') loadGuruDashboard();
       else if (currentUser.role === 'orangtua') loadOrangtuaDashboard();
-      else loadMuridDashboard();
+      else { loadMuridDashboard(); remindDataDiriIfNeeded(); }
     } else {
       toast(data.pesan || 'Login Google gagal.', 'error');
     }
@@ -2914,7 +2914,11 @@ async function completeGoogleRegister(role) {
       toast(`Selamat datang, ${currentUser.nama}! 🎉`, 'success');
       if (currentUser.role === 'guru') loadGuruDashboard();
       else if (currentUser.role === 'orangtua') loadOrangtuaDashboard();
-      else loadMuridDashboard();
+      else {
+        loadMuridDashboard();
+        // Akun murid baru via Google → minta lengkapi data diri (boleh skip)
+        if (!currentUser.profil_lengkap) setTimeout(() => openDataDiriModal(true), 1500);
+      }
     } else {
       toast(data.pesan || 'Registrasi Google gagal.', 'error');
     }
@@ -7772,6 +7776,7 @@ window.addEventListener('load', () => {
       loadOrangtuaDashboard();
     } else {
       loadMuridDashboard();
+      remindDataDiriIfNeeded();
     }
   }
   populateMapelSelects();
