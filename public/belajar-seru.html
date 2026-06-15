@@ -1492,8 +1492,8 @@
     <div style="text-align:center">
       <div style="font-size:48px;margin-bottom:8px">📋</div>
       <h3>Lengkapi Data Diri</h3>
-      <p style="color:var(--muted);font-size:14px;margin-bottom:8px">Isi data dirimu supaya gurumu mengenalmu lebih baik 😊</p>
-      <div style="display:inline-block;background:#fff5f0;border:1.5px dashed #FF6B35;color:#FF6B35;font-weight:800;font-size:13px;padding:7px 14px;border-radius:50px;margin-bottom:18px">🎁 Selesaikan & dapat +150 XP!</div>
+      <p id="dd-subtitle" style="color:var(--muted);font-size:14px;margin-bottom:8px">Isi data dirimu supaya gurumu mengenalmu lebih baik 😊</p>
+      <div id="dd-reward-badge" style="display:inline-block;background:#fff5f0;border:1.5px dashed #FF6B35;color:#FF6B35;font-weight:800;font-size:13px;padding:7px 14px;border-radius:50px;margin-bottom:18px">🎁 Selesaikan & dapat +150 XP!</div>
     </div>
     <div class="form-group">
       <label>Alamat</label>
@@ -2570,6 +2570,7 @@ async function doLogin() {
       toast(`Selamat datang, ${currentUser.nama}! 🎉`, 'success');
       if (currentUser.role === 'guru') {
         loadGuruDashboard();
+        remindDataDiriIfNeeded();
       } else if (currentUser.role === 'orangtua') {
         loadOrangtuaDashboard();
       } else {
@@ -2695,6 +2696,13 @@ function openDataDiriModal(allowSkip = true) {
   document.getElementById('dd-umur').value = currentUser?.umur || '';
   document.getElementById('dd-asal-sekolah').value = currentUser?.asal_sekolah || '';
   document.getElementById('dd-skip-btn').style.display = allowSkip ? 'block' : 'none';
+  // Reward hanya untuk murid; sesuaikan teks untuk guru
+  const isGuru = currentUser?.role === 'guru';
+  document.getElementById('dd-reward-badge').style.display = isGuru ? 'none' : 'inline-block';
+  document.getElementById('dd-subtitle').textContent = isGuru
+    ? 'Lengkapi data dirimu sebagai pengajar 😊'
+    : 'Isi data dirimu supaya gurumu mengenalmu lebih baik 😊';
+  document.getElementById('dd-asal-sekolah').placeholder = isGuru ? 'Nama sekolah tempat mengajar' : 'Nama sekolahmu';
   openModal('modal-data-diri');
 }
 
@@ -2758,9 +2766,9 @@ function showDataDiriReward(reward) {
   el.onclick = (e) => { if (e.target === el) el.remove(); };
 }
 
-// Ingatkan murid yang belum lengkap data diri saat login (boleh skip)
+// Ingatkan murid/guru yang belum lengkap data diri saat login (boleh skip)
 function remindDataDiriIfNeeded() {
-  if (currentUser?.role === 'murid' && !currentUser?.profil_lengkap) {
+  if (['murid', 'guru'].includes(currentUser?.role) && !currentUser?.profil_lengkap) {
     setTimeout(() => openDataDiriModal(true), 2500);
   }
 }
@@ -2886,7 +2894,7 @@ async function _handleGoogleCredential(response) {
       loadBellNotifications();
       setTimeout(() => subscribePush(), 2000);
       toast(`Selamat datang, ${currentUser.nama}! 🎉`, 'success');
-      if (currentUser.role === 'guru') loadGuruDashboard();
+      if (currentUser.role === 'guru') { loadGuruDashboard(); remindDataDiriIfNeeded(); }
       else if (currentUser.role === 'orangtua') loadOrangtuaDashboard();
       else { loadMuridDashboard(); remindDataDiriIfNeeded(); }
     } else {
@@ -2912,7 +2920,11 @@ async function completeGoogleRegister(role) {
       loadBellNotifications();
       setTimeout(() => subscribePush(), 2000);
       toast(`Selamat datang, ${currentUser.nama}! 🎉`, 'success');
-      if (currentUser.role === 'guru') loadGuruDashboard();
+      if (currentUser.role === 'guru') {
+        loadGuruDashboard();
+        // Akun guru baru via Google → minta lengkapi data diri (boleh skip)
+        if (!currentUser.profil_lengkap) setTimeout(() => openDataDiriModal(true), 1500);
+      }
       else if (currentUser.role === 'orangtua') loadOrangtuaDashboard();
       else {
         loadMuridDashboard();
@@ -2989,7 +3001,22 @@ function bukaProfileGuru() {
   document.getElementById('pg-nama-display').textContent   = currentUser.nama;
   document.getElementById('pg-email-display').textContent  = currentUser.email;
   document.getElementById('pg-nama-input').value = currentUser.nama;
+  document.getElementById('pg-alamat-input').value = currentUser.alamat || '';
+  document.getElementById('pg-umur-input').value = currentUser.umur || '';
+  document.getElementById('pg-asal-sekolah-input').value = currentUser.asal_sekolah || '';
   document.getElementById('pg-avatar-picker').style.display = 'none';
+  // Sinkronkan data diri dari server (sumber kebenaran)
+  api('GET', '/auth/profile').then(data => {
+    if (data.success) {
+      const d = data.data || {};
+      document.getElementById('pg-alamat-input').value = d.alamat || '';
+      document.getElementById('pg-umur-input').value = d.umur || '';
+      document.getElementById('pg-asal-sekolah-input').value = d.asal_sekolah || '';
+      currentUser.alamat = d.alamat; currentUser.umur = d.umur;
+      currentUser.asal_sekolah = d.asal_sekolah; currentUser.profil_lengkap = d.profil_lengkap;
+      localStorage.setItem('kb_user', JSON.stringify(currentUser));
+    }
+  }).catch(() => {});
   // Load statistik dari dashboard
   api('GET', '/dashboard').then(data => {
     if (data.success) {
@@ -3165,12 +3192,22 @@ async function simpanProfilMurid() {
 
 async function simpanProfilGuru() {
   const nama = document.getElementById('pg-nama-input').value.trim();
+  const alamat = document.getElementById('pg-alamat-input').value.trim();
+  const umur = document.getElementById('pg-umur-input').value.trim();
+  const asal_sekolah = document.getElementById('pg-asal-sekolah-input').value.trim();
   if (!nama) { toast('Nama tidak boleh kosong!', 'error'); return; }
   showLoading(true);
   try {
-    const data = await api('PUT', '/auth/profile', { nama });
+    const data = await api('PUT', '/auth/profile', {
+      nama,
+      alamat: alamat || undefined, umur: umur || undefined, asal_sekolah: asal_sekolah || undefined
+    });
     if (data.success) {
       currentUser.nama = nama;
+      if (alamat) currentUser.alamat = alamat;
+      if (umur) currentUser.umur = parseInt(umur, 10);
+      if (asal_sekolah) currentUser.asal_sekolah = asal_sekolah;
+      if (alamat && umur && asal_sekolah) currentUser.profil_lengkap = true;
       localStorage.setItem('kb_user', JSON.stringify(currentUser));
       document.getElementById('pg-nama-display').textContent = nama;
       document.getElementById('guru-nav-name').textContent   = nama.split(' ')[0];
@@ -7772,6 +7809,7 @@ window.addEventListener('load', () => {
     setTimeout(() => subscribePush(), 3000);
     if (currentUser.role === 'guru') {
       loadGuruDashboard();
+      remindDataDiriIfNeeded();
     } else if (currentUser.role === 'orangtua') {
       loadOrangtuaDashboard();
     } else {
@@ -10624,6 +10662,18 @@ function zepSesiBaru() {
       <div class="form-group">
         <label>Nama Lengkap</label>
         <input type="text" id="pg-nama-input" placeholder="Nama guru">
+      </div>
+      <div class="form-group">
+        <label>Alamat</label>
+        <input type="text" id="pg-alamat-input" placeholder="Alamat tempat tinggal">
+      </div>
+      <div class="form-group">
+        <label>Umur</label>
+        <input type="number" id="pg-umur-input" min="3" max="120" placeholder="contoh: 30">
+      </div>
+      <div class="form-group">
+        <label>Asal Sekolah</label>
+        <input type="text" id="pg-asal-sekolah-input" placeholder="Nama sekolah tempat mengajar">
       </div>
       <button onclick="simpanProfilGuru()" style="width:100%;padding:13px;background:var(--blue);color:white;border:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">💾 Simpan Perubahan</button>
     </div>
