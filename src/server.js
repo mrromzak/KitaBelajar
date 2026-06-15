@@ -522,52 +522,103 @@ app.get('/api/proxy/fetch', async (req, res) => {
   }
 });
 
-// ── Web search via DuckDuckGo (tanpa API key) ──
-// Dipakai oleh Asisten Guru untuk carikan artikel/referensi
+// ── Web search ──
+// Sumber utama: SearXNG (mikosearch) → data realtime; fallback: DuckDuckGo.
+// Dipakai oleh Asisten Guru untuk carikan artikel/referensi.
+const SEARXNG_URL = (process.env.SEARXNG_URL || 'https://mikosearch.up.railway.app').replace(/\/+$/, '');
+
+// Cari via SearXNG JSON API (format=json harus diaktifkan di instance)
+async function searchSearxng(q) {
+  const params = new URLSearchParams({
+    q: q.slice(0, 200),
+    format: 'json',
+    language: 'id',
+    safesearch: '1'
+  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const r = await fetch(`${SEARXNG_URL}/search?${params.toString()}`, {
+      method: 'GET',
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json'
+      }
+    });
+    if (!r.ok) throw new Error(`SearXNG HTTP ${r.status}`);
+    const ct = r.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) throw new Error('SearXNG tidak mengembalikan JSON (format=json mungkin nonaktif).');
+    const data = await r.json();
+    const results = (data.results || [])
+      .filter(it => it.url && /^https?:\/\//i.test(it.url))
+      .slice(0, 6)
+      .map(it => ({
+        title: (it.title || '').trim(),
+        url: it.url,
+        snippet: (it.content || it.snippet || '').replace(/\s+/g, ' ').trim()
+      }))
+      .filter(it => it.title);
+    return results;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+// Fallback: DuckDuckGo HTML (tanpa API key)
+async function searchDuckDuckGo(q) {
+  const query = encodeURIComponent(q.slice(0, 200));
+  const ddgUrl = `https://html.duckduckgo.com/html/?q=${query}&kl=id-id`;
+  const response = await fetch(ddgUrl, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml',
+      'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8'
+    }
+  });
+  if (!response.ok) throw new Error('DuckDuckGo tidak merespons.');
+  const html = await response.text();
+
+  const results = [];
+  const blockRe = /<div class="result[^"]*"[\s\S]*?(?=<div class="result[^"]*"|$)/g;
+  let block;
+  while ((block = blockRe.exec(html)) !== null && results.length < 6) {
+    const titleMatch = block[0].match(/class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/);
+    const snippetMatch = block[0].match(/class="result__snippet"[^>]*>([\s\S]*?)<\/a>/);
+    if (!titleMatch) continue;
+
+    let url = titleMatch[1];
+    if (url.includes('//duckduckgo.com/l/')) {
+      const uddMatch = url.match(/uddg=([^&]+)/);
+      if (uddMatch) url = decodeURIComponent(uddMatch[1]);
+    }
+    if (!url.startsWith('https://')) continue;
+
+    const title = titleMatch[2].replace(/<[^>]+>/g, '').replace(/&amp;/g,'&').trim();
+    const snippet = snippetMatch ? snippetMatch[1].replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').trim() : '';
+    if (title && url) results.push({ title, url, snippet });
+  }
+  return results;
+}
+
 app.get('/api/ai/search', async (req, res) => {
   const { q } = req.query;
   if (!q) return res.json({ success: false, pesan: 'Query wajib diisi.' });
 
+  let sumber = 'searxng';
   try {
-    const query = encodeURIComponent(q.slice(0, 200));
-    const ddgUrl = `https://html.duckduckgo.com/html/?q=${query}&kl=id-id`;
-
-    const response = await fetch(ddgUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml',
-        'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8'
-      }
-    });
-
-    if (!response.ok) throw new Error('DuckDuckGo tidak merespons.');
-    const html = await response.text();
-
-    // Parse hasil: ambil judul, snippet, dan URL dari <a class="result__a"> & <a class="result__snippet">
-    const results = [];
-    const blockRe = /<div class="result[^"]*"[\s\S]*?(?=<div class="result[^"]*"|$)/g;
-    let block;
-    while ((block = blockRe.exec(html)) !== null && results.length < 6) {
-      const titleMatch = block[0].match(/class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/);
-      const snippetMatch = block[0].match(/class="result__snippet"[^>]*>([\s\S]*?)<\/a>/);
-      if (!titleMatch) continue;
-
-      let url = titleMatch[1];
-      // DuckDuckGo pakai redirect URL — ekstrak URL asli
-      if (url.includes('//duckduckgo.com/l/')) {
-        const uddMatch = url.match(/uddg=([^&]+)/);
-        if (uddMatch) url = decodeURIComponent(uddMatch[1]);
-      }
-      // Skip iklan / non-https
-      if (!url.startsWith('https://')) continue;
-
-      const title = titleMatch[2].replace(/<[^>]+>/g, '').replace(/&amp;/g,'&').trim();
-      const snippet = snippetMatch ? snippetMatch[1].replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').trim() : '';
-
-      if (title && url) results.push({ title, url, snippet });
+    let results = [];
+    try {
+      results = await searchSearxng(q);
+    } catch (e) {
+      console.warn('[web search] SearXNG gagal, fallback DuckDuckGo:', e.message);
     }
-
-    res.json({ success: true, results });
+    // Fallback ke DuckDuckGo jika SearXNG kosong/gagal
+    if (!results || results.length === 0) {
+      sumber = 'duckduckgo';
+      results = await searchDuckDuckGo(q);
+    }
+    res.json({ success: true, sumber, results });
   } catch (err) {
     console.error('[web search]', err.message);
     res.json({ success: false, pesan: 'Gagal melakukan pencarian web.', results: [] });

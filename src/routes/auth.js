@@ -217,17 +217,53 @@ function validatePassword(password) {
   return null;
 }
 
+// Helper: bersihkan & validasi data diri (alamat, umur, asal_sekolah)
+// mode 'strict' → semua wajib (dipakai untuk guru saat daftar & saat lengkapi profil)
+function sanitizeDataDiri({ alamat, umur, asal_sekolah }, { strict = false } = {}) {
+  const result = {};
+
+  if (alamat !== undefined && alamat !== null && String(alamat).trim() !== '') {
+    result.alamat = String(alamat).trim().substring(0, 200);
+  } else if (strict) {
+    return { error: 'Alamat wajib diisi.' };
+  }
+
+  if (umur !== undefined && umur !== null && String(umur).trim() !== '') {
+    const n = parseInt(umur, 10);
+    if (Number.isNaN(n) || n < 3 || n > 120) return { error: 'Umur harus berupa angka yang masuk akal (3–120).' };
+    result.umur = n;
+  } else if (strict) {
+    return { error: 'Umur wajib diisi.' };
+  }
+
+  if (asal_sekolah !== undefined && asal_sekolah !== null && String(asal_sekolah).trim() !== '') {
+    result.asal_sekolah = String(asal_sekolah).trim().substring(0, 150);
+  } else if (strict) {
+    return { error: 'Asal sekolah wajib diisi.' };
+  }
+
+  // profil_lengkap = true hanya jika ketiga field terisi
+  if (result.alamat && result.umur && result.asal_sekolah) result.profil_lengkap = true;
+
+  return { data: result };
+}
+
 // =============================================
 //  POST /api/auth/send-otp  (langkah 1 registrasi)
 // =============================================
 router.post('/send-otp', async (req, res) => {
   try {
-    const { nama, email, password, role, kelas, kode_kelas } = req.body;
+    const { nama, email, password, role, kelas, kode_kelas, alamat, umur, asal_sekolah } = req.body;
 
     if (!nama || !email || !password || !role)
       return res.status(400).json({ success: false, pesan: 'Nama, email, password, dan role wajib diisi.' });
     if (!['guru', 'murid'].includes(role))
       return res.status(400).json({ success: false, pesan: 'Role harus "guru" atau "murid".' });
+
+    // Guru wajib mengisi data diri saat daftar; murid melengkapi setelah akun jadi (via popup)
+    const dataDiri = sanitizeDataDiri({ alamat, umur, asal_sekolah }, { strict: role === 'guru' });
+    if (dataDiri.error)
+      return res.status(400).json({ success: false, pesan: dataDiri.error });
 
     const normalEmail = validator.normalizeEmail(email) || email.toLowerCase().trim();
     if (!validator.isEmail(normalEmail))
@@ -258,7 +294,7 @@ router.post('/send-otp', async (req, res) => {
     // Simpan OTP hanya setelah email berhasil terkirim
     otpStore.set(normalEmail, {
       otp,
-      data: { nama: safaNama, email: normalEmail, password, role, kelas: kelas || null, kode_kelas: kode_kelas || null },
+      data: { nama: safaNama, email: normalEmail, password, role, kelas: kelas || null, kode_kelas: kode_kelas || null, ...dataDiri.data },
       expiresAt: Date.now() + 10 * 60 * 1000 // 10 menit
     });
 
@@ -293,7 +329,7 @@ router.post('/register', async (req, res) => {
 
     otpStore.delete(normalEmail); // hapus setelah dipakai
 
-    const { nama: safaNama, password, role, kelas, kode_kelas } = entry.data;
+    const { nama: safaNama, password, role, kelas, kode_kelas, alamat, umur, asal_sekolah, profil_lengkap } = entry.data;
 
     // Cek sekali lagi email belum ada (race condition)
     const { data: existing } = await supabase.from('users').select('id').eq('email', normalEmail).single();
@@ -305,7 +341,9 @@ router.post('/register', async (req, res) => {
     const avatar = role === 'guru' ? '👩‍🏫' : '🦁';
 
     const { error } = await supabase.from('users').insert({
-      id, nama: safaNama, email: normalEmail, password: hashedPassword, role, avatar, kelas: kelas || null, xp: 0, level: 1
+      id, nama: safaNama, email: normalEmail, password: hashedPassword, role, avatar, kelas: kelas || null, xp: 0, level: 1,
+      alamat: alamat || null, umur: umur || null, asal_sekolah: asal_sekolah || null,
+      profil_lengkap: !!profil_lengkap
     });
     if (error) throw error;
 
@@ -349,6 +387,14 @@ router.post('/register', async (req, res) => {
         // Simpan relasi orangtua - murid
         await supabase.from('parent_student').insert({ parent_id: parentId, murid_id: id });
 
+        // Simpan kredensial sebagai notifikasi in-app — selalu sampai walau email gagal
+        await supabase.from('notifikasi').insert({
+          id: uuidv4(), user_id: id,
+          judul: '👨‍👩‍👧 Akun Orangtua Dibuat',
+          pesan: `Akun untuk orangtua memantau belajarmu sudah dibuat.\nEmail: ${parentEmail}\nPassword: ${parentRawPass}\nLogin lewat tab "Murid". Simpan baik-baik ya!`,
+          tipe: 'orangtua'
+        }).then(() => {}).catch(e => console.warn('[parent-notif] gagal:', e.message));
+
         // Kirim kredensial ke email murid (async, tidak block response)
         sendParentCredentialsEmail({ to: normalEmail, namaMurid: safaNama, parentEmail, parentPassword: parentRawPass })
           .catch(e => console.warn('[parent-email] gagal kirim:', e.message));
@@ -364,7 +410,7 @@ router.post('/register', async (req, res) => {
       success: true,
       pesan: 'Registrasi berhasil!' + (parentInfo ? ' Akun orangtua dikirim ke email kamu.' : ''),
       token,
-      user: { id, nama: safaNama, email: normalEmail, role, avatar },
+      user: { id, nama: safaNama, email: normalEmail, role, avatar, profil_lengkap: !!profil_lengkap },
       ...(parentInfo && { parent_info: parentInfo })
     });
   } catch (err) {
@@ -399,7 +445,7 @@ router.post('/login', async (req, res) => {
       success: true,
       pesan: `Selamat datang kembali, ${user.nama}!`,
       token,
-      user: { id: user.id, nama: user.nama, email: user.email, role: user.role, avatar: user.avatar, kelas: user.kelas, xp: user.xp, level: user.level }
+      user: { id: user.id, nama: user.nama, email: user.email, role: user.role, avatar: user.avatar, kelas: user.kelas, xp: user.xp, level: user.level, profil_lengkap: !!user.profil_lengkap }
     });
   } catch (err) {
     console.error('[login]', err.message);
@@ -414,7 +460,7 @@ router.get('/profile', authMiddleware, async (req, res) => {
   try {
     const { data: user } = await supabase
       .from('users')
-      .select('id, nama, email, role, avatar, kelas, xp, level, created_at')
+      .select('id, nama, email, role, avatar, kelas, xp, level, alamat, umur, asal_sekolah, profil_lengkap, created_at')
       .eq('id', req.user.id).single();
 
     if (!user) return res.status(404).json({ success: false, pesan: 'User tidak ditemukan.' });
@@ -437,13 +483,25 @@ router.get('/profile', authMiddleware, async (req, res) => {
 // =============================================
 router.put('/profile', authMiddleware, async (req, res) => {
   try {
-    const { nama, avatar, password_baru, password_lama } = req.body;
+    const { nama, avatar, password_baru, password_lama, alamat, umur, asal_sekolah } = req.body;
     const { data: user } = await supabase.from('users').select('*').eq('id', req.user.id).single();
     if (!user) return res.status(404).json({ success: false, pesan: 'User tidak ditemukan.' });
 
     const updates = {};
     if (nama) updates.nama = nama;
     if (avatar) updates.avatar = avatar;
+
+    // Data diri (opsional di sini — validasi nilai jika dikirim)
+    if (alamat !== undefined || umur !== undefined || asal_sekolah !== undefined) {
+      const dd = sanitizeDataDiri({ alamat, umur, asal_sekolah }, { strict: false });
+      if (dd.error) return res.status(400).json({ success: false, pesan: dd.error });
+      Object.assign(updates, dd.data);
+      // Tandai lengkap hanya jika gabungan data lama+baru memenuhi ketiganya
+      const finalAlamat = dd.data.alamat ?? user.alamat;
+      const finalUmur = dd.data.umur ?? user.umur;
+      const finalSekolah = dd.data.asal_sekolah ?? user.asal_sekolah;
+      updates.profil_lengkap = !!(finalAlamat && finalUmur && finalSekolah);
+    }
 
     if (password_baru) {
       if (!password_lama)
@@ -459,6 +517,27 @@ router.put('/profile', authMiddleware, async (req, res) => {
     res.json({ success: true, pesan: 'Profil berhasil diperbarui.' });
   } catch (err) {
     console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
+  }
+});
+
+// =============================================
+//  PUT /api/auth/data-diri
+//  Lengkapi data diri (dipakai popup murid setelah daftar).
+//  Semua field wajib (alamat, umur, asal_sekolah).
+// =============================================
+router.put('/data-diri', authMiddleware, async (req, res) => {
+  try {
+    const { alamat, umur, asal_sekolah } = req.body;
+    const dd = sanitizeDataDiri({ alamat, umur, asal_sekolah }, { strict: true });
+    if (dd.error) return res.status(400).json({ success: false, pesan: dd.error });
+
+    const { error } = await supabase.from('users').update(dd.data).eq('id', req.user.id);
+    if (error) throw error;
+
+    res.json({ success: true, pesan: 'Data diri berhasil disimpan!', data: dd.data });
+  } catch (err) {
+    console.error('[data-diri]', err.message);
+    res.status(500).json({ success: false, pesan: 'Gagal menyimpan data diri.' });
   }
 });
 
@@ -624,11 +703,11 @@ router.post('/google', async (req, res) => {
       }
 
       const jwtToken = jwt.sign({ id, nama: safaNama, email: normalEmail, role }, JWT_SECRET, { expiresIn: '30d' });
-      return res.status(201).json({ success: true, pesan: `Selamat datang, ${safaNama}!`, token: jwtToken, user: { id, nama: safaNama, email: normalEmail, role, avatar, xp: 0, level: 1 }, parent_info: parentInfo });
+      return res.status(201).json({ success: true, pesan: `Selamat datang, ${safaNama}!`, token: jwtToken, user: { id, nama: safaNama, email: normalEmail, role, avatar, xp: 0, level: 1, profil_lengkap: false }, parent_info: parentInfo });
     }
 
     const jwtToken = jwt.sign({ id: user.id, nama: user.nama, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
-    res.json({ success: true, is_new: false, pesan: `Selamat datang, ${user.nama}!`, token: jwtToken, user: { id: user.id, nama: user.nama, email: user.email, role: user.role, avatar: user.avatar, xp: user.xp, level: user.level } });
+    res.json({ success: true, is_new: false, pesan: `Selamat datang, ${user.nama}!`, token: jwtToken, user: { id: user.id, nama: user.nama, email: user.email, role: user.role, avatar: user.avatar, xp: user.xp, level: user.level, profil_lengkap: !!user.profil_lengkap } });
   } catch (err) {
     console.error('[google-auth]', err.message);
     res.status(500).json({ success: false, pesan: 'Login Google gagal.' });

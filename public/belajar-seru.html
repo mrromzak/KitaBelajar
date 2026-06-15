@@ -366,6 +366,21 @@
         <label>Kelas</label>
         <input type="text" id="reg-kelas" placeholder="contoh: 4A">
       </div>
+      <!-- Data diri — wajib untuk guru saat daftar -->
+      <div id="reg-datadiri-group" style="display:none">
+        <div class="form-group">
+          <label>Alamat</label>
+          <input type="text" id="reg-alamat" placeholder="Alamat tempat tinggal">
+        </div>
+        <div class="form-group">
+          <label>Umur</label>
+          <input type="number" id="reg-umur" min="3" max="120" placeholder="contoh: 30">
+        </div>
+        <div class="form-group">
+          <label>Asal Sekolah</label>
+          <input type="text" id="reg-asal-sekolah" placeholder="Nama sekolah tempat mengajar">
+        </div>
+      </div>
       <button class="btn-login" onclick="doRegister()">✅ Daftar Sekarang</button>
       <div style="display:flex;align-items:center;gap:12px;margin:16px 0">
         <div style="flex:1;height:1px;background:#eee"></div>
@@ -1471,6 +1486,31 @@
   </div>
 </div>
 
+<!-- Modal Lengkapi Data Diri (murid setelah daftar) -->
+<div class="modal-overlay" id="modal-data-diri">
+  <div class="modal" style="max-width:400px">
+    <div style="text-align:center">
+      <div style="font-size:48px;margin-bottom:8px">📋</div>
+      <h3>Lengkapi Data Diri</h3>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:20px">Isi data dirimu supaya gurumu mengenalmu lebih baik 😊</p>
+    </div>
+    <div class="form-group">
+      <label>Alamat</label>
+      <input type="text" id="dd-alamat" placeholder="Alamat tempat tinggal">
+    </div>
+    <div class="form-group">
+      <label>Umur</label>
+      <input type="number" id="dd-umur" min="3" max="120" placeholder="contoh: 12">
+    </div>
+    <div class="form-group">
+      <label>Asal Sekolah</label>
+      <input type="text" id="dd-asal-sekolah" placeholder="Nama sekolahmu">
+    </div>
+    <button class="btn-submit" style="width:100%;margin-top:8px" onclick="doSubmitDataDiri()">✅ Simpan</button>
+    <button class="btn-cancel" id="dd-skip-btn" style="margin-top:8px;width:100%" onclick="skipDataDiri()">Isi nanti</button>
+  </div>
+</div>
+
 <!-- Modal Pilih Role Google OAuth -->
 <div class="modal-overlay" id="modal-google-role">
   <div class="modal" style="max-width:400px;text-align:center">
@@ -2488,6 +2528,8 @@ function switchRegRole(role) {
   document.getElementById('reg-tab-guru').classList.toggle('active', role === 'guru');
   document.getElementById('reg-tab-murid').classList.toggle('active', role === 'murid');
   document.getElementById('reg-kelas-group').style.display = role === 'murid' ? 'block' : 'none';
+  // Guru wajib isi data diri saat daftar; murid lewat popup setelah daftar
+  document.getElementById('reg-datadiri-group').style.display = role === 'guru' ? 'block' : 'none';
 }
 
 function showRegister() {
@@ -2531,6 +2573,7 @@ async function doLogin() {
         loadOrangtuaDashboard();
       } else {
         loadMuridDashboard();
+        remindDataDiriIfNeeded();
       }
     } else {
       toast(data.pesan || 'Login gagal. Cek email & password kamu!', 'error');
@@ -2550,10 +2593,19 @@ async function doRegister() {
   const kelas = document.getElementById('reg-kelas').value.trim();
   if (!nama || !email || !password) { toast('Lengkapi semua data ya! 😊', 'error'); return; }
 
+  // Guru wajib mengisi data diri saat daftar
+  const alamat = document.getElementById('reg-alamat').value.trim();
+  const umur = document.getElementById('reg-umur').value.trim();
+  const asalSekolah = document.getElementById('reg-asal-sekolah').value.trim();
+  if (currentRegRole === 'guru' && (!alamat || !umur || !asalSekolah)) {
+    toast('Guru wajib mengisi alamat, umur, dan asal sekolah! 😊', 'error'); return;
+  }
+
   showLoading(true);
   try {
     const body = { nama, email, password, role: currentRegRole };
     if (currentRegRole === 'murid' && kelas) body.kelas = kelas;
+    if (currentRegRole === 'guru') { body.alamat = alamat; body.umur = umur; body.asal_sekolah = asalSekolah; }
     const data = await api('POST', '/auth/send-otp', body);
     if (data.success) {
       _pendingRegEmail = email;
@@ -2591,13 +2643,17 @@ async function doVerifyOTP() {
       if (data.parent_info && currentUser.role === 'murid') {
         setTimeout(() => {
           const { parentEmail, parentPassword } = data.parent_info;
-          const msg = `👨‍👩‍👧 Akun orangtua sudah dibuat!\nEmail: ${parentEmail}\nPassword: ${parentPassword}\n\nKredensial ini dikirim ke emailmu. Screenshot ini untuk disimpan!`;
+          const msg = `👨‍👩‍👧 Akun orangtua sudah dibuat!\nEmail: ${parentEmail}\nPassword: ${parentPassword}\n\nKredensial ini juga tersimpan di notifikasi 🔔 & dikirim ke emailmu. Screenshot ini untuk disimpan!`;
           alert(msg);
         }, 1500);
       }
       if (currentUser.role === 'guru') loadGuruDashboard();
       else if (currentUser.role === 'orangtua') loadOrangtuaDashboard();
-      else loadMuridDashboard();
+      else {
+        loadMuridDashboard();
+        // Murid baru: minta lengkapi data diri lewat popup (boleh skip sekali)
+        if (!currentUser.profil_lengkap) setTimeout(() => openDataDiriModal(true), 1800);
+      }
     } else {
       toast(data.pesan || 'Kode OTP salah atau kedaluwarsa.', 'error');
     }
@@ -2617,11 +2673,64 @@ async function doResendOTP() {
   try {
     const body = { nama, email: _pendingRegEmail, password, role: currentRegRole };
     if (currentRegRole === 'murid' && kelas) body.kelas = kelas;
+    if (currentRegRole === 'guru') {
+      body.alamat = document.getElementById('reg-alamat').value.trim();
+      body.umur = document.getElementById('reg-umur').value.trim();
+      body.asal_sekolah = document.getElementById('reg-asal-sekolah').value.trim();
+    }
     const data = await api('POST', '/auth/send-otp', body);
     if (data.success) toast('Kode OTP baru sudah dikirim!', 'success');
     else toast(data.pesan || 'Gagal kirim ulang.', 'error');
   } catch (e) { toast('Tidak bisa terhubung ke server 😢', 'error'); }
   showLoading(false);
+}
+
+// ============================================================
+//  LENGKAPI DATA DIRI (popup murid setelah daftar)
+// ============================================================
+function openDataDiriModal(allowSkip = true) {
+  // Prefill dari currentUser jika ada
+  document.getElementById('dd-alamat').value = currentUser?.alamat || '';
+  document.getElementById('dd-umur').value = currentUser?.umur || '';
+  document.getElementById('dd-asal-sekolah').value = currentUser?.asal_sekolah || '';
+  document.getElementById('dd-skip-btn').style.display = allowSkip ? 'block' : 'none';
+  openModal('modal-data-diri');
+}
+
+async function doSubmitDataDiri() {
+  const alamat = document.getElementById('dd-alamat').value.trim();
+  const umur = document.getElementById('dd-umur').value.trim();
+  const asal_sekolah = document.getElementById('dd-asal-sekolah').value.trim();
+  if (!alamat || !umur || !asal_sekolah) { toast('Lengkapi semua data ya! 😊', 'error'); return; }
+
+  showLoading(true);
+  try {
+    const data = await api('PUT', '/auth/data-diri', { alamat, umur, asal_sekolah });
+    if (data.success) {
+      if (currentUser) {
+        currentUser.alamat = alamat; currentUser.umur = parseInt(umur, 10);
+        currentUser.asal_sekolah = asal_sekolah; currentUser.profil_lengkap = true;
+        localStorage.setItem('kb_user', JSON.stringify(currentUser));
+      }
+      closeModal('modal-data-diri');
+      toast('Data diri tersimpan! Terima kasih 🎉', 'success');
+    } else {
+      toast(data.pesan || 'Gagal menyimpan data diri.', 'error');
+    }
+  } catch (e) { toast('Tidak bisa terhubung ke server 😢', 'error'); }
+  showLoading(false);
+}
+
+function skipDataDiri() {
+  closeModal('modal-data-diri');
+  toast('Jangan lupa lengkapi data dirimu lewat menu Profil ya! 😊', 'info');
+}
+
+// Ingatkan murid yang belum lengkap data diri saat login (boleh skip)
+function remindDataDiriIfNeeded() {
+  if (currentUser?.role === 'murid' && !currentUser?.profil_lengkap) {
+    setTimeout(() => openDataDiriModal(true), 2500);
+  }
 }
 
 // ============================================================
@@ -2814,14 +2923,25 @@ function bukaProfileMurid() {
   document.getElementById('pm-email-display').textContent  = currentUser.email;
   document.getElementById('pm-nama-input').value  = currentUser.nama;
   document.getElementById('pm-kelas-input').value = currentUser.kelas || '';
+  document.getElementById('pm-alamat-input').value = currentUser.alamat || '';
+  document.getElementById('pm-umur-input').value = currentUser.umur || '';
+  document.getElementById('pm-asal-sekolah-input').value = currentUser.asal_sekolah || '';
   document.getElementById('pm-xp-badge').textContent    = (currentUser.xp || 0) + ' XP';
   document.getElementById('pm-level-badge').textContent  = 'Level ' + (currentUser.level || 1);
   document.getElementById('pm-avatar-picker').style.display = 'none';
-  // Load rank dari server
+  // Load rank + data diri dari server (sumber kebenaran)
   api('GET', '/auth/profile').then(data => {
     if (data.success) {
-      const rank = data.data?.rank;
+      const d = data.data || {};
+      const rank = d.rank;
       document.getElementById('pm-rank-badge').textContent = rank ? '🏆 Rank #' + rank : '🏆 Rank #–';
+      document.getElementById('pm-alamat-input').value = d.alamat || '';
+      document.getElementById('pm-umur-input').value = d.umur || '';
+      document.getElementById('pm-asal-sekolah-input').value = d.asal_sekolah || '';
+      // Sinkronkan currentUser
+      currentUser.alamat = d.alamat; currentUser.umur = d.umur;
+      currentUser.asal_sekolah = d.asal_sekolah; currentUser.profil_lengkap = d.profil_lengkap;
+      localStorage.setItem('kb_user', JSON.stringify(currentUser));
     }
   }).catch(() => {});
   showPage('page-profile-murid');
@@ -2979,13 +3099,23 @@ function uploadFotoProfil(role) {
 async function simpanProfilMurid() {
   const nama = document.getElementById('pm-nama-input').value.trim();
   const kelas = document.getElementById('pm-kelas-input').value.trim();
+  const alamat = document.getElementById('pm-alamat-input').value.trim();
+  const umur = document.getElementById('pm-umur-input').value.trim();
+  const asal_sekolah = document.getElementById('pm-asal-sekolah-input').value.trim();
   if (!nama) { toast('Nama tidak boleh kosong!', 'error'); return; }
   showLoading(true);
   try {
-    const data = await api('PUT', '/auth/profile', { nama, kelas: kelas || undefined });
+    const data = await api('PUT', '/auth/profile', {
+      nama, kelas: kelas || undefined,
+      alamat: alamat || undefined, umur: umur || undefined, asal_sekolah: asal_sekolah || undefined
+    });
     if (data.success) {
       currentUser.nama  = nama;
       currentUser.kelas = kelas;
+      if (alamat) currentUser.alamat = alamat;
+      if (umur) currentUser.umur = parseInt(umur, 10);
+      if (asal_sekolah) currentUser.asal_sekolah = asal_sekolah;
+      if (alamat && umur && asal_sekolah) currentUser.profil_lengkap = true;
       localStorage.setItem('kb_user', JSON.stringify(currentUser));
       document.getElementById('pm-nama-display').textContent = nama;
       document.getElementById('murid-nav-name').textContent  = nama;
@@ -10369,6 +10499,18 @@ function zepSesiBaru() {
         <label>Kelas</label>
         <input type="text" id="pm-kelas-input" placeholder="contoh: 5A">
       </div>
+      <div class="form-group">
+        <label>Alamat</label>
+        <input type="text" id="pm-alamat-input" placeholder="Alamat tempat tinggal">
+      </div>
+      <div class="form-group">
+        <label>Umur</label>
+        <input type="number" id="pm-umur-input" min="3" max="120" placeholder="contoh: 12">
+      </div>
+      <div class="form-group">
+        <label>Asal Sekolah</label>
+        <input type="text" id="pm-asal-sekolah-input" placeholder="Nama sekolahmu">
+      </div>
       <button onclick="simpanProfilMurid()" style="width:100%;padding:13px;background:var(--orange);color:white;border:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">💾 Simpan Perubahan</button>
     </div>
 
@@ -10820,9 +10962,13 @@ function gchatExtractUrl(text) {
   return m ? m[0] : null;
 }
 
-// Deteksi intent pencarian artikel/web
+// Deteksi intent pencarian artikel/web + pertanyaan butuh data realtime
 function gchatIsSearchIntent(text) {
-  return /carikan|cari(?:kan)?\s+artikel|cari(?:kan)?\s+referensi|cari(?:kan)?\s+sumber|tolong cari|cariin|search(kan)?|temukan artikel|cari materi/i.test(text);
+  // Permintaan eksplisit mencari sumber/artikel/video
+  const cariEksplisit = /carikan|cari(?:kan)?\s+artikel|cari(?:kan)?\s+referensi|cari(?:kan)?\s+sumber|cari(?:kan)?\s+video|tolong cari|cariin|search(kan)?|temukan artikel|cari materi/i.test(text);
+  // Pertanyaan yang butuh data terbaru/realtime → ambil dari web (SearXNG)
+  const butuhRealtime = /\b(terbaru|terkini|hari ini|saat ini|sekarang|update|berita|kabar|harga|kurs|jadwal|terupdate|terakhir|viral|tren(?:ding)?|202[4-9]|203\d)\b/i.test(text);
+  return cariEksplisit || butuhRealtime;
 }
 
 // Fetch konten artikel via proxy
