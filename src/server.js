@@ -525,7 +525,12 @@ app.get('/api/proxy/fetch', async (req, res) => {
 // ── Web search ──
 // Sumber utama: SearXNG (mikosearch) → data realtime; fallback: DuckDuckGo.
 // Dipakai oleh Asisten Guru untuk carikan artikel/referensi.
-const SEARXNG_URL = (process.env.SEARXNG_URL || 'https://mikosearch.up.railway.app').replace(/\/+$/, '');
+// Normalisasi: tambahkan https:// jika lupa, dan buang trailing slash
+const SEARXNG_URL = (() => {
+  let u = (process.env.SEARXNG_URL || 'https://mikosearch.up.railway.app').trim();
+  if (!/^https?:\/\//i.test(u)) u = 'https://' + u; // tahan banting kalau env tanpa skema
+  return u.replace(/\/+$/, '');
+})();
 
 // Cari via SearXNG JSON API (format=json harus diaktifkan di instance)
 async function searchSearxng(q) {
