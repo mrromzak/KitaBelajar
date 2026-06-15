@@ -1492,7 +1492,8 @@
     <div style="text-align:center">
       <div style="font-size:48px;margin-bottom:8px">📋</div>
       <h3>Lengkapi Data Diri</h3>
-      <p style="color:var(--muted);font-size:14px;margin-bottom:20px">Isi data dirimu supaya gurumu mengenalmu lebih baik 😊</p>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:8px">Isi data dirimu supaya gurumu mengenalmu lebih baik 😊</p>
+      <div style="display:inline-block;background:#fff5f0;border:1.5px dashed #FF6B35;color:#FF6B35;font-weight:800;font-size:13px;padding:7px 14px;border-radius:50px;margin-bottom:18px">🎁 Selesaikan & dapat +150 XP!</div>
     </div>
     <div class="form-group">
       <label>Alamat</label>
@@ -2710,10 +2711,16 @@ async function doSubmitDataDiri() {
       if (currentUser) {
         currentUser.alamat = alamat; currentUser.umur = parseInt(umur, 10);
         currentUser.asal_sekolah = asal_sekolah; currentUser.profil_lengkap = true;
+        if (data.reward) { currentUser.xp = data.reward.new_xp; currentUser.level = data.reward.new_level; }
         localStorage.setItem('kb_user', JSON.stringify(currentUser));
       }
       closeModal('modal-data-diri');
-      toast('Data diri tersimpan! Terima kasih 🎉', 'success');
+      if (data.reward) {
+        showDataDiriReward(data.reward);
+        if (currentUser?.role === 'murid') loadMuridDashboard();
+      } else {
+        toast('Data diri tersimpan! Terima kasih 🎉', 'success');
+      }
     } else {
       toast(data.pesan || 'Gagal menyimpan data diri.', 'error');
     }
@@ -2724,6 +2731,31 @@ async function doSubmitDataDiri() {
 function skipDataDiri() {
   closeModal('modal-data-diri');
   toast('Jangan lupa lengkapi data dirimu lewat menu Profil ya! 😊', 'info');
+}
+
+// Popup perayaan reward setelah data diri lengkap
+function showDataDiriReward(reward) {
+  const xp = reward?.xp || 0;
+  let el = document.getElementById('datadiri-reward-overlay');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'datadiri-reward-overlay';
+    el.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);backdrop-filter:blur(3px)';
+    document.body.appendChild(el);
+  }
+  const levelLine = reward?.leveled_up ? `<div style="font-size:15px;font-weight:800;color:#7b2ff7;margin-top:6px">⭐ Naik ke Level ${reward.new_level}!</div>` : '';
+  el.innerHTML = `
+    <div style="background:#fff;border-radius:24px;padding:32px 28px;max-width:340px;width:88%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:ddPop .4s cubic-bezier(.18,.89,.32,1.28)">
+      <div style="font-size:64px;line-height:1;margin-bottom:8px;animation:ddBounce 1s ease infinite">🎁</div>
+      <h3 style="margin:0 0 6px;font-size:22px;color:#333">Hadiah Didapat!</h3>
+      <p style="color:#666;font-size:14px;margin:0 0 14px">Terima kasih sudah melengkapi data diri 😊</p>
+      <div style="background:linear-gradient(135deg,#FF6B35,#ff9a6c);color:#fff;border-radius:16px;padding:16px;font-weight:900;font-size:30px;letter-spacing:1px">+${xp} XP</div>
+      ${levelLine}
+      <button onclick="document.getElementById('datadiri-reward-overlay').remove()" style="margin-top:18px;width:100%;padding:13px;background:var(--orange,#FF6B35);color:#fff;border:none;border-radius:14px;font-family:inherit;font-weight:800;font-size:15px;cursor:pointer">Asyik! 🎉</button>
+    </div>
+    <style>@keyframes ddPop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}@keyframes ddBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}</style>`;
+  // tutup otomatis kalau klik latar
+  el.onclick = (e) => { if (e.target === el) el.remove(); };
 }
 
 // Ingatkan murid yang belum lengkap data diri saat login (boleh skip)
@@ -3116,10 +3148,12 @@ async function simpanProfilMurid() {
       if (umur) currentUser.umur = parseInt(umur, 10);
       if (asal_sekolah) currentUser.asal_sekolah = asal_sekolah;
       if (alamat && umur && asal_sekolah) currentUser.profil_lengkap = true;
+      if (data.reward) { currentUser.xp = data.reward.new_xp; currentUser.level = data.reward.new_level; }
       localStorage.setItem('kb_user', JSON.stringify(currentUser));
       document.getElementById('pm-nama-display').textContent = nama;
       document.getElementById('murid-nav-name').textContent  = nama;
-      toast('Profil berhasil diperbarui! ✅', 'success');
+      if (data.reward) showDataDiriReward(data.reward);
+      else toast('Profil berhasil diperbarui! ✅', 'success');
     } else toast(data.pesan || 'Gagal simpan profil', 'error');
   } catch(e) { toast('Tidak bisa terhubung ke server', 'error'); }
   showLoading(false);

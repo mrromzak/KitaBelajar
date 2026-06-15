@@ -248,6 +248,31 @@ function sanitizeDataDiri({ alamat, umur, asal_sekolah }, { strict = false } = {
   return { data: result };
 }
 
+// Reward XP sekali saat murid pertama kali melengkapi data diri.
+// `becomingComplete` = update kali ini membuat profil jadi lengkap.
+const DATA_DIRI_REWARD_XP = 150;
+function computeDataDiriReward(user, becomingComplete) {
+  if (!becomingComplete) return { updates: {}, reward: null };
+  if (user.profil_lengkap) return { updates: {}, reward: null }; // sudah pernah lengkap → tidak dobel
+  if (user.role !== 'murid') return { updates: {}, reward: null }; // reward khusus murid
+  const newXp = (user.xp || 0) + DATA_DIRI_REWARD_XP;
+  const newLevel = Math.floor(newXp / 1000) + 1;
+  return {
+    updates: { xp: newXp, level: newLevel },
+    reward: { xp: DATA_DIRI_REWARD_XP, new_xp: newXp, new_level: newLevel, leveled_up: newLevel > (user.level || 1) }
+  };
+}
+
+// Kirim notifikasi reward data diri (non-blocking)
+function sendDataDiriRewardNotif(userId) {
+  return supabase.from('notifikasi').insert({
+    id: uuidv4(), user_id: userId,
+    judul: `🎁 +${DATA_DIRI_REWARD_XP} XP!`,
+    pesan: `Keren! Kamu dapat ${DATA_DIRI_REWARD_XP} XP karena sudah melengkapi data diri. Terus semangat belajar ya! 🌟`,
+    tipe: 'reward'
+  });
+}
+
 // =============================================
 //  POST /api/auth/send-otp  (langkah 1 registrasi)
 // =============================================
@@ -492,6 +517,7 @@ router.put('/profile', authMiddleware, async (req, res) => {
     if (avatar) updates.avatar = avatar;
 
     // Data diri (opsional di sini — validasi nilai jika dikirim)
+    let reward = null;
     if (alamat !== undefined || umur !== undefined || asal_sekolah !== undefined) {
       const dd = sanitizeDataDiri({ alamat, umur, asal_sekolah }, { strict: false });
       if (dd.error) return res.status(400).json({ success: false, pesan: dd.error });
@@ -501,6 +527,11 @@ router.put('/profile', authMiddleware, async (req, res) => {
       const finalUmur = dd.data.umur ?? user.umur;
       const finalSekolah = dd.data.asal_sekolah ?? user.asal_sekolah;
       updates.profil_lengkap = !!(finalAlamat && finalUmur && finalSekolah);
+
+      // Reward sekali bila profil baru menjadi lengkap (murid)
+      const { updates: rewardUpdates, reward: r } = computeDataDiriReward(user, updates.profil_lengkap);
+      Object.assign(updates, rewardUpdates);
+      reward = r;
     }
 
     if (password_baru) {
@@ -514,7 +545,8 @@ router.put('/profile', authMiddleware, async (req, res) => {
     }
 
     await supabase.from('users').update(updates).eq('id', req.user.id);
-    res.json({ success: true, pesan: 'Profil berhasil diperbarui.' });
+    if (reward) sendDataDiriRewardNotif(req.user.id).then(() => {}).catch(() => {});
+    res.json({ success: true, pesan: reward ? `Profil diperbarui! Kamu dapat +${reward.xp} XP 🎁` : 'Profil berhasil diperbarui.', reward });
   } catch (err) {
     console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
@@ -531,10 +563,25 @@ router.put('/data-diri', authMiddleware, async (req, res) => {
     const dd = sanitizeDataDiri({ alamat, umur, asal_sekolah }, { strict: true });
     if (dd.error) return res.status(400).json({ success: false, pesan: dd.error });
 
-    const { error } = await supabase.from('users').update(dd.data).eq('id', req.user.id);
+    // Ambil status profil saat ini untuk menentukan reward
+    const { data: user } = await supabase
+      .from('users').select('id, role, xp, level, profil_lengkap').eq('id', req.user.id).single();
+    if (!user) return res.status(404).json({ success: false, pesan: 'User tidak ditemukan.' });
+
+    const { updates: rewardUpdates, reward } = computeDataDiriReward(user, true);
+
+    const { error } = await supabase.from('users')
+      .update({ ...dd.data, ...rewardUpdates }).eq('id', req.user.id);
     if (error) throw error;
 
-    res.json({ success: true, pesan: 'Data diri berhasil disimpan!', data: dd.data });
+    if (reward) sendDataDiriRewardNotif(req.user.id).then(() => {}).catch(() => {});
+
+    res.json({
+      success: true,
+      pesan: reward ? `Data diri tersimpan! Kamu dapat +${reward.xp} XP 🎁` : 'Data diri berhasil disimpan!',
+      data: dd.data,
+      reward
+    });
   } catch (err) {
     console.error('[data-diri]', err.message);
     res.status(500).json({ success: false, pesan: 'Gagal menyimpan data diri.' });
