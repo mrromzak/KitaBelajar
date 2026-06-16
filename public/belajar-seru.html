@@ -1512,6 +1512,23 @@
   </div>
 </div>
 
+<!-- Modal Konfirmasi Hapus Akun -->
+<div class="modal-overlay" id="modal-hapus-akun">
+  <div class="modal" style="max-width:400px">
+    <div style="text-align:center">
+      <div style="font-size:48px;margin-bottom:8px">⚠️</div>
+      <h3 style="color:var(--red)">Hapus Akun</h3>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:16px">Tindakan ini <b>permanen</b> dan tidak bisa dibatalkan. Seluruh data akun kamu akan dihapus secara menyeluruh.</p>
+    </div>
+    <div class="form-group">
+      <label>Ketik <b>HAPUS AKUN</b> untuk mengonfirmasi</label>
+      <input type="text" id="hapus-akun-konfirmasi" placeholder="HAPUS AKUN" autocomplete="off" oninput="cekKonfirmasiHapus()">
+    </div>
+    <button class="btn-submit" id="hapus-akun-btn" style="width:100%;margin-top:8px;background:var(--red);opacity:.5;pointer-events:none" onclick="doHapusAkun()">🗑️ Hapus Akun Permanen</button>
+    <button class="btn-cancel" style="margin-top:8px;width:100%" onclick="closeModal('modal-hapus-akun')">Batal</button>
+  </div>
+</div>
+
 <!-- Modal Pilih Role Google OAuth -->
 <div class="modal-overlay" id="modal-google-role">
   <div class="modal" style="max-width:400px;text-align:center">
@@ -2739,6 +2756,42 @@ async function doSubmitDataDiri() {
 function skipDataDiri() {
   closeModal('modal-data-diri');
   toast('Jangan lupa lengkapi data dirimu lewat menu Profil ya! 😊', 'info');
+}
+
+// ============================================================
+//  HAPUS AKUN
+// ============================================================
+function bukaHapusAkun() {
+  const inp = document.getElementById('hapus-akun-konfirmasi');
+  if (inp) inp.value = '';
+  cekKonfirmasiHapus();
+  openModal('modal-hapus-akun');
+}
+
+function cekKonfirmasiHapus() {
+  const val = (document.getElementById('hapus-akun-konfirmasi').value || '').trim().toUpperCase();
+  const btn = document.getElementById('hapus-akun-btn');
+  const ok = val === 'HAPUS AKUN';
+  btn.style.opacity = ok ? '1' : '.5';
+  btn.style.pointerEvents = ok ? 'auto' : 'none';
+}
+
+async function doHapusAkun() {
+  const konfirmasi = (document.getElementById('hapus-akun-konfirmasi').value || '').trim();
+  if (konfirmasi.toUpperCase() !== 'HAPUS AKUN') { toast('Ketik "HAPUS AKUN" untuk konfirmasi.', 'error'); return; }
+
+  showLoading(true);
+  try {
+    const data = await api('DELETE', '/auth/account', { konfirmasi });
+    if (data.success) {
+      closeModal('modal-hapus-akun');
+      toast('Akun kamu telah dihapus. Sampai jumpa! 👋', 'success');
+      setTimeout(() => doLogout(), 1200);
+    } else {
+      toast(data.pesan || 'Gagal menghapus akun.', 'error');
+    }
+  } catch (e) { toast('Tidak bisa terhubung ke server 😢', 'error'); }
+  showLoading(false);
 }
 
 // Popup perayaan reward setelah data diri lengkap
@@ -10611,9 +10664,9 @@ function zepSesiBaru() {
 
     <!-- Bahaya -->
     <div style="background:white;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);border:2px solid #FFCDD2">
-      <div style="font-weight:800;font-size:16px;margin-bottom:8px;color:var(--red)">⚠️ Zona Berbahaya</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Aksi berikut tidak bisa dibatalkan.</p>
-      <button onclick="doLogout()" style="width:100%;padding:12px;background:#FFF0F0;color:var(--red);border:2px solid #FFCDD2;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer">← Keluar dari Akun</button>
+      <div style="font-weight:800;font-size:16px;margin-bottom:8px;color:var(--red)">🗑️ Hapus Akun</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Menghapus akun bersifat permanen dan tidak bisa dibatalkan. Semua data kamu akan hilang.</p>
+      <button onclick="bukaHapusAkun()" style="width:100%;padding:12px;background:#FFF0F0;color:var(--red);border:2px solid #FFCDD2;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer">🗑️ Hapus Akun Saya</button>
     </div>
   </div>
 </div>
@@ -10721,9 +10774,9 @@ function zepSesiBaru() {
 
     <!-- Bahaya -->
     <div style="background:white;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);border:2px solid #FFCDD2">
-      <div style="font-weight:800;font-size:16px;margin-bottom:8px;color:var(--red)">⚠️ Zona Berbahaya</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Aksi berikut tidak bisa dibatalkan.</p>
-      <button onclick="doLogout()" style="width:100%;padding:12px;background:#FFF0F0;color:var(--red);border:2px solid #FFCDD2;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer">← Keluar dari Akun</button>
+      <div style="font-weight:800;font-size:16px;margin-bottom:8px;color:var(--red)">🗑️ Hapus Akun</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Menghapus akun bersifat permanen dan tidak bisa dibatalkan. Semua data kamu akan hilang.</p>
+      <button onclick="bukaHapusAkun()" style="width:100%;padding:12px;background:#FFF0F0;color:var(--red);border:2px solid #FFCDD2;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer">🗑️ Hapus Akun Saya</button>
     </div>
   </div>
 </div>

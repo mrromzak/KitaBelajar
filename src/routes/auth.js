@@ -761,4 +761,40 @@ router.post('/google', async (req, res) => {
   }
 });
 
+// =============================================
+//  DELETE /api/auth/account
+//  Hapus akun permanen. Wajib verifikasi dengan
+//  mengetik frasa konfirmasi "HAPUS AKUN".
+//  Data terkait ikut terhapus otomatis (ON DELETE CASCADE).
+// =============================================
+router.delete('/account', authMiddleware, async (req, res) => {
+  try {
+    const { konfirmasi } = req.body;
+    if (!konfirmasi || konfirmasi.trim().toUpperCase() !== 'HAPUS AKUN')
+      return res.status(400).json({ success: false, pesan: 'Ketik "HAPUS AKUN" untuk mengonfirmasi penghapusan.' });
+
+    const { data: user } = await supabase.from('users').select('id, role').eq('id', req.user.id).single();
+    if (!user) return res.status(404).json({ success: false, pesan: 'User tidak ditemukan.' });
+
+    // Bersihkan akun orangtua otomatis yang hanya terhubung ke murid ini
+    if (user.role === 'murid') {
+      const { data: links } = await supabase.from('parent_student').select('parent_id').eq('murid_id', user.id);
+      for (const { parent_id } of (links || [])) {
+        const { count } = await supabase.from('parent_student')
+          .select('murid_id', { count: 'exact', head: true }).eq('parent_id', parent_id);
+        if ((count || 0) <= 1)
+          await supabase.from('users').delete().eq('id', parent_id).eq('role', 'orangtua');
+      }
+    }
+
+    const { error } = await supabase.from('users').delete().eq('id', user.id);
+    if (error) throw error;
+
+    res.json({ success: true, pesan: 'Akun berhasil dihapus.' });
+  } catch (err) {
+    console.error('[delete-account]', err.message);
+    res.status(500).json({ success: false, pesan: 'Gagal menghapus akun. Silakan coba lagi.' });
+  }
+});
+
 module.exports = router;

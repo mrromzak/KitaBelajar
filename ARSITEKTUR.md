@@ -41,7 +41,8 @@ KitaBelajar adalah aplikasi web **full-stack** berisi:
 |---------|--------|
 | **Groq AI (LLaMA/Qwen)** | Otak chatbot AI (chat, generate soal, ringkasan, vision) |
 | **Brevo (Sendinblue)** | Kirim email (OTP, reset password, kredensial orangtua) |
-| **Daily.co** | Video call (WebRTC) |
+| **Jitsi** (`meet.ffmuc.net`) | Video call kelas — yang **aktif dipakai** (External API, buka room di tab baru dengan nama akun) |
+| **Daily.co** | Video call alternatif — kode ada (`routes/meeting.js`) tapi **tidak dipakai** frontend saat ini (legacy) |
 | **HuggingFace** | Text-to-Speech (suara AI) — MMS-TTS |
 | **Google OAuth** | Login dengan akun Google |
 | **SearXNG** (`mikosearch.up.railway.app`) | Web search realtime untuk Asisten Guru (fallback: DuckDuckGo) |
@@ -242,8 +243,8 @@ CRUD soal (`/soal`, guru), `GET /soal/latihan` & `/soal/latihan/mapel` (latihan)
 ### `orangtua.js`
 `GET 🔒👨‍👩‍👧 /orangtua/anak` (daftar anak), `GET 🔒👨‍👩‍👧 /orangtua/aktivitas/:murid_id` (detail aktivitas: quiz, tugas, materi, rank).
 
-### `meeting.js`
-`POST 🔒👩‍🏫 /meeting/buat` — buat room video call (Daily.co).
+### `meeting.js` *(legacy)*
+`POST 🔒👩‍🏫 /meeting/buat` — buat room Daily.co. **Tidak dipakai** alur saat ini (video call aktif pakai Jitsi langsung dari frontend, tanpa endpoint ini).
 
 ---
 
@@ -253,8 +254,8 @@ CRUD soal (`/soal`, guru), `GET /soal/latihan` & `/soal/latihan/mapel` (latihan)
 |------|--------------|--------|
 | `socket/kelas.js` | `kelas:*`, `private:*` | Chat kelas realtime, status online/offline, edit/hapus pesan, banner "meeting dimulai", chat privat |
 | `socket/zepquiz.js` | `zep:*` | Game quiz live: buat/join room, mulai game, jawab soal, skor, matchmaking (1v1), public room, rejoin, forfeit |
-| `socket/videocall.js` | `vc:*` | Signaling WebRTC mesh (offer/answer/ICE) untuk video call peer-to-peer |
-| `socket/mediasoup-sfu.js` | `vc:*` | Signaling WebRTC mode SFU (alternatif, lebih scalable) |
+| `socket/videocall.js` | `vc:*` | Signaling WebRTC mesh (offer/answer/ICE) — **legacy/tidak aktif** (video call sekarang pakai Jitsi) |
+| `socket/mediasoup-sfu.js` | `vc:*` | Signaling WebRTC mode SFU — **legacy/alternatif**, tidak dipakai di alur utama |
 | `socket/world.js` | `world:*` | Game "world": gerak avatar, voting map, jawab soal bareng |
 
 ---
@@ -333,8 +334,10 @@ Menampilkan **push notification** walau tab tertutup. Di-register saat login.
 ### B. Quiz Live (KitaQuiz)
 Guru buat room (`/zepquiz/room`) → murid join via Socket.io (`zep:join_room`) → guru mulai (`zep:start_game`) → soal dikirim realtime → murid jawab (`zep:jawab`) → skor & leaderboard live.
 
-### C. Video Call Kelas
-Guru buat meeting (`/meeting/buat`, Daily.co) → broadcast banner ke murid via socket (`kelas:meeting_started`) → murid masuk room. WebRTC signaling lewat `socket/videocall.js` atau `mediasoup-sfu.js`.
+### C. Video Call Kelas (Jitsi)
+Frontend memuat Jitsi External API (`meet.ffmuc.net/external_api.js`). Guru mulai meeting → `vcStartJitsi()` membuka room Jitsi (nama room diturunkan dari ID kelas) dengan nama akun otomatis → broadcast banner ke murid via socket (`kelas:meeting_started`) → murid klik banner untuk bergabung ke room Jitsi yang sama.
+
+> Catatan: Daily.co (`routes/meeting.js`) dan WebRTC custom (`socket/videocall.js`, `mediasoup-sfu.js`) adalah implementasi lama yang masih ada di kode tapi tidak dipakai di alur aktif.
 
 ### D. Asisten AI Guru dengan Data Realtime
 Guru tanya di chat → `gchatIsSearchIntent()` deteksi apakah butuh data terbaru → kalau ya, `GET /api/ai/search` (SearXNG) ambil hasil web → hasil dimasukkan ke konteks → `POST /api/ai/chat` (Groq) → jawaban menyertakan sumber/link.
@@ -354,7 +357,7 @@ Setiap aktivitas (quiz, materi, latihan) → `updateUserStats()` tambah XP/strea
 | `ENCRYPTION_KEY` | Kunci enkripsi pesan (64 hex / 32 byte) |
 | `GROQ_API_KEY`, `GROQ_API_KEY_2`, `GROQ_MODEL` | AI (dual-key fallback) |
 | `BREVO_API_KEY`, `BREVO_FROM_EMAIL`, `BREVO_FROM_NAME` | Email |
-| `DAILY_API_KEY` | Video call |
+| `DAILY_API_KEY` | Video call Daily.co (legacy — tidak dipakai; video call aktif pakai Jitsi `meet.ffmuc.net` yang tanpa API key) |
 | `HF_TOKEN` | Text-to-Speech |
 | `GOOGLE_CLIENT_ID` | Login Google |
 | `SEARXNG_URL` | Web search realtime (default mikosearch) |
