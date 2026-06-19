@@ -179,7 +179,6 @@ Jalankan di Supabase SQL Editor setelah `schema.sql`:
 ---
 
 <div align="center">
-
-Dibuat dengan ❤️ untuk pendidikan Indonesia · **KitaBelajar**
+ untuk pendidikan Indonesia · **KitaBelajar**
 
 </div>
