@@ -74,8 +74,8 @@ Buka di browser: **http://localhost:3000**
 ### 🔑 Akun Demo
 | Role | Email | Password |
 |------|-------|----------|
-| Guru | `guru@demo.com` | `guru123` |
-| Murid | `andi@demo.com` | `murid123` |
+| Guru | `guru.demo@kitabelajar.id` | `Guru12345` |
+| Murid | `murid.demo@kitabelajar.id ` | `Murid12345` |
 
 ---
 
