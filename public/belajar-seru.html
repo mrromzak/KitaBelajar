@@ -136,7 +136,7 @@
   </nav>
   <div class="login-wrap">
     <div class="login-card">
-      <h2>🔐 Lupa Sandi</h2>
+      <h2>Lupa Sandi</h2>
       <!-- Langkah 1: Input email -->
       <div id="forgot-step-1">
         <p class="sub">Masukkan email kamu, kami kirimkan kode OTP</p>
@@ -144,7 +144,7 @@
           <label>Email</label>
           <input type="email" id="forgot-email" placeholder="email@contoh.com" onkeydown="if(event.key==='Enter')doForgotPassword()">
         </div>
-        <button class="btn-login" onclick="doForgotPassword()">📧 Kirim Kode OTP</button>
+        <button class="btn-login" onclick="doForgotPassword()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>Kirim Kode OTP</button>
       </div>
       <!-- Langkah 2: Verifikasi OTP -->
       <div id="forgot-step-2" style="display:none">
@@ -160,7 +160,7 @@
             oninput="this.value=this.value.replace(/\D/g,'')"
             onkeydown="if(event.key==='Enter')doVerifyResetOtp()">
         </div>
-        <button class="btn-login" onclick="doVerifyResetOtp()">✅ Verifikasi OTP</button>
+        <button class="btn-login" onclick="doVerifyResetOtp()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>Verifikasi OTP</button>
         <div style="text-align:center;margin-top:12px">
           <a onclick="doForgotPassword(true)" style="color:var(--orange);cursor:pointer;font-size:13px;font-weight:700">🔄 Kirim ulang OTP</a>
         </div>
@@ -176,7 +176,7 @@
           <label>Konfirmasi Sandi</label>
           <input type="password" id="forgot-pw-konfirm" placeholder="Ulangi sandi baru" onkeydown="if(event.key==='Enter')doResetPasswordStep3()">
         </div>
-        <button class="btn-login" onclick="doResetPasswordStep3()">🔑 Simpan Sandi Baru</button>
+        <button class="btn-login" onclick="doResetPasswordStep3()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>Simpan Sandi Baru</button>
       </div>
     </div>
   </div>
@@ -189,7 +189,7 @@
   </nav>
   <div class="login-wrap">
     <div class="login-card">
-      <h2>🔑 Buat Sandi Baru</h2>
+      <h2>Buat Sandi Baru</h2>
       <p class="sub">Masukkan sandi baru untuk akun kamu</p>
       <div class="form-group">
         <label>Sandi Baru</label>
@@ -199,7 +199,7 @@
         <label>Konfirmasi Sandi</label>
         <input type="password" id="reset-password2" placeholder="Ulangi sandi baru">
       </div>
-      <button class="btn-login" onclick="doResetPassword()">✅ Simpan Sandi Baru</button>
+      <button class="btn-login" onclick="doResetPassword()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>Simpan Sandi Baru</button>
     </div>
   </div>
 </div>
@@ -214,7 +214,7 @@
   </nav>
   <div class="login-wrap">
     <div class="login-card">
-      <h2>📝 Daftar Akun Baru</h2>
+      <h2>Daftar Akun Baru</h2>
       <p class="sub">Isi data diri kamu untuk mulai belajar</p>
       <div class="role-tabs">
         <button class="role-tab" id="reg-tab-guru" onclick="switchRegRole('guru')">👨‍🏫 Guru</button>
