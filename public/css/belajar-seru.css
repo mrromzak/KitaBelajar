@@ -379,7 +379,7 @@
   .gc4:hover { box-shadow: 0 16px 36px rgba(155,77,255,0.45); }
 
   /* ===== KITABELAJAR LATIHAN BANNER ===== */
-  .kb-latihan-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: linear-gradient(135deg, #6C3CE1, #FF6B35); border-radius: 22px; padding: 22px 28px; margin-bottom: 32px; cursor: pointer; transition: all 0.2s; box-shadow: 0 6px 24px rgba(108,60,225,0.3); color: white; }
+  .kb-latihan-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: linear-gradient(135deg, #6A4CF0, #B23FC9); border-radius: 22px; padding: 22px 28px; margin-bottom: 32px; cursor: pointer; transition: all 0.2s; box-shadow: 0 6px 24px rgba(106,76,240,0.32); color: white; }
   .kb-latihan-banner:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(108,60,225,0.4); }
   .kb-latihan-banner-left { display: flex; align-items: center; gap: 18px; }
   .kb-latihan-banner-icon { width: 56px; height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; animation: kbRocketFly 3.5s ease-in-out infinite; }
