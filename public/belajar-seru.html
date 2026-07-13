@@ -14,7 +14,7 @@
 <!-- Error Logger — kirim error JS ke server KitaBelajar sendiri -->
 <script src="/js/app-config.js?v=1"></script>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/belajar-seru.css?v=25">
+<link rel="stylesheet" href="/css/belajar-seru.css?v=26">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="https://meet.ffmuc.net/external_api.js"></script>
 </head>
@@ -109,7 +109,7 @@
         <label>Password</label>
         <input type="password" id="login-password" placeholder="••••••••">
       </div>
-      <button class="btn-login" onclick="doLogin()">🚀 Masuk</button>
+      <button class="btn-login" onclick="doLogin()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>Masuk</button>
       <div style="text-align:right;margin-top:8px">
         <a onclick="showPage('page-forgot')" style="color:var(--muted);font-size:13px;cursor:pointer;text-decoration:underline">Lupa sandi?</a>
       </div>
@@ -272,7 +272,7 @@
           <input type="text" id="reg-asal-sekolah" placeholder="Nama sekolah tempat mengajar">
         </div>
       </div>
-      <button class="btn-login" onclick="doRegister()">✅ Daftar Sekarang</button>
+      <button class="btn-login" onclick="doRegister()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>Daftar Sekarang</button>
       <div style="display:flex;align-items:center;gap:12px;margin:16px 0">
         <div style="flex:1;height:1px;background:#eee"></div>
         <span style="color:var(--muted);font-size:13px;font-weight:600">atau</span>
@@ -376,17 +376,17 @@
 
     <!-- Tab navigasi -->
     <div style="display:flex;gap:10px;margin-bottom:20px">
-      <button id="lb-tab-lb" class="lb-tab active" onclick="switchLbTab('lb')">🏆 Leaderboard</button>
-      <button id="lb-tab-misi" class="lb-tab" onclick="switchLbTab('misi')">🎯 Misi</button>
-      <button id="lb-tab-badges" class="lb-tab" onclick="switchLbTab('badges')">🏅 Badge</button>
+      <button id="lb-tab-lb" class="lb-tab active" onclick="switchLbTab('lb')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>Leaderboard</button>
+      <button id="lb-tab-misi" class="lb-tab" onclick="switchLbTab('misi')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Misi</button>
+      <button id="lb-tab-badges" class="lb-tab" onclick="switchLbTab('badges')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15"/><path d="M11 12 5.12 2.2"/><path d="m13 12 5.88-9.8"/><path d="M8 7h8"/><circle cx="12" cy="17" r="5"/><path d="M12 18v-2h-.5"/></svg>Badge</button>
     </div>
 
     <!-- ── PANEL LEADERBOARD ── -->
     <div id="lb-panel-lb">
       <!-- Filter mode & periode -->
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-        <button id="lb-mode-kelas"  class="lb-filter active" onclick="setLbMode('kelas')">👥 Kelas</button>
-        <button id="lb-mode-global" class="lb-filter"        onclick="setLbMode('global')">🌍 Global</button>
+        <button id="lb-mode-kelas"  class="lb-filter active" onclick="setLbMode('kelas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Kelas</button>
+        <button id="lb-mode-global" class="lb-filter"        onclick="setLbMode('global')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Global</button>
         <button id="lb-periode-all"    class="lb-filter active" onclick="setLbPeriode('all')"    style="margin-left:auto">Semua Waktu</button>
         <button id="lb-periode-minggu" class="lb-filter"        onclick="setLbPeriode('minggu')">Minggu Ini</button>
       </div>
@@ -421,9 +421,9 @@
       <!-- Filter kategori misi -->
       <div class="misi-filter-bar" id="misi-filter-bar">
         <button class="misi-filter active" data-cat="semua"       onclick="setMisiFilter('semua')">Semua</button>
-        <button class="misi-filter"        data-cat="harian"      onclick="setMisiFilter('harian')">⚡ Harian</button>
-        <button class="misi-filter"        data-cat="mingguan"    onclick="setMisiFilter('mingguan')">🗓️ Mingguan</button>
-        <button class="misi-filter"        data-cat="achievement" onclick="setMisiFilter('achievement')">🏆 Achievement</button>
+        <button class="misi-filter"        data-cat="harian"      onclick="setMisiFilter('harian')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>Harian</button>
+        <button class="misi-filter"        data-cat="mingguan"    onclick="setMisiFilter('mingguan')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 2v4"/><path d="M16 2v4"/></svg>Mingguan</button>
+        <button class="misi-filter"        data-cat="achievement" onclick="setMisiFilter('achievement')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><path d="M8.21 13.89 7 23l5-3 5 3-1.21-9.12"/></svg>Achievement</button>
       </div>
 
       <div class="misi-sec" data-cat="harian" style="margin-bottom:20px">
@@ -537,7 +537,7 @@
       <div class="section-title" style="margin-bottom:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.5 3 6 3s6-2 6-3v-5"/></svg> Kelas Saya</div>
       <div style="display:flex;gap:8px">
         <button onclick="bukaZepQuizGuru()" style="background:linear-gradient(135deg,#7b2ff7,#a64cff);color:white;border:none;padding:10px 22px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
-          🎯 Host Kita Quiz
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Host Kita Quiz
         </button>
         <button onclick="openModal('modal-buat-kelas')" style="background:var(--blue);color:white;border:none;padding:10px 22px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
           ＋ Buat Kelas
@@ -628,7 +628,7 @@
       <!-- VS Online -->
       <div onclick="bukaVSOnline()" style="background:linear-gradient(135deg,#4D96FF,#2979FF);border-radius:20px;padding:24px 28px;cursor:pointer;display:flex;align-items:center;gap:20px;transition:transform 0.2s,box-shadow 0.2s;box-shadow:0 4px 20px rgba(77,150,255,0.4)"
            onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-        <div style="font-size:44px;flex-shrink:0">🌐</div>
+        <div style="flex-shrink:0;color:#fff;display:flex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:44px;height:44px"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
         <div style="text-align:left">
           <div style="font-family:'Fredoka One',cursive;font-size:22px;color:white;margin-bottom:4px">VS Player</div>
           <div style="font-size:13px;color:rgba(255,255,255,0.75)">Main lawan murid lain secara langsung. Auto-start kalau sudah 2+ pemain!</div>
@@ -638,7 +638,7 @@
       <!-- VS AI -->
       <div onclick="bukaVSAI()" style="background:linear-gradient(135deg,#C77DFF,#7b2ff7);border-radius:20px;padding:24px 28px;cursor:pointer;display:flex;align-items:center;gap:20px;transition:transform 0.2s,box-shadow 0.2s;box-shadow:0 4px 20px rgba(199,125,255,0.4)"
            onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-        <div style="font-size:44px;flex-shrink:0">🤖</div>
+        <div style="flex-shrink:0;color:#fff;display:flex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:44px;height:44px"><rect width="18" height="10" x="3" y="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg></div>
         <div style="text-align:left">
           <div style="font-family:'Fredoka One',cursive;font-size:22px;color:white;margin-bottom:4px">VS AI (KikiBot)</div>
           <div style="font-size:13px;color:rgba(255,255,255,0.75)">Tantang KikiBot! Latihan soal sendiri tanpa perlu teman.</div>
@@ -648,7 +648,7 @@
       <!-- Invite Guru -->
       <div onclick="bukaJoinKode()" style="background:linear-gradient(135deg,#FF6B6B,#ee5a24);border-radius:20px;padding:24px 28px;cursor:pointer;display:flex;align-items:center;gap:20px;transition:transform 0.2s,box-shadow 0.2s;box-shadow:0 4px 20px rgba(255,107,107,0.4)"
            onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-        <div style="font-size:44px;flex-shrink:0">👩‍🏫</div>
+        <div style="flex-shrink:0;color:#fff;display:flex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:44px;height:44px"><path d="M14 22v-4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v4"/><path d="M18 5v17"/><path d="M4 9h4"/><circle cx="9" cy="7" r="4"/><path d="M18 2a3 3 0 0 0-3 3v0a3 3 0 0 0 3 3h3V2z"/></svg></div>
         <div style="text-align:left">
           <div style="font-family:'Fredoka One',cursive;font-size:22px;color:white;margin-bottom:4px">Dari Guru</div>
           <div style="font-size:13px;color:rgba(255,255,255,0.75)">Masukkan kode room dari gurumu atau klik notifikasi undangan.</div>
@@ -671,7 +671,7 @@
       <h2>Join dari Guru</h2>
       <p style="opacity:.6;font-size:14px;margin-bottom:28px">Masukkan kode room dari gurumu</p>
       <input class="zep-input" id="zep-join-kode" type="text" maxlength="6" placeholder="Contoh: ABC123" oninput="this.value=this.value.toUpperCase()">
-      <button class="zep-btn zep-btn-primary zep-btn-lg" style="width:100%;background:linear-gradient(135deg,#FF6B6B,#ee5a24)" onclick="zepMuridJoin()">🚀 Masuk Room!</button>
+      <button class="zep-btn zep-btn-primary zep-btn-lg" style="width:100%;background:linear-gradient(135deg,#FF6B6B,#ee5a24)" onclick="zepMuridJoin()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;vertical-align:-4px;margin-right:6px"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>Masuk Room!</button>
     </div>
   </div>
 </div>
