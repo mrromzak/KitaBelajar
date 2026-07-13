@@ -745,19 +745,17 @@ function _initGoogle() {
     } catch (e) {
       console.error('[Google Sign-In] renderButton gagal:', e);
     }
-    // Deteksi jika tombol gagal muncul — penyebab paling umum: origin domain ini
-    // belum terdaftar di "Authorized JavaScript origins" pada OAuth Client di Google Cloud Console.
+    // Diagnostik non-destruktif: HANYA log ke console bila setelah jeda panjang
+    // tombol belum muncul (mis. origin belum di-whitelist di Google Cloud Console).
+    // Tidak menyentuh DOM tombol supaya tidak menimpa tombol yang render lambat.
     setTimeout(() => {
       if (el.childElementCount === 0) {
         console.warn(
-          '[Google Sign-In] Tombol tidak ter-render. Kemungkinan origin "' + location.origin +
-          '" belum didaftarkan di Authorized JavaScript origins (Google Cloud Console) untuk client_id ini.'
+          '[Google Sign-In] Tombol belum ter-render setelah 8 detik. Bila menetap, cek apakah origin "' +
+          location.origin + '" sudah ada di Authorized JavaScript origins (Google Cloud Console).'
         );
-        el.innerHTML =
-          '<div style="font-size:12px;color:var(--muted);text-align:center;line-height:1.5;padding:6px 10px;border:1px dashed #E0D9CC;border-radius:12px">' +
-          'Login Google belum aktif untuk alamat situs ini.<br>Silakan gunakan email &amp; password.</div>';
       }
-    }, 2000);
+    }, 8000);
   });
 }
 
