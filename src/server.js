@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const { helmetMiddleware, antiJudolMiddleware, blockBadReferer } = require('./middleware/security');
+const { authMiddleware } = require('./middleware/auth');
 
 const app = express();
 const httpServer = createServer(app);
@@ -110,6 +111,7 @@ app.use('/api/auth/register',        loginLimiter);
 app.use('/api/auth/send-otp',        loginLimiter);
 app.use('/api/auth/forgot-password', loginLimiter);
 app.use('/api/auth',      require('./routes/auth'));
+app.use('/api/kode-guru', require('./routes/kode-guru'));
 app.use('/api/kelas',     require('./routes/kelas'));
 app.use('/api/materi',    require('./routes/materi'));
 app.use('/api/soal',      require('./routes/soal'));
@@ -125,54 +127,14 @@ app.use('/api/belajar',   require('./routes/belajar'));
 const quizRoutes = require('./routes/quiz');
 app.use('/api/quiz', quizRoutes);
 
-// ── Fix: POST /api/hasil-quiz — simpan hasil kuis murid ──
+// Supabase client untuk endpoint inline (push notif, error logs)
 const { createClient } = require('@supabase/supabase-js');
 const _sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY);
-app.post('/api/hasil-quiz', async (req, res) => {
-  try {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    if (!token) return res.status(401).json({ success: false, pesan: 'Token tidak ada' });
-    const user = jwt.verify(token, process.env.JWT_SECRET);
-    const { quiz_id, skor } = req.body;
-    if (!quiz_id) return res.status(400).json({ success: false, pesan: 'quiz_id wajib' });
 
-    // Cek apakah sudah ada hasil sebelumnya
-    const { data: existing } = await _sb.from('hasil_quiz')
-      .select('id, skor').eq('quiz_id', quiz_id).eq('murid_id', user.id).single();
-
-    if (existing) {
-      // Update jika skor lebih baik
-      if (skor > existing.skor) {
-        await _sb.from('hasil_quiz').update({ skor: skor || 0 }).eq('id', existing.id);
-      }
-      return res.json({ success: true, pesan: 'Hasil diperbarui', skor_lama: existing.skor, skor_baru: skor });
-    }
-
-    // Insert hasil baru — kolom yang ada: id, murid_id, quiz_id, skor, benar, total_soal, durasi_detik
-    const { v4: uuidv4 } = require('uuid');
-    const { error } = await _sb.from('hasil_quiz').insert({
-      id: uuidv4(), quiz_id, murid_id: user.id, skor: skor || 0
-    });
-    if (error) throw error;
-
-    // Update XP murid (increment)
-    const xpGain = Math.round((skor || 0) / 10);
-    if (xpGain > 0) {
-      const { data: userData } = await _sb.from('users').select('xp, level').eq('id', user.id).single();
-      if (userData) {
-        const newXp = (userData.xp || 0) + xpGain;
-        const newLevel = Math.floor(newXp / 1000) + 1;
-        await _sb.from('users').update({ xp: newXp, level: newLevel }).eq('id', user.id);
-      }
-    }
-
-    res.json({ success: true, pesan: 'Hasil disimpan!', xp_gained: xpGain });
-  } catch(err) {
-    console.error('[POST /hasil-quiz]', err.message);
-    res.status(500).json({ success: false, pesan: 'Gagal menyimpan hasil quiz.' });
-  }
-});
+// CATATAN KEAMANAN: endpoint lama `POST /api/hasil-quiz` DIHAPUS.
+// Endpoint itu menerima `skor` langsung dari client sehingga skor/XP bisa
+// dimanipulasi. Penyimpanan hasil quiz kini hanya lewat `POST /api/quiz/hasil`
+// (routes/quiz.js) yang menghitung skor di server berdasarkan jawaban.
 
 // Socket.io Zep Quiz handler
 require('./socket/zepquiz')(io);
@@ -291,19 +253,21 @@ app.get('/api/error-logs', async (req, res) => {
 // Model yang diizinkan dari frontend (whitelist agar tidak disalahgunakan)
 const ALLOWED_GROQ_MODELS = new Set([
   'llama-3.1-8b-instant',
-  'llama-3.3-70b-versatile',
+  'openai/gpt-oss-120b',     // chat & generate soal (pengganti llama-3.3-70b-versatile yg di-decommission)
+  'openai/gpt-oss-20b',      // opsi hemat/cepat
   'llama3-70b-8192',
   'llama3-8b-8192',
   'gemma2-9b-it',
-  'meta-llama/llama-4-scout-17b-16e-instruct',
-  'llama-3.1-70b-versatile',  // voice chat fallback
-  'llama3-groq-8b-8192-tool-use-preview'  // fast model
+  'meta-llama/llama-4-scout-17b-16e-instruct'
 ]);
 
 // Helper: panggil Groq dengan dual-key fallback (lihat src/utils/groq.js)
 const { callGroq, RateLimitError } = require('./utils/groq');
 
 // ── Proxy: Groq AI chat/soal (agar API key tidak terekspos di frontend) ──
+// CATATAN: /api/ai/chat TIDAK pakai authMiddleware karena dipakai juga oleh
+// NPC chatbot zep-world yang tidak mengirim token (mode anonim didukung).
+// Abuse ditahan oleh aiLimiter (rate-limit per IP).
 app.post('/api/ai/chat', aiLimiter, async (req, res) => {
   try {
     if (!process.env.GROQ_API_KEY)
@@ -338,7 +302,7 @@ app.post('/api/ai/chat', aiLimiter, async (req, res) => {
 });
 
 // ── Proxy: Groq Vision (analisis gambar untuk chatbot guru) ──
-app.post('/api/ai/vision', aiLimiter, async (req, res) => {
+app.post('/api/ai/vision', aiLimiter, authMiddleware, async (req, res) => {
   try {
     if (!process.env.GROQ_API_KEY)
       return res.status(500).json({ success: false, pesan: 'GROQ_API_KEY belum diset di server.' });
@@ -372,7 +336,7 @@ app.get('/api/ai/tts/status', (req, res) => {
 // ── HuggingFace TTS Proxy ──
 // Inggris  : Kokoro-82M  — af_bella (wanita, natural), am_michael (pria, ringan)
 // Indonesia: MMS-TTS-ind — Meta MMS, lebih natural dari Google Translate TTS
-app.post('/api/ai/tts/kokoro', async (req, res) => {
+app.post('/api/ai/tts/kokoro', aiLimiter, async (req, res) => {
   const { text, voice, lang } = req.body;
   if (!text) return res.status(400).json({ success: false });
   if (!process.env.HF_TOKEN) {
@@ -435,11 +399,46 @@ app.post('/api/ai/tts/kokoro', async (req, res) => {
 // Blokir IP internal (anti-SSRF), tapi izinkan semua domain publik
 const BLOCKED_INTERNAL = [
   /^localhost$/i, /^127\./, /^10\./, /^192\.168\./,
-  /^172\.(1[6-9]|2\d|3[01])\./, /^0\.0\.0\.0$/, /^::1$/
+  /^172\.(1[6-9]|2\d|3[01])\./, /^0\.0\.0\.0$/, /^::1$/,
+  /^169\.254\./,            // link-local / metadata cloud (AWS/GCP 169.254.169.254)
+  /\.internal$/i, /\.local$/i
 ];
 
 const https = require('https');
-app.get('/api/proxy/fetch', async (req, res) => {
+const dnsp = require('dns').promises;
+const net = require('net');
+
+// Apakah sebuah IP termasuk ruang internal/privat (anti-SSRF).
+function isPrivateIp(ip) {
+  if (net.isIPv4(ip)) {
+    const p = ip.split('.').map(Number);
+    if (p[0] === 127 || p[0] === 10 || p[0] === 0) return true;
+    if (p[0] === 192 && p[1] === 168) return true;
+    if (p[0] === 172 && p[1] >= 16 && p[1] <= 31) return true;
+    if (p[0] === 169 && p[1] === 254) return true; // link-local/metadata
+    if (p[0] >= 224) return true;                  // multicast/reserved
+    return false;
+  }
+  if (net.isIPv6(ip)) {
+    const low = ip.toLowerCase();
+    if (low === '::1' || low === '::') return true;
+    if (low.startsWith('fe80') || low.startsWith('fc') || low.startsWith('fd')) return true;
+    if (low.startsWith('::ffff:')) return isPrivateIp(low.replace('::ffff:', ''));
+    return false;
+  }
+  return true; // tak dikenal → anggap tidak aman
+}
+
+// Resolve hostname & pastikan tidak ada IP internal (cegah DNS rebinding).
+async function hostnameAman(hostname) {
+  try {
+    const addrs = await dnsp.lookup(hostname, { all: true });
+    return addrs.length > 0 && !addrs.some(a => isPrivateIp(a.address));
+  } catch {
+    return false;
+  }
+}
+app.get('/api/proxy/fetch', aiLimiter, async (req, res) => {
   const { url } = req.query;
   if (!url) return res.json({ success: false, pesan: 'URL wajib diisi' });
 
@@ -451,19 +450,21 @@ app.get('/api/proxy/fetch', async (req, res) => {
       return res.json({ success: false, pesan: 'Hanya URL HTTPS yang diizinkan.' });
     }
 
-    // Blokir IP/hostname internal (anti-SSRF)
+    // Blokir IP/hostname internal (anti-SSRF) — cek pola + IP hasil resolusi.
     const hostname = parsed.hostname;
-    if (BLOCKED_INTERNAL.some(r => r.test(hostname))) {
+    if (BLOCKED_INTERNAL.some(r => r.test(hostname)) || !(await hostnameAman(hostname))) {
       return res.json({ success: false, pesan: 'URL tidak valid.' });
     }
 
     // Fungsi fetch dengan follow redirect (max 5 hop)
-    function doFetch(targetUrl, hopsLeft) {
+    async function doFetch(targetUrl, hopsLeft) {
       if (hopsLeft <= 0) return res.json({ success: false, pesan: 'Terlalu banyak redirect.' });
       let parsedTarget;
       try { parsedTarget = new URL(targetUrl); } catch(e) { return res.json({ success: false, pesan: 'URL redirect tidak valid.' }); }
       if (parsedTarget.protocol !== 'https:') return res.json({ success: false, pesan: 'Redirect ke non-HTTPS tidak diizinkan.' });
-      if (BLOCKED_INTERNAL.some(r => r.test(parsedTarget.hostname))) return res.json({ success: false, pesan: 'URL tidak valid.' });
+      // Cek tiap hop (termasuk IP hasil resolusi) agar redirect tak menuju internal.
+      if (BLOCKED_INTERNAL.some(r => r.test(parsedTarget.hostname)) || !(await hostnameAman(parsedTarget.hostname)))
+        return res.json({ success: false, pesan: 'URL tidak valid.' });
 
       const request = https.get(targetUrl, {
         headers: {
@@ -658,6 +659,24 @@ app.get('/api', (req, res) => {
 
 app.use((req, res) => res.status(404).json({ success: false, pesan: `Endpoint tidak ditemukan: ${req.method} ${req.path}` }));
 
+// Redaksi field sensitif sebelum disimpan ke error_logs (dibaca guru via
+// /api/error-logs). Tanpa ini, password/OTP/token dari body request auth
+// ikut tersimpan plaintext → kebocoran data.
+const SENSITIVE_KEYS = new Set([
+  'password', 'password_baru', 'password_lama', 'otp', 'token', 'reset_token',
+  'google_token', 'konfirmasi', 'auth', 'p256dh', 'keys'
+]);
+function redactSensitive(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const out = Array.isArray(obj) ? [] : {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (SENSITIVE_KEYS.has(k)) out[k] = '[REDACTED]';
+    else if (v && typeof v === 'object') out[k] = redactSensitive(v);
+    else out[k] = v;
+  }
+  return out;
+}
+
 app.use((err, req, res, next) => {
   console.error('❌', err.message);
   // Simpan error ke Supabase secara async (tidak block response)
@@ -669,7 +688,7 @@ app.use((err, req, res, next) => {
     method: req.method,
     user_id: null,
     user_agent: req.headers['user-agent'] || null,
-    extra: JSON.stringify({ body: req.body, query: req.query })
+    extra: JSON.stringify({ body: redactSensitive(req.body), query: redactSensitive(req.query) })
   }).then(() => {}).catch(() => {});
   res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
 });

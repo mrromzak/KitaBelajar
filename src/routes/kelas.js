@@ -4,16 +4,36 @@ const { v4: uuidv4 } = require('uuid');
 const supabase = require('../supabase');
 const { authMiddleware, guruOnly, muridOnly } = require('../middleware/auth');
 const { encrypt, decrypt } = require('../utils/crypto');
+const { cleanText } = require('../utils/sanitize');
+
+// Cek akses kelas (anti-IDOR): guru pemilik ATAU murid terdaftar di kelas.
+async function bolehAksesKelas(user, kelasId) {
+  if (!kelasId) return false;
+  if (user.role === 'guru') {
+    const { data } = await supabase.from('kelas')
+      .select('id').eq('id', kelasId).eq('guru_id', user.id).maybeSingle();
+    return !!data;
+  }
+  if (user.role === 'murid') {
+    const { data } = await supabase.from('kelas_murid')
+      .select('kelas_id').eq('kelas_id', kelasId).eq('murid_id', user.id).maybeSingle();
+    return !!data;
+  }
+  return false;
+}
 
 // POST /api/kelas — Guru buat kelas baru
 router.post('/', authMiddleware, guruOnly, async (req, res) => {
   try {
-    const { nama, tahun_ajar, mapel } = req.body;
+    let { nama, tahun_ajar, mapel } = req.body;
     if (!nama || !tahun_ajar)
       return res.status(400).json({ success: false, pesan: 'Nama kelas dan tahun ajaran wajib diisi.' });
 
+    nama = cleanText(nama, 100);
+    tahun_ajar = cleanText(tahun_ajar, 20);
+
     const id = uuidv4();
-    const safeMapel = (mapel || '').trim();
+    const safeMapel = cleanText(mapel || '', 60);
 
     // Generate kode unik 6 karakter (huruf kapital + angka), cek duplikat ke DB
     const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // hapus karakter ambigu (I,O,0,1)
@@ -86,6 +106,12 @@ router.get('/:id', authMiddleware, async (req, res) => {
     if (!kelas) return res.status(404).json({ success: false, pesan: 'Kelas tidak ditemukan.' });
 
     const murid = muridList?.map(m => m.murid) || [];
+    // Anti-IDOR: hanya guru pemilik atau murid terdaftar yang boleh lihat detail.
+    const bolehGuru = req.user.role === 'guru' && kelas.guru_id === req.user.id;
+    const bolehMurid = req.user.role === 'murid' && murid.some(m => m && m.id === req.user.id);
+    if (!bolehGuru && !bolehMurid)
+      return res.status(403).json({ success: false, pesan: 'Kamu tidak punya akses ke kelas ini.' });
+
     res.json({ success: true, data: { ...kelas, murid, total_murid: murid.length, total_materi: totalMateri || 0 } });
   } catch (err) {
     console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
@@ -127,6 +153,10 @@ router.post('/join', authMiddleware, muridOnly, async (req, res) => {
 // GET /api/kelas/:id/chat — Ambil pesan chat kelas (decrypt isi)
 router.get('/:id/chat', authMiddleware, async (req, res) => {
   try {
+    // Anti-IDOR: hanya anggota kelas yang boleh membaca chat.
+    if (!(await bolehAksesKelas(req.user, req.params.id)))
+      return res.status(403).json({ success: false, pesan: 'Kamu tidak punya akses ke kelas ini.' });
+
     const { data } = await supabase
       .from('pesan_kelas')
       .select('*, pengirim:pengirim_id(id, nama, avatar, role)')
@@ -145,6 +175,9 @@ router.post('/:id/chat', authMiddleware, async (req, res) => {
   try {
     const { isi } = req.body;
     if (!isi?.trim()) return res.status(400).json({ success: false, pesan: 'Pesan tidak boleh kosong.' });
+    // Anti-IDOR: hanya anggota kelas yang boleh mengirim pesan.
+    if (!(await bolehAksesKelas(req.user, req.params.id)))
+      return res.status(403).json({ success: false, pesan: 'Kamu tidak punya akses ke kelas ini.' });
     const plainIsi = isi.trim();
     const id = uuidv4();
     const { error } = await supabase.from('pesan_kelas').insert({

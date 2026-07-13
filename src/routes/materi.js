@@ -5,6 +5,18 @@ const multer = require('multer');
 const supabase = require('../supabase');
 const { authMiddleware, guruOnly } = require('../middleware/auth');
 const { updateUserStats, checkMisi } = require('../utils/gamification');
+const { cleanText } = require('../utils/sanitize');
+const { validateUpload, EXT_FOR_MIME } = require('../utils/fileType');
+
+// Tipe yang benar-benar diizinkan untuk materi (dicek dari isi file).
+const MATERI_ALLOWED_MIME = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm'];
+
+// Cek kepemilikan kelas (anti mass-assignment kelas_id milik guru lain).
+async function guruMemilikiKelas(guruId, kelasId) {
+  const { data } = await supabase.from('kelas')
+    .select('id').eq('id', kelasId).eq('guru_id', guruId).maybeSingle();
+  return !!data;
+}
 
 // Multer – simpan di memory dulu, lalu upload ke Supabase Storage
 const upload = multer({
@@ -17,14 +29,16 @@ const upload = multer({
   }
 });
 
-// Helper: upload file ke Supabase Storage
-async function uploadToStorage(file, folder) {
-  const ext = file.originalname.split('.').pop();
+// Helper: upload file ke Supabase Storage.
+// Ekstensi & contentType diambil dari MIME yang TERDETEKSI dari isi file,
+// bukan dari nama/Content-Type kiriman klien (anti-spoof).
+async function uploadToStorage(file, folder, detectedMime) {
+  const ext = EXT_FOR_MIME[detectedMime] || 'bin';
   const filename = `${folder}/${uuidv4()}.${ext}`;
 
   const { error } = await supabase.storage
     .from('materi-files')
-    .upload(filename, file.buffer, { contentType: file.mimetype, upsert: false });
+    .upload(filename, file.buffer, { contentType: detectedMime, upsert: false });
 
   if (error) throw error;
 
@@ -39,10 +53,21 @@ router.post('/upload', authMiddleware, guruOnly, upload.single('file'), async (r
   try {
     if (!req.file) return res.status(400).json({ success: false, pesan: 'File tidak ditemukan.' });
 
-    const { judul, deskripsi, mapel, jenis, kelas_id, status } = req.body;
-    if (!judul || !mapel) return res.status(400).json({ success: false, pesan: 'Judul dan mapel wajib diisi.' });
+    // Validasi isi file (magic bytes), bukan sekadar Content-Type yang bisa dipalsukan.
+    const check = validateUpload(req.file.buffer, MATERI_ALLOWED_MIME);
+    if (!check.ok)
+      return res.status(400).json({ success: false, pesan: 'Isi file tidak cocok dengan format yang diizinkan (PDF/gambar/video).' });
 
-    const file_url = await uploadToStorage(req.file, (mapel || 'umum').toLowerCase().replace(/\s+/g, '-'));
+    let { judul, deskripsi, mapel, jenis, kelas_id, status } = req.body;
+    if (!judul || !mapel) return res.status(400).json({ success: false, pesan: 'Judul dan mapel wajib diisi.' });
+    // KEAMANAN: cegah guru menempel materi ke kelas milik guru lain.
+    if (kelas_id && !(await guruMemilikiKelas(req.user.id, kelas_id)))
+      return res.status(403).json({ success: false, pesan: 'Kelas itu bukan milikmu.' });
+    judul = cleanText(judul, 150);
+    mapel = cleanText(mapel, 60);
+    deskripsi = deskripsi ? cleanText(deskripsi, 500) : null;
+
+    const file_url = await uploadToStorage(req.file, (mapel || 'umum').toLowerCase().replace(/\s+/g, '-'), check.mime);
 
     const id = uuidv4();
     const { error } = await supabase.from('materi').insert({
@@ -102,9 +127,17 @@ router.post('/upload', authMiddleware, guruOnly, upload.single('file'), async (r
 // =====================================================
 router.post('/', authMiddleware, guruOnly, async (req, res) => {
   try {
-    const { judul, deskripsi, mapel, jenis, konten, file_url, kelas_id, status } = req.body;
+    let { judul, deskripsi, mapel, jenis, konten, file_url, kelas_id, status } = req.body;
     if (!judul || !mapel || !jenis)
       return res.status(400).json({ success: false, pesan: 'Judul, mapel, dan jenis wajib diisi.' });
+    // KEAMANAN: cegah guru menempel materi ke kelas milik guru lain.
+    if (kelas_id && !(await guruMemilikiKelas(req.user.id, kelas_id)))
+      return res.status(403).json({ success: false, pesan: 'Kelas itu bukan milikmu.' });
+    judul = cleanText(judul, 150);
+    mapel = cleanText(mapel, 60);
+    deskripsi = deskripsi ? cleanText(deskripsi, 500) : null;
+    // Catatan: `konten` (isi teks/markdown atau URL) TIDAK di-cleanText agar
+    // konten panjang/kode tidak rusak — dirender aman via escapeHtml (src) / renderMarkdown.
 
     const id = uuidv4();
     const { error } = await supabase.from('materi').insert({
@@ -202,6 +235,13 @@ router.get('/:id', authMiddleware, async (req, res) => {
     const { data: materi, error } = await supabase
       .from('materi').select('*, guru:guru_id(nama)').eq('id', req.params.id).single();
     if (!materi || error) return res.status(404).json({ success: false, pesan: 'Materi tidak ditemukan.' });
+
+    // Anti-IDOR: murid hanya boleh materi 'aktif' (draft milik guru tak boleh bocor);
+    // guru hanya boleh materi miliknya sendiri.
+    if (req.user.role === 'murid' && materi.status !== 'aktif')
+      return res.status(404).json({ success: false, pesan: 'Materi tidak ditemukan.' });
+    if (req.user.role === 'guru' && materi.guru_id !== req.user.id)
+      return res.status(403).json({ success: false, pesan: 'Bukan materi milikmu.' });
 
     await supabase.from('materi').update({ views: (materi.views || 0) + 1 }).eq('id', req.params.id);
 

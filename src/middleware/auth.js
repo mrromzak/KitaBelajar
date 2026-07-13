@@ -32,4 +32,11 @@ function muridOnly(req, res, next) {
   next();
 }
 
-module.exports = { authMiddleware, guruOnly, muridOnly, JWT_SECRET };
+function kepalaOnly(req, res, next) {
+  if (req.user.role !== 'kepala_sekolah') {
+    return res.status(403).json({ success: false, pesan: 'Akses ditolak. Hanya kepala sekolah yang bisa melakukan ini.' });
+  }
+  next();
+}
+
+module.exports = { authMiddleware, guruOnly, muridOnly, kepalaOnly, JWT_SECRET };

@@ -269,7 +269,7 @@ router.get('/ai-generate', authMiddleware, async (req, res) => {
     let groqData;
     try {
       groqData = await callGroq({
-        model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+        model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
         max_tokens: 3000,
         temperature: 0.9,
         messages: [

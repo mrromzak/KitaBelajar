@@ -21,14 +21,16 @@
   .page { display: none; min-height: 100vh; }
   .page.active { display: block; }
 
-  /* ===== TOAST ===== */
+  /* ===== TOAST (muncul dari atas) ===== */
   #toast {
-    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+    position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-120%);
     background: #2D2D2D; color: white; padding: 12px 24px; border-radius: 50px;
-    font-weight: 700; font-size: 14px; z-index: 999; transition: transform 0.3s ease;
-    pointer-events: none; white-space: nowrap;
+    font-weight: 700; font-size: 14px; z-index: 999;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease;
+    opacity: 0; pointer-events: none; white-space: nowrap;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.18);
   }
-  #toast.show { transform: translateX(-50%) translateY(0); }
+  #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
   #toast.success { background: var(--green); }
   #toast.error { background: var(--red); }
   #toast.info { background: var(--blue); }
@@ -165,8 +167,10 @@
     border-bottom: 3px solid var(--yellow);
     position: sticky; top: 0; z-index: 100;
     box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    min-height: 76px; /* tinggi konsisten di semua halaman */
   }
-  .logo { font-family: 'Fredoka One', cursive; font-size: 26px; color: var(--orange); display: flex; align-items: center; gap: 8px; }
+  .logo { font-family: 'Fredoka One', cursive; font-size: 26px; color: var(--orange); display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .logo:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; border-radius: 8px; }
   .logo span { font-size: 30px; }
   .nav-links { display: flex; gap: 10px; align-items: center; }
   .nav-btn {
@@ -236,21 +240,69 @@
   .btn-murid { background: var(--orange); color: white; }
   .btn-guru { background: white; color: var(--blue); border: 3px solid var(--blue); }
   .features { padding: 20px 40px 60px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; max-width: 960px; margin: 0 auto; }
-  .feature-card { background: white; border-radius: var(--radius); padding: 28px 22px; text-align: center; box-shadow: var(--shadow); transition: transform 0.2s; border-top: 5px solid transparent; }
-  .feature-card:hover { transform: translateY(-5px); }
-  .feature-card:nth-child(1) { border-color: var(--yellow); }
-  .feature-card:nth-child(2) { border-color: var(--green); }
-  .feature-card:nth-child(3) { border-color: var(--pink); }
-  .feature-card:nth-child(4) { border-color: var(--blue); }
-  .feature-icon { font-size: 40px; margin-bottom: 12px; }
+  .feature-card { background: white; border-radius: var(--radius); padding: 28px 22px; text-align: center; box-shadow: var(--shadow); border: 1px solid #F0ECE4; transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease; }
+  .feature-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.10); }
+  /* Ikon fitur: SVG line-icon dalam kotak bulat bertint (bukan emoji) */
+  .feature-icon { width: 58px; height: 58px; border-radius: 18px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+  .feature-icon svg { width: 28px; height: 28px; }
+  .feature-card:nth-child(1) .feature-icon { background: rgba(255,177,0,0.14); color: #E6A100; }
+  .feature-card:nth-child(2) .feature-icon { background: rgba(107,203,119,0.16); color: #3FA152; }
+  .feature-card:nth-child(3) .feature-icon { background: rgba(255,107,157,0.15); color: var(--pink); }
+  .feature-card:nth-child(4) .feature-icon { background: rgba(77,150,255,0.15); color: var(--blue); }
   .feature-card h3 { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
   .feature-card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
 
-  /* ===== LOGIN FORM ===== */
-  .login-wrap { max-width: 420px; margin: 60px auto; padding: 0 24px; }
-  .login-card { background: white; border-radius: 28px; padding: 40px 36px; box-shadow: 0 12px 48px rgba(0,0,0,0.1); }
-  .login-card h2 { font-family: 'Fredoka One', cursive; font-size: 28px; margin-bottom: 6px; }
-  .login-card .sub { font-size: 14px; color: var(--muted); margin-bottom: 28px; }
+  /* Desktop: hero jadi 2 kolom asimetris (teks kiri, maskot kanan) — lebih dinamis */
+  @media (min-width: 900px) {
+    .hero { padding: 56px 60px 48px; }
+    .hero-inner { max-width: 1080px; margin: 0 auto; }
+    .hero-text {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      grid-template-areas:
+        "badge  maskot"
+        "title  maskot"
+        "desc   maskot"
+        "btns   maskot";
+      align-items: center;
+      column-gap: 32px;
+      text-align: left;
+    }
+    .hero-badge   { grid-area: badge; justify-self: start; margin-bottom: 14px; }
+    .hero h1      { grid-area: title; margin-bottom: 18px; }
+    .hero p       { grid-area: desc; margin: 0 0 28px; max-width: 460px; }
+    .hero-buttons { grid-area: btns; justify-content: flex-start; }
+    .hero-maskot  { grid-area: maskot; margin: 0; justify-self: center; }
+    /* Features tampil sedikit "naik" menutupi hero -> ritme lebih hidup */
+    .features { margin-top: -10px; }
+  }
+
+  /* ===== LOGIN / REGISTER / AUTH CARDS ===== */
+  .login-wrap {
+    max-width: 440px; margin: 0 auto; padding: 48px 24px;
+    min-height: calc(100vh - 76px);
+    display: flex; flex-direction: column; justify-content: center;
+    position: relative;
+  }
+  /* Latar lembut supaya halaman auth tidak terasa kosong/datar */
+  .login-wrap::before {
+    content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(420px 320px at 12% 8%, rgba(255,217,61,0.18), transparent 70%),
+      radial-gradient(460px 340px at 88% 96%, rgba(77,150,255,0.16), transparent 70%);
+  }
+  .login-card {
+    position: relative; z-index: 1;
+    background: white; border-radius: 28px; padding: 36px 34px 34px;
+    box-shadow: 0 18px 50px rgba(45,45,45,0.12); border: 1px solid #F2EEE6;
+  }
+  /* Maskot kecil sebagai header semua kartu auth (login/daftar/lupa/reset) */
+  .login-card::before {
+    content: ''; display: block; width: 72px; height: 72px; margin: 0 auto 10px;
+    background: url('/assets/maskot.png?v=2') center/contain no-repeat;
+  }
+  .login-card h2 { font-family: 'Fredoka One', cursive; font-size: 26px; margin-bottom: 6px; text-align: center; }
+  .login-card .sub { font-size: 13.5px; color: var(--muted); margin-bottom: 26px; text-align: center; line-height: 1.55; }
   .role-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
   .role-tab { flex: 1; padding: 10px; border-radius: 12px; border: 2.5px solid #eee; background: none; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; }
   .role-tab.active { border-color: var(--orange); background: #FFF3E8; color: var(--orange); }
@@ -262,7 +314,7 @@
     transition: border-color 0.2s; outline: none;
   }
   .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--orange); }
-  .btn-login { width: 100%; padding: 14px; border-radius: 14px; border: none; background: var(--orange); color: white; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 16px; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
+  .btn-login { width: 100%; padding: 14px; border-radius: 14px; border: none; background: var(--orange); color: white; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 16px; cursor: pointer; transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease; margin-top: 8px; }
   .btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,107,53,0.35); }
   .login-switch { text-align: center; margin-top: 20px; font-size: 13px; color: var(--muted); }
   .login-switch a { color: var(--orange); font-weight: 700; cursor: pointer; text-decoration: none; }
@@ -306,7 +358,8 @@
   .game-card::after { content: ''; position: absolute; bottom: -30%; left: -15%; width: 80px; height: 80px; background: rgba(255,255,255,0.07); border-radius: 50%; pointer-events: none; }
   .game-card:hover { transform: translateY(-7px) scale(1.04); }
   .game-card .game-icon-wrap { width: 58px; height: 58px; background: rgba(255,255,255,0.22); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; backdrop-filter: blur(4px); }
-  .game-card .game-icon { font-size: 30px; line-height: 1; }
+  .game-card .game-icon { font-size: 30px; line-height: 1; display: flex; align-items: center; justify-content: center; color: #fff; }
+  .game-card .game-icon svg { width: 30px; height: 30px; }
   .game-card h4 { font-size: 14px; font-weight: 900; margin-bottom: 3px; letter-spacing: 0.1px; }
   .game-card p { font-size: 11px; opacity: 0.82; margin-top: 0; line-height: 1.4; }
   .gc1 { background: linear-gradient(135deg, #FF6B35, #FF9A5C); box-shadow: 0 8px 24px rgba(255,107,53,0.38); }
@@ -827,8 +880,15 @@
   .hero p { font-size: 14px; margin-bottom: 20px; }
   .hero-maskot { margin: 12px 0; }
 
+  /* Reorder: CTA muncul tepat di bawah teks (sebelum maskot) supaya
+     tombol "Ayo Belajar" & "Masuk" tidak ketutup di bawah fold */
+  .hero-text { display: flex; flex-direction: column; }
+  .hero-badge, .hero h1, .hero p { order: 1; }
+  .hero-buttons { order: 2; margin-top: 4px; }
+  .hero-maskot { order: 3; }
+
   /* Maskot tengah lebih kecil */
-  .maskot-img { width: 200px !important; height: 200px !important; }
+  .maskot-img { width: 180px !important; height: 180px !important; }
   .maskot-wrap { padding: 32px 52px 8px; }
 
   /* Speech bubbles: perkecil & sesuaikan posisi */
@@ -966,5 +1026,129 @@
   /* Info row: wrap */
   #page-soal-builder [style*="display:flex;gap:12px;margin-bottom:20px"] {
     gap: 8px !important;
+  }
+}
+
+/* ===== dipindah dari <style> inline belajar-seru.html ===== */
+/* ===== GURU AI CHATBOT ===== */
+.guru-chatbot-fab{position:fixed!important;bottom:28px;right:28px;width:60px;height:60px;border-radius:50%;background:#fff;border:none;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 6px 28px rgba(0,0,0,0.18);transition:all .25s;z-index:9999;padding:0;overflow:hidden}
+.guru-chatbot-fab.visible{display:flex!important}
+.guru-chatbot-fab:hover{transform:scale(1.1);box-shadow:0 10px 36px rgba(0,0,0,0.25)}
+.fab-badge{position:absolute;top:-3px;right:-3px;width:18px;height:18px;background:#FF4757;border-radius:50%;border:2px solid #fff;font-size:10px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s}
+.guru-chatbot-panel{position:fixed!important;bottom:100px;right:28px;width:370px;max-height:580px;background:#fff;border-radius:24px;box-shadow:0 16px 48px rgba(0,0,0,0.22);display:flex;flex-direction:column;z-index:9998;transform:scale(0.85) translateY(30px);transform-origin:bottom right;opacity:0;pointer-events:none;transition:all .25s cubic-bezier(.34,1.56,.64,1)}
+.guru-chatbot-panel.open{transform:scale(1) translateY(0)!important;opacity:1!important;pointer-events:all!important}
+.gchat-header{background:linear-gradient(135deg,#7b2ff7,#4D96FF);color:#fff;padding:16px 18px;border-radius:24px 24px 0 0;display:flex;align-items:center;gap:12px}
+.gchat-header-icon{width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.15);border-radius:50%;padding:4px}
+.gchat-header-info{flex:1}
+.gchat-header-info strong{display:block;font-size:15px;font-weight:800}
+.gchat-header-info span{font-size:12px;opacity:.85}
+.gchat-close{background:rgba(255,255,255,0.2);border:none;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.gchat-close:hover{background:rgba(255,255,255,0.35)}
+.gchat-chips{display:flex;gap:6px;padding:10px 14px;overflow-x:auto;border-bottom:1px solid #F0F0F0;scrollbar-width:none}
+.gchat-chips::-webkit-scrollbar{display:none}
+.gchat-chip{flex-shrink:0;padding:5px 12px;border-radius:50px;background:#F0F0F8;border:none;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:#5A5A8A;cursor:pointer;transition:all .2s;white-space:nowrap}
+.gchat-chip:hover{background:#e0d8f8;color:#7b2ff7}
+.gchat-messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:0}
+.gchat-msg{display:flex;gap:8px;align-items:flex-end}
+.gchat-msg.user{flex-direction:row-reverse}
+.gchat-bubble{max-width:78%;min-width:0;padding:10px 14px;border-radius:16px;font-size:13.5px;line-height:1.5;font-weight:600;word-break:break-word;overflow-x:auto}
+.gchat-bubble .katex-display{overflow-x:auto;overflow-y:hidden;max-width:100%;padding:4px 0}
+.gchat-bubble .katex{font-size:1em}
+.gchat-msg.bot .gchat-bubble{background:#F4F0FF;color:#2D2D2D;border-bottom-left-radius:4px}
+.gchat-msg.user .gchat-bubble{background:linear-gradient(135deg,#7b2ff7,#4D96FF);color:#fff;border-bottom-right-radius:4px}
+.gchat-avatar{width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.gchat-typing{display:flex;gap:4px;align-items:center;padding:10px 14px;background:#F4F0FF;border-radius:16px;border-bottom-left-radius:4px;width:fit-content}
+.gchat-typing span{width:7px;height:7px;background:#9B6DFF;border-radius:50%;animation:gchat-bounce 1.2s infinite}
+.gchat-typing span:nth-child(2){animation-delay:.2s}
+.gchat-typing span:nth-child(3){animation-delay:.4s}
+@keyframes gchat-bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+.gchat-attach{width:36px;height:36px;border-radius:50%;background:#F4F4F4;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background .2s;align-self:center}
+.gchat-attach:hover{background:#E8E0FF}
+.gchat-attach:hover svg{fill:#7b2ff7}
+.gchat-file-chip{display:flex;align-items:center;gap:6px;background:#F0EDFF;border:1.5px solid #C4B5FD;border-radius:10px;padding:5px 10px;font-size:12px;font-weight:700;color:#5B21B6;max-width:220px}
+.gchat-file-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.gchat-file-chip button{background:none;border:none;cursor:pointer;color:#9CA3AF;font-size:14px;line-height:1;padding:0;flex-shrink:0}
+.gchat-file-chip button:hover{color:#EF4444}
+.gchat-footer{padding:12px 14px;border-top:1px solid #F0F0F0;display:flex;gap:8px}
+.gchat-input{flex:1;border:2px solid #E8E8E8;border-radius:50px;padding:9px 16px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;outline:none;transition:border-color .2s;background:#FAFAFA}
+.gchat-input:focus{border-color:#7b2ff7;background:#fff}
+.gchat-send{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#7b2ff7,#4D96FF);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.gchat-send:hover{transform:scale(1.1)}
+.gchat-send svg{width:18px;height:18px;fill:#fff}
+@media(max-width:480px){.guru-chatbot-panel{width:calc(100vw - 32px);right:16px;bottom:88px}.guru-chatbot-fab{right:16px;bottom:20px}}
+
+/* ── Leaderboard & Misi ───────────────────────────────── */
+.lb-tab{flex:1;padding:10px 6px;border-radius:14px;background:#F4F0FF;border:none;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer;color:#7b2ff7;transition:all .2s}
+.lb-tab.active{background:linear-gradient(135deg,#7b2ff7,#4D96FF);color:#fff;box-shadow:0 4px 16px rgba(123,47,247,.35)}
+.lb-filter{padding:7px 14px;border-radius:50px;background:#F4F4F8;border:none;font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;cursor:pointer;color:#666;transition:all .15s}
+.lb-filter.active{background:linear-gradient(135deg,#7b2ff7,#4D96FF);color:#fff}
+.misi-filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.misi-filter{padding:8px 16px;border-radius:50px;background:#F4F4F8;border:none;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;cursor:pointer;color:#666;transition:all .15s}
+.misi-filter:hover{background:#EDEBF5}
+.misi-filter.active{background:linear-gradient(135deg,#7b2ff7,#4D96FF);color:#fff;box-shadow:0 4px 14px rgba(123,47,247,.3)}
+.lb-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:#fff;border-radius:16px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:2px solid transparent;transition:all .2s}
+.lb-item.saya{border-color:#7b2ff7;background:#F8F4FF}
+.lb-item.top1{background:linear-gradient(135deg,#FFF8DC,#FFF3CD);border-color:#FFD700}
+.lb-item.top2{background:linear-gradient(135deg,#F8F8F8,#EFEFEF);border-color:#C0C0C0}
+.lb-item.top3{background:linear-gradient(135deg,#FFF3ED,#FFE8D6);border-color:#CD7F32}
+.lb-rank{width:28px;text-align:center;font-weight:900;font-size:16px;flex-shrink:0}
+.lb-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#E8E0FF;display:flex;align-items:center;justify-content:center;font-size:18px}
+.lb-info{flex:1;min-width:0}
+.lb-nama{font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-meta{font-size:11px;color:var(--muted);font-weight:700;margin-top:2px}
+.lb-xp{font-weight:900;font-size:14px;color:#7b2ff7;flex-shrink:0}
+.lb-podium-item{display:flex;flex-direction:column;align-items:center;gap:4px}
+.lb-podium-col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+.misi-card{background:#fff;border-radius:18px;padding:14px 16px;box-shadow:0 2px 12px rgba(0,0,0,.07);border-left:4px solid #E0D0FF;display:flex;align-items:center;gap:12px}
+.misi-card.selesai{border-left-color:#00C851;background:#F0FFF5}
+.misi-card.claimed{border-left-color:#ccc;background:#F8F8F8;opacity:.7}
+.misi-icon{font-size:24px;flex-shrink:0}
+.misi-info{flex:1;min-width:0}
+.misi-judul{font-weight:800;font-size:13px}
+.misi-progres-bar{height:6px;background:#E8E0FF;border-radius:50px;margin-top:6px;overflow:hidden}
+.misi-progres-fill{height:100%;background:linear-gradient(90deg,#7b2ff7,#4D96FF);border-radius:50px;transition:width .4s}
+.misi-reward{font-size:11px;color:#7b2ff7;font-weight:800;margin-top:4px}
+.btn-klaim{padding:6px 14px;border-radius:50px;background:linear-gradient(135deg,#00C851,#38ef7d);border:none;color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;cursor:pointer;flex-shrink:0;transition:all .2s}
+.btn-klaim:hover{transform:scale(1.05)}
+.btn-mulai-misi{padding:6px 12px;border-radius:50px;background:linear-gradient(135deg,#7b2ff7,#4D96FF);border:none;color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:11px;cursor:pointer;flex-shrink:0;transition:all .2s;white-space:nowrap}
+.btn-mulai-misi:hover{transform:scale(1.05);box-shadow:0 4px 12px rgba(123,47,247,.4)}
+/* ── Materi Ceklis ───────────────────────────── */
+.materi-ceklis-footer{padding:10px 18px 14px;border-top:1px solid #F0EEFF;margin-top:4px}
+.materi-ceklis-btn{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:14px;border:2px dashed #C4B5FD;background:#FAFAFF;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;color:#7b2ff7;transition:all .2s;width:100%}
+.materi-ceklis-btn:hover:not(:disabled){background:#F3EEFF;border-style:solid;border-color:#7b2ff7}
+.materi-ceklis-btn.done{border:2px solid #00C851;background:#F0FFF5;color:#00C851;cursor:default}
+.materi-ceklis-btn:disabled{cursor:default}
+.ceklis-box{width:22px;height:22px;border-radius:6px;border:2px solid #C4B5FD;background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0;transition:all .2s}
+.materi-ceklis-btn.done .ceklis-box{border-color:#00C851;background:#00C851;color:#fff}
+.ceklis-label{flex:1;text-align:left}
+.ceklis-xp{font-size:11px;font-weight:900;background:linear-gradient(135deg,#7b2ff7,#4D96FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stream-post.materi-done{border-left:4px solid #00C851}
+.materi-ceklis-btn.loading{opacity:.6;pointer-events:none}
+.badge-card{width:80px;padding:12px 8px;border-radius:16px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.08);text-align:center;border:2px solid #F0E8FF;transition:all .2s;cursor:default}
+.badge-card.dimiliki{border-color:#7b2ff7;background:#F8F4FF}
+.badge-card.locked{opacity:.35;filter:grayscale(1)}
+.badge-icon{font-size:28px;margin-bottom:4px}
+.badge-nama{font-size:10px;font-weight:800;color:#444;line-height:1.2}
+/* Badge celebration modal */
+.badge-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;animation:fadeIn .25s}
+.badge-modal-box{background:#fff;border-radius:28px;padding:36px 32px;text-align:center;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(123,47,247,.25);animation:popIn .35s cubic-bezier(.34,1.56,.64,1)}
+.badge-modal-icon{font-size:72px;margin-bottom:8px;animation:bounce 0.6s ease infinite alternate}
+.badge-modal-title{font-size:22px;font-weight:900;color:#7b2ff7;margin-bottom:6px}
+.badge-modal-sub{font-size:14px;color:#666;margin-bottom:6px}
+.badge-modal-desc{font-size:13px;color:#999;margin-bottom:20px}
+.badge-modal-btn{padding:10px 28px;border-radius:50px;background:linear-gradient(135deg,#7b2ff7,#e040fb);border:none;color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;cursor:pointer;transition:transform .2s}
+.badge-modal-btn:hover{transform:scale(1.05)}
+@keyframes popIn{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-12px)}}
+
+/* ===== AKSESIBILITAS: hormati preferensi kurangi gerak =====
+   User yang mengaktifkan "reduce motion" di OS tidak dipaksa melihat
+   animasi loop/parallax yang bisa memicu mabuk gerak. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }

@@ -108,7 +108,7 @@ async function generateSoalServer(mapel, jenjang, kelas, jumlah = 10) {
 // ── Panggil Groq API dengan retry + backoff ──────────────────
 async function _callGroq(mapel, jenjang, kelas, jumlah, retries = 3) {
   const GROQ_API_KEY = process.env.GROQ_API_KEY;
-  const GROQ_MODEL   = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+  const GROQ_MODEL   = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
   if (!GROQ_API_KEY) throw new Error('GROQ_API_KEY tidak diset');
 
   const seed = Math.random().toString(36).substring(2, 8);

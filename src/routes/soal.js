@@ -5,6 +5,7 @@ const supabase = require('../supabase');
 const { authMiddleware, guruOnly } = require('../middleware/auth');
 const { encrypt, decrypt } = require('../utils/crypto');
 const { updateUserStats, checkMisi } = require('../utils/gamification');
+const { cleanText } = require('../utils/sanitize');
 
 // =====================================================
 // POST /api/soal – Tambah soal baru
@@ -15,12 +16,16 @@ router.post('/', authMiddleware, guruOnly, async (req, res) => {
     if (!pertanyaan || !mapel || !jenis || !jawaban)
       return res.status(400).json({ success: false, pesan: 'Pertanyaan, mapel, jenis, dan jawaban wajib diisi.' });
 
+    // Sanitasi teks yang akan dirender ke murid (defense-in-depth, selain escape di render).
+    const safePertanyaan = cleanText(pertanyaan, 500);
+    const safeOpsi = Array.isArray(opsi) ? opsi.map(o => cleanText(String(o), 200)) : (opsi || null);
+
     const id = uuidv4();
     const { error } = await supabase.from('soal').insert({
-      id, pertanyaan,
+      id, pertanyaan: safePertanyaan,
       emoji: emoji || '❓',
-      mapel, jenis,
-      opsi: opsi || null,
+      mapel: cleanText(mapel, 60), jenis,
+      opsi: safeOpsi,
       jawaban: encrypt(jawaban),  // enkripsi jawaban sebelum disimpan
       poin: poin || 100,
       tingkat: tingkat || 'mudah',
@@ -241,6 +246,10 @@ router.get('/quiz', authMiddleware, async (req, res) => {
     }));
 
     // Filter hanya soal pilihan ganda untuk quiz game
+    // CATATAN: endpoint ini HANYA dipakai zep-world (game kasual) yang mengecek
+    // jawaban di sisi klien, jadi `jawaban` sengaja TIDAK di-strip di sini.
+    // Anti-contek untuk kuis bernilai ada di alur lain (skor dihitung server-side
+    // di POST /api/quiz/hasil; zep multiplayer divalidasi server via socket).
     const soalPG = soalList.filter(s => s.jenis === 'pilihan_ganda' && s.opsi?.length >= 2);
 
     res.json({
@@ -263,6 +272,13 @@ router.post('/quiz', authMiddleware, guruOnly, async (req, res) => {
     const { judul, deskripsi, mapel, kelas_id, durasi, soal_ids } = req.body;
     if (!judul || !mapel || !soal_ids?.length)
       return res.status(400).json({ success: false, pesan: 'Judul, mapel, dan minimal 1 soal wajib diisi.' });
+
+    // KEAMANAN: cegah guru membuat quiz untuk kelas milik guru lain.
+    if (kelas_id) {
+      const { data: ownKelas } = await supabase.from('kelas')
+        .select('id').eq('id', kelas_id).eq('guru_id', req.user.id).maybeSingle();
+      if (!ownKelas) return res.status(403).json({ success: false, pesan: 'Kelas itu bukan milikmu.' });
+    }
 
     const id = uuidv4();
     const { error } = await supabase.from('quiz').insert({

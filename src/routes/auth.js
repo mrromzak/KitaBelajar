@@ -7,6 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
 const supabase = require('../supabase');
 const { authMiddleware, JWT_SECRET } = require('../middleware/auth');
+const { cleanText, cleanAvatar } = require('../utils/sanitize');
 
 // ── OTP via Brevo HTTP API (gratis 300/hari, tidak diblok Railway) ──
 async function sendBrevoEmail({ to, subject, html, text }) {
@@ -294,7 +295,7 @@ router.post('/send-otp', async (req, res) => {
     if (!validator.isEmail(normalEmail))
       return res.status(400).json({ success: false, pesan: 'Format email tidak valid.' });
 
-    const safaNama = nama.trim().substring(0, 100);
+    const safaNama = cleanText(nama, 100);
     if (safaNama.length < 2)
       return res.status(400).json({ success: false, pesan: 'Nama minimal 2 karakter.' });
 
@@ -513,8 +514,8 @@ router.put('/profile', authMiddleware, async (req, res) => {
     if (!user) return res.status(404).json({ success: false, pesan: 'User tidak ditemukan.' });
 
     const updates = {};
-    if (nama) updates.nama = nama;
-    if (avatar) updates.avatar = avatar;
+    if (nama) updates.nama = cleanText(nama, 100);
+    if (avatar) updates.avatar = cleanAvatar(avatar);
 
     // Data diri (opsional di sini — validasi nilai jika dikirim)
     let reward = null;
@@ -719,7 +720,7 @@ router.post('/google', async (req, res) => {
 
       // Buat akun baru dengan role yang dipilih
       const id = uuidv4();
-      const safaNama = (gData.name || gData.email.split('@')[0]).trim().substring(0, 100);
+      const safaNama = cleanText(gData.name || gData.email.split('@')[0], 100);
       const avatar = role === 'guru' ? '👩‍🏫' : '🦁';
       const { error } = await supabase.from('users').insert({
         id, nama: safaNama, email: normalEmail, password: bcrypt.hashSync(id, 10), role, avatar, xp: 0, level: 1

@@ -206,8 +206,7 @@
 const API_BASE   = window.location.origin + '/api';
 const WS_SERVER  = window.location.origin;
 
-// ── GROQ API KEY — isi dengan key kamu dari console.groq.com ──
-window.GROQ_API_KEY = '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';
+// ── AI lewat backend proxy (/api/ai/chat) — key TIDAK lagi di frontend ──
 const TILE       = 48;       // ukuran tile pixel
 const MAP_W      = 32;       // jumlah tile lebar
 const MAP_H      = 24;       // jumlah tile tinggi
@@ -1711,11 +1710,10 @@ async function kirimNPC() {
   msgs.appendChild(typingDiv);
   msgs.scrollTop = msgs.scrollHeight;
 
-  const apiKey = window.GROQ_API_KEY;
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const res = await fetch(`${API_BASE}/ai/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'llama-3.1-8b-instant',
         max_tokens: 200,
@@ -1726,9 +1724,9 @@ async function kirimNPC() {
         ]
       })
     });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
-    const balasan = data.choices?.[0]?.message?.content || 'Pertanyaan bagus! Coba lebih spesifik ya 🌟';
+    const json = await res.json();
+    if (!json.success) throw new Error(json.pesan || 'AI error');
+    const balasan = json.data?.choices?.[0]?.message?.content || 'Pertanyaan bagus! Coba lebih spesifik ya 🌟';
     typingDiv.remove();
     npcChatHistory[npc.id].push({ role: 'assistant', content: balasan });
     tambahPesanNPC('ai', balasan, npc.emoji);

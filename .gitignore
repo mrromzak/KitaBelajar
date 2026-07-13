@@ -2,3 +2,10 @@ node_modules/
 .env
 *.log
 .history
+
+# Testing & prototype — jangan di-push ke GitHub
+test/
+prototype/
+
+# Backup lokal file (mis. belajar-seru.html.bak) — jangan di-track
+*.bak

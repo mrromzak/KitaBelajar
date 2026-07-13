@@ -100,7 +100,7 @@ ENCRYPTION_KEY=64-karakter-hex   # generate: node -e "console.log(require('crypt
 # AI (Groq) — key ke-2 opsional untuk fallback rate limit
 GROQ_API_KEY=gsk_xxx
 GROQ_API_KEY_2=gsk_yyy
-GROQ_MODEL=qwen/qwen3-32b
+GROQ_MODEL=openai/gpt-oss-120b
 
 # Email (Brevo)
 BREVO_API_KEY=xkeysib-xxx

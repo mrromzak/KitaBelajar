@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
+const validator = require('validator');
 const supabase = require('../supabase');
 const { authMiddleware } = require('../middleware/auth');
 const { encrypt, decrypt } = require('../utils/crypto');
@@ -10,6 +11,11 @@ router.get('/private/:userId', authMiddleware, async (req, res) => {
   try {
     const myId = req.user.id;
     const otherId = req.params.userId;
+
+    // WAJIB UUID — otherId diinterpolasi ke filter .or() PostgREST.
+    // Tanpa ini, input non-UUID bisa menyuntik filter (filter injection).
+    if (!validator.isUUID(String(otherId)))
+      return res.status(400).json({ success: false, pesan: 'ID pengguna tidak valid.' });
 
     const { data, error } = await supabase
       .from('pesan_private')
@@ -40,6 +46,8 @@ router.post('/private/:userId', authMiddleware, async (req, res) => {
   try {
     const { isi } = req.body;
     if (!isi?.trim()) return res.status(400).json({ success: false, pesan: 'Pesan tidak boleh kosong.' });
+    if (!validator.isUUID(String(req.params.userId)))
+      return res.status(400).json({ success: false, pesan: 'ID pengguna tidak valid.' });
 
     const plainIsi = isi.trim();
     const id = uuidv4();

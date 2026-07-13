@@ -13,6 +13,14 @@ const { v4: uuidv4 } = require('uuid');
 const multer = require('multer');
 const { decrypt } = require('../utils/crypto');
 const { updateUserStats, checkMisi } = require('../utils/gamification');
+const { cleanText } = require('../utils/sanitize');
+const { validateUpload, EXT_FOR_MIME } = require('../utils/fileType');
+
+// Tipe submission yang benar-benar diizinkan (dicek dari isi file).
+const SUBMISSION_ALLOWED_MIME = [
+  'application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+  'application/msword', 'application/zip' // zip mencakup .docx
+];
 
 // Multer untuk submission file (10MB max)
 const uploadSubmission = multer({
@@ -143,8 +151,11 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // ============================================================
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { judul, deskripsi, mapel, kelas_id, durasi, tipe, deadline, status, soal_ids, tipe_submission } = req.body;
+    let { judul, deskripsi, mapel, kelas_id, durasi, tipe, deadline, status, soal_ids, tipe_submission } = req.body;
     if (!judul) return res.status(400).json({ success: false, pesan: 'Judul wajib diisi' });
+    judul = cleanText(judul, 150);
+    mapel = mapel ? cleanText(mapel, 60) : mapel;
+    deskripsi = deskripsi ? cleanText(deskripsi, 500) : deskripsi;
 
     const guru_id = req.user.id || req.user.userId;
 
@@ -347,18 +358,23 @@ router.get('/hasil/cek', authMiddleware, async (req, res) => {
   try {
     const { quiz_id } = req.query;
     const murid_id = req.user.id || req.user.userId;
+    // Pakai limit(1) + order, BUKAN single/maybeSingle: bila murid mengerjakan
+    // kuis yang sama lebih dari sekali, ada >1 baris → single() melempar error
+    // "multiple rows returned". Ambil hasil terbaru saja.
     const { data, error } = await supabase
       .from('hasil_quiz')
       .select('id, skor, benar, total_soal')
       .eq('murid_id', murid_id)
       .eq('quiz_id', quiz_id)
-      .maybeSingle();
+      .order('selesai_at', { ascending: false })
+      .limit(1);
 
     if (error) {
       console.error('[GET /quiz/hasil/cek]', error.message);
       return res.json({ success: true, sudah: false, hasil: null });
     }
-    return res.json({ success: true, sudah: !!data, hasil: data || null });
+    const hasil = (data && data[0]) || null;
+    return res.json({ success: true, sudah: !!hasil, hasil });
   } catch(e) {
     console.error('[GET /quiz/hasil/cek catch]', e.message);
     return res.json({ success: true, sudah: false, hasil: null });
@@ -411,9 +427,13 @@ router.post('/:id/submission', authMiddleware, (req, res, next) => {
       if (!konten || !konten.startsWith('http')) return res.status(400).json({ success: false, pesan: 'URL link tidak valid.' });
     } else if (tipe === 'file' || tipe === 'gambar') {
       if (!req.file) return res.status(400).json({ success: false, pesan: 'File tidak ditemukan.' });
-      const ext  = req.file.originalname.split('.').pop().toLowerCase();
+      // Validasi isi file (magic bytes), bukan Content-Type kiriman klien.
+      const check = validateUpload(req.file.buffer, SUBMISSION_ALLOWED_MIME);
+      if (!check.ok)
+        return res.status(400).json({ success: false, pesan: 'Isi file tidak cocok dengan format yang diizinkan (PDF/gambar/dokumen).' });
+      const ext  = EXT_FOR_MIME[check.mime] || 'bin';
       const filePath = `${quiz_id}/${murid_id}_${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('submissions').upload(filePath, req.file.buffer, { contentType: req.file.mimetype, upsert: false });
+      const { error: upErr } = await supabase.storage.from('submissions').upload(filePath, req.file.buffer, { contentType: check.mime, upsert: false });
       if (upErr) {
         console.error('[submission upload]', upErr.message);
         return res.status(500).json({ success: false, pesan: 'Gagal mengupload file. Coba lagi.' });

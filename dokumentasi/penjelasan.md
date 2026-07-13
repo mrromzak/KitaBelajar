@@ -475,4 +475,127 @@ erDiagram
 
 ---
 
-*Catatan: Untuk penjelasan teknis yang lebih rinci (daftar lengkap endpoint API, event Socket.io, dan alur tiap fitur), lihat dokumen `ARSITEKTUR.md` di root proyek. Struktur SQL asli ada di `schema.sql` dan file `migration_*.sql`.*
+## D. Panduan Penggunaan (User Manual)
+
+Bagian ini menjelaskan cara memakai aplikasi **KitaBelajar** langkah demi langkah untuk setiap jenis pengguna. Aplikasi dibuka melalui **browser** (tidak perlu instalasi).
+
+### D.1 Memulai (Semua Pengguna)
+
+#### a. Membuka Aplikasi
+Buka alamat aplikasi di browser (mis. `https://kitabelajar.up.railway.app`). Halaman awal (*landing*) menampilkan tombol **Masuk** dan **Daftar**.
+
+#### b. Mendaftar Akun Baru
+Tersedia dua cara:
+
+**Cara 1 — Daftar manual (email + OTP):**
+1. Klik **Daftar**.
+2. Pilih peran: **Guru** atau **Murid**.
+3. Isi nama, email, dan password.
+4. Jika mendaftar sebagai **Guru**, lengkapi juga data diri (alamat, umur, asal sekolah) di formulir.
+5. Klik daftar — kode **OTP** akan dikirim ke email.
+6. Masukkan kode OTP untuk menyelesaikan pendaftaran.
+
+**Cara 2 — Daftar dengan Google:**
+1. Klik **Masuk dengan Google**.
+2. Pilih akun Google.
+3. Jika akun baru, pilih peran (**Guru**/**Murid**). Akun langsung jadi tanpa OTP.
+
+> **Catatan untuk Murid:** Setelah mendaftar, muncul *popup* pengisian **data diri** (alamat, umur, asal sekolah). Mengisinya memberi hadiah **+150 XP**. Boleh dilewati, tapi pengingat akan muncul lagi saat login berikutnya hingga terisi.
+>
+> **Akun Orangtua otomatis:** Saat seorang murid mendaftar, sistem otomatis membuat **akun orangtua**. Email & password akun orangtua dikirim ke email murid dan juga tersimpan sebagai **notifikasi** di dalam aplikasi.
+
+#### c. Masuk (Login)
+1. Klik **Masuk**.
+2. Masukkan email & password (atau gunakan **Masuk dengan Google**).
+3. Sistem mengarahkan ke dashboard sesuai peran.
+
+#### d. Lupa Password
+1. Di halaman login, klik **Lupa Password**.
+2. Masukkan email → kode **OTP** dikirim ke email.
+3. Masukkan OTP, lalu buat password baru.
+
+---
+
+### D.2 Panduan untuk **Murid**
+
+Setelah login, murid masuk ke **Dashboard Murid** yang menampilkan XP, level, streak, dan menu utama.
+
+| Aktivitas | Cara melakukannya |
+|-----------|-------------------|
+| **Gabung kelas** | Klik **Gabung Kelas** → masukkan **kode akses** yang diberikan guru. |
+| **Belajar materi** | Buka kelas → pilih materi (teks/PDF/video/gambar). Materi yang selesai dibaca menambah progres. |
+| **Mengerjakan Quiz / PR** | Buka quiz aktif → jawab soal sebelum waktu/deadline habis → kirim. Skor & XP langsung dihitung. |
+| **Mengumpulkan tugas** | Pada PR bertipe tugas, unggah berkas / tautan / teks / gambar sesuai yang diminta guru. |
+| **KitaQuiz (quiz live)** | Masukkan **kode room** quiz live dari guru → jawab soal secara waktu-nyata bersama teman → lihat peringkat langsung. |
+| **Latihan soal** | Pilih menu latihan untuk berlatih soal mandiri. |
+| **Kelas online (video call)** | Klik tautan/menu video call kelas saat guru mengadakan pertemuan. Izinkan akses kamera & mikrofon. |
+| **Chat** | Gunakan **chat kelas** untuk diskusi grup, atau **chat privat** untuk pesan langsung. |
+| **Asisten AI** | Buka chatbot AI untuk bertanya pelajaran, minta penjelasan, atau bantuan mengerjakan soal. |
+| **Misi & Hadiah** | Selesaikan **misi harian/mingguan** untuk XP & badge. Ambil **hadiah harian** setiap hari. |
+| **Leaderboard** | Lihat peringkat XP untuk memacu semangat belajar. |
+
+> **Sistem Gamifikasi:** Setiap aktivitas (mengerjakan quiz, membaca materi, login harian) memberi **XP**. Setiap **1000 XP = naik 1 level**. Login beruntun menambah **streak**. Pencapaian tertentu memberi **badge**.
+
+---
+
+### D.3 Panduan untuk **Guru**
+
+Setelah login, guru masuk ke **Dashboard Guru** untuk mengelola pembelajaran.
+
+| Aktivitas | Cara melakukannya |
+|-----------|-------------------|
+| **Membuat mata pelajaran** | Buat mata pelajaran terlebih dahulu sebelum membuat kelas. |
+| **Membuat kelas** | Klik **Buat Kelas** → isi nama, tahun ajar, mapel. Sistem membuat **kode akses** untuk dibagikan ke murid. |
+| **Mengunggah materi** | Buka kelas → **Tambah Materi** → pilih jenis (teks/PDF/video/gambar) → unggah/isi konten. |
+| **Membuat bank soal** | Buka menu soal → buat soal (pilihan ganda/isian/benar-salah) lengkap dengan jawaban & poin. |
+| **Membuat Quiz / PR** | Klik **Buat Quiz** → pilih soal dari bank soal → atur durasi, tipe (fun/PR), deadline, dan tipe pengumpulan. |
+| **Menilai tugas** | Buka daftar pengumpulan murid → beri **nilai** & **feedback**. |
+| **Melihat daftar murid & nilai** | Buka kelas untuk melihat daftar murid dan rekap penilaian. |
+| **Mengadakan kelas online** | Mulai **video call** (Jitsi) untuk pertemuan tatap muka daring. |
+| **KitaQuiz live** | Buat room quiz live → bagikan **kode room** → pantau jalannya quiz secara waktu-nyata. |
+| **Asisten AI Guru** | Gunakan AI untuk membuat soal, RPP, ringkasan, hingga **pencarian referensi terbaru dari web** (gunakan kata kunci seperti "terbaru", "berita", "harga"). |
+| **Komunikasi** | Balas **chat kelas** dan **chat privat** dari murid. |
+
+---
+
+### D.4 Panduan untuk **Orangtua**
+
+Akun orangtua dibuat **otomatis** saat anak (murid) mendaftar. Kredensial login dikirim via email & notifikasi in-app pada akun murid.
+
+1. **Login** memakai email & password orangtua yang diterima.
+2. Masuk ke **Dashboard Orangtua** untuk memantau:
+   - Perkembangan belajar anak (XP, level).
+   - Nilai quiz & tugas.
+   - Materi yang sudah diselesaikan.
+3. Menerima **notifikasi** terkait aktivitas anak.
+
+---
+
+### D.5 Pengaturan Akun (Semua Pengguna)
+
+Buka menu **Profil / Pengaturan**:
+
+| Pengaturan | Keterangan |
+|------------|-----------|
+| **Ubah profil** | Mengubah nama, avatar, dan data diri (alamat, umur, asal sekolah). |
+| **Ganti password** | Masukkan password lama lalu password baru. |
+| **Notifikasi** | Mengaktifkan *push notification* di browser (bila didukung). |
+| **🗑️ Hapus Akun** | Pada menu **Pengaturan**, bagian paling bawah. Untuk menghapus akun: klik **Hapus Akun Saya** → muncul *popup* konfirmasi → **ketik persis frasa `HAPUS AKUN`** untuk mengaktifkan tombol hapus → klik **Hapus Akun Permanen**. |
+
+> ⚠️ **Penghapusan akun bersifat permanen** dan tidak bisa dibatalkan. Seluruh data (kelas, materi, nilai, pesan, dll.) akan ikut terhapus. Jika seorang **murid** menghapus akunnya, akun **orangtua** yang otomatis dibuat untuknya juga ikut terhapus (selama orangtua tersebut tidak terhubung ke murid lain).
+
+---
+
+### D.6 Tips & Pemecahan Masalah
+
+| Masalah | Solusi |
+|---------|--------|
+| Tidak menerima email OTP | Periksa folder **Spam/Promosi**. Tunggu beberapa menit, lalu coba kirim ulang. |
+| Tidak bisa gabung kelas | Pastikan **kode akses** benar (huruf besar/kecil) dan kelas masih aktif. |
+| Kamera/mikrofon tidak jalan saat video call | Izinkan akses kamera & mikrofon pada browser; gunakan browser modern (Chrome/Edge/Firefox). |
+| Sesi tiba-tiba keluar | Token login kedaluwarsa — cukup login ulang. |
+| Halaman tidak memuat / koneksi gagal | Periksa koneksi internet, lalu muat ulang halaman. |
+
+---
+
+*Catatan: Untuk penjelasan teknis yang lebih rinci (daftar lengkap endpoint API, event Socket.io, dan alur tiap fitur), lihat dokumen `ARSITEKTUR.md` di root proyek. Struktur SQL asli ada di `schema.sql` dan file `migration_*.sql`. Untuk panduan pengujian otomatis, lihat `dokumentasi/unit-testing.md`.*
