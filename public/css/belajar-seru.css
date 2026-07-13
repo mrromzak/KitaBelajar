@@ -473,8 +473,8 @@
   .btn-play:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(255,107,53,0.4); }
 
   /* ===== ZEP QUIZ ===== */
-  /* Tema cerah & energik (bukan dark) — nuansa seru/festival */
-  .zep-page { min-height: 100vh; background: linear-gradient(155deg, #6A4CF0 0%, #B23FC9 52%, #FF7E5F 100%); color: white; font-family: 'Nunito', sans-serif; }
+  /* Tema kalem, biru-ungu lembut (lebih teduh, tidak menyilaukan) */
+  .zep-page { min-height: 100vh; background: linear-gradient(160deg, #33409A 0%, #5B3F94 52%, #8A4F86 100%); color: white; font-family: 'Nunito', sans-serif; }
   .zep-navbar { background: rgba(255,255,255,0.06); backdrop-filter: blur(10px); padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); position: sticky; top:0; z-index:10; }
   .zep-logo { font-family: 'Fredoka One', cursive; font-size: 24px; color: #FFD93D; }
   .zep-btn { padding: 9px 22px; border-radius: 50px; border: none; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px; cursor: pointer; transition: all 0.2s; }

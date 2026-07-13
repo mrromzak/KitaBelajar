@@ -550,9 +550,14 @@ function showDataDiriReward(reward) {
 
 // Ingatkan murid/guru yang belum lengkap data diri saat login (boleh skip)
 function remindDataDiriIfNeeded() {
-  if (['murid', 'guru'].includes(currentUser?.role) && !currentUser?.profil_lengkap) {
-    setTimeout(() => openDataDiriModal(true), 2500);
-  }
+  if (!['murid', 'guru'].includes(currentUser?.role) || currentUser?.profil_lengkap) return;
+  // Jangan ingatkan tiap login. Cukup sekali per 2 hari per user (disimpan lokal).
+  const REMIND_INTERVAL_MS = 2 * 24 * 60 * 60 * 1000; // 2 hari
+  const key = 'kb_datadiri_reminder_' + (currentUser?.id || '');
+  const last = parseInt(localStorage.getItem(key) || '0', 10);
+  if (Date.now() - last < REMIND_INTERVAL_MS) return; // belum waktunya ingatkan lagi
+  localStorage.setItem(key, String(Date.now()));
+  setTimeout(() => openDataDiriModal(true), 2500);
 }
 
 // ============================================================
