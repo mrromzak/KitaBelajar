@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kita Latihan! 🚀 — KitaBelajar</title>
+  <link rel="icon" type="image/png" href="/assets/maskot-icon.png?v=1">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -12,7 +13,7 @@
     }
     *{box-sizing:border-box;margin:0;padding:0}
     html{scroll-behavior:smooth}
-    body{font-family:var(--ff-body);background:#FFF9F0;color:#1a1a2e;overflow-x:hidden;min-height:100vh}
+    body{font-family:var(--ff-body);background:linear-gradient(168deg,#FFF7EE 0%,#FFF0F3 42%,#F1EEFF 100%) fixed;color:#1a1a2e;overflow-x:hidden;min-height:100vh}
 
     /* ── BG FLOATING SHAPES ── */
     #bg-wrap{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
@@ -67,9 +68,9 @@
     .lv-card .lv-badge{display:inline-block;background:rgba(255,255,255,.25);border-radius:50px;padding:3px 16px;font-family:var(--ff-heading);font-size:22px;margin-bottom:6px}
     .lv-card .lv-name{font-size:11px;opacity:.85;font-weight:800;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
     .lv-card .lv-sub-count{font-size:12px;background:rgba(0,0,0,.18);border-radius:50px;padding:4px 14px;font-weight:800;display:inline-block}
-    .card-sd{background:linear-gradient(145deg,#11998e,#38ef7d)}
-    .card-smp{background:linear-gradient(145deg,#4776E6,#8E54E9)}
-    .card-sma{background:linear-gradient(145deg,#f7971e,#ffd200)}
+    .card-sd{background:linear-gradient(145deg,#20C997,#12B886)}
+    .card-smp{background:linear-gradient(145deg,#4D96FF,#4361EE)}
+    .card-sma{background:linear-gradient(145deg,#FF9A2E,#FFC93D)}
 
     /* Stats row */
     .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
@@ -88,9 +89,9 @@
     .page-title-block .page-ttl{font-family:var(--ff-heading);font-size:26px;color:#1a1a2e}
     .page-title-block .page-sub2{font-size:13px;color:#888;font-weight:700;margin-top:2px}
     .lv-pill{display:inline-flex;align-items:center;gap:5px;border-radius:50px;padding:4px 14px;font-size:12px;font-weight:900;color:#fff;margin-left:8px}
-    .pill-sd{background:linear-gradient(135deg,#11998e,#38ef7d)}
-    .pill-smp{background:linear-gradient(135deg,#4776E6,#8E54E9)}
-    .pill-sma{background:linear-gradient(135deg,#f7971e,#ffd200);color:#5A3A00}
+    .pill-sd{background:linear-gradient(135deg,#20C997,#12B886)}
+    .pill-smp{background:linear-gradient(135deg,#4D96FF,#4361EE)}
+    .pill-sma{background:linear-gradient(135deg,#FF9A2E,#FFC93D);color:#5A3A00}
 
     .subj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
     .subj-card{border-radius:22px;padding:24px 14px;text-align:center;cursor:pointer;border:none;font-family:var(--ff-body);color:#fff;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 18px rgba(0,0,0,.16);animation:popIn .35s ease both;position:relative;overflow:hidden}
@@ -123,7 +124,7 @@
     .essay-input{width:100%;min-height:110px;border-radius:14px;border:2px solid #FFD0B0;padding:14px;font-family:var(--ff-body);font-size:15px;resize:vertical;outline:none;transition:border-color .2s;background:#FFFDF9;color:#1a1a2e;font-weight:600}
     .essay-input:focus{border-color:#FF6B35}
     .essay-input:disabled{background:#F5F5F5;color:#999}
-    .btn-essay-submit{width:100%;background:linear-gradient(135deg,#11998e,#38ef7d);color:#fff;border:none;border-radius:18px;padding:15px;font-family:var(--ff-body);font-weight:900;font-size:16px;cursor:pointer;transition:all .2s;box-shadow:0 5px 20px rgba(17,153,142,.3);letter-spacing:.3px}
+    .btn-essay-submit{width:100%;background:linear-gradient(135deg,#20C997,#12B886);color:#fff;border:none;border-radius:18px;padding:15px;font-family:var(--ff-body);font-weight:900;font-size:16px;cursor:pointer;transition:all .2s;box-shadow:0 5px 20px rgba(17,153,142,.3);letter-spacing:.3px}
     .btn-essay-submit:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(17,153,142,.4)}
     .btn-essay-submit:disabled{opacity:.5;cursor:default;transform:none}
 
@@ -695,7 +696,7 @@ const BANK = {
       {q:'Nilai tempat angka 7 pada bilangan 4.750 adalah...', opts:['Satuan','Puluhan','Ratusan','Ribuan'], ans:'Ratusan', r:'4.750: 4=ribuan, 7=ratusan, 5=puluhan, 0=satuan. Angka 7 di posisi ratusan', e:'🔢'},
       {q:'5/10 + 3/10 = ?', opts:['8/20','8/10','2/10','15/10'], ans:'8/10', r:'Penyebut sama, tinggal jumlahkan pembilang: 5 + 3 = 8. Hasilnya 8/10', e:'➕'},
     ]},
-    'IPA': {icon:'🔬', bg:'linear-gradient(135deg,#11998e,#38ef7d)', soal:[
+    'IPA': {icon:'🔬', bg:'linear-gradient(135deg,#20C997,#12B886)', soal:[
       {q:'Hewan yang mengalami metamorfosis sempurna adalah...', opts:['Ayam','Kupu-kupu','Katak','Belalang'], ans:'Kupu-kupu', r:'Kupu-kupu melewati 4 tahap: telur → ulat → kepompong → kupu-kupu (metamorfosis sempurna)', e:'🦋'},
       {q:'Gas yang kita hirup untuk bernapas disebut...', opts:['Karbondioksida','Nitrogen','Oksigen','Hidrogen'], ans:'Oksigen', r:'Manusia menghirup oksigen (O₂) dan mengeluarkan karbondioksida (CO₂)', e:'💨'},
       {q:'Planet yang paling dekat dengan Matahari adalah...', opts:['Venus','Bumi','Merkurius','Mars'], ans:'Merkurius', r:'Urutan planet dari Matahari: Merkurius, Venus, Bumi, Mars. Merkurius paling dekat', e:'🪐'},
@@ -737,7 +738,7 @@ const BANK = {
       {q:'Bagian yang menceritakan penyelesaian masalah dalam cerita disebut...', opts:['Orientasi','Komplikasi','Resolusi','Koda'], ans:'Resolusi', r:'Resolusi adalah bagian cerita tempat masalah diselesaikan', e:'📖'},
       {q:'Kata "perjalanan" dibentuk dari kata dasar...', opts:['Jalan','Jalankan','Jalani','Perjalan'], ans:'Jalan', r:'"Perjalanan" = per- + jalan + -an. Kata dasarnya adalah "jalan"', e:'🚶'},
     ]},
-    'IPS': {icon:'🗺️', bg:'linear-gradient(135deg,#f7971e,#ffd200)', soal:[
+    'IPS': {icon:'🗺️', bg:'linear-gradient(135deg,#FF9A2E,#FFC93D)', soal:[
       {q:'Ibu kota Indonesia adalah...', opts:['Surabaya','Bandung','Jakarta','Yogyakarta'], ans:'Jakarta', r:'Jakarta adalah ibu kota Indonesia sejak merdeka hingga saat ini (sebelum IKN resmi berpindah)', e:'🏙️'},
       {q:'Lagu kebangsaan Indonesia adalah...', opts:['Garuda Pancasila','Indonesia Raya','Bagimu Negeri','Maju Tak Gentar'], ans:'Indonesia Raya', r:'Indonesia Raya adalah lagu kebangsaan NKRI yang diciptakan oleh W.R. Supratman', e:'🎵'},
       {q:'Pancasila memiliki berapa sila?', opts:['3','4','5','6'], ans:'5', r:'Pancasila terdiri dari 5 sila sebagai dasar negara Indonesia', e:'🦅'},
@@ -781,7 +782,7 @@ const BANK = {
     ]},
   },
   SMP: {
-    'Matematika': {icon:'🔢', bg:'linear-gradient(135deg,#4776E6,#8E54E9)', soal:[
+    'Matematika': {icon:'🔢', bg:'linear-gradient(135deg,#4D96FF,#4361EE)', soal:[
       {q:'√169 = ?', opts:['12','13','14','15'], ans:'13', r:'13 × 13 = 169, jadi akar dari 169 adalah 13', e:'√'},
       {q:'2⁵ = ?', opts:['16','32','64','8'], ans:'32', r:'2⁵ = 2×2×2×2×2 = 4×4×2 = 32', e:'🔢'},
       {q:'Luas persegi panjang p=12cm, l=8cm adalah...', opts:['20 cm²','96 cm²','80 cm²','40 cm²'], ans:'96 cm²', r:'Luas = p × l = 12 × 8 = 96 cm²', e:'📐'},
@@ -808,7 +809,7 @@ const BANK = {
       {q:'Himpunan A = {1,2,3} dan B = {2,3,4}. A ∩ B = ?', opts:['{1,2,3,4}','{2,3}','{1,4}','{1}'], ans:'{2,3}', r:'Irisan (∩) = elemen yang ada di keduanya. A∩B = {2,3}', e:'🔢'},
       {q:'Sudut pelurus dari 65° adalah...', opts:['25°','35°','115°','125°'], ans:'115°', r:'Sudut pelurus = 180° - 65° = 115° (dua sudut pelurus berjumlah 180°)', e:'📐'},
     ]},
-    'IPA': {icon:'🔬', bg:'linear-gradient(135deg,#11998e,#38ef7d)', soal:[
+    'IPA': {icon:'🔬', bg:'linear-gradient(135deg,#20C997,#12B886)', soal:[
       {q:'Rumus kimia air adalah...', opts:['CO₂','H₂O','NaCl','O₂'], ans:'H₂O', r:'Air tersusun dari 2 atom Hidrogen (H) dan 1 atom Oksigen (O) → H₂O', e:'💧'},
       {q:'Sel tumbuhan memiliki ... yang tidak ada di sel hewan', opts:['Inti sel','Dinding sel','Sitoplasma','Membran sel'], ans:'Dinding sel', r:'Dinding sel (dari selulosa) hanya ada di sel tumbuhan, memberi bentuk kaku pada sel', e:'🌿'},
       {q:'Perubahan dari cair ke gas disebut...', opts:['Membeku','Mencair','Menguap','Menyublim'], ans:'Menguap', r:'Menguap = perubahan wujud dari cair ke gas (contoh: air dipanaskan)', e:'♨️'},
@@ -852,7 +853,7 @@ const BANK = {
       {q:'"How long have you been here?" menggunakan tense...', opts:['Simple past','Present perfect continuous','Past continuous','Future'], ans:'Present perfect continuous', r:'Present perfect continuous = have/has + been + V-ing (kegiatan mulai lampau, masih berlangsung)', e:'⏱️'},
       {q:'Arti dari idiom "under the weather" adalah...', opts:['Di bawah cuaca','Merasa tidak enak badan','Di luar ruangan','Mengikuti arus'], ans:'Merasa tidak enak badan', r:'"Under the weather" adalah idiom yang berarti merasa sakit atau tidak sehat', e:'🤒'},
     ]},
-    'IPS': {icon:'🗺️', bg:'linear-gradient(135deg,#f7971e,#ffd200)', soal:[
+    'IPS': {icon:'🗺️', bg:'linear-gradient(135deg,#FF9A2E,#FFC93D)', soal:[
       {q:'Benua terbesar di dunia adalah...', opts:['Amerika','Afrika','Asia','Eropa'], ans:'Asia', r:'Asia adalah benua terbesar (44 juta km²), mencakup sekitar 30% luas daratan dunia', e:'🌏'},
       {q:'Sungai terpanjang di dunia adalah...', opts:['Amazon','Nil','Yangtze','Mississippi'], ans:'Nil', r:'Sungai Nil di Afrika Timur-Utara adalah sungai terpanjang (~6.650 km)', e:'🏞️'},
       {q:'Gunung tertinggi di dunia adalah...', opts:['Rinjani','Everest','Kilimanjaro','Mont Blanc'], ans:'Everest', r:'Gunung Everest (8.849 m) di Himalaya, perbatasan Nepal-Tibet adalah yang tertinggi di dunia', e:'⛰️'},
@@ -1548,9 +1549,9 @@ function pilihMapel(mapel) {
 
   const KELAS_COLORS = [
     'linear-gradient(145deg,#FF6B35,#FF9A6C)',
-    'linear-gradient(145deg,#4776E6,#8E54E9)',
-    'linear-gradient(145deg,#11998e,#38ef7d)',
-    'linear-gradient(145deg,#f7971e,#ffd200)',
+    'linear-gradient(145deg,#4D96FF,#4361EE)',
+    'linear-gradient(145deg,#20C997,#12B886)',
+    'linear-gradient(145deg,#FF9A2E,#FFC93D)',
     'linear-gradient(145deg,#FF0080,#FF6B35)',
     'linear-gradient(145deg,#6C5CE7,#A855F7)',
   ];

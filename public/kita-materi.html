@@ -4,12 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Materi Belajar 📚 — KitaBelajar</title>
+  <link rel="icon" type="image/png" href="/assets/maskot-icon.png?v=1">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
   <style>
     :root{--ff-h:'Fredoka One',cursive;--ff-b:'Nunito',sans-serif;--bg:#FFF9F0;--text:#1a1a2e;--muted:#888;--orange:#FF6B35;--blue:#4776E6;--green:#11998e;--purple:#6C5CE7}
     *{box-sizing:border-box;margin:0;padding:0}
     html{scroll-behavior:smooth}
-    body{font-family:var(--ff-b);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+    body{font-family:var(--ff-b);background:linear-gradient(168deg,#FFF7EE 0%,#FFF0F3 42%,#F1EEFF 100%) fixed;color:var(--text);min-height:100vh;overflow-x:hidden}
 
     /* BG */
     #bg-wrap{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
@@ -34,7 +35,7 @@
     .hero-home{text-align:center;padding:28px 0 36px}
     .hero-icon{font-size:80px;display:block;animation:bookBounce 2.5s ease-in-out infinite;filter:drop-shadow(0 6px 16px rgba(0,0,0,.15))}
     @keyframes bookBounce{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-16px) rotate(5deg)}}
-    .hero-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#4776E6,#8E54E9);color:#fff;border-radius:50px;padding:6px 18px;font-size:12px;font-weight:900;letter-spacing:.8px;margin-bottom:14px}
+    .hero-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#4D96FF,#4361EE);color:#fff;border-radius:50px;padding:6px 18px;font-size:12px;font-weight:900;letter-spacing:.8px;margin-bottom:14px}
     .hero-h1{font-family:var(--ff-h);font-size:clamp(32px,7vw,56px);line-height:1.1;margin-bottom:10px}
     .hero-h1 .g1{color:#1a1a2e}
     .hero-h1 .g2{background:linear-gradient(135deg,#4776E6,#FF0080);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
@@ -65,9 +66,9 @@
     .gc-badge{display:inline-block;background:rgba(255,255,255,.28);border-radius:50px;padding:4px 18px;font-family:var(--ff-h);font-size:24px;margin-bottom:6px}
     .gc-name{font-size:11px;opacity:.85;font-weight:900;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
     .gc-count{font-size:11px;background:rgba(0,0,0,.18);border-radius:50px;padding:4px 14px;font-weight:800;display:inline-block}
-    .gc-sd{background:linear-gradient(145deg,#11998e,#38ef7d)}
-    .gc-smp{background:linear-gradient(145deg,#4776E6,#8E54E9)}
-    .gc-sma{background:linear-gradient(145deg,#f7971e,#ffd200);color:#5A3A00}
+    .gc-sd{background:linear-gradient(145deg,#20C997,#12B886)}
+    .gc-smp{background:linear-gradient(145deg,#4D96FF,#4361EE)}
+    .gc-sma{background:linear-gradient(145deg,#FF9A2E,#FFC93D);color:#5A3A00}
 
     /* STATS */
     .stats-home{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
@@ -82,9 +83,9 @@
     .page-ttl{font-family:var(--ff-h);font-size:26px;color:var(--text)}
     .page-sub{font-size:13px;color:var(--muted);font-weight:700;margin-top:2px}
     .lv-pill{display:inline-flex;align-items:center;gap:4px;border-radius:50px;padding:4px 14px;font-size:12px;font-weight:900;color:#fff;margin-left:6px}
-    .pill-sd{background:linear-gradient(135deg,#11998e,#38ef7d)}
-    .pill-smp{background:linear-gradient(135deg,#4776E6,#8E54E9)}
-    .pill-sma{background:linear-gradient(135deg,#f7971e,#ffd200);color:#5A3A00}
+    .pill-sd{background:linear-gradient(135deg,#20C997,#12B886)}
+    .pill-smp{background:linear-gradient(135deg,#4D96FF,#4361EE)}
+    .pill-sma{background:linear-gradient(135deg,#FF9A2E,#FFC93D);color:#5A3A00}
 
     .subj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
     .subj-card{border-radius:22px;padding:26px 14px;text-align:center;cursor:pointer;border:none;color:#fff;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 18px rgba(0,0,0,.16);animation:popIn .35s ease both;position:relative;overflow:hidden}
@@ -251,7 +252,7 @@ const MATERI = {
 /* ───────────────── SD ───────────────── */
 SD: {
   'Matematika': {
-    icon:'🔢', bg:'linear-gradient(145deg,#11998e,#38ef7d)',
+    icon:'🔢', bg:'linear-gradient(145deg,#20C997,#12B886)',
     topics:[
       { j:'Bilangan Cacah & Nilai Tempat', i:`
 <div class="mc-def"><div class="mc-def-title">📖 Pengertian</div><p>Bilangan cacah adalah bilangan yang dimulai dari 0, 1, 2, 3, ... Nilai tempat menentukan nilai sebuah angka berdasarkan posisinya dalam suatu bilangan.</p></div>
@@ -750,7 +751,7 @@ SD: {
 /* ───────────────── SMP ───────────────── */
 SMP: {
   'Matematika': {
-    icon:'📐', bg:'linear-gradient(145deg,#4776E6,#8E54E9)',
+    icon:'📐', bg:'linear-gradient(145deg,#4D96FF,#4361EE)',
     topics:[
       { j:'Aljabar & Persamaan Linear', i:`
 <div class="mc-def"><div class="mc-def-title">📖 Pengertian</div><p>Aljabar menggunakan huruf (variabel) untuk mewakili bilangan yang belum diketahui. Persamaan linear adalah persamaan dengan pangkat tertinggi variabelnya 1.</p></div>
@@ -1410,7 +1411,7 @@ Akar: x = 2 atau x = 3
 /* ───────────────── SMA ───────────────── */
 SMA: {
   'Matematika': {
-    icon:'∑', bg:'linear-gradient(145deg,#4776E6,#8E54E9)',
+    icon:'∑', bg:'linear-gradient(145deg,#4D96FF,#4361EE)',
     topics:[
       { j:'Fungsi & Jenisnya', i:`
 <div class="mc-def"><div class="mc-def-title">📖 Pengertian</div><p>Fungsi adalah relasi yang menghubungkan setiap anggota domain dengan tepat satu anggota kodomain.</p></div>
@@ -1621,7 +1622,7 @@ SMA: {
   },
 
   'Kimia': {
-    icon:'⚗️', bg:'linear-gradient(145deg,#11998e,#38ef7d)',
+    icon:'⚗️', bg:'linear-gradient(145deg,#20C997,#12B886)',
     topics:[
       { j:'Struktur Atom & Konfigurasi Elektron', i:`
 <div class="mc-poin"><div class="mc-poin-title">✅ Model Atom</div><ul>
@@ -1903,7 +1904,7 @@ SMA: {
   },
 
   'Ekonomi': {
-    icon:'💰', bg:'linear-gradient(145deg,#f7971e,#ffd200)',
+    icon:'💰', bg:'linear-gradient(145deg,#FF9A2E,#FFC93D)',
     topics:[
       { j:'Konsep Dasar Ekonomi', i:`
 <div class="mc-def"><div class="mc-def-title">📖 Ilmu Ekonomi</div><p>Ilmu ekonomi mempelajari perilaku manusia dalam memenuhi kebutuhan yang tidak terbatas dengan sumber daya yang terbatas (kelangkaan/scarcity).</p></div>
