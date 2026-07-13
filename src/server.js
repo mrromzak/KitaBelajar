@@ -22,9 +22,16 @@ const allowedOrigins = [
 ];
 
 function corsOriginFn(origin, callback) {
-  if (!origin) return callback(null, true);
+  if (!origin) return callback(null, true);               // request non-browser / same-origin tanpa Origin
   if (allowedOrigins.includes(origin)) return callback(null, true);
-  callback(new Error('CORS: origin tidak diizinkan — ' + origin));
+  // Izinkan otomatis domain hosting Railway (produksi bisa pindah subdomain sewaktu-waktu).
+  try {
+    const host = new URL(origin).hostname;
+    if (host === 'railway.app' || host.endsWith('.railway.app')) return callback(null, true);
+  } catch (e) { /* origin tidak valid → tolak di bawah */ }
+  // Tolak dengan halus (tanpa CORS header) — JANGAN lempar Error agar tidak jadi HTTP 500.
+  console.warn('CORS: origin tidak diizinkan —', origin);
+  return callback(null, false);
 }
 
 // ── Rate limiters ───────────────────────────────────────────
