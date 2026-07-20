@@ -1026,6 +1026,65 @@ async function simpanProfilGuru() {
   showLoading(false);
 }
 
+// ── Code Guru: Lihat Code Guru dengan verifikasi OTP ──
+async function lihatCodeGuru() {
+  showLoading(true);
+  try {
+    const data = await api('GET', '/auth/profile');
+    if (data.success && data.data && data.data.has_code_guru) {
+      // Tampilkan form OTP
+      document.getElementById('pg-cg-placeholder').style.display = 'none';
+      document.getElementById('pg-cg-otp-form').style.display = 'block';
+      document.getElementById('pg-cg-result').style.display = 'none';
+      document.getElementById('pg-cg-otp-input').value = '';
+      // Kirim OTP ke email
+      const otpData = await api('POST', '/auth/send-code-guru-otp');
+      if (otpData.success) {
+        toast('Kode OTP dikirim ke email kamu. Cek email ya!', 'success');
+      } else {
+        toast(otpData.pesan || 'Gagal kirim OTP', 'error');
+      }
+    } else {
+      toast('Code Guru belum tersedia.', 'error');
+    }
+  } catch(e) { toast('Tidak bisa terhubung ke server', 'error'); }
+  showLoading(false);
+}
+
+async function verifikasiCodeGuru() {
+  const otp = document.getElementById('pg-cg-otp-input').value.trim();
+  if (!otp) { toast('Masukkan kode OTP!', 'error'); return; }
+  showLoading(true);
+  try {
+    const data = await api('POST', '/auth/verify-code-guru-otp', { otp });
+    if (data.success) {
+      // Tampilkan code_guru
+      document.getElementById('pg-cg-otp-form').style.display = 'none';
+      document.getElementById('pg-cg-result').style.display = 'block';
+      document.getElementById('pg-cg-code-display').textContent = data.data.code_guru;
+      toast('Verifikasi berhasil! Code Guru ditampilkan.', 'success');
+    } else {
+      toast(data.pesan || 'Gagal verifikasi OTP', 'error');
+    }
+  } catch(e) { toast('Tidak bisa terhubung ke server', 'error'); }
+  showLoading(false);
+}
+
+function copyCodeGuru() {
+  const code = document.getElementById('pg-cg-code-display').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    toast('Code Guru berhasil disalin!', 'success');
+  }).catch(() => {
+    toast('Gagal menyalin code', 'error');
+  });
+}
+
+function tutupCodeGuru() {
+  document.getElementById('pg-cg-placeholder').style.display = 'block';
+  document.getElementById('pg-cg-otp-form').style.display = 'none';
+  document.getElementById('pg-cg-result').style.display = 'none';
+}
+
 async function gantiPasswordMurid() {
   const lama = document.getElementById('pm-pw-lama').value;
   const baru = document.getElementById('pm-pw-baru').value;

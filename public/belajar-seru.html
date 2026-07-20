@@ -2473,6 +2473,36 @@
       <button onclick="simpanProfilGuru()" style="width:100%;padding:13px;background:var(--blue);color:white;border:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">💾 Simpan Perubahan</button>
     </div>
 
+    <!-- Code Guru -->
+    <div id="pg-code-guru-section" style="background:white;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:20px">
+      <div style="font-weight:800;font-size:16px;margin-bottom:18px;display:flex;align-items:center;gap:8px">🔑 Code Guru</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Code guru digunakan untuk login. Simpan dengan baik dan jangan berikan ke siapa pun.</p>
+      <div id="pg-cg-placeholder">
+        <button onclick="lihatCodeGuru()" style="width:100%;padding:13px;background:var(--blue);color:white;border:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">🔑 Lihat Code Guru</button>
+      </div>
+      <div id="pg-cg-otp-form" style="display:none">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Kode OTP telah dikirim ke email kamu. Masukkan kode untuk melihat Code Guru.</p>
+        <div class="form-group">
+          <label>Kode OTP</label>
+          <input type="text" id="pg-cg-otp-input" placeholder="Masukkan 6 digit OTP" maxlength="6" style="text-align:center;font-size:24px;letter-spacing:8px;font-family:monospace;font-weight:900">
+        </div>
+        <div style="display:flex;gap:10px">
+          <button onclick="tutupCodeGuru()" style="flex:1;padding:13px;background:#f0f0f0;color:var(--text);border:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">Batal</button>
+          <button onclick="verifikasiCodeGuru()" style="flex:1;padding:13px;background:var(--blue);color:white;border:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">Verifikasi</button>
+        </div>
+      </div>
+      <div id="pg-cg-result" style="display:none">
+        <div style="background:#F3F0FF;border-radius:12px;padding:20px;text-align:center;margin-bottom:16px">
+          <div style="font-size:12px;color:#7C3AED;font-weight:700;margin-bottom:8px">CODE GURU KAMU</div>
+          <div id="pg-cg-code-display" style="font-size:32px;font-weight:900;letter-spacing:4px;color:#7C3AED;font-family:monospace"></div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button onclick="copyCodeGuru()" style="flex:1;padding:13px;background:#7C3AED;color:white;border:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">📋 Salin Code</button>
+          <button onclick="tutupCodeGuru()" style="flex:1;padding:13px;background:#f0f0f0;color:var(--text);border:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">Tutup</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Ganti Password -->
     <div style="background:white;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:20px">
       <div style="font-weight:800;font-size:16px;margin-bottom:18px">🔒 Ganti Password</div>
