@@ -335,7 +335,21 @@ function openFeatureModal(key) {
   document.getElementById('feature-modal-icon').textContent = data.icon;
   document.getElementById('feature-modal-title').textContent = data.title;
   document.getElementById('feature-modal-content').innerHTML = data.content;
-  openModal('modal-feature-detail');
+  const overlay = document.getElementById('modal-feature-detail');
+  const slide = document.getElementById('modal-feature-slide');
+  overlay.style.display = 'flex';
+  requestAnimationFrame(() => {
+    slide.classList.add('open');
+  });
+}
+
+function closeFeatureModal() {
+  const overlay = document.getElementById('modal-feature-detail');
+  const slide = document.getElementById('modal-feature-slide');
+  slide.classList.remove('open');
+  setTimeout(() => {
+    overlay.style.display = 'none';
+  }, 400);
 }
 
 document.querySelectorAll('.modal-overlay').forEach(m => {
@@ -3200,7 +3214,7 @@ function formatBellTime(date) {
   return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
 }
 
-function klikBellNotif(id, tipe, dariId, namaPengirim, avatarPengirim, kelasId) {
+async function klikBellNotif(id, tipe, dariId, namaPengirim, avatarPengirim, kelasId) {
   closeBellDropdown();
   const notif = bellNotifs.find(n => n.id === id);
   if (notif && !notif.dibaca) {
@@ -3208,12 +3222,15 @@ function klikBellNotif(id, tipe, dariId, namaPengirim, avatarPengirim, kelasId) 
     bellUnreadCount = Math.max(0, bellUnreadCount - 1);
     updateBellBadge();
   }
+
+  // Private chat → buka chat langsung
   if (tipe === 'private' && dariId) {
     bukaPrivateChat(dariId, namaPengirim || 'Seseorang', avatarPengirim || '🦁');
-  } else if (tipe === 'kelas' && kelasId && currentKelas?.id === kelasId) {
-    switchKelasTab('chat');
-  } else if (tipe === 'quiz_invite' && notif) {
-    // Langsung join quiz dari notifikasi undangan guru
+    return;
+  }
+
+  // Quiz invite → buka quiz langsung
+  if (tipe === 'quiz_invite' && notif) {
     let kode = null;
     try {
       const extra = typeof notif.data_extra === 'string' ? JSON.parse(notif.data_extra) : notif.data_extra;
@@ -3222,9 +3239,34 @@ function klikBellNotif(id, tipe, dariId, namaPengirim, avatarPengirim, kelasId) 
     if (kode) {
       bukaZepQuizDariKode(kode);
     } else {
-      // Fallback: buka halaman join manual
       bukaZepQuizMurid();
     }
+    return;
+  }
+
+  // Kelas (materi, kuis/tugas) → buka kelas yang benar
+  if (kelasId) {
+    try {
+      await openKelas(kelasId, 0);
+      // Tunggu halaman kelas terbuka, lalu switch tab sesuai tipe
+      setTimeout(() => {
+        if (tipe === 'materi') {
+          switchKelasTab('materi');
+        } else if (tipe === 'quiz' || tipe === 'kuis' || tipe === 'tugas' || tipe === 'tugas_baru') {
+          switchKelasTab('kuis');
+        } else {
+          switchKelasTab('materi');
+        }
+      }, 400);
+    } catch(e) {
+      toast('Gagal membuka kelas terkait.', 'error');
+    }
+    return;
+  }
+
+  // Fallback: buka halaman sesuai role
+  if (currentUser) {
+    showPage(currentUser.role === 'guru' ? 'page-guru' : 'page-murid');
   }
 }
 
