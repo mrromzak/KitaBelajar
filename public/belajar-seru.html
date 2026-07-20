@@ -62,29 +62,45 @@
     </div>
   </div>
   <div class="features">
-    <div class="feature-card">
+    <div class="feature-card" onclick="openFeatureModal('materi')">
       <div class="feature-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
       </div>
       <h3>Materi Lengkap</h3><p>Semua mata pelajaran SD, SMP, SMA tersedia dengan penjelasan yang mudah dipahami</p>
+      <div class="feature-click-hint">Klik untuk tahu lebih detail →</div>
     </div>
-    <div class="feature-card">
+    <div class="feature-card" onclick="openFeatureModal('latihan')">
       <div class="feature-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
       </div>
       <h3>Latihan Soal</h3><p>Ribuan soal latihan dengan tingkat kesulitan yang bisa disesuaikan</p>
+      <div class="feature-click-hint">Klik untuk tahu lebih detail →</div>
     </div>
-    <div class="feature-card">
+    <div class="feature-card" onclick="openFeatureModal('games')">
       <div class="feature-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
       </div>
       <h3>Games Edukatif</h3><p>Belajar sambil bermain! Quiz, puzzle, flashcard, dan masih banyak lagi</p>
+      <div class="feature-click-hint">Klik untuk tahu lebih detail →</div>
     </div>
-    <div class="feature-card">
+    <div class="feature-card" onclick="openFeatureModal('poin')">
       <div class="feature-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><path d="M8.21 13.89 7 23l5-3 5 3-1.21-9.12"/></svg>
       </div>
       <h3>Sistem Poin</h3><p>Kumpulkan XP dan naiki leaderboard kelas! Buktikan kamu yang terbaik</p>
+      <div class="feature-click-hint">Klik untuk tahu lebih detail →</div>
+    </div>
+  </div>
+
+  <!-- Modal Fitur Detail -->
+  <div class="modal-overlay" id="modal-feature-detail">
+    <div class="modal" style="max-width:520px;max-height:90vh;overflow-y:auto">
+      <div style="text-align:center;margin-bottom:20px">
+        <div id="feature-modal-icon" style="font-size:56px;margin-bottom:8px"></div>
+        <h3 id="feature-modal-title" style="margin:0 0 8px 0;font-size:22px"></h3>
+      </div>
+      <div id="feature-modal-content" style="color:var(--text);font-size:14px;line-height:1.8"></div>
+      <button class="btn-cancel" style="width:100%;margin-top:20px" onclick="closeModal('modal-feature-detail')">Tutup</button>
     </div>
   </div>
 </div>

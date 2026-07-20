@@ -258,6 +258,86 @@ function openModal(id) {
   if (id === 'modal-buat-kelas') populateBuatKelasMapel();
 }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// Feature card modal data
+const featureData = {
+  materi: {
+    icon: '📚',
+    title: 'Materi Lengkap',
+    content: `
+      <p>KitaBelajar menyediakan <strong>materi lengkap</strong> untuk semua jenjang pendidikan:</p>
+      <ul style="text-align:left;line-height:2;margin:16px 0;padding-left:20px">
+        <li><strong>SD (Kelas 1-6)</strong> — Matematika, IPA, Bahasa Indonesia, IPS, Bahasa Inggris</li>
+        <li><strong>SMP (Kelas 7-9)</strong> — Matematika, IPA, Bahasa Indonesia, Sejarah, Geografi, Ekonomi</li>
+        <li><strong>SMA (Kelas 10-12)</strong> — Matematika Lanjutan, Fisika, Kimia, Biologi, Sosiologi, Ekonomi</li>
+      </ul>
+      <p>Setiap materi dilengkapi dengan:</p>
+      <ul style="text-align:left;line-height:2;margin:16px 0;padding-left:20px">
+        <li>📝 Penjelasan lengkap dengan bahasa yang mudah dipahami</li>
+        <li>🎯 Ringkasan poin penting di setiap bab</li>
+        <li>🔗 Link ke latihan soal dan video pendukung</li>
+        <li>🤖 Fitur AI untuk tanya-jawab materi secara interaktif</li>
+      </ul>
+    `
+  },
+  latihan: {
+    icon: '✏️',
+    title: 'Latihan Soal',
+    content: `
+      <p>Ribuan soal latihan siap membantu kamu menguasai setiap mata pelajaran:</p>
+      <ul style="text-align:left;line-height:2;margin:16px 0;padding-left:20px">
+        <li><strong>Bank Soal Lengkap</strong> — Ribuan soal dari berbagai jenjang dan mata pelajaran</li>
+        <li><strong>Level Kesulitan</strong> — Mudah, Sedang, Sulit — sesuaikan dengan kemampuanmu</li>
+        <li><strong>Soal Acak</strong> — Urutan soal diacak setiap sesi agar tidak bosan</li>
+        <li><strong>Pembahasan</strong> — Setiap soal dilengkapi pembahasan lengkap</li>
+        <li><strong>Progress Tracking</strong> — Pantau perkembangan belajarmu</li>
+      </ul>
+      <p>Soal-soal ini dirancang oleh guru-guru berpengalaman dan disesuaikan dengan kurikulum terbaru.</p>
+    `
+  },
+  games: {
+    icon: '🎮',
+    title: 'Games Edukatif',
+    content: `
+      <p>Belajar jadi lebih seru dengan berbagai permainan edukatif:</p>
+      <ul style="text-align:left;line-height:2;margin:16px 0;padding-left:20px">
+        <li><strong>Quiz Interaktif</strong> — Uji pengetahuanmu dengan quiz yang menyenangkan</li>
+        <li><strong>Puzzle Matematika</strong> — Latih logika dengan puzzle yang menantang</li>
+        <li><strong>Flashcard</strong> — Hafal konsep penting dengan kartu flash yang efektif</li>
+        <li><strong>Word Scramble</strong> — Susun kata untuk mengingat istilah penting</li>
+        <li><strong>Memory Game</strong> — Latih daya ingat dengan permainan memori</li>
+        <li><strong>Math Race</strong> — Balapan hitung cepat untuk melatih kecepatan berpikir</li>
+      </ul>
+      <p>Setiap permainan memberikan XP dan badge sebagai reward atas pencapaianmu! 🏆</p>
+    `
+  },
+  poin: {
+    icon: '🏆',
+    title: 'Sistem Poin & Gamifikasi',
+    content: `
+      <p>Sistem gamifikasi membuat belajarmu semakin seru dan memotivasi:</p>
+      <ul style="text-align:left;line-height:2;margin:16px 0;padding-left:20px">
+        <li><strong>XP (Experience Points)</strong> — Dapatkan XP dari setiap aktivitas belajar</li>
+        <li><strong>Level Up</strong> — Naik level seiring bertambahnya XP</li>
+        <li><strong>Leaderboard</strong> — Bersaing dengan teman sekelas untuk peringkat tertinggi</li>
+        <li><strong>Badge & Achievement</strong> — Kumpulkan badge untuk pencapaian tertentu</li>
+        <li><strong>Daily Streak</strong> — Login setiap hari untuk menjaga streak dan bonus XP</li>
+        <li><strong>Referral Bonus</strong> — Ajak teman dan dapatkan bonus XP</li>
+      </ul>
+      <p>Setiap poin yang kamu kumpulkan menunjukkan progress belajarmu. Semakin tinggi levelmu, semakin banyak tantangan yang terbuka! 🚀</p>
+    `
+  }
+};
+
+function openFeatureModal(key) {
+  const data = featureData[key];
+  if (!data) return;
+  document.getElementById('feature-modal-icon').textContent = data.icon;
+  document.getElementById('feature-modal-title').textContent = data.title;
+  document.getElementById('feature-modal-content').innerHTML = data.content;
+  openModal('modal-feature-detail');
+}
+
 document.querySelectorAll('.modal-overlay').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
 });
