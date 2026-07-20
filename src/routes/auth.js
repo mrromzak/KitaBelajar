@@ -1134,9 +1134,4 @@ router.post('/verify-code-guru-otp', authMiddleware, async (req, res) => {
   }
 });
 
-// =============================================
-//  POST /api/auth/login-google-guru
-//  Guru login via Google OAuth (Google Sign-In).
-//  Body: { credential } — id_token dari Google GSI
-//  Guru harus sudah didaftarkan oleh kepala sekolah di whitelist.
 module.exports = router;
