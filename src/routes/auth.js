@@ -912,17 +912,6 @@ router.post('/google', async (req, res) => {
       });
     }
 
-    // User baru belum terdaftar → minta pilih role
-    if (!role || !['guru', 'murid'].includes(role)) {
-      return res.json({
-        success: true,
-        is_new: true,
-        google_token: req.body.google_token,
-        nama: gData.name || gData.email.split('@')[0],
-        email: normalEmail
-      });
-    }
-
     // Buat akun baru dengan role yang dipilih
     const id = uuidv4();
     const safaNama = cleanText(gData.name || gData.email.split('@')[0], 100);
