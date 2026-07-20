@@ -252,6 +252,10 @@
   .btn-guru { background: white; color: var(--blue); border: 3px solid var(--blue); }
   .features { padding: 20px 40px 60px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; max-width: 960px; margin: 0 auto; }
   .feature-card { background: #FFF8F0; border-radius: var(--radius); padding: 28px 22px; text-align: center; box-shadow: var(--shadow); border: 1px solid #F0ECE4; transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease; cursor: pointer; }
+  .feature-card:nth-child(1),
+  .feature-card:nth-child(2),
+  .feature-card:nth-child(3),
+  .feature-card:nth-child(4) { background: #FFF8F0; }
   .feature-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.10); }
   .feature-click-hint { font-size: 12px; color: var(--muted); margin-top: 12px; opacity: 0; transition: opacity 0.2s ease; }
   .feature-card:hover .feature-click-hint { opacity: 1; }
