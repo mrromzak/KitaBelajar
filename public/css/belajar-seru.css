@@ -1,4 +1,4 @@
- 
+
   :root {
     --yellow: #FFD93D;
     --orange: #FF6B35;
@@ -129,7 +129,7 @@
   #bell-dropdown {
     position: fixed; top: 68px; right: 16px; width: 340px; max-height: 480px;
     background: white; border-radius: 18px; box-shadow: 0 12px 40px rgba(0,0,0,0.15);
-    z-index: 10001; display: none; flex-direction: column; overflow: hidden;
+    z-index: 200; display: none; flex-direction: column; overflow: hidden;
     border: 1.5px solid #f0f0f0;
   }
   #bell-dropdown.open { display: flex; }
@@ -203,7 +203,7 @@
   .logo-maskot { width: 64px; height: 64px; object-fit: contain; }
 
   /* ===== LANDING ===== */
-  .hero { padding: 4px 40px 4px; position: relative; overflow: hidden; }
+  .hero { padding: 40px 40px 40px; position: relative; overflow: hidden; }
   .hero-shapes { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
   .shape { position: absolute; border-radius: 50%; opacity: 0.15; animation: float 4s ease-in-out infinite; }
   .shape:nth-child(1) { width: 120px; height: 120px; background: var(--yellow); top: -20px; left: 10%; }
@@ -215,11 +215,11 @@
   /* Hero layout: teks dulu, maskot di bawah */
   .hero-inner { display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; z-index: 1; }
   .hero-text { width: 100%; }
-  .hero-maskot { margin: 8px 0; }
-  .maskot-img { width: 160px; height: 160px; object-fit: contain; }
+  .hero-maskot { margin: 20px 0; }
+  .maskot-img { width: 320px; height: 320px; object-fit: contain; }
 
   /* ===== SPEECH BUBBLES ===== */
-  .maskot-wrap { position: relative; display: inline-block; padding: 20px 50px 5px; }
+  .maskot-wrap { position: relative; display: inline-block; padding: 40px 80px 10px; }
   .hero-bubble {
     position: absolute; background: #fff; border-radius: 18px;
     padding: 8px 14px; font-size: 13px; font-weight: 800; white-space: nowrap;
@@ -241,10 +241,10 @@
   @keyframes bub2 { 0%,100% { transform: translateY(0) rotate(1deg); } 50% { transform: translateY(-12px) rotate(-1deg); } }
   @keyframes bub3 { 0%,100% { transform: translateY(0) rotate(2deg); } 50% { transform: translateY(-8px) rotate(-2deg); } }
 
-  .hero-badge { display: inline-block; background: var(--yellow); color: var(--orange); font-weight: 800; font-size: 11px; padding: 4px 14px; border-radius: 50px; margin-bottom: 12px; }
-  .hero h1 { font-family: 'Fredoka One', cursive; font-size: clamp(24px, 4vw, 40px); line-height: 1.2; margin-bottom: 8px; }
+  .hero-badge { display: inline-block; background: var(--yellow); color: var(--orange); font-weight: 800; font-size: 13px; padding: 6px 18px; border-radius: 50px; margin-bottom: 20px; }
+  .hero h1 { font-family: 'Fredoka One', cursive; font-size: clamp(32px, 5vw, 56px); line-height: 1.15; margin-bottom: 16px; }
   .hero h1 em { color: var(--orange); font-style: normal; }
-  .hero p { font-size: 13px; color: var(--muted); max-width: 480px; margin: 0 auto 16px; line-height: 1.5; }
+  .hero p { font-size: 16px; color: var(--muted); max-width: 480px; margin: 0 auto 36px; line-height: 1.7; }
   .hero-buttons { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
   .btn-big { padding: 16px 36px; border-radius: 50px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 16px; border: none; cursor: pointer; transition: all 0.25s; display: flex; align-items: center; gap: 8px; }
   .btn-big:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 10px 28px rgba(0,0,0,0.15); }
@@ -620,9 +620,8 @@
   .ai-src-card:hover { border-color: #7b2ff7; background: #F9F5FF; transform: translateY(-2px); }
   .ai-src-card.active { border-color: #7b2ff7; background: #F3EEFF; }
 
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; pointer-events: none; }
-  .modal-overlay.open { display: flex; pointer-events: auto; }
-  .modal-overlay.hidden { display: none; pointer-events: none; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
   .modal { background: white; border-radius: 24px; padding: 32px; max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
   .modal h3 { font-family: 'Fredoka One', cursive; font-size: 22px; margin-bottom: 20px; }
   .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
