@@ -189,10 +189,6 @@ function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0, 0);
-  if (id === 'page-login') {
-    setGoogleLoginMode('default');
-    _initGoogleGuruBtn();
-  }
 }
 
 // Klik logo di navbar -> kembali ke "beranda" yang sesuai peran user.
@@ -732,93 +728,6 @@ async function completeGoogleRegister(role) {
   showLoading(false);
 }
 
-// =============================================
-//  Login Guru via Google Sign-In (One Tap)
-//  Guru yang sudah didaftarkan kepala sekolah
-//  bisa login langsung dengan Google.
-// =============================================
-async function doLoginGoogleGuru() {
-  if (typeof google === 'undefined' || !google.accounts) {
-    toast('Google Sign-In belum dimuat. Coba beberapa saat lagi.', 'error');
-    return;
-  }
-  showLoading(true);
-  try {
-    google.accounts.id.prompt((notification) => {
-      if (notification.isNotDisplayed()) {
-        console.warn('[Google GSI] One Tap tidak ditampilkan:', notification.getNotDisplayedReason());
-        toast('Login Google gagal. Coba lagi atau gunakan email/password.', 'error');
-        showLoading(false);
-      }
-    });
-    // One Tap akan memanggil callback _handleGoogleCredential,
-    // yang akan route ke /auth/google-guru
-  } catch (e) {
-    toast('Login Google gagal.', 'error');
-    showLoading(false);
-  }
-}
-
-// Override _handleGoogleCredential untuk route guru ke endpoint khusus
-const _originalHandleGoogleCredential = _handleGoogleCredential;
-
-let _googleLoginMode = 'default'; // 'default' | 'guru'
-
-function setGoogleLoginMode(mode) {
-  _googleLoginMode = mode || 'default';
-}
-
-async function _handleGoogleCredentialWithMode(response) {
-  showLoading(true);
-  try {
-    if (_googleLoginMode === 'guru') {
-      // Guru login via Google → endpoint khusus
-      const data = await api('POST', '/auth/login-google-guru', { credential: response.credential });
-      if (data.success) {
-        token = data.token;
-        currentUser = data.user;
-        localStorage.setItem('kb_token', token);
-        localStorage.setItem('kb_user', JSON.stringify(currentUser));
-        joinPrivateChannel();
-        loadBellNotifications();
-        setTimeout(() => subscribePush(), 2000);
-        toast(`Selamat datang, ${currentUser.nama}! 🎉`, 'success');
-        if (currentUser.role === 'guru') { loadGuruDashboard(); remindDataDiriIfNeeded(); }
-        else if (currentUser.role === 'orangtua') loadOrangtuaDashboard();
-        else { loadMuridDashboard(); remindDataDiriIfNeeded(); }
-      } else {
-        toast(data.pesan || 'Login Google gagal.', 'error');
-      }
-    } else {
-      // Default: route ke /auth/google (existing flow)
-      const data = await api('POST', '/auth/google', { google_token: response.credential });
-      if (data.success) {
-        if (data.is_new) {
-          _pendingGoogleToken = data.google_token;
-          document.getElementById('google-role-nama').textContent = data.nama || data.email || '';
-          showLoading(false);
-          openModal('modal-google-role');
-          return;
-        }
-        token = data.token;
-        currentUser = data.user;
-        localStorage.setItem('kb_token', token);
-        localStorage.setItem('kb_user', JSON.stringify(currentUser));
-        joinPrivateChannel();
-        loadBellNotifications();
-        setTimeout(() => subscribePush(), 2000);
-        toast(`Selamat datang, ${currentUser.nama}! 🎉`, 'success');
-        if (currentUser.role === 'guru') { loadGuruDashboard(); remindDataDiriIfNeeded(); }
-        else if (currentUser.role === 'orangtua') loadOrangtuaDashboard();
-        else { loadMuridDashboard(); remindDataDiriIfNeeded(); }
-      } else {
-        toast(data.pesan || 'Login Google gagal.', 'error');
-      }
-    }
-  } catch(e) { toast('Login Google gagal.', 'error'); }
-  showLoading(false);
-}
-
 let _googleInited = false;
 function _initGoogle() {
   if (_googleInited || typeof google === 'undefined' || !google.accounts) return;
@@ -826,7 +735,7 @@ function _initGoogle() {
   try {
     google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
-      callback: _handleGoogleCredentialWithMode,
+      callback: _handleGoogleCredential,
       ux_mode: 'popup',
       itp_support: true
     });
@@ -852,16 +761,6 @@ function _initGoogle() {
         );
       }
     }, 8000);
-  });
-}
-
-// Update tombol Google Guru di login page
-function _initGoogleGuruBtn() {
-  const btn = document.getElementById('btn-login-google-guru');
-  if (!btn) return;
-  btn.addEventListener('click', () => {
-    setGoogleLoginMode('guru');
-    doLoginGoogleGuru();
   });
 }
 

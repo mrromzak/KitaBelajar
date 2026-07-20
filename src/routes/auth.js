@@ -794,6 +794,8 @@ router.post('/reset-password', async (req, res) => {
 
 // =============================================
 //  POST /api/auth/google — Login/Register via Google OAuth
+//  Auto-detect role: jika email ada di whitelist kode_guru → role = 'guru'
+//  Jika email belum terdaftar & bukan guru → minta pilih role (existing flow)
 // =============================================
 router.post('/google', async (req, res) => {
   try {
@@ -809,58 +811,152 @@ router.post('/google', async (req, res) => {
       return res.status(401).json({ success: false, pesan: 'Token Google tidak valid.' });
 
     const normalEmail = gData.email.toLowerCase().trim();
+
+    // ── Deteksi typo email umum ──────────────────────────────────────────
+    const commonTypos = {
+      'gmial.com': 'gmail.com',
+      'gmal.com': 'gmail.com',
+      'gamil.com': 'gmail.com',
+      'gmaill.com': 'gmail.com',
+      'gmai.com': 'gmail.com',
+      'gmaiil.com': 'gmail.com',
+      'gmail.co': 'gmail.com',
+      'gmail.cm': 'gmail.com',
+      'gmail.om': 'gmail.com',
+      'gmail.con': 'gmail.com',
+      'gmail.cim': 'gmail.com',
+      'gmail.cpm': 'gmail.com',
+      'gmail.cm ': 'gmail.com',
+      'yahooo.com': 'yahoo.com',
+      'yaho.com': 'yahoo.com',
+      'yaoo.com': 'yahoo.com',
+      'yahoo.co': 'yahoo.com',
+      'hotmal.com': 'hotmail.com',
+      'hotmial.com': 'hotmail.com',
+      'hotamil.com': 'hotmail.com',
+      'outlok.com': 'outlook.com',
+      'outloo.com': 'outlook.com',
+      'outlook.co': 'outlook.com',
+    };
+    const emailDomain = normalEmail.split('@')[1];
+    if (emailDomain && commonTypos[emailDomain]) {
+      const correctedEmail = normalEmail.replace(emailDomain, commonTypos[emailDomain]);
+      return res.status(400).json({
+        success: false,
+        pesan: `Sepertinya email Anda salah ketik. Maksud Anda "${correctedEmail}"?`,
+        corrected_email: correctedEmail
+      });
+    }
+
     let { data: user } = await supabase.from('users').select('*').eq('email', normalEmail).single();
 
-    if (!user) {
-      // Jika role belum dipilih, minta frontend pilih dulu
-      if (!role || !['guru', 'murid'].includes(role)) {
-        return res.json({
-          success: true,
-          is_new: true,
-          google_token: req.body.google_token,
-          nama: gData.name || gData.email.split('@')[0],
-          email: normalEmail
-        });
-      }
+    // ── Cek apakah email ada di whitelist kode_guru (guru) ──────────────
+    let { data: kodeEntry } = await supabase
+      .from('kode_guru')
+      .select('*')
+      .eq('email_guru', normalEmail)
+      .eq('status', 'active')
+      .maybeSingle();
 
-      // Buat akun baru dengan role yang dipilih
+    // ── Jika email ADA di whitelist → guru login/auto-create ──────────────
+    if (kodeEntry) {
+      if (user) {
+        // Guru sudah punya akun → login langsung
+        const jwtToken = jwt.sign({ id: user.id, nama: user.nama, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
+        return res.json({ success: true, is_new: false, pesan: `Selamat datang, ${user.nama}!`, token: jwtToken, user: { id: user.id, nama: user.nama, email: user.email, role: user.role, avatar: user.avatar, xp: user.xp, level: user.level, profil_lengkap: !!user.profil_lengkap } });
+      }
+      // Guru belum punya akun → auto-create dengan role 'guru'
       const id = uuidv4();
       const safaNama = cleanText(gData.name || gData.email.split('@')[0], 100);
-      const avatar = role === 'guru' ? '👩‍🏫' : '🦁';
-      const { error } = await supabase.from('users').insert({
-        id, nama: safaNama, email: normalEmail, password: bcrypt.hashSync(id, 10), role, avatar, xp: 0, level: 1
+      const avatar = '👩‍🏫';
+      const { error: insertErr } = await supabase.from('users').insert({
+        id, nama: safaNama, email: normalEmail, password: bcrypt.hashSync(id, 10), role: 'guru', avatar, xp: 0, level: 1
       });
-      if (error) throw error;
+      if (insertErr) throw insertErr;
+
+      // Auto-generate code_guru
+      await supabase.rpc('generate_code_guru_for_user', { p_user_id: id })
+        .catch(async () => {
+          const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+          let newCode = '';
+          for (let i = 0; i < 8; i++) newCode += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+          await supabase.from('users').update({ code_guru: newCode, code_guru_generated_at: new Date().toISOString() }).eq('id', id)
+            .catch(e => console.warn('[google-auth] gagal set code_guru fallback:', e.message));
+        });
 
       await supabase.from('notifikasi').insert({
         id: uuidv4(), user_id: id,
         judul: '🎉 Selamat Datang!',
-        pesan: `Halo ${safaNama}! Selamat bergabung di KitaBelajar. Semangat belajar ya!`
+        pesan: `Halo ${safaNama}! Selamat bergabung sebagai guru di KitaBelajar.`
       });
 
-      // Buat akun orangtua otomatis jika role murid
-      let parentInfo = null;
-      if (role === 'murid') {
-        const suffix = uuidv4().replace(/-/g,'').slice(0,6);
-        const parentEmail = `ortu.${suffix}@kitabelajar.id`;
-        const parentPassword = generateRandomPassword(10);
-        const parentId = uuidv4();
-        await supabase.from('users').insert({
-          id: parentId, nama: `Orangtua ${safaNama}`,
-          email: parentEmail, password: bcrypt.hashSync(parentPassword, 10),
-          role: 'orangtua', avatar: '👨‍👩‍👧', xp: 0, level: 1
-        });
-        await supabase.from('parent_student').insert({ parent_id: parentId, murid_id: id });
-        sendParentCredentialsEmail({ to: normalEmail, namaMurid: safaNama, parentEmail, parentPassword }).catch(() => {});
-        parentInfo = { parentEmail, parentPassword };
-      }
-
-      const jwtToken = jwt.sign({ id, nama: safaNama, email: normalEmail, role }, JWT_SECRET, { expiresIn: '30d' });
-      return res.status(201).json({ success: true, pesan: `Selamat datang, ${safaNama}!`, token: jwtToken, user: { id, nama: safaNama, email: normalEmail, role, avatar, xp: 0, level: 1, profil_lengkap: false }, parent_info: parentInfo });
+      const jwtToken = jwt.sign({ id, nama: safaNama, email: normalEmail, role: 'guru' }, JWT_SECRET, { expiresIn: '30d' });
+      return res.status(201).json({ success: true, is_new: true, pesan: `Selamat datang, ${safaNama}!`, token: jwtToken, user: { id, nama: safaNama, email: normalEmail, role: 'guru', avatar, xp: 0, level: 1, profil_lengkap: false } });
     }
 
-    const jwtToken = jwt.sign({ id: user.id, nama: user.nama, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
-    res.json({ success: true, is_new: false, pesan: `Selamat datang, ${user.nama}!`, token: jwtToken, user: { id: user.id, nama: user.nama, email: user.email, role: user.role, avatar: user.avatar, xp: user.xp, level: user.level, profil_lengkap: !!user.profil_lengkap } });
+    // ── Jika email TIDAK ada di whitelist → notifikasi "belum terdaftar sebagai guru" ─
+    if (user) {
+      // User sudah terdaftar tapi bukan guru → login biasa
+      const jwtToken = jwt.sign({ id: user.id, nama: user.nama, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
+      return res.json({ success: true, is_new: false, pesan: `Selamat datang, ${user.nama}!`, token: jwtToken, user: { id: user.id, nama: user.nama, email: user.email, role: user.role, avatar: user.avatar, xp: user.xp, level: user.level, profil_lengkap: !!user.profil_lengkap } });
+    }
+
+    // User baru belum terdaftar → minta pilih role
+    if (!role || !['guru', 'murid'].includes(role)) {
+      return res.json({
+        success: true,
+        is_new: true,
+        google_token: req.body.google_token,
+        nama: gData.name || gData.email.split('@')[0],
+        email: normalEmail
+      });
+    }
+
+    // User baru belum terdaftar → minta pilih role
+    if (!role || !['guru', 'murid'].includes(role)) {
+      return res.json({
+        success: true,
+        is_new: true,
+        google_token: req.body.google_token,
+        nama: gData.name || gData.email.split('@')[0],
+        email: normalEmail
+      });
+    }
+
+    // Buat akun baru dengan role yang dipilih
+    const id = uuidv4();
+    const safaNama = cleanText(gData.name || gData.email.split('@')[0], 100);
+    const avatar = role === 'guru' ? '👩‍🏫' : '🦁';
+    const { error } = await supabase.from('users').insert({
+      id, nama: safaNama, email: normalEmail, password: bcrypt.hashSync(id, 10), role, avatar, xp: 0, level: 1
+    });
+    if (error) throw error;
+
+    await supabase.from('notifikasi').insert({
+      id: uuidv4(), user_id: id,
+      judul: '🎉 Selamat Datang!',
+      pesan: `Halo ${safaNama}! Selamat bergabung di KitaBelajar. Semangat belajar ya!`
+    });
+
+    // Buat akun orangtua otomatis jika role murid
+    let parentInfo = null;
+    if (role === 'murid') {
+      const suffix = uuidv4().replace(/-/g,'').slice(0,6);
+      const parentEmail = `ortu.${suffix}@kitabelajar.id`;
+      const parentPassword = generateRandomPassword(10);
+      const parentId = uuidv4();
+      await supabase.from('users').insert({
+        id: parentId, nama: `Orangtua ${safaNama}`,
+        email: parentEmail, password: bcrypt.hashSync(parentPassword, 10),
+        role: 'orangtua', avatar: '👨‍👩‍👧', xp: 0, level: 1
+      });
+      await supabase.from('parent_student').insert({ parent_id: parentId, murid_id: id });
+      sendParentCredentialsEmail({ to: normalEmail, namaMurid: safaNama, parentEmail, parentPassword }).catch(() => {});
+      parentInfo = { parentEmail, parentPassword };
+    }
+
+    const jwtToken = jwt.sign({ id, nama: safaNama, email: normalEmail, role }, JWT_SECRET, { expiresIn: '30d' });
+    return res.status(201).json({ success: true, pesan: `Selamat datang, ${safaNama}!`, token: jwtToken, user: { id, nama: safaNama, email: normalEmail, role, avatar, xp: 0, level: 1, profil_lengkap: false }, parent_info: parentInfo });
   } catch (err) {
     console.error('[google-auth]', err.message);
     res.status(500).json({ success: false, pesan: 'Login Google gagal.' });
@@ -1054,152 +1150,4 @@ router.post('/verify-code-guru-otp', authMiddleware, async (req, res) => {
 //  Guru login via Google OAuth (Google Sign-In).
 //  Body: { credential } — id_token dari Google GSI
 //  Guru harus sudah didaftarkan oleh kepala sekolah di whitelist.
-// =============================================
-router.post('/login-google-guru', async (req, res) => {
-  try {
-    if (!googleClient) {
-      return res.status(503).json({ success: false, pesan: 'Login Google belum dikonfigurasi. Hubungi administrator.' });
-    }
-
-    const { credential } = req.body || {};
-    if (!credential) {
-      return res.status(400).json({ success: false, pesan: 'Google credential (id_token) wajib dikirim.' });
-    }
-
-    // 1. Verifikasi id_token via Google
-    let payload;
-    try {
-      const ticket = await googleClient.verifyIdToken({
-        idToken: credential,
-        audience: GOOGLE_CLIENT_ID
-      });
-      payload = ticket.getPayload();
-    } catch (e) {
-      return res.status(401).json({ success: false, pesan: 'Token Google tidak valid atau sudah expired.' });
-    }
-
-    const email = payload.email;
-    const nama = payload.name || payload.email.split('@')[0];
-
-    if (!payload.email_verified) {
-      return res.status(403).json({ success: false, pesan: 'Email Google belum diverifikasi.' });
-    }
-
-    // 2. Cek apakah email guru ada di whitelist (kode_guru table)
-    const { data: kodeEntry } = await supabase
-      .from('kode_guru')
-      .select('*')
-      .eq('email_guru', email.toLowerCase())
-      .eq('status', 'active')
-      .maybeSingle();
-
-    if (!kodeEntry) {
-      return res.status(403).json({
-        success: false,
-        pesan: 'Email Anda belum didaftarkan oleh kepala sekolah. Hubungi administrator.'
-      });
-    }
-
-    // 3. Cek apakah akun guru sudah ada
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email.toLowerCase())
-      .single();
-
-    if (existingUser) {
-      // 4. Catat login
-      await supabase.rpc('increment_kode_guru_used', { kode_id: kodeEntry.id })
-        .catch(async () => {
-          const { data: k } = await supabase.from('kode_guru').select('used_count').eq('id', kodeEntry.id).single();
-          if (k) {
-            await supabase.from('kode_guru').update({ used_count: (k.used_count || 0) + 1 }).eq('id', kodeEntry.id);
-          }
-        });
-
-      // 5. Generate JWT
-      const token = jwt.sign(
-        { id: existingUser.id, nama: existingUser.nama, email: existingUser.email, role: existingUser.role },
-        JWT_SECRET, { expiresIn: '30d' }
-      );
-
-      return res.json({
-        success: true,
-        pesan: `Selamat datang, ${existingUser.nama}!`,
-        token,
-        user: {
-          id: existingUser.id,
-          nama: existingUser.nama,
-          email: existingUser.email,
-          role: existingUser.role,
-          avatar: existingUser.avatar
-        }
-      });
-    }
-
-    // 6. Buat akun guru baru jika belum ada
-    const id = uuidv4();
-    const passwordHash = bcrypt.hashSync(crypto.randomBytes(16).toString('hex'), 10);
-
-    const { data: newUser, error } = await supabase
-      .from('users')
-      .insert({
-        id,
-        nama,
-        email: email.toLowerCase(),
-        password: passwordHash,
-        role: 'guru',
-        avatar: '👩‍🏫',
-        xp: 0,
-        level: 1
-      })
-      .single();
-
-    if (error) {
-      return res.status(500).json({ success: false, pesan: 'Gagal membuat akun guru.' });
-    }
-
-    // 7. Auto-generate code_guru
-    await supabase.rpc('generate_code_guru_for_user', { p_user_id: id })
-      .catch(async () => {
-        const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        let newCode = '';
-        for (let i = 0; i < 8; i++) newCode += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
-        await supabase.from('users').update({ code_guru: newCode, code_guru_generated_at: new Date().toISOString() }).eq('id', id)
-          .catch(e => console.warn('[login-google-guru] gagal set code_guru fallback:', e.message));
-      });
-
-    // 8. Catat login
-    await supabase.rpc('increment_kode_guru_used', { kode_id: kodeEntry.id })
-      .catch(async () => {
-        const { data: k } = await supabase.from('kode_guru').select('used_count').eq('id', kodeEntry.id).single();
-        if (k) {
-          await supabase.from('kode_guru').update({ used_count: (k.used_count || 0) + 1 }).eq('id', kodeEntry.id);
-        }
-      });
-
-    // 9. Generate JWT
-    const token = jwt.sign(
-      { id: newUser.id, nama: newUser.nama, email: newUser.email, role: newUser.role },
-      JWT_SECRET, { expiresIn: '30d' }
-    );
-
-    res.status(201).json({
-      success: true,
-      pesan: `Selamat datang, ${newUser.nama}! Akun guru berhasil dibuat.`,
-      token,
-      user: {
-        id: newUser.id,
-        nama: newUser.nama,
-        email: newUser.email,
-        role: newUser.role,
-        avatar: newUser.avatar
-      }
-    });
-  } catch (err) {
-    console.error('[login-google-guru]', err.message);
-    res.status(500).json({ success: false, pesan: 'Server error.' });
-  }
-});
-
 module.exports = router;
