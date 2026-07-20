@@ -276,13 +276,9 @@ function switchRole(role) {
   currentRole = role;
 }
 
+// switchRegRole sudah tidak digunakan — register hanya untuk murid
 function switchRegRole(role) {
-  currentRegRole = role;
-  document.getElementById('reg-tab-guru').classList.toggle('active', role === 'guru');
-  document.getElementById('reg-tab-murid').classList.toggle('active', role === 'murid');
-  document.getElementById('reg-kelas-group').style.display = role === 'murid' ? 'block' : 'none';
-  // Guru wajib isi data diri saat daftar; murid lewat popup setelah daftar
-  document.getElementById('reg-datadiri-group').style.display = role === 'guru' ? 'block' : 'none';
+  // no-op
 }
 
 function showRegister() {
@@ -296,9 +292,16 @@ async function doLogin() {
   if (!email || !password) { toast('Isi email dan password dulu ya! 😊', 'error'); return; }
   if (!isValidEmail(email)) { toast('Format email tidak valid. Contoh: nama@email.com', 'error'); return; }
 
+  // Jika field Code Guru terlihat, kirimkan ke backend
+  const kodeGuruEl = document.getElementById('login-kode-guru');
+  const body = { email, password };
+  if (kodeGuruEl && kodeGuruEl.style.display !== 'none' && kodeGuruEl.value.trim()) {
+    body.code_guru = kodeGuruEl.value.trim().toUpperCase();
+  }
+
   showLoading(true);
   try {
-    const data = await api('POST', '/auth/login', { email, password });
+    const data = await api('POST', '/auth/login', body);
     if (data.success) {
       // Login terpadu: peran ditentukan backend, langsung diarahkan ke dashboard yang sesuai.
       token = data.token;

@@ -201,3 +201,302 @@ mencetak origin yang bermasalah ke console — supaya kegagalan tidak lagi senya
 - Setiap perubahan `css`/`js` **wajib menaikkan `?v=N`** di `belajar-seru.html` (sudah: css `v=22`, app-core `v=3`).
 - Status: 14 dari 15 item **selesai**; sisa #13 sebagian (audit gradient/emoji tingkat dashboard, opsional).
 - Cek cepat sintaks: `node --check public/js/app-core.js`.
+
+---
+
+## SESI KEAMANAN & INFRASTRUKTUR (Juli 2026)
+
+> Dikerjakan oleh AI session terpisah. Semua perubahan sudah di-push ke `main` (commit `785e573`).
+
+### Ringkasan Sesi
+
+| # | Item | Status |
+|---|------|--------|
+| S1 | Prototype sistem kode undangan guru (lokal, tidak di-push) | ✅ |
+| S2 | 7 security fixes pada prototype | ✅ |
+| S3 | Integrasi Supabase pada prototype | ✅ |
+| S4 | Migration schema `kode_guru` v2 (permanen, login log, RPC) | ✅ |
+| S5 | RLS (Row Level Security) semua 24 tabel Supabase | ✅ |
+| S6 | Smoke test 18 endpoint — 18/18 PASS | ✅ |
+| S7 | Integrasi `kode-guru` ke `src/routes/kode-guru.js` (main app) | ✅ |
+| S8 | Audit gradient/emoji dashboard (item #13 sisa) | ⬜ |
+| S9 | Integrasi fitur kode guru ke UI frontend (`belajar-seru.html`) | ⬜ |
+| S10 | Halaman manajemen guru untuk kepala sekolah di frontend | ⬜ |
+
+---
+
+### S1–S3: Prototype Sistem Kode Undangan Guru ✅
+
+**Lokasi:** `prototype/kode-guru/` (di `.gitignore`, tidak di-push — hanya lokal)
+
+**Konsep:**
+- Kepala sekolah generate **kode permanen 8 karakter** per guru (3-char SHA-256 hash `nama|email` + 5-char CSPRNG)
+- Satu email guru = satu kode permanen (tidak berubah, bisa dipakai berulang)
+- Guru login dengan Google → sistem cek whitelist email → beri akses
+
+**File prototype (lokal saja):**
+- `prototype/kode-guru/server.js` — Express server port `PROTO_PORT=4100`
+- `prototype/kode-guru/app.js` — semua route API
+- `prototype/kode-guru/store.js` — dual-mode: Supabase (produksi) / in-memory (fallback)
+- `prototype/kode-guru/index.html` — UI admin panel + guru registration
+- `prototype/kode-guru/public/app.js` — frontend JS (CSP-compliant, tanpa inline)
+- `prototype/kode-guru/seed-kepala.js` — seed akun kepala ke Supabase
+
+**7 Security Fixes yang diimplementasikan:**
+1. JWT secret wajib dari env (tidak ada fallback lemah) — `server.js`
+2. Google OAuth2 nyata via `google-auth-library` (verifikasi `id_token`) — `app.js`
+3. Validasi format email & telepon via `validator.js` — `store.js`
+4. Rate limiter login diperketat (5 req/15 menit) — `app.js`
+5. Data persistent via Supabase (`SUPABASE_SERVICE_KEY`) — `store.js`
+6. CORS whitelist origin — `app.js`
+7. Hapus `unsafe-inline` dari CSP, JS dipisah ke file eksternal — `index.html` + `public/app.js`
+
+**Bug fixes selama integrasi:**
+- `EADDRINUSE :::3000` → pakai `PROTO_PORT=4100` bukan `PORT`
+- Kolom `password_hash` tidak ada → pakai `password` (sesuai schema Supabase aktual)
+- Kolom `no_telepon`/`alamat` tidak ada di tabel `users` → dihapus dari insert, dikembalikan dari parameter
+
+---
+
+### S4: Migration Schema `kode_guru` v2 ✅
+
+**File:** [`migration_kode_guru_v2.sql`](../migration_kode_guru_v2.sql)
+
+**Yang dibuat:**
+```sql
+-- Tabel kode_guru (kode permanen per guru)
+CREATE TABLE kode_guru (
+  id          UUID PRIMARY KEY,
+  kode        TEXT UNIQUE NOT NULL,        -- 8-char permanent code
+  email_guru  TEXT NOT NULL,
+  nama_guru   TEXT NOT NULL,
+  dibuat_oleh UUID REFERENCES users(id),
+  status      TEXT DEFAULT 'active',       -- active | revoked
+  login_count INT  DEFAULT 0,
+  created_at  TIMESTAMPTZ DEFAULT now(),
+  last_used_at TIMESTAMPTZ
+);
+
+-- Tabel kode_guru_login_log (audit trail)
+CREATE TABLE kode_guru_login_log (
+  id         UUID PRIMARY KEY,
+  kode_id    UUID REFERENCES kode_guru(id),
+  guru_id    UUID REFERENCES users(id),
+  login_at   TIMESTAMPTZ DEFAULT now()
+);
+
+-- RPC increment_kode_guru_login (atomic counter)
+CREATE FUNCTION increment_kode_guru_login(kode_id UUID) ...
+```
+
+**Sudah dijalankan di Supabase SQL Editor** ✅
+
+---
+
+### S5: RLS (Row Level Security) Semua 24 Tabel ✅
+
+**File:** [`migration_rls_semua_tabel.sql`](../migration_rls_semua_tabel.sql)
+
+**Strategi:** "Backend-only pattern"
+- `ALTER TABLE x ENABLE ROW LEVEL SECURITY` — tanpa policy = deny all untuk anon/authenticated
+- Backend Node.js pakai `SUPABASE_SERVICE_KEY` → bypass RLS otomatis (Supabase default)
+- Browser tidak bisa akses Supabase langsung dengan anon key
+
+**24 tabel yang dilindungi:**
+`users`, `kelas`, `kelas_murid`, `materi`, `soal`, `quiz`, `quiz_soal`, `hasil_quiz`,
+`detail_jawaban`, `progres_materi`, `notifikasi`, `pesan_kelas`, `pesan_private`,
+`tugas_submission`, `parent_student`, `push_subscriptions`, `badges`, `murid_badges`,
+`misi_template`, `misi_murid`, `daily_reward_klaim`, `kode_guru`, `kode_guru_login_log`, `error_logs`
+
+**Sudah dijalankan di Supabase SQL Editor** ✅ — semua 24 tabel `rowsecurity = true`
+
+**File diagnostik:** [`cek_rls_status.sql`](../cek_rls_status.sql) — query untuk cek status RLS kapanpun
+
+---
+
+### S6: Smoke Test 18 Endpoint ✅
+
+**File:** [`smoke_test.js`](../smoke_test.js)
+
+**Hasil:** 18/18 PASS
+
+```
+✅ GET /              → 200 (halaman utama HTML)
+✅ POST /api/auth/login       → 200 (kepala, dapat token)
+✅ GET /api/auth/profile      → 200 (data user)
+✅ GET /api/dashboard         → 200
+✅ GET /api/kelas             → 200
+✅ GET /api/materi            → 200
+✅ GET /api/soal/latihan      → 200
+✅ GET /api/quiz              → 200
+✅ GET /api/kode-guru         → 200
+✅ GET /api/notifikasi        → 200
+✅ GET /api/misi              → 200
+✅ GET /api/misi/badges       → 200
+✅ GET /api/soal/latihan/mapel → 200
+✅ GET /api/chat/inbox        → 200
+✅ GET /api/orangtua/anak     → 403 (kepala bukan orangtua — benar)
+✅ GET /api/dashboard (no token) → 401
+✅ POST /api/auth/login (salah) → 401
+✅ GET /api/tidak-ada         → 404
+```
+
+**Cara jalankan:** `node smoke_test.js` (server harus jalan dulu: `node src/server.js`)
+
+---
+
+### S7: Route `kode-guru` di Main App ✅
+
+**File:** [`src/routes/kode-guru.js`](../src/routes/kode-guru.js)
+
+Route yang tersedia (semua `kepalaOnly`):
+- `POST /api/kode-guru` — generate kode baru untuk guru
+- `GET /api/kode-guru` — list semua kode
+- `GET /api/kode-guru/guru` — list guru yang sudah punya akun
+- `PATCH /api/kode-guru/:id/revoke` — cabut kode
+
+**Sudah terdaftar di** [`src/server.js`](../src/server.js:121):
+```js
+app.use('/api/kode-guru', require('./routes/kode-guru'));
+```
+
+---
+
+## YANG BELUM DIKERJAKAN (Backlog untuk AI Berikutnya)
+
+### ⬜ B1: Integrasi UI Kode Guru ke Frontend (`belajar-seru.html`)
+
+**Prioritas: TINGGI**
+
+Backend sudah siap (`/api/kode-guru`), tapi belum ada UI di frontend untuk:
+- Kepala sekolah: panel generate kode, lihat daftar kode, revoke kode
+- Kepala sekolah: lihat daftar guru yang sudah terdaftar (`GET /api/kode-guru/guru`)
+- Guru: tampilkan kode mereka di profil/dashboard
+
+**File yang perlu diubah:**
+- `public/belajar-seru.html` — tambah section panel kepala sekolah
+- `public/js/app-core.js` — tambah fungsi load/generate/revoke kode
+- `public/css/belajar-seru.css` — styling panel kepala (jika perlu)
+
+**Catatan:** role `kepala_sekolah` sudah ada di backend, tapi dashboard-nya (`dashboardGuru` di `src/routes/dashboard.js`) belum dibedakan dari guru biasa.
+
+---
+
+### ⬜ B2: Dashboard Kepala Sekolah Terpisah
+
+**Prioritas: TINGGI**
+
+Saat ini kepala sekolah masuk ke dashboard guru (`dashboardGuru`). Perlu dashboard khusus yang menampilkan:
+- Statistik sekolah (total guru, murid, kelas)
+- Daftar kode guru (aktif/revoked)
+- Daftar guru terdaftar
+- Manajemen kode (generate, revoke)
+
+**File yang perlu diubah:**
+- `src/routes/dashboard.js` — tambah `dashboardKepala()` function, routing berdasarkan role
+- `public/belajar-seru.html` — tambah section dashboard kepala
+- `public/js/app-core.js` — tambah `loadDashboardKepala()`
+
+---
+
+### ⬜ B3: Validasi Kode Guru saat Register Guru
+
+**Prioritas: TINGGI**
+
+Saat ini guru bisa register tanpa kode. Perlu:
+- Tambah field `kode_guru` di form register guru
+- Backend `POST /api/auth/register` validasi kode sebelum buat akun
+- Kode harus `active` dan email harus cocok dengan `email_guru` di tabel `kode_guru`
+- Setelah register sukses, update `login_count` dan `last_used_at`
+
+**File yang perlu diubah:**
+- `src/routes/auth.js` — tambah validasi kode di endpoint register
+- `public/belajar-seru.html` — tambah field kode di form register guru
+- `public/js/app-core.js` — kirim kode saat register
+
+---
+
+### ⬜ B4: Endpoint Validasi Kode (untuk Frontend)
+
+**Prioritas: SEDANG**
+
+Tambah endpoint `POST /api/kode-guru/validate` yang bisa dicek frontend sebelum submit form register:
+```json
+{ "kode": "WJDHZLS2", "email": "guru@sekolah.id" }
+→ { "valid": true, "nama_guru": "Budi Santoso" }
+```
+
+**File yang perlu diubah:**
+- `src/routes/kode-guru.js` — tambah route `POST /validate`
+
+---
+
+### ⬜ B5: Audit Gradient/Emoji Dashboard (Item #13 Sisa)
+
+**Prioritas: RENDAH (opsional)**
+
+Dari backlog UI/UX lama — audit emoji dan gradient di:
+- Game card dashboard murid (welcome-banner, card AyoBelajar/KitaLatihan)
+- Pertimbangkan apakah perlu diubah mengingat audiens anak-anak
+
+**File:** `public/belajar-seru.html`, `public/css/belajar-seru.css`
+
+---
+
+### ⬜ B6: Push Notification (Service Worker)
+
+**Prioritas: SEDANG**
+
+`public/sw.js` sudah ada tapi belum terintegrasi penuh. Tabel `push_subscriptions` sudah ada di DB (dan sudah RLS). Perlu:
+- Endpoint `POST /api/notifikasi/subscribe` untuk simpan subscription
+- Endpoint `POST /api/notifikasi/push` untuk kirim push notif
+- Frontend: minta permission + register service worker
+
+---
+
+### ⬜ B7: Error Logging ke Tabel `error_logs`
+
+**Prioritas: RENDAH**
+
+Tabel `error_logs` sudah ada di DB (dan sudah RLS). Perlu:
+- Middleware global error handler yang log ke `error_logs`
+- Atau endpoint `POST /api/error-log` untuk frontend report error
+
+---
+
+## Env Variables yang Diperlukan
+
+Lihat [`.env.example`](../.env.example) untuk daftar lengkap. Yang baru ditambahkan:
+
+```env
+# Prototype kode guru (lokal saja)
+PROTO_PORT=4100
+KEPALA_EMAIL=kepala@sekolah.id
+KEPALA_PASS=KepalaProto2024!
+KEPALA_NAMA=Kepala Sekolah
+
+# Google OAuth (wajib untuk login Google)
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+```
+
+---
+
+## Arsitektur Keamanan Saat Ini
+
+```
+Browser
+  │
+  │  fetch('/api/...') — hanya tahu URL Node.js
+  ▼
+Node.js (src/server.js) — PORT=3000
+  │  pakai SUPABASE_SERVICE_KEY (bypass RLS)
+  ▼
+Supabase Database
+  │  RLS ON: 24 tabel
+  │  anon key dari browser → DITOLAK
+  │  service_role key → bypass otomatis
+  ▼
+  data
+```
+
+**Tidak ada akses langsung browser → Supabase.** Semua lewat Node.js.

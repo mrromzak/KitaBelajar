@@ -130,6 +130,52 @@ router.get('/guru', authMiddleware, kepalaOnly, async (req, res) => {
 });
 
 // =====================================================
+//  POST /api/kode-guru/validate — cek kode (publik, tanpa auth)
+//  Body: { kode: "ABCD1234" }
+//  Dipakai frontend sebelum submit form register guru.
+// =====================================================
+router.post('/validate', async (req, res) => {
+  try {
+    const { kode } = req.body;
+    if (!kode || typeof kode !== 'string' || kode.trim().length === 0)
+      return res.status(400).json({ success: false, pesan: 'Kode wajib diisi.' });
+
+    const safeKode = kode.trim().toUpperCase();
+    const { data: entry, error } = await supabase
+      .from('kode_guru').select('*').eq('kode', safeKode).maybeSingle();
+
+    if (error) throw error;
+    if (!entry)
+      return res.status(404).json({ success: false, pesan: 'Kode tidak ditemukan.' });
+
+    const status = deriveStatus(entry);
+    if (status !== 'active')
+      return res.status(400).json({
+        success: false,
+        pesan: status === 'revoked' ? 'Kode sudah dicabut oleh kepala sekolah.'
+             : status === 'expired' ? 'Kode sudah kadaluarsa.'
+             : 'Kode sudah habis kuotanya.',
+        status
+      });
+
+    res.json({
+      success: true,
+      valid: true,
+      pesan: 'Kode valid. Silakan lanjutkan pendaftaran.',
+      data: {
+        kode: entry.kode,
+        label: entry.label,
+        sisa_kuota: Math.max(0, entry.max_uses - (entry.used_count || 0)),
+        expires_at: entry.expires_at
+      }
+    });
+  } catch (err) {
+    console.error('[kode-guru:validate]', err.message);
+    res.status(500).json({ success: false, pesan: 'Gagal memvalidasi kode. Coba lagi.' });
+  }
+});
+
+// =====================================================
 //  PATCH /api/kode-guru/:id/revoke — cabut kode
 // =====================================================
 router.patch('/:id/revoke', authMiddleware, kepalaOnly, async (req, res) => {

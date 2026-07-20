@@ -74,6 +74,8 @@ function sendResetEmail({ to, nama, resetUrl }) {
 const otpStore = new Map(); // email → { otp, data, expiresAt }
 // ── Reset OTP store (terpisah dari OTP registrasi) ─────────────
 const resetOtpStore = new Map(); // email → { otp, expiresAt }
+// ── OTP store untuk reveal code_guru di profil (verifikasi email) ──
+const codeGuruOtpStore = new Map(); // email → { otp, userId, expiresAt }
 
 function generateOTP() {
   return String(Math.floor(100000 + Math.random() * 900000)); // 6 digit
@@ -279,12 +281,40 @@ function sendDataDiriRewardNotif(userId) {
 // =============================================
 router.post('/send-otp', async (req, res) => {
   try {
-    const { nama, email, password, role, kelas, kode_kelas, alamat, umur, asal_sekolah } = req.body;
+    const { nama, email, password, role, kelas, kode_kelas, alamat, umur, asal_sekolah, kode_guru } = req.body;
 
     if (!nama || !email || !password || !role)
       return res.status(400).json({ success: false, pesan: 'Nama, email, password, dan role wajib diisi.' });
     if (!['guru', 'murid'].includes(role))
       return res.status(400).json({ success: false, pesan: 'Role harus "guru" atau "murid".' });
+
+    // ── B3: Guru wajib menyertakan kode undangan yang valid ──────────────
+    let kodeGuruId = null;
+    if (role === 'guru') {
+      if (!kode_guru || typeof kode_guru !== 'string' || kode_guru.trim().length === 0)
+        return res.status(400).json({ success: false, pesan: 'Guru wajib menyertakan kode undangan dari kepala sekolah.' });
+
+      const safeKodeGuru = kode_guru.trim().toUpperCase();
+      const { data: kodeEntry } = await supabase
+        .from('kode_guru').select('id, status, expires_at, max_uses, used_count').eq('kode', safeKodeGuru).maybeSingle();
+
+      if (!kodeEntry)
+        return res.status(400).json({ success: false, pesan: 'Kode undangan tidak ditemukan. Minta kode dari kepala sekolah.' });
+
+      // Cek status: expired jika expires_at sudah lewat, used_up jika kuota habis
+      const now = new Date();
+      const isExpired = kodeEntry.expires_at && new Date(kodeEntry.expires_at) < now;
+      const isUsedUp = (kodeEntry.used_count || 0) >= kodeEntry.max_uses;
+      if (kodeEntry.status === 'revoked')
+        return res.status(400).json({ success: false, pesan: 'Kode undangan sudah dicabut oleh kepala sekolah.' });
+      if (isExpired)
+        return res.status(400).json({ success: false, pesan: 'Kode undangan sudah kadaluarsa.' });
+      if (isUsedUp)
+        return res.status(400).json({ success: false, pesan: 'Kode undangan sudah habis kuotanya.' });
+
+      kodeGuruId = kodeEntry.id;
+    }
+    // ─────────────────────────────────────────────────────────────────────
 
     // Guru wajib mengisi data diri saat daftar; murid melengkapi setelah akun jadi (via popup)
     const dataDiri = sanitizeDataDiri({ alamat, umur, asal_sekolah }, { strict: role === 'guru' });
@@ -320,7 +350,7 @@ router.post('/send-otp', async (req, res) => {
     // Simpan OTP hanya setelah email berhasil terkirim
     otpStore.set(normalEmail, {
       otp,
-      data: { nama: safaNama, email: normalEmail, password, role, kelas: kelas || null, kode_kelas: kode_kelas || null, ...dataDiri.data },
+      data: { nama: safaNama, email: normalEmail, password, role, kelas: kelas || null, kode_kelas: kode_kelas || null, kode_guru_id: kodeGuruId, ...dataDiri.data },
       expiresAt: Date.now() + 10 * 60 * 1000 // 10 menit
     });
 
@@ -355,7 +385,7 @@ router.post('/register', async (req, res) => {
 
     otpStore.delete(normalEmail); // hapus setelah dipakai
 
-    const { nama: safaNama, password, role, kelas, kode_kelas, alamat, umur, asal_sekolah, profil_lengkap } = entry.data;
+    const { nama: safaNama, password, role, kelas, kode_kelas, alamat, umur, asal_sekolah, profil_lengkap, kode_guru_id } = entry.data;
 
     // Cek sekali lagi email belum ada (race condition)
     const { data: existing } = await supabase.from('users').select('id').eq('email', normalEmail).single();
@@ -372,6 +402,34 @@ router.post('/register', async (req, res) => {
       profil_lengkap: !!profil_lengkap
     });
     if (error) throw error;
+
+    // ── B3: Konsumsi kuota kode undangan guru setelah akun berhasil dibuat ──
+    if (role === 'guru' && kode_guru_id) {
+      await supabase.rpc('increment_kode_guru_used', { kode_id: kode_guru_id })
+        .catch(async () => {
+          // Fallback jika RPC belum ada: update manual
+          const { data: k } = await supabase.from('kode_guru').select('used_count').eq('id', kode_guru_id).single();
+          if (k) {
+            await supabase.from('kode_guru').update({ used_count: (k.used_count || 0) + 1 }).eq('id', kode_guru_id);
+          }
+        });
+    }
+    // ─────────────────────────────────────────────────────────────────────
+
+    // ── Auto-generate code_guru untuk guru baru ────────────────────────────
+    if (role === 'guru') {
+      await supabase.rpc('generate_code_guru_for_user', { p_user_id: id })
+        .catch(async () => {
+          // Fallback manual jika RPC belum ada
+          const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+          let newCode = '';
+          for (let i = 0; i < 8; i++) newCode += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+          await supabase.from('users').update({ code_guru: newCode, code_guru_generated_at: new Date().toISOString() }).eq('id', id)
+            .catch(e => console.warn('[register] gagal set code_guru fallback:', e.message));
+        });
+      console.log(`[register] code_guru di-generate untuk guru baru: ${normalEmail}`);
+    }
+    // ─────────────────────────────────────────────────────────────────────
 
     // Join kelas otomatis jika murid punya kode
     if (role === 'murid' && kode_kelas) {
@@ -450,7 +508,7 @@ router.post('/register', async (req, res) => {
 // =============================================
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, code_guru } = req.body;
     if (!email || !password)
       return res.status(400).json({ success: false, pesan: 'Email dan password wajib diisi.' });
 
@@ -462,6 +520,33 @@ router.post('/login', async (req, res) => {
       .from('users').select('*').eq('email', normalEmail).single();
     if (!user || !bcrypt.compareSync(password, user.password))
       return res.status(401).json({ success: false, pesan: 'Email atau password salah.' });
+
+    // ── Validasi code_guru untuk role guru saat login ──────────────────────
+    // Guru LAMA (sudah punya users.code_guru): skip validasi kode undangan —
+    //   mereka sudah punya akun sebelum fitur ini, jadi langsung login.
+    // Guru BARU (users.code_guru IS NULL saat login pertama): wajib kode undangan
+    //   kepala sekolah — tapi ini tidak mungkin terjadi karena code_guru
+    //   di-generate saat register. Jika entah bagaimana NULL, tolak dengan pesan jelas.
+    if (user.role === 'guru') {
+      if (user.code_guru) {
+        // ✅ Guru lama / guru yang sudah punya code_guru → skip validasi kode undangan
+        console.log(`[login] guru lama ${normalEmail} — skip validasi code_guru (sudah punya akun)`);
+      } else {
+        // ⚠️ Guru tanpa code_guru (seharusnya tidak terjadi setelah migration)
+        // Coba auto-generate dulu sebelum menolak
+        const { data: generatedCode } = await supabase
+          .rpc('generate_code_guru_for_user', { p_user_id: user.id })
+          .catch(() => ({ data: null }));
+        if (!generatedCode) {
+          return res.status(403).json({
+            success: false,
+            pesan: 'Akun guru belum memiliki code guru. Hubungi administrator untuk generate ulang.'
+          });
+        }
+        console.log(`[login] auto-generated code_guru untuk ${normalEmail}: ${generatedCode}`);
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────
 
     const token = jwt.sign(
       { id: user.id, nama: user.nama, email: user.email, role: user.role },
@@ -486,7 +571,7 @@ router.get('/profile', authMiddleware, async (req, res) => {
   try {
     const { data: user } = await supabase
       .from('users')
-      .select('id, nama, email, role, avatar, kelas, xp, level, alamat, umur, asal_sekolah, profil_lengkap, created_at')
+      .select('id, nama, email, role, avatar, kelas, xp, level, alamat, umur, asal_sekolah, profil_lengkap, created_at, code_guru')
       .eq('id', req.user.id).single();
 
     if (!user) return res.status(404).json({ success: false, pesan: 'User tidak ditemukan.' });
@@ -498,7 +583,16 @@ router.get('/profile', authMiddleware, async (req, res) => {
         .eq('role', 'murid').gt('xp', user.xp);
       rank = (count || 0) + 1;
     }
-    res.json({ success: true, data: { ...user, rank } });
+
+    // Untuk guru: sertakan flag has_code_guru (JANGAN kirim code_guru langsung)
+    // code_guru hanya bisa dilihat setelah verifikasi OTP via /api/auth/verify-code-guru-otp
+    const responseData = { ...user, rank };
+    if (user.role === 'guru') {
+      responseData.has_code_guru = !!user.code_guru;
+      delete responseData.code_guru; // hapus dari response — harus lewat OTP
+    }
+
+    res.json({ success: true, data: responseData });
   } catch (err) {
     console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
@@ -795,6 +889,152 @@ router.delete('/account', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('[delete-account]', err.message);
     res.status(500).json({ success: false, pesan: 'Gagal menghapus akun. Silakan coba lagi.' });
+  }
+});
+
+// =============================================
+//  POST /api/auth/send-code-guru-otp
+//  Langkah 1: Guru minta OTP untuk melihat code_guru di profil.
+//  Wajib login (authMiddleware). Kirim OTP ke email guru.
+// =============================================
+router.post('/send-code-guru-otp', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'guru')
+      return res.status(403).json({ success: false, pesan: 'Hanya guru yang bisa mengakses fitur ini.' });
+
+    const { data: user } = await supabase
+      .from('users').select('id, nama, email, code_guru').eq('id', req.user.id).single();
+    if (!user) return res.status(404).json({ success: false, pesan: 'User tidak ditemukan.' });
+
+    // Jika belum punya code_guru, generate dulu
+    if (!user.code_guru) {
+      const { data: newCode } = await supabase
+        .rpc('generate_code_guru_for_user', { p_user_id: user.id })
+        .catch(() => ({ data: null }));
+      if (!newCode) {
+        // Fallback manual
+        const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let generatedCode = '';
+        for (let i = 0; i < 8; i++) generatedCode += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+        await supabase.from('users').update({ code_guru: generatedCode, code_guru_generated_at: new Date().toISOString() }).eq('id', user.id);
+        console.log(`[send-code-guru-otp] fallback generate code_guru untuk ${user.email}: ${generatedCode}`);
+      }
+    }
+
+    const otp = generateOTP();
+
+    try {
+      await sendBrevoEmail({
+        to: user.email,
+        subject: 'Kode Verifikasi — Lihat Code Guru KitaBelajar',
+        text: `Halo ${user.nama}! Kode OTP untuk melihat Code Guru kamu: ${otp} (berlaku 10 menit). Jangan berikan ke siapa pun.`,
+        html: `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#fff8f5;font-family:Nunito,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
+  <tr><td align="center">
+    <table width="480" cellpadding="0" cellspacing="0" style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(255,107,53,.1);">
+      <tr><td style="background:linear-gradient(135deg,#FF6B35,#ff9a6c);padding:32px;text-align:center;">
+        <div style="font-size:26px;font-weight:900;color:white;letter-spacing:2px;">KitaBelajar</div>
+        <div style="color:rgba(255,255,255,.8);font-size:13px;margin-top:4px;">Platform Belajar Seru</div>
+      </td></tr>
+      <tr><td style="padding:36px 40px;text-align:center;">
+        <div style="font-size:48px;margin-bottom:12px;">🔑</div>
+        <h2 style="color:#333;font-size:22px;margin:0 0 8px;">Verifikasi Email</h2>
+        <p style="color:#666;font-size:14px;margin:0 0 28px;">Halo <b>${user.nama}</b>! Gunakan kode di bawah untuk melihat <b>Code Guru</b> kamu.</p>
+        <div style="background:#fff5f0;border:2px dashed #FF6B35;border-radius:16px;padding:24px;margin-bottom:24px;">
+          <div style="font-size:44px;font-weight:900;letter-spacing:14px;color:#FF6B35;font-family:'Courier New',monospace;">${otp}</div>
+          <div style="color:#aaa;font-size:12px;margin-top:10px;">Berlaku <b style="color:#FF6B35;">10 menit</b></div>
+        </div>
+        <div style="background:#fff3cd;border-left:4px solid #ffc107;border-radius:8px;padding:12px 16px;text-align:left;">
+          <p style="color:#856404;font-size:13px;margin:0;">⚠️ Jangan berikan kode ini kepada siapa pun, termasuk tim KitaBelajar.</p>
+        </div>
+      </td></tr>
+      <tr><td style="background:#fff8f5;padding:16px;text-align:center;border-top:1px solid #ffe8de;">
+        <p style="color:#bbb;font-size:11px;margin:0;">© 2025 KitaBelajar · Email otomatis, jangan dibalas</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`
+      });
+    } catch (mailErr) {
+      console.error('[send-code-guru-otp] email gagal:', mailErr.message);
+      return res.status(500).json({ success: false, pesan: 'Gagal mengirim email OTP. Pastikan email benar atau coba beberapa saat lagi.' });
+    }
+
+    codeGuruOtpStore.set(user.email, {
+      otp,
+      userId: user.id,
+      expiresAt: Date.now() + 10 * 60 * 1000 // 10 menit
+    });
+
+    res.json({ success: true, pesan: 'Kode OTP dikirim ke email kamu. Berlaku 10 menit.' });
+  } catch (err) {
+    console.error('[send-code-guru-otp]', err.message);
+    res.status(500).json({ success: false, pesan: 'Gagal mengirim OTP. Coba lagi.' });
+  }
+});
+
+// =============================================
+//  POST /api/auth/verify-code-guru-otp
+//  Langkah 2: Verifikasi OTP → kembalikan code_guru.
+//  Wajib login (authMiddleware).
+//  Body: { otp: "123456" }
+// =============================================
+router.post('/verify-code-guru-otp', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'guru')
+      return res.status(403).json({ success: false, pesan: 'Hanya guru yang bisa mengakses fitur ini.' });
+
+    const { otp } = req.body;
+    if (!otp) return res.status(400).json({ success: false, pesan: 'Kode OTP wajib diisi.' });
+
+    const { data: user } = await supabase
+      .from('users').select('id, nama, email, code_guru, code_guru_generated_at').eq('id', req.user.id).single();
+    if (!user) return res.status(404).json({ success: false, pesan: 'User tidak ditemukan.' });
+
+    const entry = codeGuruOtpStore.get(user.email);
+    if (!entry)
+      return res.status(400).json({ success: false, pesan: 'Kode OTP tidak ditemukan. Minta ulang kode.' });
+    if (Date.now() > entry.expiresAt) {
+      codeGuruOtpStore.delete(user.email);
+      return res.status(400).json({ success: false, pesan: 'Kode OTP sudah kedaluwarsa. Minta ulang kode.' });
+    }
+    if (entry.userId !== user.id)
+      return res.status(403).json({ success: false, pesan: 'OTP tidak valid untuk akun ini.' });
+    if (entry.otp !== String(otp).trim())
+      return res.status(400).json({ success: false, pesan: 'Kode OTP salah.' });
+
+    codeGuruOtpStore.delete(user.email); // hapus setelah dipakai (sekali pakai)
+
+    // Jika belum punya code_guru (edge case), generate sekarang
+    let finalCode = user.code_guru;
+    if (!finalCode) {
+      const { data: newCode } = await supabase
+        .rpc('generate_code_guru_for_user', { p_user_id: user.id })
+        .catch(() => ({ data: null }));
+      finalCode = newCode;
+      if (!finalCode) {
+        // Fallback manual
+        const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let generatedCode = '';
+        for (let i = 0; i < 8; i++) generatedCode += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+        await supabase.from('users').update({ code_guru: generatedCode, code_guru_generated_at: new Date().toISOString() }).eq('id', user.id);
+        finalCode = generatedCode;
+      }
+    }
+
+    res.json({
+      success: true,
+      pesan: 'Verifikasi berhasil! Berikut Code Guru kamu.',
+      data: {
+        code_guru: finalCode,
+        generated_at: user.code_guru_generated_at
+      }
+    });
+  } catch (err) {
+    console.error('[verify-code-guru-otp]', err.message);
+    res.status(500).json({ success: false, pesan: 'Gagal verifikasi OTP. Coba lagi.' });
   }
 });
 

@@ -5,7 +5,9 @@ const { authMiddleware } = require('../middleware/auth');
 
 // GET /api/dashboard
 router.get('/', authMiddleware, async (req, res) => {
-  req.user.role === 'guru' ? dashboardGuru(req, res) : dashboardMurid(req, res);
+  if (req.user.role === 'kepala_sekolah') return dashboardKepala(req, res);
+  if (req.user.role === 'guru') return dashboardGuru(req, res);
+  return dashboardMurid(req, res);
 });
 
 async function dashboardGuru(req, res) {
@@ -70,6 +72,75 @@ async function dashboardGuru(req, res) {
     });
   } catch (err) {
     console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
+  }
+}
+
+async function dashboardKepala(req, res) {
+  try {
+    const kepalaId = req.user.id;
+
+    const [
+      { count: totalGuru },
+      { count: totalMurid },
+      { count: totalKelas },
+      { data: kodeList },
+      { data: guruTerbaru }
+    ] = await Promise.all([
+      supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'guru'),
+      supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'murid'),
+      supabase.from('kelas').select('id', { count: 'exact', head: true }),
+      supabase.from('kode_guru')
+        .select('id, kode, status, max_uses, used_count, expires_at, label, created_at')
+        .eq('dibuat_oleh', kepalaId)
+        .order('created_at', { ascending: false })
+        .limit(10),
+      supabase.from('users')
+        .select('id, nama, email, avatar, created_at')
+        .eq('role', 'guru')
+        .order('created_at', { ascending: false })
+        .limit(5)
+    ]);
+
+    // Hitung status kode secara dinamis
+    const now = new Date();
+    function deriveKodeStatus(c) {
+      if (c.status === 'revoked') return 'revoked';
+      if (c.expires_at && new Date(c.expires_at) < now) return 'expired';
+      if ((c.used_count || 0) >= c.max_uses) return 'used_up';
+      return 'active';
+    }
+
+    const kodePublic = (kodeList || []).map(c => ({
+      id: c.id,
+      kode: c.kode,
+      status: deriveKodeStatus(c),
+      max_uses: c.max_uses,
+      used_count: c.used_count || 0,
+      sisa_kuota: Math.max(0, c.max_uses - (c.used_count || 0)),
+      expires_at: c.expires_at,
+      label: c.label,
+      created_at: c.created_at
+    }));
+
+    const kodeAktif = kodePublic.filter(k => k.status === 'active').length;
+
+    res.json({
+      success: true, role: 'kepala_sekolah',
+      data: {
+        stats: {
+          total_guru: totalGuru || 0,
+          total_murid: totalMurid || 0,
+          total_kelas: totalKelas || 0,
+          total_kode: (kodeList || []).length,
+          kode_aktif: kodeAktif
+        },
+        kode_terbaru: kodePublic,
+        guru_terbaru: guruTerbaru || []
+      }
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
 }
 
