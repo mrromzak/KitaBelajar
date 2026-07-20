@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 //  CONFIG
 // ============================================================
 const API = window.location.origin + '/api';
@@ -3191,11 +3191,11 @@ function renderBellDropdown() {
     const safe_id     = escapeHtml(n.id || '');
     const safe_tipe   = escapeHtml(n.tipe || '');
     const safe_dariId = escapeHtml(n.dari_id || '');
-    const safe_nama   = (n.pengirim_nama || '').replace(/'/g, '&apos;');
-    const safe_ava    = (n.pengirim_avatar || '').replace(/'/g, '&apos;');
+    const safe_nama   = escapeHtml(n.pengirim_nama || '');
+    const safe_ava    = escapeHtml(n.pengirim_avatar || '');
     const safe_kelas  = escapeHtml(n.kelas_id || '');
     return `<div class="bell-notif-item type-${safe_tipe}${n.dibaca ? '' : ' unread'}"
-      onclick="klikBellNotif('${safe_id}','${safe_tipe}','${safe_dariId}','${safe_nama}','${safe_ava}','${safe_kelas}')">
+      data-notif-id="${safe_id}" data-notif-tipe="${safe_tipe}" data-notif-dari-id="${safe_dariId}" data-notif-nama="${safe_nama}" data-notif-ava="${safe_ava}" data-notif-kelas="${safe_kelas}">
       <div class="bell-notif-icon">${icon}</div>
       <div class="bell-notif-body">
         <div class="bell-notif-judul">${escapeHtml(n.judul || '')}</div>
@@ -3205,6 +3205,19 @@ function renderBellDropdown() {
     </div>`;
   }).join('');
 }
+
+// Event delegation for notification items (avoids inline onclick escaping issues)
+document.addEventListener('click', function(e) {
+  const item = e.target.closest('.bell-notif-item');
+  if (!item) return;
+  const id = item.dataset.notifId || '';
+  const tipe = item.dataset.notifTipe || '';
+  const dariId = item.dataset.notifDariId || '';
+  const nama = item.dataset.notifNama || '';
+  const ava = item.dataset.notifAva || '';
+  const kelas = item.dataset.notifKelas || '';
+  klikBellNotif(id, tipe, dariId, nama, ava, kelas);
+});
 
 function formatBellTime(date) {
   const diff = Math.floor((Date.now() - date) / 1000);
