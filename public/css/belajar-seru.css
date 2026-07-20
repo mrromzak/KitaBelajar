@@ -620,7 +620,7 @@
   .ai-src-card:hover { border-color: #7b2ff7; background: #F9F5FF; transform: translateY(-2px); }
   .ai-src-card.active { border-color: #7b2ff7; background: #F3EEFF; }
 
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 10000; align-items: center; justify-content: center; }
   .modal-overlay.open { display: flex; }
   .modal { background: white; border-radius: 24px; padding: 32px; max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
   .modal h3 { font-family: 'Fredoka One', cursive; font-size: 22px; margin-bottom: 20px; }
