@@ -126,8 +126,9 @@
         <input type="password" id="login-password" placeholder="••••••••">
       </div>
       <div class="form-group" id="login-kode-guru-group" style="display:none">
-        <label>Code Guru</label>
-        <input type="text" id="login-kode-guru" placeholder="Masukkan code guru" maxlength="10" style="font-family:monospace;letter-spacing:3px;text-transform:uppercase">
+        <label>🔑 Kode Undangan Guru</label>
+        <input type="text" id="login-kode-guru" placeholder="Contoh: ABCD1234" maxlength="12" style="font-family:monospace;letter-spacing:3px;text-transform:uppercase" autocomplete="off">
+        <small style="color:var(--muted);font-size:12px;margin-top:4px;display:block">Kode undangan dari kepala sekolah</small>
       </div>
       <button class="btn-login" onclick="doLogin()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>Masuk</button>
       <div style="text-align:right;margin-top:8px">
@@ -1475,6 +1476,27 @@
       </button>
     </div>
     <button class="btn-cancel" style="margin-top:16px;width:100%" onclick="closeModal('modal-google-role')">Batal</button>
+  </div>
+</div>
+
+<!-- Modal Kode Undangan Guru (Google Login) -->
+<div class="modal-overlay" id="modal-google-guru-kode">
+  <div class="modal" style="max-width:400px;text-align:center">
+    <div style="font-size:48px;margin-bottom:8px">🔑</div>
+    <h3 style="margin-bottom:6px">Verifikasi Akun Guru</h3>
+    <p id="google-guru-kode-nama" style="color:var(--muted);font-size:14px;margin-bottom:4px"></p>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:20px">Masukkan kode undangan dari kepala sekolah untuk melanjutkan login sebagai guru.</p>
+    <div class="form-group" style="text-align:left">
+      <label>Kode Undangan Guru</label>
+      <input type="text" id="google-guru-kode-input" placeholder="Contoh: ABCD1234" maxlength="12"
+        style="font-family:monospace;letter-spacing:3px;text-transform:uppercase;font-size:18px;text-align:center"
+        autocomplete="off" onkeydown="if(event.key==='Enter')completeGoogleGuruKode()">
+      <small style="color:var(--muted);font-size:12px;margin-top:4px;display:block">Kode ini diberikan oleh kepala sekolah saat mendaftarkan akun guru</small>
+    </div>
+    <div class="modal-btns" style="margin-top:16px">
+      <button class="btn-cancel" onclick="closeModal('modal-google-guru-kode')">Batal</button>
+      <button class="btn-primary" onclick="completeGoogleGuruKode()">✅ Verifikasi</button>
+    </div>
   </div>
 </div>
 

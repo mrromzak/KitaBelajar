@@ -386,11 +386,13 @@ async function doLogin() {
   if (!email || !password) { toast('Isi email dan password dulu ya! 😊', 'error'); return; }
   if (!isValidEmail(email)) { toast('Format email tidak valid. Contoh: nama@email.com', 'error'); return; }
 
-  // Jika field Code Guru terlihat, kirimkan ke backend
+  // Kirim kode_guru_login jika field kode undangan guru terlihat dan terisi
+  const kodeGuruGroup = document.getElementById('login-kode-guru-group');
   const kodeGuruEl = document.getElementById('login-kode-guru');
   const body = { email, password };
-  if (kodeGuruEl && kodeGuruEl.style.display !== 'none' && kodeGuruEl.value.trim()) {
-    body.code_guru = kodeGuruEl.value.trim().toUpperCase();
+  const groupVisible = kodeGuruGroup && kodeGuruGroup.style.display !== 'none';
+  if (groupVisible && kodeGuruEl && kodeGuruEl.value.trim()) {
+    body.kode_guru_login = kodeGuruEl.value.trim().toUpperCase();
   }
 
   showLoading(true);
@@ -418,6 +420,11 @@ async function doLogin() {
         loadMuridDashboard();
         remindDataDiriIfNeeded();
       }
+    } else if (data.needs_kode_guru) {
+      // Backend mendeteksi akun guru tapi kode undangan belum diisi / salah
+      if (kodeGuruGroup) kodeGuruGroup.style.display = '';
+      if (kodeGuruEl) kodeGuruEl.focus();
+      toast(data.pesan || 'Masukkan kode undangan dari kepala sekolah.', 'error');
     } else {
       toast(data.pesan || 'Login gagal. Cek email & password kamu!', 'error');
     }
@@ -426,6 +433,48 @@ async function doLogin() {
   }
   showLoading(false);
 }
+
+// Deteksi email guru saat blur pada field login-email
+async function _checkGuruEmailOnBlur() {
+  const emailEl = document.getElementById('login-email');
+  const group   = document.getElementById('login-kode-guru-group');
+  if (!emailEl || !group) return;
+  const email = emailEl.value.trim();
+  if (!email || !isValidEmail(email)) {
+    group.style.display = 'none';
+    return;
+  }
+  try {
+    const res = await fetch('/api/auth/check-guru-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    group.style.display = data.is_guru ? '' : 'none';
+    if (data.is_guru) {
+      const kodeEl = document.getElementById('login-kode-guru');
+      if (kodeEl) kodeEl.focus();
+    }
+  } catch (_) {
+    // Jika gagal, sembunyikan saja — tidak blokir login
+    group.style.display = 'none';
+  }
+}
+
+// Pasang listener blur pada login-email (dipanggil saat halaman login dimuat)
+(function _attachLoginEmailBlur() {
+  function attach() {
+    const el = document.getElementById('login-email');
+    if (el && !el._guruBlurAttached) {
+      el.addEventListener('blur', _checkGuruEmailOnBlur);
+      el._guruBlurAttached = true;
+    }
+  }
+  // Coba langsung, dan juga setelah DOMContentLoaded
+  attach();
+  document.addEventListener('DOMContentLoaded', attach);
+})();
 
 let _pendingRegEmail = null;
 
@@ -755,12 +804,25 @@ async function doResetPassword() {
 const GOOGLE_CLIENT_ID = '1090565500817-q17ik5t91fssrv3ncj215oqh1atfcpmm.apps.googleusercontent.com';
 
 let _pendingGoogleToken = null;
+let _pendingGoogleGuruToken = null; // Token Google yang menunggu verifikasi kode undangan guru
 
 async function _handleGoogleCredential(response) {
   showLoading(true);
   try {
     const data = await api('POST', '/auth/google', { google_token: response.credential });
     if (data.success) {
+      if (data.needs_kode_guru) {
+        // Akun guru terdeteksi — minta kode undangan dari kepala sekolah
+        _pendingGoogleGuruToken = data.google_token || response.credential;
+        const namaEl = document.getElementById('google-guru-kode-nama');
+        if (namaEl) namaEl.textContent = data.nama || data.email || '';
+        const inputEl = document.getElementById('google-guru-kode-input');
+        if (inputEl) inputEl.value = '';
+        showLoading(false);
+        openModal('modal-google-guru-kode');
+        setTimeout(() => { if (inputEl) inputEl.focus(); }, 300);
+        return;
+      }
       if (data.is_new) {
         // User baru — simpan token Google, minta pilih role
         _pendingGoogleToken = data.google_token;
@@ -788,6 +850,49 @@ async function _handleGoogleCredential(response) {
   showLoading(false);
 }
 
+// Dipanggil dari modal-google-guru-kode setelah user memasukkan kode undangan
+async function completeGoogleGuruKode() {
+  if (!_pendingGoogleGuruToken) return;
+  const inputEl = document.getElementById('google-guru-kode-input');
+  const kode = inputEl ? inputEl.value.trim().toUpperCase() : '';
+  if (!kode) { toast('Masukkan kode undangan dari kepala sekolah.', 'error'); return; }
+
+  closeModal('modal-google-guru-kode');
+  showLoading(true);
+  try {
+    const data = await api('POST', '/auth/google', {
+      google_token: _pendingGoogleGuruToken,
+      kode_guru_login: kode
+    });
+    if (data.success && data.token) {
+      _pendingGoogleGuruToken = null;
+      token = data.token;
+      currentUser = data.user;
+      localStorage.setItem('kb_token', token);
+      localStorage.setItem('kb_user', JSON.stringify(currentUser));
+      localStorage.removeItem('kb_mapel_list');
+      joinPrivateChannel();
+      loadBellNotifications();
+      setTimeout(() => subscribePush(), 2000);
+      toast(`Selamat datang, ${currentUser.nama}! 🎉`, 'success');
+      loadGuruDashboard();
+      remindDataDiriIfNeeded();
+      if (!currentUser.profil_lengkap) setTimeout(() => openDataDiriModal(true), 1500);
+    } else if (data.needs_kode_guru) {
+      // Kode salah — buka kembali modal
+      openModal('modal-google-guru-kode');
+      toast(data.pesan || 'Kode undangan tidak valid.', 'error');
+    } else {
+      _pendingGoogleGuruToken = null;
+      toast(data.pesan || 'Verifikasi kode guru gagal.', 'error');
+    }
+  } catch(e) {
+    toast('Tidak bisa terhubung ke server 😢', 'error');
+    openModal('modal-google-guru-kode');
+  }
+  showLoading(false);
+}
+
 async function completeGoogleRegister(role) {
   if (!_pendingGoogleToken) return;
   closeModal('modal-google-role');
@@ -795,6 +900,18 @@ async function completeGoogleRegister(role) {
   try {
     const data = await api('POST', '/auth/google', { google_token: _pendingGoogleToken, role });
     _pendingGoogleToken = null;
+    if (data.needs_kode_guru) {
+      // User memilih role guru saat registrasi Google → minta kode undangan
+      _pendingGoogleGuruToken = data.google_token;
+      const namaEl = document.getElementById('google-guru-kode-nama');
+      if (namaEl) namaEl.textContent = data.nama || data.email || '';
+      const inputEl = document.getElementById('google-guru-kode-input');
+      if (inputEl) inputEl.value = '';
+      showLoading(false);
+      openModal('modal-google-guru-kode');
+      setTimeout(() => { if (inputEl) inputEl.focus(); }, 300);
+      return;
+    }
     if (data.success && data.token) {
       token = data.token;
       currentUser = data.user;

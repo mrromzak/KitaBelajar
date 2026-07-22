@@ -515,11 +515,34 @@ router.post('/register', async (req, res) => {
 });
 
 // =============================================
+//  POST /api/auth/check-guru-email
+//  Cek apakah email terdaftar sebagai guru.
+//  Dipakai frontend untuk menampilkan field kode_guru sebelum login.
+//  Tidak memerlukan autentikasi — hanya mengembalikan flag is_guru.
+// =============================================
+router.post('/check-guru-email', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.json({ is_guru: false });
+    const normalEmail = validator.normalizeEmail(email) || email.toLowerCase().trim();
+    if (!validator.isEmail(normalEmail)) return res.json({ is_guru: false });
+
+    const { data: user } = await supabase
+      .from('users').select('id, role').eq('email', normalEmail).maybeSingle();
+
+    return res.json({ is_guru: !!(user && user.role === 'guru') });
+  } catch (err) {
+    console.error('[check-guru-email]', err.message);
+    return res.json({ is_guru: false });
+  }
+});
+
+// =============================================
 //  POST /api/auth/login
 // =============================================
 router.post('/login', async (req, res) => {
   try {
-    const { email, password, code_guru } = req.body;
+    const { email, password, kode_guru_login } = req.body;
     if (!email || !password)
       return res.status(400).json({ success: false, pesan: 'Email dan password wajib diisi.' });
 
@@ -532,30 +555,55 @@ router.post('/login', async (req, res) => {
     if (!user || !bcrypt.compareSync(password, user.password))
       return res.status(401).json({ success: false, pesan: 'Email atau password salah.' });
 
-    // ── Validasi code_guru untuk role guru saat login ──────────────────────
-    // Guru LAMA (sudah punya users.code_guru): skip validasi kode undangan —
-    //   mereka sudah punya akun sebelum fitur ini, jadi langsung login.
-    // Guru BARU (users.code_guru IS NULL saat login pertama): wajib kode undangan
-    //   kepala sekolah — tapi ini tidak mungkin terjadi karena code_guru
-    //   di-generate saat register. Jika entah bagaimana NULL, tolak dengan pesan jelas.
+    // ── Validasi kode_guru_login untuk role guru saat login ────────────────
+    // Guru wajib memasukkan kode undangan (dari tabel kode_guru) yang didaftarkan
+    // oleh kepala sekolah/admin. Ini memastikan hanya guru resmi yang bisa login.
     if (user.role === 'guru') {
-      if (user.code_guru) {
-        // ✅ Guru lama / guru yang sudah punya code_guru → skip validasi kode undangan
-        console.log(`[login] guru lama ${normalEmail} — skip validasi code_guru (sudah punya akun)`);
-      } else {
-        // ⚠️ Guru tanpa code_guru (seharusnya tidak terjadi setelah migration)
-        // Coba auto-generate dulu sebelum menolak
+      if (!kode_guru_login || typeof kode_guru_login !== 'string' || !kode_guru_login.trim()) {
+        return res.status(403).json({
+          success: false,
+          needs_kode_guru: true,
+          pesan: 'Guru wajib memasukkan kode undangan dari kepala sekolah untuk login.'
+        });
+      }
+
+      const safeKode = kode_guru_login.trim().toUpperCase();
+      const { data: kodeEntry } = await supabase
+        .from('kode_guru')
+        .select('id, status, expires_at, max_uses, used_count, email_guru')
+        .eq('kode', safeKode)
+        .maybeSingle();
+
+      if (!kodeEntry)
+        return res.status(403).json({ success: false, pesan: 'Kode undangan tidak ditemukan. Minta kode dari kepala sekolah.' });
+
+      const now = new Date();
+      if (kodeEntry.status === 'revoked')
+        return res.status(403).json({ success: false, pesan: 'Kode undangan sudah dicabut oleh kepala sekolah.' });
+      if (kodeEntry.expires_at && new Date(kodeEntry.expires_at) < now)
+        return res.status(403).json({ success: false, pesan: 'Kode undangan sudah kadaluarsa.' });
+
+      // Jika kode punya email_guru spesifik, pastikan cocok dengan email yang login
+      if (kodeEntry.email_guru && kodeEntry.email_guru.toLowerCase().trim() !== normalEmail)
+        return res.status(403).json({ success: false, pesan: 'Kode undangan tidak sesuai dengan akun ini.' });
+
+      // Pastikan code_guru ada di akun guru (auto-generate jika belum ada)
+      if (!user.code_guru) {
         const { data: generatedCode } = await supabase
           .rpc('generate_code_guru_for_user', { p_user_id: user.id })
           .catch(() => ({ data: null }));
         if (!generatedCode) {
-          return res.status(403).json({
-            success: false,
-            pesan: 'Akun guru belum memiliki code guru. Hubungi administrator untuk generate ulang.'
-          });
+          // Fallback manual
+          const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+          let newCode = '';
+          for (let i = 0; i < 8; i++) newCode += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+          await supabase.from('users').update({ code_guru: newCode, code_guru_generated_at: new Date().toISOString() }).eq('id', user.id)
+            .catch(e => console.warn('[login] gagal set code_guru fallback:', e.message));
         }
-        console.log(`[login] auto-generated code_guru untuk ${normalEmail}: ${generatedCode}`);
+        console.log(`[login] auto-generated code_guru untuk ${normalEmail}`);
       }
+
+      console.log(`[login] guru ${normalEmail} login dengan kode undangan: ${safeKode}`);
     }
     // ─────────────────────────────────────────────────────────────────────
 
@@ -796,10 +844,11 @@ router.post('/reset-password', async (req, res) => {
 //  POST /api/auth/google — Login/Register via Google OAuth
 //  Auto-detect role: jika email ada di whitelist kode_guru → role = 'guru'
 //  Jika email belum terdaftar & bukan guru → minta pilih role (existing flow)
+//  Guru (baru maupun lama) wajib memasukkan kode_guru_login dari kepala sekolah.
 // =============================================
 router.post('/google', async (req, res) => {
   try {
-    const { google_token, role } = req.body;
+    const { google_token, role, kode_guru_login } = req.body;
     if (!google_token) return res.status(400).json({ success: false, pesan: 'Google token wajib diisi.' });
 
     // Verifikasi token ke Google
@@ -850,13 +899,50 @@ router.post('/google', async (req, res) => {
 
     let { data: user } = await supabase.from('users').select('*').eq('email', normalEmail).single();
 
-    // ── Cek apakah email ada di whitelist kode_guru (guru) ──────────────
+    // ── Cek apakah email terdaftar sebagai guru (di users table) ──────────
+    const isExistingGuru = !!(user && user.role === 'guru');
+
+    // ── Cek apakah email ada di whitelist kode_guru (guru baru via Google) ──
     let { data: kodeEntry } = await supabase
       .from('kode_guru')
       .select('*')
       .eq('email_guru', normalEmail)
       .eq('status', 'active')
       .maybeSingle();
+
+    // ── Jika email adalah guru (existing) atau ada di whitelist → wajib kode_guru_login ──
+    if (isExistingGuru || kodeEntry) {
+      // Jika kode_guru_login belum dikirim → minta frontend tampilkan form kode
+      if (!kode_guru_login || typeof kode_guru_login !== 'string' || !kode_guru_login.trim()) {
+        return res.json({
+          success: true,
+          needs_kode_guru: true,
+          google_token,
+          nama: gData.name || normalEmail.split('@')[0],
+          email: normalEmail,
+          pesan: 'Akun guru terdeteksi. Masukkan kode undangan dari kepala sekolah.'
+        });
+      }
+
+      // Verifikasi kode_guru_login dari tabel kode_guru
+      const safeKode = kode_guru_login.trim().toUpperCase();
+      const { data: loginKodeEntry } = await supabase
+        .from('kode_guru')
+        .select('id, status, expires_at, email_guru')
+        .eq('kode', safeKode)
+        .maybeSingle();
+
+      if (!loginKodeEntry)
+        return res.status(403).json({ success: false, pesan: 'Kode undangan tidak ditemukan. Minta kode dari kepala sekolah.' });
+      if (loginKodeEntry.status === 'revoked')
+        return res.status(403).json({ success: false, pesan: 'Kode undangan sudah dicabut oleh kepala sekolah.' });
+      if (loginKodeEntry.expires_at && new Date(loginKodeEntry.expires_at) < new Date())
+        return res.status(403).json({ success: false, pesan: 'Kode undangan sudah kadaluarsa.' });
+      if (loginKodeEntry.email_guru && loginKodeEntry.email_guru.toLowerCase().trim() !== normalEmail)
+        return res.status(403).json({ success: false, pesan: 'Kode undangan tidak sesuai dengan akun ini.' });
+
+      console.log(`[google-auth] guru ${normalEmail} login dengan kode undangan: ${safeKode}`);
+    }
 
     // ── Jika email ADA di whitelist → guru login/auto-create ──────────────
     if (kodeEntry) {
