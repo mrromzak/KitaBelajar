@@ -1199,18 +1199,19 @@
 
 /* ===== DARK MODE STYLES ===== */
 body.dark-mode {
-  --bg: #0D0D1A;
-  --card: #15152B;
-  --input: #1C1C36;
-  --border: #2A2A50;
-  --border-light: #38385E;
+  --bg: #0B0B16;
+  --card: #14142C;
+  --elevated: #1C1C38;
+  --input: #1E1E3C;
+  --border: #363662;
+  --border-light: #424274;
   --text: #E4E4F0;
-  --muted: #9494AE;
-  --placeholder: #6E6E88;
-  --hover: #202042;
+  --muted: #9494B0;
+  --placeholder: #6E6E8A;
+  --hover: #222248;
   --success-bg: #0E2A1A;
-  --unread: #1E1E44;
-  --shadow: 0 6px 24px rgba(0,0,0,0.4);
+  --unread: #20204A;
+  --shadow: 0 6px 24px rgba(0,0,0,0.45);
 }
 body.dark-mode {
   background:
@@ -1221,8 +1222,11 @@ body.dark-mode {
   background-attachment: fixed;
   color: var(--text);
 }
-body.dark-mode .navbar, body.dark-mode nav {
-  background: var(--card);
+body.dark-mode .navbar {
+  background: var(--elevated);
+}
+body.dark-mode nav {
+  background: var(--elevated);
   border-color: var(--border);
 }
 body.dark-mode input, body.dark-mode select, body.dark-mode textarea {
@@ -1288,7 +1292,7 @@ body.dark-mode .modal-overlay {
   background: rgba(0, 0, 0, 0.65);
 }
 body.dark-mode .modal-slide-down {
-  background: var(--card) !important;
+  background: var(--elevated) !important;
   color: var(--text) !important;
   border: 2px solid var(--border);
 }
@@ -1325,7 +1329,7 @@ body.dark-mode .bell-btn:hover {
   background: var(--input);
 }
 body.dark-mode .bell-dropdown, body.dark-mode .profile-dropdown {
-  background: var(--card);
+  background: var(--elevated);
   border-color: var(--border);
   color: var(--text);
 }
