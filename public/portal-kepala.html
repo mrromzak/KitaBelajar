@@ -707,7 +707,7 @@ async function loadGuruList() {
   const tbody = document.getElementById('tbl-guru-body');
   tbody.innerHTML = '<tr><td colspan="4" class="empty"><span class="spinner spinner-dark"></span> Memuat...</td></tr>';
   try {
-    const data = await api('GET', '/kode-guru/guru-list');
+    const data = await api('GET', '/kode-guru/guru');
     if (data.success && Array.isArray(data.data)) {
       if (data.data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="4" class="empty">Belum ada guru yang terdaftar.</td></tr>';
