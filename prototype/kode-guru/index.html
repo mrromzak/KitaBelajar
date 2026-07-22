@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Kepala Sekolah — KitaBelajar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary:      #7C3AED;
+      --primary-dark: #5B21B6;
+      --primary-light:#F3F0FF;
+      --orange:       #FF6B35;
+      --orange-light: #FFF3E8;
+      --danger:       #EF4444;
+      --danger-light: #FEE2E2;
+      --success:      #10B981;
+      --success-light:#D1FAE5;
+      --warning:      #F59E0B;
+      --warning-light:#FEF3C7;
+      --border:       #E8E8F0;
+      --muted:        #6B7280;
+      --bg:           #F8F7FF;
+      --card:         #FFFFFF;
+      --radius:       16px;
+      --shadow:       0 4px 24px rgba(124,58,237,0.08);
+    }
+    body {
+      font-family: 'Nunito', system-ui, sans-serif;
+      background: var(--bg);
+      color: #1F1235;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────────── */
+    header {
+      background: white;
+      border-bottom: 2px solid var(--border);
+      padding: 0 28px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(124,58,237,0.06);
+    }
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .header-logo .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--primary), #A78BFA);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .role-badge {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 50px;
+      display: none;
+    }
+
+    /* ── BUTTONS ─────────────────────────────────────────────── */
+    .btn {
+      padding: 10px 20px;
+      border-radius: 50px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      border: none;
+      font-family: 'Nunito', sans-serif;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+    .btn-primary  { background: var(--primary); color: white; }
+    .btn-primary:hover:not(:disabled)  { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(124,58,237,0.3); }
+    .btn-outline  { background: white; color: var(--primary); border: 2px solid var(--primary); }
+    .btn-outline:hover:not(:disabled)  { background: var(--primary-light); }
+    .btn-danger   { background: var(--danger-light); color: var(--danger); border: 1.5px solid #FECACA; }
+    .btn-danger:hover:not(:disabled)   { background: #FECACA; }
+    .btn-ghost    { background: none; color: var(--muted); border: 2px solid var(--border); }
+    .btn-ghost:hover:not(:disabled)    { background: #F8F7FF; }
+    .btn-sm { padding: 6px 14px; font-size: 12px; }
+    .btn-logout { background: none; color: var(--muted); border: 2px solid var(--border); display: none; }
+    .btn-logout:hover { background: var(--danger-light); color: var(--danger); border-color: #FECACA; }
+
+    /* ── SPINNER ─────────────────────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2.5px solid rgba(255,255,255,.35);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      vertical-align: middle;
+    }
+    .spinner-dark { border-color: rgba(0,0,0,.15); border-top-color: var(--primary); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── MAIN LAYOUT ─────────────────────────────────────────── */
+    main { max-width: 980px; margin: 0 auto; padding: 32px 20px 60px; }
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ── CARD ────────────────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 900;
+      color: #1F1235;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── FORM ────────────────────────────────────────────────── */
+    .form-grid { display: grid; gap: 16px; }
+    .form-row  { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    input[type=text], input[type=email], input[type=password] {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 14px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 600;
+      outline: none;
+      transition: border .15s, box-shadow .15s;
+      background: white;
+    }
+    input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(124,58,237,.1); }
+    input::placeholder { color: #C4C4D4; font-weight: 600; }
+
+    /* ── ALERT ───────────────────────────────────────────────── */
+    .alert {
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 12px;
+      display: none;
+    }
+    .alert.show { display: block; }
+    .alert-error   { background: var(--danger-light); color: #991B1B; border: 1.5px solid #FECACA; }
+    .alert-success { background: var(--success-light); color: #065F46; border: 1.5px solid #A7F3D0; }
+
+    /* ── INFO BOX ────────────────────────────────────────────── */
+    .info-box {
+      background: #EFF6FF;
+      border: 1.5px solid #BFDBFE;
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1E40AF;
+      margin-bottom: 18px;
+      line-height: 1.6;
+    }
+
+    /* ── LOGIN PAGE ──────────────────────────────────────────── */
+    .login-wrap {
+      min-height: calc(100vh - 64px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px;
+    }
+    .login-card {
+      background: white;
+      border: 1.5px solid var(--border);
+      border-radius: 24px;
+      padding: 36px 32px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 8px 40px rgba(124,58,237,0.12);
+    }
+    .login-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .login-header .login-icon {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, var(--primary), #A78BFA);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 14px;
+    }
+    .login-header h1 { font-size: 22px; font-weight: 900; color: #1F1235; margin-bottom: 4px; }
+    .login-header p  { font-size: 13px; color: var(--muted); font-weight: 600; }
+
+    /* Role toggle */
+    .role-tabs {
+      display: flex;
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 22px;
+      gap: 4px;
+    }
+    .role-tab {
+      flex: 1;
+      padding: 9px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      border: none;
+      font-family: 'Nunito', sans-serif;
+      background: transparent;
+      color: var(--muted);
+      transition: all .2s;
+    }
+    .role-tab.active {
+      background: white;
+      color: var(--primary);
+      box-shadow: 0 2px 8px rgba(124,58,237,0.15);
+    }
+
+    /* Google button area */
+    .google-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 20px;
+      background: var(--bg);
+      border-radius: 14px;
+      border: 1.5px dashed var(--border);
+    }
+    .google-area p {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* ── DASHBOARD HEADER ────────────────────────────────────── */
+    .dash-hero {
+      background: linear-gradient(135deg, var(--primary) 0%, #A78BFA 100%);
+      border-radius: 20px;
+      padding: 28px 32px;
+      color: white;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .dash-hero::before {
+      content: '';
+      position: absolute;
+      top: -30px; right: -30px;
+      width: 140px; height: 140px;
+      background: rgba(255,255,255,.08);
+      border-radius: 50%;
+    }
+    .dash-hero::after {
+      content: '';
+      position: absolute;
+      bottom: -50px; right: 60px;
+      width: 180px; height: 180px;
+      background: rgba(255,255,255,.05);
+      border-radius: 50%;
+    }
+    .dash-hero-text h2 { font-size: 22px; font-weight: 900; margin-bottom: 4px; }
+    .dash-hero-text p  { font-size: 13px; opacity: .85; font-weight: 600; }
+    .dash-hero-icon { font-size: 52px; position: relative; z-index: 1; }
+
+    /* ── TABS ────────────────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 20px;
+      background: white;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 6px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px 8px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      border: none;
+      font-family: 'Nunito', sans-serif;
+      background: transparent;
+      color: var(--muted);
+      transition: all .2s;
+    }
+    .tab-btn.active {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 2px 10px rgba(124,58,237,0.3);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active-panel { display: block; }
+
+    /* ── KODE BOX ────────────────────────────────────────────── */
+    .kode-result-box {
+      background: linear-gradient(135deg, var(--primary-light), #EDE9FE);
+      border: 2px solid #DDD6FE;
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      margin-top: 16px;
+      display: none;
+    }
+    .kode-result-box .kode-label {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    .kode-display {
+      font-family: 'Courier New', monospace;
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing: 6px;
+      color: var(--primary);
+      cursor: pointer;
+      user-select: all;
+      transition: color .15s;
+    }
+    .kode-display:hover { color: var(--primary-dark); }
+    .kode-meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+      font-weight: 600;
+    }
+
+    /* ── TABLE ───────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; border-radius: 12px; border: 1.5px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      background: var(--bg);
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      border-bottom: 1.5px solid var(--border);
+      white-space: nowrap;
+    }
+    td { padding: 12px 16px; border-bottom: 1.5px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg); }
+    .empty { text-align: center; color: var(--muted); padding: 40px; font-size: 13px; font-weight: 600; }
+
+    /* Status badges */
+    .badge-active  { background: var(--success-light); color: #065F46; padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 800; }
+    .badge-revoked { background: var(--danger-light);  color: #991B1B; padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 800; }
+    .badge-expired { background: var(--warning-light); color: #92400E; padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 800; }
+    .badge-used-up { background: #E0E7FF; color: #3730A3; padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 800; }
+
+    /* ── GURU WELCOME SECTION ────────────────────────────────── */
+    .guru-welcome-card {
+      background: linear-gradient(135deg, #10B981, #34D399);
+      border-radius: 20px;
+      padding: 28px 32px;
+      color: white;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .guru-welcome-card h2 { font-size: 20px; font-weight: 900; margin-bottom: 8px; }
+    .guru-kode-box {
+      background: rgba(255,255,255,.15);
+      border-radius: 14px;
+      padding: 16px;
+      margin-top: 16px;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.7;
+      text-align: left;
+    }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+      .login-card { padding: 28px 20px; }
+      .dash-hero { flex-direction: column; text-align: center; }
+      .dash-hero-icon { display: none; }
+      main { padding: 20px 14px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ──────────────────────────────────────────────── -->
+<header>
+  <a class="header-logo" href="/">
+    <div class="logo-icon">🏫</div>
+    KitaBelajar
+    <span style="font-size:11px;background:var(--primary-light);color:var(--primary);padding:3px 10px;border-radius:50px;font-weight:800">Portal Sekolah</span>
+  </a>
+  <div class="header-right">
+    <span class="role-badge" id="badge-role"></span>
+    <button class="btn btn-logout btn-sm" id="btn-logout">← Keluar</button>
+  </div>
+</header>
+
+<!-- ══ SECTION LOGIN ══════════════════════════════════════════ -->
+<div id="section-login" class="section active">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-icon">🔐</div>
+        <h1>Masuk ke Portal</h1>
+        <p>Sistem manajemen guru KitaBelajar</p>
+      </div>
+
+      <!-- Role tabs -->
+      <div class="role-tabs">
+        <button class="role-tab active" id="role-kepala-btn">👑 Kepala Sekolah</button>
+        <button class="role-tab" id="role-guru-btn">👩‍🏫 Guru</button>
+      </div>
+
+      <!-- Login Kepala -->
+      <div id="login-kepala-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="login-email">Email</label>
+            <input type="email" id="login-email" placeholder="kepala@sekolah.id" autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+          </div>
+        </div>
+        <button class="btn btn-primary" id="btn-login" style="width:100%;margin-top:18px;justify-content:center;padding:13px">
+          Masuk sebagai Kepala Sekolah
+        </button>
+      </div>
+
+      <!-- Login Guru (Google) -->
+      <div id="login-guru-form" style="display:none">
+        <div class="info-box">
+          <strong>🔑 Login dengan Google</strong><br>
+          Guru harus sudah didaftarkan oleh kepala sekolah. Gunakan akun Google yang terdaftar di sistem.
+        </div>
+        <div class="google-area">
+          <p>Klik tombol di bawah untuk login dengan akun Google Anda</p>
+          <div id="google-btn-container"></div>
+          <p style="font-size:11px;color:#C4C4D4">Hanya email yang terdaftar yang bisa masuk</p>
+        </div>
+      </div>
+
+      <div class="alert" id="login-alert"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SECTION DASHBOARD (KEPALA) ════════════════════════════ -->
+<div id="section-dashboard" class="section">
+  <main>
+    <!-- Hero banner -->
+    <div class="dash-hero">
+      <div class="dash-hero-text">
+        <h2 id="dash-greeting">Selamat Datang! 🏫</h2>
+        <p>Kelola kode undangan guru dan pantau perkembangan sekolah</p>
+      </div>
+      <div class="dash-hero-icon">🏫</div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tab-generate">✨ Buat Kode</button>
+      <button class="tab-btn" data-tab="tab-list">📋 Daftar Kode</button>
+      <button class="tab-btn" data-tab="tab-guru">👩‍🏫 Guru Terdaftar</button>
+    </div>
+
+    <!-- Tab: Generate Kode -->
+    <div id="tab-generate" class="card tab-panel active-panel">
+      <div class="card-title">🔑 Generate Kode Undangan Guru</div>
+      <div class="info-box">
+        Kode undangan bersifat <strong>permanen</strong> — tidak habis dipakai. Guru menggunakan kode ini saat mendaftar atau login pertama kali. Anda bisa mencabut kode kapan saja.
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="gen-nama">Nama Guru *</label>
+            <input type="text" id="gen-nama" placeholder="Contoh: Budi Santoso">
+          </div>
+          <div class="form-group">
+            <label for="gen-email">Email Guru *</label>
+            <input type="email" id="gen-email" placeholder="guru@email.com">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="gen-telepon">No. Telepon (opsional)</label>
+            <input type="text" id="gen-telepon" placeholder="08xx-xxxx-xxxx">
+          </div>
+          <div class="form-group">
+            <label for="gen-label">Label / Keterangan (opsional)</label>
+            <input type="text" id="gen-label" placeholder="Contoh: Guru Matematika" maxlength="100">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="gen-alamat">Alamat (opsional)</label>
+          <input type="text" id="gen-alamat" placeholder="Alamat guru">
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btn-generate" style="margin-top:18px">
+        ✨ Generate Kode Undangan
+      </button>
+      <div class="alert" id="gen-alert"></div>
+
+      <!-- Hasil generate -->
+      <div class="kode-result-box" id="gen-result">
+        <div class="kode-label">✅ Kode Berhasil Dibuat</div>
+        <div class="kode-display" id="gen-kode-display" title="Klik untuk menyalin"></div>
+        <div class="kode-meta" id="gen-kode-meta"></div>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:16px">
+          <button class="btn btn-primary btn-sm" id="btn-copy">📋 Salin Kode</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('gen-result').style.display='none'">Tutup</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Daftar Kode -->
+    <div id="tab-list" class="card tab-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin-bottom:0">📋 Daftar Kode Undangan</div>
+        <button class="btn btn-ghost btn-sm" id="btn-refresh-list">🔄 Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Kode</th>
+              <th>Nama Guru</th>
+              <th>Email</th>
+              <th>Telepon</th>
+              <th>Status</th>
+              <th>Login</th>
+              <th>Label</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-kode-body">
+            <tr><td colspan="8" class="empty"><span class="spinner spinner-dark"></span> Memuat...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab: Guru Terdaftar -->
+    <div id="tab-guru" class="card tab-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin-bottom:0">👩‍🏫 Guru Terdaftar</div>
+        <button class="btn btn-ghost btn-sm" id="btn-refresh-guru">🔄 Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nama</th>
+              <th>Email</th>
+              <th>Bergabung</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-guru-body">
+            <tr><td colspan="4" class="empty"><span class="spinner spinner-dark"></span> Memuat...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ══ SECTION GURU (setelah login Google) ═══════════════════ -->
+<div id="section-guru" class="section">
+  <main style="max-width:560px">
+    <div class="guru-welcome-card">
+      <div style="font-size:48px;margin-bottom:12px">🎉</div>
+      <h2 id="guru-welcome">Selamat Datang!</h2>
+      <div class="guru-kode-box" id="guru-kode-info"></div>
+    </div>
+    <div class="card" id="guru-profil" style="display:none">
+      <div class="card-title">📋 Profil Anda</div>
+    </div>
+    <div class="info-box">
+      Akun Anda telah terverifikasi. Gunakan aplikasi KitaBelajar utama untuk mengajar dan mengelola kelas.
+    </div>
+    <button class="btn btn-outline" onclick="logout()" style="width:100%;justify-content:center">← Keluar</button>
+  </main>
+</div>
+
+<script src="/public/app.js"></script>
+</body>
+</html>
