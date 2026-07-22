@@ -298,7 +298,9 @@ router.post('/quiz', authMiddleware, guruOnly, async (req, res) => {
         const notifs = muridList.map(m => ({
           id: uuidv4(), user_id: m.murid_id,
           judul: '⚡ Quiz Baru!',
-          pesan: `Ada quiz baru: "${judul}". Ayo kerjakan sekarang!`
+          pesan: `Ada quiz baru: "${judul}". Ayo kerjakan sekarang!`,
+          tipe: 'quiz',
+          data_extra: JSON.stringify({ kelas_id })
         }));
         await supabase.from('notifikasi').insert(notifs);
       }

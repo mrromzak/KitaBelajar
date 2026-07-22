@@ -3371,10 +3371,23 @@ async function loadBellNotifications() {
   try {
     const data = await api('GET', '/notifikasi');
     (data.data || []).forEach(n => {
-      const tipe = n.judul?.includes('Materi') ? 'materi'
-                 : (n.judul?.includes('Kuis') || n.judul?.includes('Quiz')) ? 'quiz'
-                 : 'notif';
-      bellNotifs.push({ id: n.id, tipe, judul: n.judul, pesan: n.pesan, created_at: n.created_at, dibaca: n.dibaca });
+      let tipe = n.tipe || 'notif';
+      let kelas_id = null;
+      if (n.data_extra) {
+        try {
+          const extra = typeof n.data_extra === 'string' ? JSON.parse(n.data_extra) : n.data_extra;
+          kelas_id = extra?.kelas_id || null;
+        } catch(e) {}
+      }
+      bellNotifs.push({
+        id: n.id,
+        tipe,
+        judul: n.judul,
+        pesan: n.pesan,
+        created_at: n.created_at,
+        dibaca: n.dibaca,
+        kelas_id
+      });
       if (!n.dibaca) bellUnreadCount++;
     });
     updateBellBadge();
@@ -3391,13 +3404,21 @@ document.addEventListener('click', (e) => {
 
 // Socket: notifikasi materi/quiz dari backend
 socket.on('notif:baru', (notif) => {
+  let kelas_id = null;
+  if (notif.data_extra) {
+    try {
+      const extra = typeof notif.data_extra === 'string' ? JSON.parse(notif.data_extra) : notif.data_extra;
+      kelas_id = extra?.kelas_id || null;
+    } catch(e) {}
+  }
   addBellNotif({
     id: 'n_' + Date.now() + '_' + Math.random(),
     tipe: notif.tipe || 'notif',
     judul: notif.judul,
     pesan: notif.pesan,
     created_at: notif.created_at || new Date().toISOString(),
-    dibaca: false
+    dibaca: false,
+    kelas_id
   });
   // Browser notification saat tab tidak aktif
   showBrowserNotif(notif.judul || 'KitaBelajar', notif.pesan || '', 'notif-' + (notif.tipe || 'umum'));

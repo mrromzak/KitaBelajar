@@ -93,7 +93,9 @@ router.post('/upload', authMiddleware, guruOnly, upload.single('file'), async (r
         const notifs = muridList.map(m => ({
           id: uuidv4(), user_id: m.murid_id,
           judul: '📚 Materi Baru!',
-          pesan: `Guru menambahkan materi baru: "${judul}" (${mapel})`
+          pesan: `Guru menambahkan materi baru: "${judul}" (${mapel})`,
+          tipe: 'materi',
+          data_extra: JSON.stringify({ kelas_id })
         }));
         await supabase.from('notifikasi').insert(notifs);
         // Emit real-time socket ke setiap murid
@@ -161,7 +163,9 @@ router.post('/', authMiddleware, guruOnly, async (req, res) => {
         const notifs = muridList.map(m => ({
           id: uuidv4(), user_id: m.murid_id,
           judul: '📚 Materi Baru!',
-          pesan: `Guru menambahkan materi baru: "${judul}" (${mapel})`
+          pesan: `Guru menambahkan materi baru: "${judul}" (${mapel})`,
+          tipe: 'materi',
+          data_extra: JSON.stringify({ kelas_id })
         }));
         await supabase.from('notifikasi').insert(notifs);
         const io = req.app.get('io');

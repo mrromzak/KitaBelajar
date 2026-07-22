@@ -199,7 +199,9 @@ router.post('/', authMiddleware, async (req, res) => {
         const notifs = muridList.map(m => ({
           id: uuidv4(), user_id: m.murid_id,
           judul: '📝 Kuis Baru!',
-          pesan: `Guru membuat kuis baru: "${judul}" (${mapel || 'Umum'})`
+          pesan: `Guru membuat kuis baru: "${judul}" (${mapel || 'Umum'})`,
+          tipe: 'quiz',
+          data_extra: JSON.stringify({ kelas_id })
         }));
         await supabase.from('notifikasi').insert(notifs);
         const io = req.app.get('io');
@@ -515,8 +517,14 @@ router.put('/:id/submissions/:sub_id/nilai', authMiddleware, async (req, res) =>
 
     // Notif ke murid
     if (sub?.murid_id) {
-      const { data: qz } = await supabase.from('quiz').select('judul').eq('id', req.params.id).single();
-      await supabase.from('notifikasi').insert({ id: uuidv4(), user_id: sub.murid_id, judul: '📊 Tugas Dinilai', pesan: `Tugasmu "${qz?.judul}" sudah dinilai: ${nilai}/100` });
+      const { data: qz } = await supabase.from('quiz').select('judul, kelas_id').eq('id', req.params.id).single();
+      await supabase.from('notifikasi').insert({
+        id: uuidv4(), user_id: sub.murid_id,
+        judul: '📊 Tugas Dinilai',
+        pesan: `Tugasmu "${qz?.judul}" sudah dinilai: ${nilai}/100`,
+        tipe: 'tugas',
+        data_extra: qz?.kelas_id ? JSON.stringify({ kelas_id: qz.kelas_id }) : null
+      });
       const io = req.app.get('io');
       if (io) io.to('user:' + sub.murid_id).emit('notif:baru', { tipe: 'nilai', judul: '📊 Tugas Dinilai', pesan: `Tugasmu "${qz?.judul}" sudah dinilai: ${nilai}/100`, created_at: new Date().toISOString() });
     }
