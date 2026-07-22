@@ -370,14 +370,56 @@ function switchRole(role) {
   currentRole = role;
 }
 
-// switchRegRole sudah tidak digunakan — register hanya untuk murid
 function switchRegRole(role) {
-  // no-op
+  currentRegRole = role;
+  // Update tab active state
+  const tabMurid = document.getElementById('reg-tab-murid');
+  const tabGuru  = document.getElementById('reg-tab-guru');
+  if (tabMurid) tabMurid.classList.toggle('active', role === 'murid');
+  if (tabGuru)  tabGuru.classList.toggle('active', role === 'guru');
+  // Show/hide kelas group (murid only)
+  const kelasGroup = document.getElementById('reg-kelas-group');
+  if (kelasGroup) kelasGroup.style.display = role === 'murid' ? '' : 'none';
+  // Show/hide data diri + kode guru group (guru only)
+  const dataDiriGroup = document.getElementById('reg-datadiri-group');
+  if (dataDiriGroup) dataDiriGroup.style.display = role === 'guru' ? '' : 'none';
+  // Reset kode status
+  const statusEl = document.getElementById('reg-kode-guru-status');
+  if (statusEl) statusEl.textContent = '';
 }
 
 function showRegister() {
   switchRegRole('murid');
   showPage('page-register');
+}
+
+async function cekKodeGuru() {
+  const kodeEl  = document.getElementById('reg-kode-guru');
+  const statusEl = document.getElementById('reg-kode-guru-status');
+  if (!kodeEl || !statusEl) return;
+  const kode = kodeEl.value.trim().toUpperCase();
+  if (!kode) { statusEl.textContent = ''; return; }
+  statusEl.style.color = 'var(--muted)';
+  statusEl.textContent = 'Memeriksa kode…';
+  try {
+    const res = await fetch('/api/kode-guru/validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kode })
+    });
+    const data = await res.json();
+    if (data.success) {
+      statusEl.style.color = '#22C55E';
+      const sisa = data.data?.sisa_kuota ?? '?';
+      statusEl.textContent = `✅ Kode valid! Sisa kuota: ${sisa}`;
+    } else {
+      statusEl.style.color = '#EF4444';
+      statusEl.textContent = `❌ ${data.pesan || 'Kode tidak valid.'}`;
+    }
+  } catch (_) {
+    statusEl.style.color = '#EF4444';
+    statusEl.textContent = '❌ Tidak bisa terhubung ke server.';
+  }
 }
 
 async function doLogin() {
@@ -441,11 +483,28 @@ async function doRegister() {
     toast('Guru wajib mengisi alamat, umur, dan asal sekolah! 😊', 'error'); return;
   }
 
+  // Guru wajib menyertakan kode undangan yang valid
+  if (currentRegRole === 'guru') {
+    const kodeEl = document.getElementById('reg-kode-guru');
+    const kodeGuru = kodeEl ? kodeEl.value.trim().toUpperCase() : '';
+    if (!kodeGuru) { toast('Masukkan kode undangan dari kepala sekolah! 🔑', 'error'); return; }
+    const statusEl = document.getElementById('reg-kode-guru-status');
+    if (statusEl && !statusEl.textContent.includes('✅')) {
+      toast('Klik tombol Cek untuk memverifikasi kode undangan terlebih dahulu! 🔑', 'error'); return;
+    }
+  }
+
   showLoading(true);
   try {
     const body = { nama, email, password, role: currentRegRole };
     if (currentRegRole === 'murid' && kelas) body.kelas = kelas;
-    if (currentRegRole === 'guru') { body.alamat = alamat; body.umur = umur; body.asal_sekolah = asalSekolah; }
+    if (currentRegRole === 'guru') {
+      body.alamat = alamat;
+      body.umur = umur;
+      body.asal_sekolah = asalSekolah;
+      const kodeEl = document.getElementById('reg-kode-guru');
+      body.kode_guru = kodeEl ? kodeEl.value.trim().toUpperCase() : '';
+    }
     const data = await api('POST', '/auth/send-otp', body);
     if (data.success) {
       _pendingRegEmail = email;

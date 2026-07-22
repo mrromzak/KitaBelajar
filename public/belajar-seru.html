@@ -93,8 +93,8 @@
   </div>
 
   <!-- Modal Fitur Detail (Slide Down) -->
-  <div class="modal-overlay" id="modal-feature-detail" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:9999;justify-content:flex-start">
-    <div class="modal-slide-down" id="modal-feature-slide" style="max-width:520px;width:90%;margin:0 auto;background:white;border-radius:0 0 24px 24px;padding:32px 28px;box-shadow:0 20px 60px rgba(0,0,0,0.2);transform:translateY(-100%);opacity:0;transition:transform 0.4s cubic-bezier(0.22,1,0.36,1),opacity 0.3s ease;max-height:85vh;overflow-y:auto">
+  <div class="modal-overlay" id="modal-feature-detail" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:9999" onclick="if(event.target===this)closeFeatureModal()">
+    <div class="modal-slide-down" id="modal-feature-slide" style="max-width:520px;width:90%;background:white;padding:32px 28px;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:85vh;overflow-y:auto">
       <div style="text-align:center;margin-bottom:20px">
         <div id="feature-modal-icon" style="font-size:56px;margin-bottom:8px"></div>
         <h3 id="feature-modal-title" style="margin:0 0 8px 0;font-size:22px"></h3>
@@ -233,7 +233,8 @@
       <h2>Daftar Akun Baru</h2>
       <p class="sub">Isi data diri kamu untuk mulai belajar</p>
       <div class="role-tabs">
-        <button class="role-tab active" id="reg-tab-murid">🎒 Murid</button>
+        <button class="role-tab active" id="reg-tab-murid" onclick="switchRegRole('murid')">🎒 Murid</button>
+        <button class="role-tab" id="reg-tab-guru" onclick="switchRegRole('guru')">👨‍🏫 Guru</button>
       </div>
       <div class="form-group">
         <label>Nama Lengkap</label>
