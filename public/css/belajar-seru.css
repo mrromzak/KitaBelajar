@@ -1668,6 +1668,14 @@ body.dark-mode [style*="background:#eee"] {
   background: var(--input) !important;
 }
 
+body.dark-mode button[onclick^="bukaProfile"] {
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+body.dark-mode button[onclick^="bukaProfile"]:hover {
+  color: #1a1a2e !important;
+}
+
 body.dark-mode [style*="color:#1a1a2e"]:not(button):not(.bell-btn):not([class*="badge"]):not([class*="tab"]):not(.zep-btn){color:var(--text)!important}
 body.dark-mode [style*="color:#333"]:not(button):not(.bell-btn):not([class*="badge"]){color:var(--text)!important}
 body.dark-mode [style*="color:#2D2D2D"]:not(button):not(.bell-btn):not([class*="badge"]){color:var(--text)!important}
