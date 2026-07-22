@@ -1199,164 +1199,171 @@
 
 /* ===== DARK MODE STYLES ===== */
 body.dark-mode {
-  --bg: #120B24;
-  --card: #1C1430;
-  --text: #F1EDF9;
-  --muted: #A39BB5;
-  --shadow: 0 6px 24px rgba(0,0,0,0.3);
+  --bg: #0D0D1A;
+  --card: #15152B;
+  --input: #1C1C36;
+  --border: #2A2A50;
+  --border-light: #38385E;
+  --text: #E4E4F0;
+  --muted: #9494AE;
+  --placeholder: #6E6E88;
+  --hover: #202042;
+  --success-bg: #0E2A1A;
+  --unread: #1E1E44;
+  --shadow: 0 6px 24px rgba(0,0,0,0.4);
 }
 body.dark-mode {
   background:
-    radial-gradient(900px 650px at 0% 0%, rgba(255,107,53,0.12), transparent 60%),
-    radial-gradient(850px 620px at 100% 3%, rgba(199,125,255,0.12), transparent 58%),
-    radial-gradient(1000px 780px at 50% 110%, rgba(77,150,255,0.08), transparent 62%),
-    #0F0A1C;
+    radial-gradient(800px 600px at 0% 0%, rgba(124,92,252,0.07), transparent 60%),
+    radial-gradient(750px 550px at 100% 5%, rgba(196,79,224,0.07), transparent 58%),
+    radial-gradient(900px 700px at 50% 110%, rgba(77,150,255,0.04), transparent 62%),
+    var(--bg);
   background-attachment: fixed;
   color: var(--text);
 }
 body.dark-mode .navbar, body.dark-mode nav {
-  background: #1C1430;
-  border-color: #2B2144;
+  background: var(--card);
+  border-color: var(--border);
 }
 body.dark-mode input, body.dark-mode select, body.dark-mode textarea {
-  background: #251D3A;
-  border-color: #382D54;
-  color: #F1EDF9;
+  background: var(--input);
+  border-color: var(--border-light);
+  color: var(--text);
 }
 body.dark-mode input::placeholder {
-  color: #6D6480;
+  color: var(--placeholder);
 }
 body.dark-mode .login-card, body.dark-mode .panel, body.dark-mode .card, body.dark-mode .welcome-banner, body.dark-mode .modal {
-  background: #1C1430;
-  color: #F1EDF9;
-  border-color: #2B2144;
+  background: var(--card);
+  color: var(--text);
+  border-color: var(--border);
 }
 body.dark-mode .empty-state {
-  color: #A39BB5;
+  color: var(--muted);
 }
 body.dark-mode .lb-tab, body.dark-mode .lb-filter, body.dark-mode .misi-filter {
-  background: #251D3A;
-  border-color: #382D54;
-  color: #F1EDF9;
+  background: var(--input);
+  border-color: var(--border-light);
+  color: var(--text);
 }
 body.dark-mode .lb-tab.active, body.dark-mode .lb-filter.active, body.dark-mode .misi-filter.active {
-  background: linear-gradient(135deg,#6A4CF0,#B23FC9);
+  background: linear-gradient(135deg,#7C5CFC,#C44FE0);
   color: white;
 }
 body.dark-mode .lb-item {
-  background: #1C1430;
-  border-color: #2B2144;
+  background: var(--card);
+  border-color: var(--border);
 }
 body.dark-mode .lb-item.saya {
-  background: #25183A;
-  border-color: #7b2ff7;
+  background: var(--hover);
+  border-color: #8B5CF6;
 }
 body.dark-mode .misi-card {
-  background: #1C1430;
+  background: var(--card);
 }
 body.dark-mode .misi-card.selesai {
-  background: #102B1D;
+  background: var(--success-bg);
   border-left-color: #00C851;
 }
 body.dark-mode .misi-progres-bar {
-  background: #251D3A;
+  background: var(--input);
 }
 body.dark-mode .progress-mini {
-  background: #251D3A;
+  background: var(--input);
 }
 body.dark-mode .chat-input-area, body.dark-mode .gchat-footer {
-  background: #1C1430;
-  border-top-color: #2B2144;
+  background: var(--card);
+  border-top-color: var(--border);
 }
 body.dark-mode .gchat-input {
-  background: #251D3A;
-  border-color: #382D54;
-  color: #F1EDF9;
+  background: var(--input);
+  border-color: var(--border-light);
+  color: var(--text);
 }
 body.dark-mode .gchat-msg.bot .gchat-bubble {
-  background: #251D3A;
-  color: #F1EDF9;
+  background: var(--input);
+  color: var(--text);
 }
 body.dark-mode .modal-overlay {
   background: rgba(0, 0, 0, 0.65);
 }
 body.dark-mode .modal-slide-down {
-  background: #1C1430 !important;
-  color: #F1EDF9 !important;
-  border: 2px solid #2B2144;
+  background: var(--card) !important;
+  color: var(--text) !important;
+  border: 2px solid var(--border);
 }
 body.dark-mode .tab-item {
-  border-color: #2B2144;
+  border-color: var(--border);
 }
 body.dark-mode .tab-item.active {
-  background: #251D3A;
+  background: var(--input);
 }
 body.dark-mode .materi-card, body.dark-mode .soal-card, body.dark-mode .kelas-card, body.dark-mode .stream-post, body.dark-mode .task-card {
-  background: #1C1430;
-  border-color: #2B2144;
-  color: #F1EDF9;
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--text);
 }
 body.dark-mode .stream-post {
-  border: 2px solid #2B2144;
+  border: 2px solid var(--border);
 }
 body.dark-mode .comment-box, body.dark-mode .komentar-area {
-  background: #251D3A;
-  border-top-color: #2B2144;
+  background: var(--input);
+  border-top-color: var(--border);
 }
 body.dark-mode .komentar-item {
-  border-bottom-color: #2B2144;
+  border-bottom-color: var(--border);
 }
 body.dark-mode .btn-cancel {
-  background: #251D3A;
-  border-color: #382D54;
-  color: #F1EDF9;
+  background: var(--input);
+  border-color: var(--border-light);
+  color: var(--text);
 }
 body.dark-mode .bell-btn {
-  border-color: #2B2144;
+  border-color: var(--border);
 }
 body.dark-mode .bell-btn:hover {
-  background: #251D3A;
+  background: var(--input);
 }
 body.dark-mode .bell-dropdown, body.dark-mode .profile-dropdown {
-  background: #1C1430;
-  border-color: #2B2144;
-  color: #F1EDF9;
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--text);
 }
 body.dark-mode .bell-item {
-  border-bottom-color: #2B2144;
+  border-bottom-color: var(--border);
 }
 body.dark-mode .bell-item:hover {
-  background: #251D3A;
+  background: var(--input);
 }
 body.dark-mode .bell-item.unread {
-  background: #2D1E4E;
+  background: var(--unread);
 }
 body.dark-mode .btn-meeting {
-  background: #251D3A;
-  color: #4D96FF;
+  background: var(--input);
+  color: #60A5FA;
 }
 body.dark-mode .materi-ceklis-btn {
-  background: #251D3A;
-  border-color: #382D54;
+  background: var(--input);
+  border-color: var(--border-light);
 }
 body.dark-mode .materi-ceklis-btn.done {
-  background: #102B1D;
+  background: var(--success-bg);
   border-color: #00C851;
 }
 body.dark-mode .badge-card {
-  background: #1C1430;
-  border-color: #2B2144;
+  background: var(--card);
+  border-color: var(--border);
 }
 body.dark-mode .badge-card.dimiliki {
-  background: #251D3A;
-  border-color: #7b2ff7;
+  background: var(--input);
+  border-color: #8B5CF6;
 }
 body.dark-mode .badge-modal-box {
-  background: #1C1430;
-  border: 2px solid #2B2144;
+  background: var(--card);
+  border: 2px solid var(--border);
 }
 body.dark-mode .badge-modal-desc {
-  color: #A39BB5;
+  color: var(--muted);
 }
 body.dark-mode .logo-maskot, body.dark-mode .logo img {
   background: white;
