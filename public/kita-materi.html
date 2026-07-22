@@ -159,6 +159,49 @@
       .materi-head{flex-direction:column;text-align:center}
     }
     @media(max-width:360px){.hero-h1{font-size:30px}}
+
+    /* ===== DARK MODE ===== */
+    body.dark-mode{--text:#E4E4F0;--muted:#9494B0;--bg:#0B0B16}
+    body.dark-mode{background:radial-gradient(800px 600px at 0% 0%,rgba(124,92,252,0.07),transparent 60%),radial-gradient(750px 550px at 100% 5%,rgba(196,79,224,0.07),transparent 58%),radial-gradient(900px 700px at 50% 110%,rgba(77,150,255,0.04),transparent 62%),#0B0B16;background-attachment:fixed;color:var(--text)}
+    body.dark-mode .navbar{background:rgba(28,28,56,.93);border-bottom-color:#2A2A50;box-shadow:0 2px 16px rgba(0,0,0,.2)}
+    body.dark-mode .btn-back{background:#1C1C38;border-color:#363662;color:#E4E4F0}
+    body.dark-mode .btn-back:hover{background:var(--orange);color:#fff;border-color:var(--orange)}
+    body.dark-mode .search-box{background:#14142C;border-color:#363662}
+    body.dark-mode .search-box input::placeholder{color:#6E6E8A}
+    body.dark-mode .search-item{background:#14142C;border-color:#2A2A50}
+    body.dark-mode .search-item:hover{border-color:#8B5CF6}
+    body.dark-mode .grade-label{color:#6E6E8A}
+    body.dark-mode .gc-sma{color:#E4E4F0}
+    body.dark-mode .stat-box{background:#14142C;border-color:#2A2A50}
+    body.dark-mode .stat-num{color:#C77DFF}
+    body.dark-mode .hero-h1 .g1{color:#E4E4F0}
+    body.dark-mode .hero-sub{color:var(--muted)}
+    body.dark-mode .page-ttl{color:var(--text)}
+    body.dark-mode .page-sub{color:var(--muted)}
+    body.dark-mode .search-item .search-badge{color:#fff}
+    body.dark-mode .materi-head{background:#14142C;border-color:#2A2A50}
+    body.dark-mode .materi-head-title{color:var(--text)}
+    body.dark-mode .materi-head-sub{color:var(--muted)}
+    body.dark-mode .acc-item{background:#14142C;border-color:#2A2A50}
+    body.dark-mode .acc-item.open{border-color:#8B5CF6}
+    body.dark-mode .acc-header:hover{background:#1C1C38}
+    body.dark-mode .acc-title{color:var(--text)}
+    body.dark-mode .mc-def{background:linear-gradient(135deg,#1A1A3E,#1C1C30);border-left-color:#60A5FA}
+    body.dark-mode .mc-def p{color:#A5B4FC}
+    body.dark-mode .mc-poin{background:#0E2A1A;border-left-color:#34D399}
+    body.dark-mode .mc-poin ul li{color:#6EE7B7}
+    body.dark-mode .mc-rumus{background:linear-gradient(135deg,#2D2418,#2A1A10);border-left-color:#F97316}
+    body.dark-mode .mc-rumus .formula{background:rgba(255,107,53,.15);color:#FDBA74}
+    body.dark-mode .mc-rumus p{color:#FDBA74}
+    body.dark-mode .mc-contoh{background:#0F2020;border-left-color:#22D3EE}
+    body.dark-mode .mc-contoh p,.mc-contoh ul li{color:#67E8F9}
+    body.dark-mode .mc-tips{background:linear-gradient(135deg,#2D2818,#2A2418);border-left-color:#FBBF24;color:#FDE68A}
+    body.dark-mode .mc-ingat{background:linear-gradient(135deg,#1C1A3A,#1A1830);border-left-color:#A78BFA;color:#C4B5FD}
+    body.dark-mode .btn-nav{box-shadow:0 3px 10px rgba(255,107,53,.2)}
+    body.dark-mode #search-clear{color:#6E6E8A!important}
+    body.dark-mode .lv-pill.pill-sma{color:#E4E4F0}
+    body.dark-mode .subj-card .subj-name{color:#fff}
+    body.dark-mode .mc-def-title,.mc-poin-title,.mc-rumus-title,.mc-contoh-title{color:inherit}
   </style>
 </head>
 <body>
@@ -169,6 +212,7 @@
   <div class="nav-brand">📚 AyoBelajar!</div>
   <div class="nav-right">
     <button class="btn-back" id="btn-back" onclick="goBack()" style="display:none">← Kembali</button>
+    <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="Ubah tema" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center">🌙</button>
     <button class="btn-nav" onclick="window.location.href='belajar-seru.html'">🏠 Beranda</button>
   </div>
 </nav>
@@ -2399,6 +2443,19 @@ function buatShapes() {
     wrap.appendChild(d);
   }
 }
+
+// Dark mode
+function toggleDarkMode() {
+  const mode = document.body.classList.toggle('dark-mode');
+  localStorage.setItem('kb_dark_mode', mode);
+  document.querySelectorAll('.dark-mode-toggle').forEach(b => b.textContent = mode ? '☀️' : '🌙');
+}
+(function() {
+  if (localStorage.getItem('kb_dark_mode') === 'true') {
+    document.body.classList.add('dark-mode');
+    document.querySelectorAll('.dark-mode-toggle').forEach(b => b.textContent = '☀️');
+  }
+})();
 </script>
 </body>
 </html>
