@@ -494,6 +494,35 @@
   .btn-play { background: var(--orange); color: white; border: none; padding: 14px 36px; border-radius: 50px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 16px; cursor: pointer; transition: all 0.2s; }
   .btn-play:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(255,107,53,0.4); }
 
+  /* ===== QUIZ GAME — TEMA KOMPETITIF ===== */
+  #page-quiz {
+    background: linear-gradient(145deg, #1B2A3A 0%, #2A4055 45%, #1E3845 100%);
+    min-height: 100vh;
+  }
+  #page-quiz .quiz-wrap { padding-top: 32px; }
+  #page-quiz .quiz-header { margin-bottom: 20px; }
+  #page-quiz .quiz-score-badge { background: rgba(255,255,255,0.12); color: #FCD34D; font-size: 14px; border: 1.5px solid rgba(255,255,255,0.15); }
+  #page-quiz .quiz-timer { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); color: white; font-size: 24px; width: 60px; height: 60px; box-shadow: 0 0 20px rgba(255,255,255,0.05); }
+  #page-quiz .quiz-timer.warning { border-color: #FCD34D; color: #FCD34D; box-shadow: 0 0 24px rgba(252,211,77,0.25); }
+  #page-quiz .quiz-timer.danger { border-color: #EF4444; color: #EF4444; box-shadow: 0 0 24px rgba(239,68,68,0.3); animation: pulse 0.8s ease infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+  #page-quiz .progress-track { background: rgba(255,255,255,0.08); height: 8px; }
+  #page-quiz .progress-thumb { background: linear-gradient(90deg, #10B981, #60A5FA); }
+  #page-quiz .quiz-card { background: rgba(255,255,255,0.05); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1.5px solid rgba(255,255,255,0.08); box-shadow: 0 8px 32px rgba(0,0,0,0.2); padding: 36px 32px; }
+  #page-quiz .quiz-q-num { color: rgba(255,255,255,0.5); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
+  #page-quiz .quiz-question { color: white; font-size: 24px; }
+  #page-quiz .quiz-emoji { font-size: 56px; margin: 20px 0; }
+  #page-quiz .quiz-options { gap: 14px; }
+  #page-quiz .quiz-opt { background: rgba(255,255,255,0.06); border: 2.5px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 18px 16px; color: rgba(255,255,255,0.9); font-weight: 800; font-size: 17px; }
+  #page-quiz .quiz-opt:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.3); transform: scale(1.04); box-shadow: 0 0 20px rgba(255,255,255,0.06); }
+  #page-quiz .quiz-opt.correct { background: rgba(16,185,129,0.2); border-color: #10B981; color: #6EE7B7; box-shadow: 0 0 24px rgba(16,185,129,0.15); }
+  #page-quiz .quiz-opt.wrong { background: rgba(239,68,68,0.2); border-color: #EF4444; color: #FCA5A5; box-shadow: 0 0 24px rgba(239,68,68,0.15); }
+  #page-quiz .quiz-result { color: white; }
+  #page-quiz .result-title { color: white; }
+  #page-quiz .result-sub { color: rgba(255,255,255,0.6); }
+  #page-quiz .result-score-big { color: #FCD34D; }
+  #page-quiz .btn-play { background: linear-gradient(135deg, #F59E0B, #F97316); box-shadow: 0 8px 28px rgba(245,158,11,0.3); }
+
   /* ===== ZEP QUIZ ===== */
   /* Tema kalem, biru-ungu lembut (lebih teduh, tidak menyilaukan) */
   .zep-page { min-height: 100vh; background: linear-gradient(160deg, #33409A 0%, #5B3F94 52%, #8A4F86 100%); color: white; font-family: 'Nunito', sans-serif; }

@@ -5737,10 +5737,10 @@ function renderQuestion() {
   opts.innerHTML = (q.opts || []).map((o, i) => `
     <button onclick="selectAnswer(${i}, this)"
       style="width:100%;padding:14px 18px;border-radius:16px;border:2.5px solid ${optColors[i%4]}30;
-             background:white;font-family:Nunito,sans-serif;font-weight:700;font-size:15px;
+             background:transparent;font-family:Nunito,sans-serif;font-weight:700;font-size:15px;
              cursor:pointer;transition:all 0.2s;text-align:left;display:flex;align-items:center;gap:12px"
       onmouseover="if(!this.dataset.answered)this.style.background='${optColors[i%4]}15'"
-      onmouseout="if(!this.dataset.answered)this.style.background='white'">
+      onmouseout="if(!this.dataset.answered)this.style.background='transparent'">
       <span style="width:32px;height:32px;border-radius:50%;background:${optColors[i%4]}20;color:${optColors[i%4]};
                    font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
         ${optLetters[i]}
@@ -5754,12 +5754,15 @@ function renderQuestion() {
 function startTimer() {
   clearInterval(timer);
   timeLeft = 15;
-  document.getElementById('quiz-timer').textContent = timeLeft;
-  document.getElementById('quiz-timer').style.background = 'rgba(255,255,255,0.25)';
+  const timerEl = document.getElementById('quiz-timer');
+  timerEl.textContent = timeLeft;
+  timerEl.className = timerEl.className.replace(/ warning| danger/g, '');
   timer = setInterval(() => {
     timeLeft--;
-    document.getElementById('quiz-timer').textContent = timeLeft;
-    if (timeLeft <= 5) document.getElementById('quiz-timer').style.background = 'rgba(255,0,0,0.35)';
+    timerEl.textContent = timeLeft;
+    timerEl.className = timerEl.className.replace(/ warning| danger/g, '');
+    if (timeLeft <= 5) timerEl.classList.add('danger');
+    else if (timeLeft <= 8) timerEl.classList.add('warning');
     if (timeLeft <= 0) { clearInterval(timer); timeExpired(); }
   }, 1000);
 }
