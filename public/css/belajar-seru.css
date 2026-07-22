@@ -1398,6 +1398,9 @@ body.dark-mode .badge-modal-box {
 body.dark-mode .badge-modal-desc {
   color: var(--muted);
 }
+body.dark-mode .badge-modal-sub {
+  color: var(--muted);
+}
 body.dark-mode .logo-maskot, body.dark-mode .logo img {
   background: white;
   border-radius: 50%;
@@ -1664,3 +1667,10 @@ body.dark-mode [style*="background:#F9F5FF"] {
 body.dark-mode [style*="background:#eee"] {
   background: var(--input) !important;
 }
+
+body.dark-mode [style*="color:#1a1a2e"]:not(button):not(.bell-btn):not([class*="badge"]):not([class*="tab"]):not(.zep-btn){color:var(--text)!important}
+body.dark-mode [style*="color:#333"]:not(button):not(.bell-btn):not([class*="badge"]){color:var(--text)!important}
+body.dark-mode [style*="color:#2D2D2D"]:not(button):not(.bell-btn):not([class*="badge"]){color:var(--text)!important}
+body.dark-mode [style*="color:#666"]:not(.bell-btn):not([class*="badge"]){color:var(--muted)!important}
+body.dark-mode [style*="color:#444"]:not(.bell-btn):not([class*="badge"]){color:var(--text)!important}
+body.dark-mode .bell-btn svg{color:var(--muted)!important}
