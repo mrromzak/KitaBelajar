@@ -1358,3 +1358,6 @@ body.dark-mode .badge-modal-box {
 body.dark-mode .badge-modal-desc {
   color: #A39BB5;
 }
+body.dark-mode .logo-maskot, body.dark-mode .maskot-img, body.dark-mode .logo img {
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.45));
+}
