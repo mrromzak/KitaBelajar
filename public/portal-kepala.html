@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Kepala Sekolah — KitaBelajar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary:      #7C3AED;
+      --primary-dark: #5B21B6;
+      --primary-light:#F3F0FF;
+      --orange:       #FF6B35;
+      --danger:       #EF4444;
+      --danger-light: #FEE2E2;
+      --success:      #10B981;
+      --success-light:#D1FAE5;
+      --warning:      #F59E0B;
+      --warning-light:#FEF3C7;
+      --border:       #E8E8F0;
+      --muted:        #6B7280;
+      --bg:           #F8F7FF;
+      --card:         #FFFFFF;
+      --radius:       16px;
+      --shadow:       0 4px 24px rgba(124,58,237,0.08);
+    }
+    body {
+      font-family: 'Nunito', system-ui, sans-serif;
+      background: var(--bg);
+      color: #1F1235;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────────── */
+    header {
+      background: white;
+      border-bottom: 2px solid var(--border);
+      padding: 0 28px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(124,58,237,0.06);
+    }
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .header-logo .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--primary), #A78BFA);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+    }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .role-badge {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 12px; font-weight: 800;
+      padding: 4px 12px; border-radius: 50px;
+      display: none;
+    }
+
+    /* ── BUTTONS ─────────────────────────────────────────────── */
+    .btn {
+      padding: 10px 20px; border-radius: 50px;
+      font-size: 14px; font-weight: 800;
+      cursor: pointer; border: none;
+      font-family: 'Nunito', sans-serif;
+      transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+    .btn-primary  { background: var(--primary); color: white; }
+    .btn-primary:hover:not(:disabled)  { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(124,58,237,0.3); }
+    .btn-outline  { background: white; color: var(--primary); border: 2px solid var(--primary); }
+    .btn-outline:hover:not(:disabled)  { background: var(--primary-light); }
+    .btn-danger   { background: var(--danger-light); color: var(--danger); border: 1.5px solid #FECACA; }
+    .btn-danger:hover:not(:disabled)   { background: #FECACA; }
+    .btn-ghost    { background: none; color: var(--muted); border: 2px solid var(--border); }
+    .btn-ghost:hover:not(:disabled)    { background: #F8F7FF; }
+    .btn-sm { padding: 6px 14px; font-size: 12px; }
+    .btn-logout { background: none; color: var(--muted); border: 2px solid var(--border); display: none; }
+    .btn-logout:hover { background: var(--danger-light); color: var(--danger); border-color: #FECACA; }
+
+    /* ── SPINNER ─────────────────────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2.5px solid rgba(255,255,255,.35);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      vertical-align: middle;
+    }
+    .spinner-dark { border-color: rgba(0,0,0,.15); border-top-color: var(--primary); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── MAIN LAYOUT ─────────────────────────────────────────── */
+    main { max-width: 980px; margin: 0 auto; padding: 32px 20px 60px; }
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ── CARD ────────────────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 16px; font-weight: 900; color: #1F1235;
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* ── FORM ────────────────────────────────────────────────── */
+    .form-grid { display: grid; gap: 16px; }
+    .form-row  { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group label {
+      display: block; font-size: 12px; font-weight: 800;
+      color: var(--muted); margin-bottom: 6px;
+      text-transform: uppercase; letter-spacing: .5px;
+    }
+    input[type=text], input[type=email], input[type=password], input[type=number] {
+      width: 100%; padding: 12px 16px;
+      border: 2px solid var(--border); border-radius: 12px;
+      font-size: 14px; font-family: 'Nunito', sans-serif;
+      font-weight: 600; outline: none;
+      transition: border .15s, box-shadow .15s;
+      background: white;
+    }
+    input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(124,58,237,.1); }
+    input::placeholder { color: #C4C4D4; font-weight: 600; }
+
+    /* ── ALERT ───────────────────────────────────────────────── */
+    .alert {
+      border-radius: 12px; padding: 12px 16px;
+      font-size: 13px; font-weight: 700;
+      margin-top: 12px; display: none;
+    }
+    .alert.show { display: block; }
+    .alert-error   { background: var(--danger-light); color: #991B1B; border: 1.5px solid #FECACA; }
+    .alert-success { background: var(--success-light); color: #065F46; border: 1.5px solid #A7F3D0; }
+
+    /* ── INFO BOX ────────────────────────────────────────────── */
+    .info-box {
+      background: #EFF6FF; border: 1.5px solid #BFDBFE;
+      border-radius: 12px; padding: 14px 18px;
+      font-size: 13px; font-weight: 600; color: #1E40AF;
+      margin-bottom: 18px; line-height: 1.6;
+    }
+
+    /* ── LOGIN PAGE ──────────────────────────────────────────── */
+    .login-wrap {
+      min-height: calc(100vh - 64px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 32px 20px;
+    }
+    .login-card {
+      background: white; border: 1.5px solid var(--border);
+      border-radius: 24px; padding: 36px 32px;
+      width: 100%; max-width: 440px;
+      box-shadow: 0 8px 40px rgba(124,58,237,0.12);
+    }
+    .login-header { text-align: center; margin-bottom: 28px; }
+    .login-header .login-icon {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, var(--primary), #A78BFA);
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; margin: 0 auto 14px;
+    }
+    .login-header h1 { font-size: 22px; font-weight: 900; color: #1F1235; margin-bottom: 4px; }
+    .login-header p  { font-size: 13px; color: var(--muted); font-weight: 600; }
+
+    /* ── DASHBOARD HEADER ────────────────────────────────────── */
+    .dash-hero {
+      background: linear-gradient(135deg, var(--primary) 0%, #A78BFA 100%);
+      border-radius: 20px; padding: 28px 32px;
+      color: white; margin-bottom: 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; position: relative; overflow: hidden;
+    }
+    .dash-hero::before {
+      content: ''; position: absolute;
+      top: -30px; right: -30px;
+      width: 140px; height: 140px;
+      background: rgba(255,255,255,.08); border-radius: 50%;
+    }
+    .dash-hero::after {
+      content: ''; position: absolute;
+      bottom: -50px; right: 60px;
+      width: 180px; height: 180px;
+      background: rgba(255,255,255,.05); border-radius: 50%;
+    }
+    .dash-hero-text h2 { font-size: 22px; font-weight: 900; margin-bottom: 4px; }
+    .dash-hero-text p  { font-size: 13px; opacity: .85; font-weight: 600; }
+    .dash-hero-icon { font-size: 52px; position: relative; z-index: 1; }
+
+    /* ── TABS ────────────────────────────────────────────────── */
+    .tabs {
+      display: flex; gap: 6px; margin-bottom: 20px;
+      background: white; border: 1.5px solid var(--border);
+      border-radius: 14px; padding: 6px;
+    }
+    .tab-btn {
+      flex: 1; padding: 10px 8px; border-radius: 10px;
+      font-size: 13px; font-weight: 800; cursor: pointer;
+      border: none; font-family: 'Nunito', sans-serif;
+      background: transparent; color: var(--muted); transition: all .2s;
+    }
+    .tab-btn.active {
+      background: var(--primary); color: white;
+      box-shadow: 0 2px 10px rgba(124,58,237,0.3);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active-panel { display: block; }
+
+    /* ── KODE BOX ────────────────────────────────────────────── */
+    .kode-result-box {
+      background: linear-gradient(135deg, var(--primary-light), #EDE9FE);
+      border: 2px solid #DDD6FE; border-radius: 16px;
+      padding: 24px; text-align: center;
+      margin-top: 16px; display: none;
+    }
+    .kode-result-box .kode-label {
+      font-size: 11px; font-weight: 800; color: var(--primary);
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;
+    }
+    .kode-display {
+      font-family: 'Courier New', monospace;
+      font-size: 36px; font-weight: 900;
+      letter-spacing: 6px; color: var(--primary);
+      cursor: pointer; user-select: all; transition: color .15s;
+    }
+    .kode-display:hover { color: var(--primary-dark); }
+    .kode-meta { font-size: 12px; color: var(--muted); margin-top: 8px; font-weight: 600; }
+
+    /* ── TABLE ───────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; border-radius: 12px; border: 1.5px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      background: var(--bg); padding: 12px 16px; text-align: left;
+      font-size: 11px; font-weight: 800; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .5px;
+      border-bottom: 1.5px solid var(--border); white-space: nowrap;
+    }
+    td { padding: 12px 16px; border-bottom: 1.5px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg); }
+    .empty { text-align: center; color: var(--muted); padding: 40px; font-size: 13px; font-weight: 600; }
+
+    /* Status badges */
+    .badge-active  { background: var(--success-light); color: #065F46; padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 800; }
+    .badge-revoked { background: var(--danger-light);  color: #991B1B; padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 800; }
+    .badge-expired { background: var(--warning-light); color: #92400E; padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 800; }
+    .badge-used-up { background: #E0E7FF; color: #3730A3; padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 800; }
+
+    /* ── TOAST ───────────────────────────────────────────────── */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #1F1235; color: white;
+      padding: 12px 24px; border-radius: 50px;
+      font-size: 14px; font-weight: 700;
+      opacity: 0; transition: opacity .3s;
+      z-index: 9999; pointer-events: none;
+      white-space: nowrap;
+    }
+    #toast.show { opacity: 1; }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+      .login-card { padding: 28px 20px; }
+      .dash-hero { flex-direction: column; text-align: center; }
+      .dash-hero-icon { display: none; }
+      main { padding: 20px 14px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ──────────────────────────────────────────────── -->
+<header>
+  <a class="header-logo" href="/portal-kepala.html">
+    <div class="logo-icon">🏫</div>
+    KitaBelajar
+    <span style="font-size:11px;background:var(--primary-light);color:var(--primary);padding:3px 10px;border-radius:50px;font-weight:800">Portal Sekolah</span>
+  </a>
+  <div class="header-right">
+    <span class="role-badge" id="badge-role"></span>
+    <button class="btn btn-logout btn-sm" id="btn-logout" onclick="logout()">← Keluar</button>
+  </div>
+</header>
+
+<!-- ══ SECTION LOGIN ══════════════════════════════════════════ -->
+<div id="section-login" class="section active">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-icon">🔐</div>
+        <h1>Masuk ke Portal</h1>
+        <p>Sistem manajemen guru KitaBelajar</p>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="login-email">Email Kepala Sekolah</label>
+          <input type="email" id="login-email" placeholder="kepala@sekolah.id" autocomplete="email"
+            onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
+            onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btn-login" onclick="doLogin()" style="width:100%;margin-top:18px;justify-content:center;padding:13px">
+        Masuk sebagai Kepala Sekolah
+      </button>
+
+      <div class="alert" id="login-alert"></div>
+
+      <div style="margin-top:20px;text-align:center;font-size:12px;color:var(--muted);font-weight:600">
+        Guru mendaftar di <a href="/belajar-seru.html" style="color:var(--primary);font-weight:800">KitaBelajar</a> menggunakan kode undangan yang Anda buat di sini.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SECTION DASHBOARD (KEPALA) ════════════════════════════ -->
+<div id="section-dashboard" class="section">
+  <main>
+    <!-- Hero banner -->
+    <div class="dash-hero">
+      <div class="dash-hero-text">
+        <h2 id="dash-greeting">Selamat Datang! 🏫</h2>
+        <p>Kelola kode undangan guru dan pantau perkembangan sekolah</p>
+      </div>
+      <div class="dash-hero-icon">🏫</div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tab-generate">✨ Buat Kode</button>
+      <button class="tab-btn" data-tab="tab-list">📋 Daftar Kode</button>
+      <button class="tab-btn" data-tab="tab-guru">👩‍🏫 Guru Terdaftar</button>
+    </div>
+
+    <!-- Tab: Generate Kode -->
+    <div id="tab-generate" class="card tab-panel active-panel">
+      <div class="card-title">🔑 Generate Kode Undangan Guru</div>
+      <div class="info-box">
+        Kode undangan digunakan guru saat <strong>mendaftar akun</strong> di KitaBelajar. Anda bisa mengatur kuota (berapa guru yang bisa pakai kode ini) dan masa berlaku. Kode bisa dicabut kapan saja.
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="gen-label">Label / Keterangan (opsional)</label>
+            <input type="text" id="gen-label" placeholder="Contoh: Guru Matematika Baru" maxlength="100">
+          </div>
+          <div class="form-group">
+            <label for="gen-max-uses">Kuota (maks. guru yang bisa pakai)</label>
+            <input type="number" id="gen-max-uses" value="1" min="1" max="1000" placeholder="1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="gen-expires">Masa Berlaku (hari, kosongkan = tidak terbatas)</label>
+          <input type="number" id="gen-expires" placeholder="Contoh: 7" min="1" max="365">
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btn-generate" onclick="doGenerateKode()" style="margin-top:18px">
+        ✨ Generate Kode Undangan
+      </button>
+      <div class="alert" id="gen-alert"></div>
+
+      <!-- Hasil generate -->
+      <div class="kode-result-box" id="gen-result">
+        <div class="kode-label">✅ Kode Berhasil Dibuat</div>
+        <div class="kode-display" id="gen-kode-display" title="Klik untuk menyalin" onclick="copyKode()"></div>
+        <div class="kode-meta" id="gen-kode-meta"></div>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:16px">
+          <button class="btn btn-primary btn-sm" id="btn-copy" onclick="copyKode()">📋 Salin Kode</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('gen-result').style.display='none'">Tutup</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Daftar Kode -->
+    <div id="tab-list" class="card tab-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin-bottom:0">📋 Daftar Kode Undangan</div>
+        <button class="btn btn-ghost btn-sm" onclick="loadKodeList()">🔄 Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Kode</th>
+              <th>Label</th>
+              <th>Kuota</th>
+              <th>Terpakai</th>
+              <th>Status</th>
+              <th>Dibuat</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-kode-body">
+            <tr><td colspan="7" class="empty"><span class="spinner spinner-dark"></span> Memuat...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab: Guru Terdaftar -->
+    <div id="tab-guru" class="card tab-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin-bottom:0">👩‍🏫 Guru Terdaftar</div>
+        <button class="btn btn-ghost btn-sm" onclick="loadGuruList()">🔄 Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nama</th>
+              <th>Email</th>
+              <th>Bergabung</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-guru-body">
+            <tr><td colspan="4" class="empty"><span class="spinner spinner-dark"></span> Memuat...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ============================================================
+//  STATE
+// ============================================================
+let token = localStorage.getItem('kb_portal_token') || null;
+let currentUser = JSON.parse(localStorage.getItem('kb_portal_user') || 'null');
+let lastGeneratedKode = null;
+
+// ============================================================
+//  INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  if (token && currentUser && currentUser.role === 'kepala_sekolah') {
+    showDashboard();
+  } else {
+    showSection('section-login');
+  }
+});
+
+// ============================================================
+//  HELPERS
+// ============================================================
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active-panel'));
+  document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+  document.getElementById(tabId).classList.add('active-panel');
+
+  if (tabId === 'tab-list') loadKodeList();
+  if (tabId === 'tab-guru') loadGuruList();
+}
+
+function showAlert(id, msg, type = 'error') {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = `alert alert-${type} show`;
+}
+
+function hideAlert(id) {
+  const el = document.getElementById(id);
+  if (el) { el.className = 'alert'; el.textContent = ''; }
+}
+
+function toast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = type === 'error' ? '#EF4444' : type === 'success' ? '#10B981' : '#1F1235';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+async function api(method, path, body) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' }
+  };
+  if (token) opts.headers['Authorization'] = `Bearer ${token}`;
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch('/api' + path, opts);
+  return res.json();
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+// ============================================================
+//  AUTH
+// ============================================================
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  hideAlert('login-alert');
+
+  if (!email || !password) {
+    showAlert('login-alert', 'Isi email dan password terlebih dahulu.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Masuk...';
+
+  try {
+    const data = await api('POST', '/auth/login', { email, password });
+    if (data.success && data.user.role === 'kepala_sekolah') {
+      token = data.token;
+      currentUser = data.user;
+      localStorage.setItem('kb_portal_token', token);
+      localStorage.setItem('kb_portal_user', JSON.stringify(currentUser));
+      showDashboard();
+    } else if (data.success && data.user.role !== 'kepala_sekolah') {
+      showAlert('login-alert', `Akun ini adalah ${data.user.role}, bukan kepala sekolah. Gunakan akun kepala sekolah.`);
+    } else {
+      showAlert('login-alert', data.pesan || 'Email atau password salah.');
+    }
+  } catch (e) {
+    showAlert('login-alert', 'Tidak bisa terhubung ke server. Pastikan server berjalan.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Masuk sebagai Kepala Sekolah';
+}
+
+function showDashboard() {
+  document.getElementById('badge-role').textContent = '👑 Kepala Sekolah';
+  document.getElementById('badge-role').style.display = 'inline-block';
+  document.getElementById('btn-logout').style.display = 'inline-flex';
+  document.getElementById('dash-greeting').textContent = `Selamat Datang, ${currentUser.nama}! 🏫`;
+  showSection('section-dashboard');
+  loadKodeList();
+}
+
+function logout() {
+  token = null;
+  currentUser = null;
+  localStorage.removeItem('kb_portal_token');
+  localStorage.removeItem('kb_portal_user');
+  document.getElementById('badge-role').style.display = 'none';
+  document.getElementById('btn-logout').style.display = 'none';
+  showSection('section-login');
+}
+
+// ============================================================
+//  GENERATE KODE
+// ============================================================
+async function doGenerateKode() {
+  hideAlert('gen-alert');
+  document.getElementById('gen-result').style.display = 'none';
+
+  const label = document.getElementById('gen-label').value.trim();
+  const maxUses = parseInt(document.getElementById('gen-max-uses').value) || 1;
+  const expiresDays = document.getElementById('gen-expires').value.trim();
+
+  const btn = document.getElementById('btn-generate');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Membuat...';
+
+  try {
+    const body = { label, max_uses: maxUses };
+    if (expiresDays) {
+      const d = new Date();
+      d.setDate(d.getDate() + parseInt(expiresDays));
+      body.expires_at = d.toISOString();
+    }
+
+    const data = await api('POST', '/kode-guru', body);
+    if (data.success) {
+      const kode = data.data?.kode || data.kode || '';
+      lastGeneratedKode = kode;
+      document.getElementById('gen-kode-display').textContent = kode;
+      const sisa = data.data?.sisa_kuota ?? maxUses;
+      document.getElementById('gen-kode-meta').textContent =
+        `Kuota: ${maxUses} guru${expiresDays ? ` · Berlaku ${expiresDays} hari` : ' · Tidak terbatas'}`;
+      document.getElementById('gen-result').style.display = 'block';
+      toast('Kode berhasil dibuat! ✅', 'success');
+    } else {
+      showAlert('gen-alert', data.pesan || 'Gagal membuat kode.');
+    }
+  } catch (e) {
+    showAlert('gen-alert', 'Tidak bisa terhubung ke server.');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '✨ Generate Kode Undangan';
+}
+
+function copyKode() {
+  if (!lastGeneratedKode) return;
+  navigator.clipboard.writeText(lastGeneratedKode).then(() => {
+    toast('Kode disalin! 📋', 'success');
+  }).catch(() => {
+    toast('Gagal menyalin. Salin manual: ' + lastGeneratedKode);
+  });
+}
+
+// ============================================================
+//  DAFTAR KODE
+// ============================================================
+async function loadKodeList() {
+  const tbody = document.getElementById('tbl-kode-body');
+  tbody.innerHTML = '<tr><td colspan="7" class="empty"><span class="spinner spinner-dark"></span> Memuat...</td></tr>';
+  try {
+    const data = await api('GET', '/kode-guru');
+    if (data.success && Array.isArray(data.data)) {
+      if (data.data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">Belum ada kode undangan. Buat kode baru di tab "Buat Kode".</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.data.map(k => {
+        const statusBadge = {
+          active:   '<span class="badge-active">Aktif</span>',
+          revoked:  '<span class="badge-revoked">Dicabut</span>',
+          expired:  '<span class="badge-expired">Kedaluwarsa</span>',
+          used_up:  '<span class="badge-used-up">Habis</span>',
+        }[k.status] || `<span>${k.status}</span>`;
+
+        const canRevoke = k.status === 'active';
+        return `<tr>
+          <td><code style="font-family:monospace;font-weight:900;font-size:15px;letter-spacing:2px;color:var(--primary)">${k.kode}</code></td>
+          <td>${k.label || '<span style="color:var(--muted)">—</span>'}</td>
+          <td>${k.max_uses ?? '∞'}</td>
+          <td>${k.used_count ?? 0}</td>
+          <td>${statusBadge}</td>
+          <td>${fmtDate(k.created_at)}</td>
+          <td>${canRevoke
+            ? `<button class="btn btn-danger btn-sm" onclick="revokeKode('${k.id}')">Cabut</button>`
+            : '<span style="color:var(--muted);font-size:12px">—</span>'
+          }</td>
+        </tr>`;
+      }).join('');
+    } else {
+      tbody.innerHTML = `<tr><td colspan="7" class="empty">${data.pesan || 'Gagal memuat data.'}</td></tr>`;
+    }
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Tidak bisa terhubung ke server.</td></tr>';
+  }
+}
+
+async function revokeKode(id) {
+  if (!confirm('Cabut kode ini? Guru yang belum mendaftar tidak bisa menggunakannya lagi.')) return;
+  try {
+    const data = await api('PATCH', `/kode-guru/${id}/revoke`);
+    if (data.success) {
+      toast('Kode berhasil dicabut.', 'success');
+      loadKodeList();
+    } else {
+      toast(data.pesan || 'Gagal mencabut kode.', 'error');
+    }
+  } catch (e) {
+    toast('Tidak bisa terhubung ke server.', 'error');
+  }
+}
+
+// ============================================================
+//  DAFTAR GURU
+// ============================================================
+async function loadGuruList() {
+  const tbody = document.getElementById('tbl-guru-body');
+  tbody.innerHTML = '<tr><td colspan="4" class="empty"><span class="spinner spinner-dark"></span> Memuat...</td></tr>';
+  try {
+    const data = await api('GET', '/kode-guru/guru-list');
+    if (data.success && Array.isArray(data.data)) {
+      if (data.data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty">Belum ada guru yang terdaftar.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.data.map((g, i) => `<tr>
+        <td style="color:var(--muted);font-weight:700">${i + 1}</td>
+        <td style="font-weight:800">${g.nama || '—'}</td>
+        <td style="color:var(--muted)">${g.email || '—'}</td>
+        <td style="color:var(--muted)">${fmtDate(g.created_at)}</td>
+      </tr>`).join('');
+    } else {
+      tbody.innerHTML = `<tr><td colspan="4" class="empty">${data.pesan || 'Gagal memuat data.'}</td></tr>`;
+    }
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="4" class="empty">Tidak bisa terhubung ke server.</td></tr>';
+  }
+}
+</script>
+</body>
+</html>

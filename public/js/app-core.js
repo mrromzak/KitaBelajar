@@ -370,56 +370,8 @@ function switchRole(role) {
   currentRole = role;
 }
 
-function switchRegRole(role) {
-  currentRegRole = role;
-  // Update tab active state
-  const tabMurid = document.getElementById('reg-tab-murid');
-  const tabGuru  = document.getElementById('reg-tab-guru');
-  if (tabMurid) tabMurid.classList.toggle('active', role === 'murid');
-  if (tabGuru)  tabGuru.classList.toggle('active', role === 'guru');
-  // Show/hide kelas group (murid only)
-  const kelasGroup = document.getElementById('reg-kelas-group');
-  if (kelasGroup) kelasGroup.style.display = role === 'murid' ? '' : 'none';
-  // Show/hide data diri + kode guru group (guru only)
-  const dataDiriGroup = document.getElementById('reg-datadiri-group');
-  if (dataDiriGroup) dataDiriGroup.style.display = role === 'guru' ? '' : 'none';
-  // Reset kode status
-  const statusEl = document.getElementById('reg-kode-guru-status');
-  if (statusEl) statusEl.textContent = '';
-}
-
 function showRegister() {
-  switchRegRole('murid');
   showPage('page-register');
-}
-
-async function cekKodeGuru() {
-  const kodeEl  = document.getElementById('reg-kode-guru');
-  const statusEl = document.getElementById('reg-kode-guru-status');
-  if (!kodeEl || !statusEl) return;
-  const kode = kodeEl.value.trim().toUpperCase();
-  if (!kode) { statusEl.textContent = ''; return; }
-  statusEl.style.color = 'var(--muted)';
-  statusEl.textContent = 'Memeriksa kode…';
-  try {
-    const res = await fetch('/api/kode-guru/validate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ kode })
-    });
-    const data = await res.json();
-    if (data.success) {
-      statusEl.style.color = '#22C55E';
-      const sisa = data.data?.sisa_kuota ?? '?';
-      statusEl.textContent = `✅ Kode valid! Sisa kuota: ${sisa}`;
-    } else {
-      statusEl.style.color = '#EF4444';
-      statusEl.textContent = `❌ ${data.pesan || 'Kode tidak valid.'}`;
-    }
-  } catch (_) {
-    statusEl.style.color = '#EF4444';
-    statusEl.textContent = '❌ Tidak bisa terhubung ke server.';
-  }
 }
 
 async function doLogin() {
@@ -448,7 +400,7 @@ async function doLogin() {
         loadGuruDashboard();
         remindDataDiriIfNeeded();
       } else if (currentUser.role === 'kepala_sekolah') {
-        loadKepalaSekolahDashboard();
+        window.location.href = '/portal-kepala.html';
       } else if (currentUser.role === 'orangtua') {
         loadOrangtuaDashboard();
       } else {
@@ -475,36 +427,10 @@ async function doRegister() {
   if (!isValidEmail(email)) { toast('Format email tidak valid. Contoh: nama@email.com', 'error'); return; }
   if (password.length < 8) { toast('Password minimal 8 karakter ya! 🔒', 'error'); return; }
 
-  // Guru wajib mengisi data diri saat daftar
-  const alamat = document.getElementById('reg-alamat').value.trim();
-  const umur = document.getElementById('reg-umur').value.trim();
-  const asalSekolah = document.getElementById('reg-asal-sekolah').value.trim();
-  if (currentRegRole === 'guru' && (!alamat || !umur || !asalSekolah)) {
-    toast('Guru wajib mengisi alamat, umur, dan asal sekolah! 😊', 'error'); return;
-  }
-
-  // Guru wajib menyertakan kode undangan yang valid
-  if (currentRegRole === 'guru') {
-    const kodeEl = document.getElementById('reg-kode-guru');
-    const kodeGuru = kodeEl ? kodeEl.value.trim().toUpperCase() : '';
-    if (!kodeGuru) { toast('Masukkan kode undangan dari kepala sekolah! 🔑', 'error'); return; }
-    const statusEl = document.getElementById('reg-kode-guru-status');
-    if (statusEl && !statusEl.textContent.includes('✅')) {
-      toast('Klik tombol Cek untuk memverifikasi kode undangan terlebih dahulu! 🔑', 'error'); return;
-    }
-  }
-
   showLoading(true);
   try {
-    const body = { nama, email, password, role: currentRegRole };
-    if (currentRegRole === 'murid' && kelas) body.kelas = kelas;
-    if (currentRegRole === 'guru') {
-      body.alamat = alamat;
-      body.umur = umur;
-      body.asal_sekolah = asalSekolah;
-      const kodeEl = document.getElementById('reg-kode-guru');
-      body.kode_guru = kodeEl ? kodeEl.value.trim().toUpperCase() : '';
-    }
+    const body = { nama, email, password, role: 'murid' };
+    if (kelas) body.kelas = kelas;
     const data = await api('POST', '/auth/send-otp', body);
     if (data.success) {
       _pendingRegEmail = email;
@@ -1351,181 +1277,6 @@ function doLogout() {
 // ============================================================
 //  DASHBOARD KEPALA SEKOLAH
 // ============================================================
-let _kepalaLastKode = null; // simpan kode terakhir yang di-generate untuk copyKode()
-
-async function loadKepalaSekolahDashboard() {
-  if (!currentUser || currentUser.role !== 'kepala_sekolah') return;
-  showPage('page-kepala');
-  const nameEl = document.getElementById('kepala-nav-name');
-  if (nameEl) nameEl.textContent = currentUser.nama;
-  const greetEl = document.getElementById('kepala-greeting');
-  if (greetEl) greetEl.textContent = `Selamat Datang, ${currentUser.nama}! 🏫`;
-  // Muat data paralel
-  await Promise.all([loadKepalaKodeList(), loadKepalaGuruList(), loadKepalaStats()]);
-}
-
-async function loadKepalaStats() {
-  try {
-    const [kodeRes, guruRes] = await Promise.all([
-      api('GET', '/kode-guru'),
-      api('GET', '/kode-guru/guru')
-    ]);
-    const kodeList = kodeRes.success ? (kodeRes.data || []) : [];
-    const guruList = guruRes.success ? (guruRes.data || []) : [];
-    const aktif = kodeList.filter(k => k.status === 'active').length;
-    const statGuru = document.getElementById('kepala-stat-guru');
-    const statKodeAktif = document.getElementById('kepala-stat-kode-aktif');
-    if (statGuru) statGuru.textContent = guruList.length;
-    if (statKodeAktif) statKodeAktif.textContent = aktif;
-    // Murid & kelas dari dashboard endpoint
-    try {
-      const dash = await api('GET', '/dashboard');
-      if (dash && dash.stats) {
-        const statMurid = document.getElementById('kepala-stat-murid');
-        const statKelas = document.getElementById('kepala-stat-kelas');
-        if (statMurid) statMurid.textContent = dash.stats.total_murid ?? '–';
-        if (statKelas) statKelas.textContent = dash.stats.total_kelas ?? '–';
-      }
-    } catch (_) {}
-  } catch (_) {}
-}
-
-async function loadKepalaKodeList() {
-  const el = document.getElementById('kepala-kode-list');
-  if (!el) return;
-  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat kode...</div>';
-  try {
-    const data = await api('GET', '/kode-guru');
-    if (!data.success) { el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted)">${data.pesan || 'Gagal memuat kode.'}</div>`; return; }
-    const list = data.data || [];
-    if (!list.length) {
-      el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)">Belum ada kode. Buat kode undangan pertama untuk guru!</div>';
-      return;
-    }
-    el.innerHTML = list.map(k => {
-      const statusBadge = k.status === 'active'
-        ? '<span style="background:#D1FAE5;color:#065F46;padding:3px 10px;border-radius:50px;font-size:11px;font-weight:700">✅ Aktif</span>'
-        : k.status === 'expired'
-        ? '<span style="background:#FEF3C7;color:#92400E;padding:3px 10px;border-radius:50px;font-size:11px;font-weight:700">⏰ Kadaluarsa</span>'
-        : k.status === 'used_up'
-        ? '<span style="background:#E0E7FF;color:#3730A3;padding:3px 10px;border-radius:50px;font-size:11px;font-weight:700">✔ Habis</span>'
-        : '<span style="background:#FEE2E2;color:#991B1B;padding:3px 10px;border-radius:50px;font-size:11px;font-weight:700">🚫 Dicabut</span>';
-      const expiresStr = k.expires_at
-        ? new Date(k.expires_at).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' })
-        : 'Tidak terbatas';
-      const revokeBtn = k.status === 'active'
-        ? `<button onclick="revokeKode('${k.id}')" style="background:#FEE2E2;color:#991B1B;border:none;padding:6px 14px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:700;font-size:12px;cursor:pointer">🚫 Cabut</button>`
-        : '';
-      return `<div style="background:white;border:1.5px solid #F0F0F0;border-radius:16px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-          <span style="font-family:monospace;font-size:20px;font-weight:900;letter-spacing:3px;color:#7C3AED;background:#F3F0FF;padding:8px 14px;border-radius:10px">${k.kode}</span>
-          <div>
-            <div style="font-weight:700;font-size:14px;margin-bottom:2px">${k.label || 'Kode Undangan'}</div>
-            <div style="font-size:12px;color:var(--muted)">Pakai: ${k.used_count}/${k.max_uses} · Berlaku: ${expiresStr}</div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          ${statusBadge}
-          ${revokeBtn}
-        </div>
-      </div>`;
-    }).join('');
-  } catch (e) {
-    el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Gagal memuat kode.</div>';
-  }
-}
-
-async function loadKepalaGuruList() {
-  const el = document.getElementById('kepala-guru-list');
-  if (!el) return;
-  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat daftar guru...</div>';
-  try {
-    const data = await api('GET', '/kode-guru/guru');
-    if (!data.success) { el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted)">${data.pesan || 'Gagal memuat.'}</div>`; return; }
-    const list = data.data || [];
-    if (!list.length) {
-      el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)">Belum ada guru yang terdaftar.</div>';
-      return;
-    }
-    el.innerHTML = list.map((g, i) => {
-      const avatarHtml = g.avatar
-        ? `<div style="width:36px;height:36px;border-radius:50%;background:#F3F0FF;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${g.avatar}</div>`
-        : `<div style="width:36px;height:36px;border-radius:50%;background:#7C3AED;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:14px;flex-shrink:0">${(g.nama||'G').charAt(0).toUpperCase()}</div>`;
-      const tgl = g.created_at ? new Date(g.created_at).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' }) : '–';
-      return `<div style="background:white;border:1.5px solid #F0F0F0;border-radius:16px;padding:14px 18px;margin-bottom:8px;display:flex;align-items:center;gap:14px">
-        ${avatarHtml}
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:700;font-size:14px">${g.nama}</div>
-          <div style="font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.email}</div>
-        </div>
-        <div style="font-size:11px;color:var(--muted);white-space:nowrap">Bergabung ${tgl}</div>
-      </div>`;
-    }).join('');
-  } catch (e) {
-    el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Gagal memuat daftar guru.</div>';
-  }
-}
-
-async function doGenerateKode() {
-  const label    = (document.getElementById('gen-kode-label')?.value || '').trim() || null;
-  const maxUses  = parseInt(document.getElementById('gen-kode-max-uses')?.value || '1', 10);
-  const expires  = (document.getElementById('gen-kode-expires')?.value || '').trim() || null;
-  const resultEl = document.getElementById('gen-kode-result');
-  const valEl    = document.getElementById('gen-kode-value');
-  const infoEl   = document.getElementById('gen-kode-info');
-  if (resultEl) resultEl.style.display = 'none';
-  try {
-    const body = { max_uses: maxUses || 1, label };
-    if (expires) body.expires_in_days = parseInt(expires, 10);
-    const data = await api('POST', '/kode-guru', body);
-    if (!data.success) { toast(data.pesan || 'Gagal membuat kode.', 'error'); return; }
-    const k = data.data;
-    _kepalaLastKode = k.kode;
-    if (valEl) valEl.textContent = k.kode;
-    if (infoEl) {
-      const expiresStr = k.expires_at
-        ? `Berlaku s/d ${new Date(k.expires_at).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' })}`
-        : 'Tidak ada batas waktu';
-      infoEl.textContent = `Maks. ${k.max_uses} guru · ${expiresStr}`;
-    }
-    if (resultEl) resultEl.style.display = 'block';
-    toast('Kode undangan berhasil dibuat! 🎉', 'success');
-    loadKepalaKodeList();
-    loadKepalaStats();
-  } catch (e) {
-    toast('Gagal membuat kode. Coba lagi.', 'error');
-  }
-}
-
-function copyKode() {
-  const kode = _kepalaLastKode || document.getElementById('gen-kode-value')?.textContent || '';
-  if (!kode) return;
-  navigator.clipboard.writeText(kode).then(() => {
-    toast('Kode disalin ke clipboard! 📋', 'success');
-  }).catch(() => {
-    // Fallback
-    const ta = document.createElement('textarea');
-    ta.value = kode;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    toast('Kode disalin! 📋', 'success');
-  });
-}
-
-async function revokeKode(id) {
-  if (!confirm('Yakin ingin mencabut kode ini? Guru yang belum pakai tidak bisa menggunakannya lagi.')) return;
-  try {
-    const data = await api('PATCH', `/kode-guru/${id}/revoke`, {});
-    if (!data.success) { toast(data.pesan || 'Gagal mencabut kode.', 'error'); return; }
-    toast('Kode berhasil dicabut.', 'success');
-    loadKepalaKodeList();
-    loadKepalaStats();
-  } catch (e) {
-    toast('Gagal mencabut kode. Coba lagi.', 'error');
-  }
-}
 
 // ============================================================
 //  DASHBOARD ORANGTUA
