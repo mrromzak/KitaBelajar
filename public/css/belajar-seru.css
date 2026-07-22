@@ -634,9 +634,9 @@
 
   /* ===== GOOGLE CLASSROOM STYLE ===== */
   .kelas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-bottom: 32px; }
-  .kelas-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); cursor: pointer; transition: all 0.25s; }
+  .kelas-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); cursor: pointer; transition: all 0.25s; display: flex; flex-direction: column; }
   .kelas-card:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(0,0,0,0.13); }
-  .kelas-card-header { padding: 24px 20px 20px; position: relative; overflow: hidden; min-height: 110px; }
+  .kelas-card-header { padding: 24px 20px 20px; position: relative; overflow: hidden; min-height: 110px; flex: 1; }
   .kelas-card-header::after { content: ''; position: absolute; right: -20px; bottom: -30px; width: 100px; height: 100px; background: rgba(255,255,255,0.15); border-radius: 50%; }
   .kelas-card-header::before { content: ''; position: absolute; right: 30px; bottom: -50px; width: 140px; height: 140px; background: rgba(255,255,255,0.1); border-radius: 50%; }
   .kelas-mapel-tag { display: inline-block; background: rgba(255,255,255,0.25); color: white; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 50px; margin-bottom: 8px; }
