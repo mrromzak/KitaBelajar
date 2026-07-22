@@ -539,10 +539,10 @@
               <th>#</th>
               <th>Nama</th>
               <th>Email</th>
+              <th>Kode Guru</th>
               <th>Alamat</th>
               <th>Umur</th>
               <th>Asal Sekolah</th>
-              <th>Kode Guru</th>
               <th>Bergabung</th>
               <th>Aksi</th>
             </tr>
@@ -879,14 +879,14 @@ async function loadGuruList() {
         tbody.innerHTML = '<tr><td colspan="9" class="empty">Belum ada guru yang terdaftar.</td></tr>';
         return;
       }
-      tbody.innerHTML = data.data.map((g, i) => `<tr>
+      tbody.innerHTML = data.data.map((g, i) => `<tr onclick="if(!event.target.closest('button')) openEditGuruModal('${g.id}', '${escapeHtml(g.nama)}', '${escapeHtml(g.email)}', '${escapeHtml(g.alamat || '')}', '${g.umur || ''}', '${escapeHtml(g.asal_sekolah || '')}')" style="cursor:pointer">
         <td style="color:var(--muted);font-weight:700">${i + 1}</td>
         <td style="font-weight:800">${g.nama || '—'}</td>
         <td style="color:var(--muted)">${g.email || '—'}</td>
+        <td><code style="font-family:monospace;font-weight:900;font-size:14px;color:var(--orange)">${g.code_guru || '—'}</code></td>
         <td>${g.alamat || '<span style="color:var(--muted)">—</span>'}</td>
         <td>${g.umur || '<span style="color:var(--muted)">—</span>'}</td>
         <td>${g.asal_sekolah || '<span style="color:var(--muted)">—</span>'}</td>
-        <td><code style="font-family:monospace;font-weight:900;font-size:14px;color:var(--orange)">${g.code_guru || '—'}</code></td>
         <td style="color:var(--muted);font-size:12px">${fmtDate(g.created_at)}</td>
         <td>
           <div style="display:flex;gap:6px">

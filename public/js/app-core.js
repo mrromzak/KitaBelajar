@@ -10,6 +10,37 @@ let currentUser = JSON.parse(localStorage.getItem('kb_user') || 'null');
 let currentRole = 'murid'; // for login page
 let currentRegRole = 'murid';
 
+// ── DARK MODE FUNCTIONS ──────────────────────────────────────
+function toggleGlobalDarkMode() {
+  const mode = document.body.classList.toggle('dark-mode');
+  localStorage.setItem('kb_dark_mode', mode);
+  document.querySelectorAll('.dark-mode-toggle').forEach(btn => {
+    btn.textContent = mode ? '☀️' : '🌙';
+  });
+}
+
+function initGlobalDarkMode() {
+  const isDarkMode = localStorage.getItem('kb_dark_mode') === 'true';
+  if (isDarkMode) {
+    document.body.classList.add('dark-mode');
+  } else {
+    document.body.classList.remove('dark-mode');
+  }
+  document.querySelectorAll('.dark-mode-toggle').forEach(btn => {
+    btn.textContent = isDarkMode ? '☀️' : '🌙';
+  });
+}
+
+function kembaliKeDashboardUtama() {
+  if (currentUser) {
+    if (currentUser.role === 'guru') showPage('page-guru');
+    else if (currentUser.role === 'orangtua') showPage('page-orangtua');
+    else showPage('page-murid');
+  } else {
+    showPage('page-landing');
+  }
+}
+
 // ============================================================
 //  MATA PELAJARAN MANAGEMENT
 // ============================================================
@@ -740,7 +771,9 @@ let _pendingGoogleGuruToken = null; // Token Google yang menunggu verifikasi kod
 async function _handleGoogleCredential(response) {
   showLoading(true);
   try {
-    const data = await api('POST', '/auth/google', { google_token: response.credential });
+    const isRegisterPage = document.getElementById('page-register') && document.getElementById('page-register').classList.contains('active');
+    const mode = isRegisterPage ? 'register' : 'login';
+    const data = await api('POST', '/auth/google', { google_token: response.credential, mode });
     if (data.success) {
       if (data.needs_kode_guru) {
         // Akun guru terdeteksi — minta kode undangan dari kepala sekolah
@@ -5847,6 +5880,7 @@ function showResult() {
 //  AUTO LOGIN jika token masih ada
 // ============================================================
 window.addEventListener('load', () => {
+  initGlobalDarkMode();
   // Cek reset_token di URL
   const urlParams = new URLSearchParams(location.search);
   const resetToken = urlParams.get('reset_token');

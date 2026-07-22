@@ -1196,3 +1196,165 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ===== DARK MODE STYLES ===== */
+body.dark-mode {
+  --bg: #120B24;
+  --card: #1C1430;
+  --text: #F1EDF9;
+  --muted: #A39BB5;
+  --shadow: 0 6px 24px rgba(0,0,0,0.3);
+}
+body.dark-mode {
+  background:
+    radial-gradient(900px 650px at 0% 0%, rgba(255,107,53,0.12), transparent 60%),
+    radial-gradient(850px 620px at 100% 3%, rgba(199,125,255,0.12), transparent 58%),
+    radial-gradient(1000px 780px at 50% 110%, rgba(77,150,255,0.08), transparent 62%),
+    #0F0A1C;
+  background-attachment: fixed;
+  color: var(--text);
+}
+body.dark-mode .navbar, body.dark-mode nav {
+  background: #1C1430;
+  border-color: #2B2144;
+}
+body.dark-mode input, body.dark-mode select, body.dark-mode textarea {
+  background: #251D3A;
+  border-color: #382D54;
+  color: #F1EDF9;
+}
+body.dark-mode input::placeholder {
+  color: #6D6480;
+}
+body.dark-mode .login-card, body.dark-mode .panel, body.dark-mode .card, body.dark-mode .welcome-banner, body.dark-mode .modal {
+  background: #1C1430;
+  color: #F1EDF9;
+  border-color: #2B2144;
+}
+body.dark-mode .empty-state {
+  color: #A39BB5;
+}
+body.dark-mode .lb-tab, body.dark-mode .lb-filter, body.dark-mode .misi-filter {
+  background: #251D3A;
+  border-color: #382D54;
+  color: #F1EDF9;
+}
+body.dark-mode .lb-tab.active, body.dark-mode .lb-filter.active, body.dark-mode .misi-filter.active {
+  background: linear-gradient(135deg,#6A4CF0,#B23FC9);
+  color: white;
+}
+body.dark-mode .lb-item {
+  background: #1C1430;
+  border-color: #2B2144;
+}
+body.dark-mode .lb-item.saya {
+  background: #25183A;
+  border-color: #7b2ff7;
+}
+body.dark-mode .misi-card {
+  background: #1C1430;
+}
+body.dark-mode .misi-card.selesai {
+  background: #102B1D;
+  border-left-color: #00C851;
+}
+body.dark-mode .misi-progres-bar {
+  background: #251D3A;
+}
+body.dark-mode .progress-mini {
+  background: #251D3A;
+}
+body.dark-mode .chat-input-area, body.dark-mode .gchat-footer {
+  background: #1C1430;
+  border-top-color: #2B2144;
+}
+body.dark-mode .gchat-input {
+  background: #251D3A;
+  border-color: #382D54;
+  color: #F1EDF9;
+}
+body.dark-mode .gchat-msg.bot .gchat-bubble {
+  background: #251D3A;
+  color: #F1EDF9;
+}
+body.dark-mode .modal-overlay {
+  background: rgba(0, 0, 0, 0.65);
+}
+body.dark-mode .modal-slide-down {
+  background: #1C1430 !important;
+  color: #F1EDF9 !important;
+  border: 2px solid #2B2144;
+}
+body.dark-mode .tab-item {
+  border-color: #2B2144;
+}
+body.dark-mode .tab-item.active {
+  background: #251D3A;
+}
+body.dark-mode .materi-card, body.dark-mode .soal-card, body.dark-mode .kelas-card, body.dark-mode .stream-post, body.dark-mode .task-card {
+  background: #1C1430;
+  border-color: #2B2144;
+  color: #F1EDF9;
+}
+body.dark-mode .stream-post {
+  border: 2px solid #2B2144;
+}
+body.dark-mode .comment-box, body.dark-mode .komentar-area {
+  background: #251D3A;
+  border-top-color: #2B2144;
+}
+body.dark-mode .komentar-item {
+  border-bottom-color: #2B2144;
+}
+body.dark-mode .btn-cancel {
+  background: #251D3A;
+  border-color: #382D54;
+  color: #F1EDF9;
+}
+body.dark-mode .bell-btn {
+  border-color: #2B2144;
+}
+body.dark-mode .bell-btn:hover {
+  background: #251D3A;
+}
+body.dark-mode .bell-dropdown, body.dark-mode .profile-dropdown {
+  background: #1C1430;
+  border-color: #2B2144;
+  color: #F1EDF9;
+}
+body.dark-mode .bell-item {
+  border-bottom-color: #2B2144;
+}
+body.dark-mode .bell-item:hover {
+  background: #251D3A;
+}
+body.dark-mode .bell-item.unread {
+  background: #2D1E4E;
+}
+body.dark-mode .btn-meeting {
+  background: #251D3A;
+  color: #4D96FF;
+}
+body.dark-mode .materi-ceklis-btn {
+  background: #251D3A;
+  border-color: #382D54;
+}
+body.dark-mode .materi-ceklis-btn.done {
+  background: #102B1D;
+  border-color: #00C851;
+}
+body.dark-mode .badge-card {
+  background: #1C1430;
+  border-color: #2B2144;
+}
+body.dark-mode .badge-card.dimiliki {
+  background: #251D3A;
+  border-color: #7b2ff7;
+}
+body.dark-mode .badge-modal-box {
+  background: #1C1430;
+  border: 2px solid #2B2144;
+}
+body.dark-mode .badge-modal-desc {
+  color: #A39BB5;
+}
