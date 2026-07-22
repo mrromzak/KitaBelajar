@@ -41,7 +41,7 @@ function normalizeKode(k)  { return String(k || '').trim().toUpperCase(); }
 
 // ── Public shape sent to clients ──────────────────────────────
 function publicCode(c) {
-  const usedCount = c.usedCount ?? 0;
+  const usedCount = c.usedCount ?? c.used_count ?? 0;
   const maxUses   = c.maxUses   ?? c.max_uses ?? 1;
   return {
     id:         c.id,
@@ -58,8 +58,11 @@ function publicCode(c) {
 
 function deriveStatus(c) {
   if (c.status === 'revoked') return 'revoked';
-  if (c.expiresAt && c.expiresAt < Date.now()) return 'expired';
-  if ((c.usedCount ?? 0) >= (c.maxUses ?? c.max_uses ?? 1)) return 'used_up';
+  const expiresAt = c.expiresAt ?? c.expires_at;
+  if (expiresAt && new Date(expiresAt).getTime() < Date.now()) return 'expired';
+  const usedCount = c.usedCount ?? c.used_count ?? 0;
+  const maxUses   = c.maxUses   ?? c.max_uses ?? 1;
+  if (usedCount >= maxUses) return 'used_up';
   return 'active';
 }
 
@@ -88,117 +91,296 @@ function createStore(supabase = null) {
 
   // ── User helpers ───────────────────────────────────────────
 
-  function _createUser({ nama, email, passwordHash, role }) {
+  async function _createUser({ nama, email, passwordHash, role }) {
     const normEmail = normalizeEmail(email);
+    if (supabase) {
+      const { data: existing } = await supabase.from('users').select('id').eq('email', normEmail).maybeSingle();
+      if (existing) return { error: 'Email sudah terdaftar.' };
+      const id = crypto.randomUUID();
+      const { data, error } = await supabase.from('users').insert({
+        id,
+        nama,
+        email: normEmail,
+        password: passwordHash,
+        role,
+        avatar: role === 'guru' ? '👩‍🏫' : '🦁'
+      }).select().single();
+      if (error) return { error: error.message };
+      return { user: { id: data.id, nama: data.nama, email: data.email, role: data.role, createdAt: data.created_at } };
+    } else {
+      if (_usersByEmail.has(normEmail)) return { error: 'Email sudah terdaftar.' };
+      const id   = crypto.randomUUID();
+      const user = { id, nama, email: normEmail, passwordHash, role, createdAt: Date.now() };
+      _users.set(id, user);
+      _usersByEmail.set(normEmail, id);
+      return { user };
+    }
+  }
+
+  // Sync / Async wrapper to maintain sync for tests but support async for Supabase path
+  function createKepala(data) {
+    if (supabase) {
+      return _createUser({ ...data, role: 'kepala_sekolah' });
+    }
+    const normEmail = normalizeEmail(data.email);
     if (_usersByEmail.has(normEmail)) return { error: 'Email sudah terdaftar.' };
     const id   = crypto.randomUUID();
-    const user = { id, nama, email: normEmail, passwordHash, role, createdAt: Date.now() };
+    const user = { id, nama: data.nama, email: normEmail, passwordHash: data.passwordHash, role: 'kepala_sekolah', createdAt: Date.now() };
     _users.set(id, user);
     _usersByEmail.set(normEmail, id);
     return { user };
   }
 
-  // Sync — tests call without await
-  function createKepala(data) { return _createUser({ ...data, role: 'kepala_sekolah' }); }
-  function createGuru(data)   { return _createUser({ ...data, role: 'guru' }); }
+  function createGuru(data) {
+    if (supabase) {
+      return _createUser({ ...data, role: 'guru' });
+    }
+    const normEmail = normalizeEmail(data.email);
+    if (_usersByEmail.has(normEmail)) return { error: 'Email sudah terdaftar.' };
+    const id   = crypto.randomUUID();
+    const user = { id, nama: data.nama, email: normEmail, passwordHash: data.passwordHash, role: 'guru', createdAt: Date.now() };
+    _users.set(id, user);
+    _usersByEmail.set(normEmail, id);
+    return { user };
+  }
 
   function findUserByEmail(email) {
-    const id = _usersByEmail.get(normalizeEmail(email));
-    return id ? _users.get(id) : null;
+    const normEmail = normalizeEmail(email);
+    if (supabase) {
+      return (async () => {
+        const { data, error } = await supabase.from('users').select('*').eq('email', normEmail).maybeSingle();
+        if (error || !data) return null;
+        return {
+          id: data.id,
+          nama: data.nama,
+          email: data.email,
+          passwordHash: data.password,
+          role: data.role,
+          createdAt: data.created_at
+        };
+      })();
+    } else {
+      const id = _usersByEmail.get(normEmail);
+      const user = id ? _users.get(id) : null;
+      return user;
+    }
   }
 
   function listGuru() {
-    return [..._users.values()]
-      .filter(u => u.role === 'guru')
-      .map(publicUser);
+    if (supabase) {
+      return (async () => {
+        const { data, error } = await supabase.from('users').select('*').eq('role', 'guru').order('created_at', { ascending: false });
+        if (error || !data) return [];
+        return data.map(publicUser);
+      })();
+    } else {
+      const list = [..._users.values()]
+        .filter(u => u.role === 'guru')
+        .map(publicUser);
+      return list;
+    }
   }
 
   // ── Code helpers ───────────────────────────────────────────
 
   function generateCode({ dibuatOleh, maxUses = 1, expiresInDays = null, label = null }) {
-    // Generate unique kode
     let kode, attempts = 0;
-    do {
-      kode = randomKode(8);
-      attempts++;
-    } while (_codesByKode.has(kode) && attempts < 20);
+    if (supabase) {
+      return (async () => {
+        do {
+          kode = randomKode(8);
+          const { data } = await supabase.from('kode_guru').select('id').eq('kode', kode).maybeSingle();
+          if (!data) break;
+          attempts++;
+        } while (attempts < 20);
 
-    const expiresAt = expiresInDays
-      ? Date.now() + expiresInDays * 24 * 60 * 60 * 1000
-      : null;
+        const expiresAt = expiresInDays
+          ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString()
+          : null;
 
-    const code = {
-      id:         crypto.randomUUID(),
-      kode,
-      dibuatOleh,
-      status:     'active',
-      maxUses:    Math.min(Math.max(parseInt(maxUses, 10) || 1, 1), 1000),
-      usedCount:  0,
-      expiresAt,
-      label:      label ? String(label).slice(0, 100) : null,
-      createdAt:  Date.now()
-    };
-    _codes.set(code.id, code);
-    _codesByKode.set(kode, code.id);
-    return { code };
+        const id = crypto.randomUUID();
+        const { data, error } = await supabase.from('kode_guru').insert({
+          id,
+          kode,
+          dibuat_oleh: dibuatOleh,
+          status: 'active',
+          max_uses: Math.min(Math.max(parseInt(maxUses, 10) || 1, 1), 1000),
+          used_count: 0,
+          expires_at: expiresAt,
+          label: label ? String(label).slice(0, 100) : null
+        }).select().single();
+
+        if (error) return { error: error.message };
+        return { code: publicCode(data) };
+      })();
+    } else {
+      do {
+        kode = randomKode(8);
+        attempts++;
+      } while (_codesByKode.has(kode) && attempts < 20);
+
+      const expiresAt = expiresInDays
+        ? Date.now() + expiresInDays * 24 * 60 * 60 * 1000
+        : null;
+
+      const code = {
+        id:         crypto.randomUUID(),
+        kode,
+        dibuatOleh,
+        status:     'active',
+        maxUses:    Math.min(Math.max(parseInt(maxUses, 10) || 1, 1), 1000),
+        usedCount:  0,
+        expiresAt,
+        label:      label ? String(label).slice(0, 100) : null,
+        createdAt:  Date.now()
+      };
+      _codes.set(code.id, code);
+      _codesByKode.set(kode, code.id);
+      return { code };
+    }
   }
 
-  // Sync validate — no side effects
   function validateCode(rawKode) {
     const kode = normalizeKode(rawKode);
-    const id   = _codesByKode.get(kode);
-    if (!id) return { valid: false, reason: 'Kode tidak ditemukan.' };
-    const code = _codes.get(id);
-    if (!code)                    return { valid: false, reason: 'Kode tidak ditemukan.' };
-    if (code.status === 'revoked') return { valid: false, reason: 'Kode sudah dicabut.' };
-    if (code.expiresAt && code.expiresAt < Date.now())
-      return { valid: false, reason: 'Kode sudah kadaluarsa.' };
-    if (code.usedCount >= code.maxUses)
-      return { valid: false, reason: 'Kuota kode sudah habis.' };
-    return { valid: true };
+    if (supabase) {
+      return (async () => {
+        const { data, error } = await supabase.from('kode_guru').select('*').eq('kode', kode).maybeSingle();
+        if (error || !data) return { valid: false, reason: 'Kode tidak ditemukan.' };
+        if (data.status === 'revoked') return { valid: false, reason: 'Kode sudah dicabut.' };
+        if (data.expires_at && new Date(data.expires_at).getTime() < Date.now())
+          return { valid: false, reason: 'Kode sudah kadaluarsa.' };
+        if ((data.used_count || 0) >= data.max_uses)
+          return { valid: false, reason: 'Kuota kode sudah habis.' };
+        return { valid: true };
+      })();
+    } else {
+      const id   = _codesByKode.get(kode);
+      if (!id) return { valid: false, reason: 'Kode tidak ditemukan.' };
+      const code = _codes.get(id);
+      if (!code)                    return { valid: false, reason: 'Kode tidak ditemukan.' };
+      if (code.status === 'revoked') return { valid: false, reason: 'Kode sudah dicabut.' };
+      if (code.expiresAt && code.expiresAt < Date.now())
+        return { valid: false, reason: 'Kode sudah kadaluarsa.' };
+      if (code.usedCount >= code.maxUses)
+        return { valid: false, reason: 'Kuota kode sudah habis.' };
+      return { valid: true };
+    }
   }
 
-  // Synchronous redeem — safe because Node.js is single-threaded.
-  // Each concurrent HTTP request runs its synchronous code atomically
-  // before yielding to the event loop, so usedCount++ cannot race.
-  // The test calls this without await and checks .ok directly.
   function redeemCode(rawKode, guruId) {
     const kode = normalizeKode(rawKode);
-    const id   = _codesByKode.get(kode);
-    if (!id) return { ok: false, reason: 'Kode tidak ditemukan.' };
-    const code = _codes.get(id);
-    if (!code) return { ok: false, reason: 'Kode tidak ditemukan.' };
+    if (supabase) {
+      return (async () => {
+        // Panggil RPC Supabase redeem_kode_guru yang bersifat atomik
+        const { data: codeId, error } = await supabase.rpc('redeem_kode_guru', { p_kode: kode });
+        if (error || !codeId) {
+          // Fallback jika RPC tidak terdefinisi/eror: coba manual dengan read-modify-write (tetapi laporkan)
+          const { data: codeData } = await supabase.from('kode_guru').select('*').eq('kode', kode).maybeSingle();
+          if (!codeData) return { ok: false, reason: 'Kode tidak ditemukan.' };
+          if (codeData.status === 'revoked') return { ok: false, reason: 'Kode sudah dicabut.' };
+          if (codeData.expires_at && new Date(codeData.expires_at).getTime() < Date.now())
+            return { ok: false, reason: 'Kode sudah kadaluarsa.' };
+          if ((codeData.used_count || 0) >= codeData.max_uses)
+            return { ok: false, reason: 'Kuota kode sudah habis.' };
 
-    if (code.status === 'revoked')
-      return { ok: false, reason: 'Kode sudah dicabut.' };
-    if (code.expiresAt && code.expiresAt < Date.now())
-      return { ok: false, reason: 'Kode sudah kadaluarsa.' };
-    if (code.usedCount >= code.maxUses)
-      return { ok: false, reason: 'Kuota kode sudah habis.' };
+          const { error: updateError } = await supabase
+            .from('kode_guru')
+            .update({ used_count: (codeData.used_count || 0) + 1 })
+            .eq('id', codeData.id);
 
-    code.usedCount += 1;
-    _redemptions.push({ id: crypto.randomUUID(), codeId: id, guruId, redeemedAt: Date.now() });
-    return { ok: true };
+          if (updateError) return { ok: false, reason: 'Gagal meredeem kode.' };
+          
+          await supabase.from('kode_guru_redemptions').insert({
+            id: crypto.randomUUID(),
+            kode_id: codeData.id,
+            guru_id: guruId
+          });
+          return { ok: true };
+        }
+
+        await supabase.from('kode_guru_redemptions').insert({
+          id: crypto.randomUUID(),
+          kode_id: codeId,
+          guru_id: guruId
+        });
+        return { ok: true };
+      })();
+    } else {
+      const id   = _codesByKode.get(kode);
+      if (!id) return { ok: false, reason: 'Kode tidak ditemukan.' };
+      const code = _codes.get(id);
+      if (!code) return { ok: false, reason: 'Kode tidak ditemukan.' };
+
+      if (code.status === 'revoked')
+        return { ok: false, reason: 'Kode sudah dicabut.' };
+      if (code.expiresAt && code.expiresAt < Date.now())
+        return { ok: false, reason: 'Kode sudah kadaluarsa.' };
+      if (code.usedCount >= code.maxUses)
+        return { ok: false, reason: 'Kuota kode sudah habis.' };
+
+      code.usedCount += 1;
+      _redemptions.push({ id: crypto.randomUUID(), codeId: id, guruId, redeemedAt: Date.now() });
+      return { ok: true };
+    }
   }
 
   function listCodes(kepalaId) {
-    return [..._codes.values()]
-      .filter(c => c.dibuatOleh === kepalaId)
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .map(publicCode);
+    if (supabase) {
+      return (async () => {
+        const { data, error } = await supabase
+          .from('kode_guru')
+          .select('*')
+          .eq('dibuat_oleh', kepalaId)
+          .order('created_at', { ascending: false });
+        if (error || !data) return [];
+        return data.map(publicCode);
+      })();
+    } else {
+      const list = [..._codes.values()]
+        .filter(c => c.dibuatOleh === kepalaId)
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .map(publicCode);
+      return list;
+    }
   }
 
   function revokeCode(id, kepalaId) {
-    const code = _codes.get(id);
-    if (!code)                       return { error: 'Kode tidak ditemukan.' };
-    if (code.dibuatOleh !== kepalaId) return { error: 'Bukan kode milikmu.' };
-    if (code.status === 'revoked')   return { entry: publicCode(code) };
-    code.status = 'revoked';
-    return { entry: publicCode(code) };
+    if (supabase) {
+      return (async () => {
+        const { data: codeData } = await supabase.from('kode_guru').select('*').eq('id', id).maybeSingle();
+        if (!codeData) return { error: 'Kode tidak ditemukan.' };
+        if (codeData.dibuat_oleh !== kepalaId) return { error: 'Bukan kode milikmu.' };
+        
+        const { data, error } = await supabase
+          .from('kode_guru')
+          .update({ status: 'revoked' })
+          .eq('id', id)
+          .select().single();
+
+        if (error) return { error: error.message };
+        return { entry: publicCode(data) };
+      })();
+    } else {
+      const code = _codes.get(id);
+      if (!code)                       return { error: 'Kode tidak ditemukan.' };
+      if (code.dibuatOleh !== kepalaId) return { error: 'Bukan kode milikmu.' };
+      if (code.status === 'revoked')   return { entry: publicCode(code) };
+      code.status = 'revoked';
+      return { entry: publicCode(code) };
+    }
   }
 
   function listRedemptions(codeId) {
-    return _redemptions.filter(r => r.codeId === codeId);
+    if (supabase) {
+      return (async () => {
+        const { data, error } = await supabase.from('kode_guru_redemptions').select('*').eq('kode_id', codeId);
+        if (error || !data) return [];
+        return data;
+      })();
+    } else {
+      const list = _redemptions.filter(r => r.codeId === codeId);
+      return list;
+    }
   }
 
   // Internal escape hatch for tests (mutable reference)
@@ -207,11 +389,25 @@ function createStore(supabase = null) {
   }
 
   function stats() {
-    return {
-      users:       _users.size,
-      codes:       _codes.size,
-      redemptions: _redemptions.length
-    };
+    if (supabase) {
+      return (async () => {
+        const { count: usersCount } = await supabase.from('users').select('*', { count: 'exact', head: true });
+        const { count: codesCount } = await supabase.from('kode_guru').select('*', { count: 'exact', head: true });
+        const { count: redemptionsCount } = await supabase.from('kode_guru_redemptions').select('*', { count: 'exact', head: true });
+        return {
+          users: usersCount || 0,
+          codes: codesCount || 0,
+          redemptions: redemptionsCount || 0
+        };
+      })();
+    } else {
+      const counts = {
+        users:       _users.size,
+        codes:       _codes.size,
+        redemptions: _redemptions.length
+      };
+      return counts;
+    }
   }
 
   return {

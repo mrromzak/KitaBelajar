@@ -14,6 +14,7 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const supabase = require('../supabase');
 const { authMiddleware, kepalaOnly } = require('../middleware/auth');
@@ -118,7 +119,7 @@ router.get('/', authMiddleware, kepalaOnly, async (req, res) => {
 router.get('/guru', authMiddleware, kepalaOnly, async (req, res) => {
   try {
     const { data, error } = await supabase
-      .from('users').select('id, nama, email, avatar, created_at')
+      .from('users').select('id, nama, email, avatar, created_at, alamat, umur, asal_sekolah, code_guru')
       .eq('role', 'guru')
       .order('created_at', { ascending: false });
     if (error) throw error;
@@ -126,6 +127,119 @@ router.get('/guru', authMiddleware, kepalaOnly, async (req, res) => {
   } catch (err) {
     console.error('[kode-guru:guru]', err.message);
     res.status(500).json({ success: false, pesan: 'Gagal memuat daftar guru.' });
+  }
+});
+
+// =====================================================
+//  POST /api/kode-guru/guru — kepala daftarkan guru secara manual
+// =====================================================
+router.post('/guru', authMiddleware, kepalaOnly, async (req, res) => {
+  try {
+    const { nama, email, password, alamat, umur, asal_sekolah } = req.body;
+    if (!nama || !email || !password) {
+      return res.status(400).json({ success: false, pesan: 'Nama, email, dan password wajib diisi.' });
+    }
+
+    const normalEmail = email.toLowerCase().trim();
+    const { data: existing } = await supabase.from('users').select('id').eq('email', normalEmail).maybeSingle();
+    if (existing) {
+      return res.status(400).json({ success: false, pesan: 'Email sudah terdaftar.' });
+    }
+
+    const id = uuidv4();
+    const hashedPassword = bcrypt.hashSync(password, 10);
+
+    // Generate code_guru baru
+    let newCode = '';
+    const { data: generated } = await supabase.rpc('generate_code_guru_for_user', { p_user_id: id }).catch(() => ({ data: null }));
+    if (!generated) {
+      for (let i = 0; i < 8; i++) newCode += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+    }
+
+    const { error } = await supabase.from('users').insert({
+      id,
+      nama: cleanText(nama, 100),
+      email: normalEmail,
+      password: hashedPassword,
+      role: 'guru',
+      avatar: '👩‍🏫',
+      alamat: alamat ? cleanText(alamat, 200) : null,
+      umur: umur ? parseInt(umur, 10) : null,
+      asal_sekolah: asal_sekolah ? cleanText(asal_sekolah, 150) : null,
+      profil_lengkap: !!(alamat && umur && asal_sekolah),
+      code_guru: newCode || null,
+      code_guru_generated_at: newCode ? new Date().toISOString() : null
+    });
+    if (error) throw error;
+
+    if (!newCode) {
+      // Panggil RPC ulang jika tadi tidak langsung di-insert (karena id user harus terdaftar dulu)
+      await supabase.rpc('generate_code_guru_for_user', { p_user_id: id }).catch(() => {});
+    }
+
+    res.status(201).json({ success: true, pesan: 'Guru berhasil didaftarkan secara manual.' });
+  } catch (err) {
+    console.error('[kode-guru:create-guru-manual]', err.message);
+    res.status(500).json({ success: false, pesan: 'Gagal mendaftarkan guru secara manual.' });
+  }
+});
+
+// =====================================================
+//  PUT /api/kode-guru/guru/:id — kepala edit data diri guru
+// =====================================================
+router.put('/guru/:id', authMiddleware, kepalaOnly, async (req, res) => {
+  try {
+    const { nama, email, password, alamat, umur, asal_sekolah } = req.body;
+    const { id } = req.params;
+
+    const updates = {};
+    if (nama) updates.nama = cleanText(nama, 100);
+    if (email) updates.email = email.toLowerCase().trim();
+    if (password) updates.password = bcrypt.hashSync(password, 10);
+    if (alamat !== undefined) updates.alamat = alamat ? cleanText(alamat, 200) : null;
+    if (umur !== undefined) updates.umur = umur ? parseInt(umur, 10) : null;
+    if (asal_sekolah !== undefined) updates.asal_sekolah = asal_sekolah ? cleanText(asal_sekolah, 150) : null;
+
+    if (updates.alamat !== undefined || updates.umur !== undefined || updates.asal_sekolah !== undefined) {
+      // Ambil user dulu untuk mengecek profil lengkap
+      const { data: user } = await supabase.from('users').select('alamat, umur, asal_sekolah').eq('id', id).single();
+      if (user) {
+        const finalAlamat = updates.alamat !== undefined ? updates.alamat : user.alamat;
+        const finalUmur = updates.umur !== undefined ? updates.umur : user.umur;
+        const finalSekolah = updates.asal_sekolah !== undefined ? updates.asal_sekolah : user.asal_sekolah;
+        updates.profil_lengkap = !!(finalAlamat && finalUmur && finalSekolah);
+      }
+    }
+
+    const { error } = await supabase.from('users').update(updates).eq('id', id).eq('role', 'guru');
+    if (error) throw error;
+
+    res.json({ success: true, pesan: 'Data guru berhasil diperbarui.' });
+  } catch (err) {
+    console.error('[kode-guru:update-guru]', err.message);
+    res.status(500).json({ success: false, pesan: 'Gagal memperbarui data guru.' });
+  }
+});
+
+// =====================================================
+//  POST /api/kode-guru/guru/:id/regenerate — kepala re-generate code_guru guru
+// =====================================================
+router.post('/guru/:id/regenerate', authMiddleware, kepalaOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    let generatedCode = '';
+    for (let i = 0; i < 8; i++) generatedCode += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+
+    const { error } = await supabase.from('users')
+      .update({ code_guru: generatedCode, code_guru_generated_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('role', 'guru');
+    if (error) throw error;
+
+    res.json({ success: true, pesan: 'Kode guru berhasil di-generate ulang.', code_guru: generatedCode });
+  } catch (err) {
+    console.error('[kode-guru:regenerate-guru-code]', err.message);
+    res.status(500).json({ success: false, pesan: 'Gagal me-regenerate kode guru.' });
   }
 });
 

@@ -138,7 +138,7 @@ function createApp({ store, jwtSecret, googleClientId = null, allowedOrigins = [
       return res.status(400).json({ success: false, pesan: 'Email dan password wajib diisi.' });
     try {
       const GENERIC = 'Email atau password salah.';
-      const user = store.findUserByEmail(email);
+      const user = await store.findUserByEmail(email);
       if (!user) return res.status(401).json({ success: false, pesan: GENERIC });
       const hash = user.passwordHash || user.password || user.password_hash;
       const ok   = hash && bcrypt.compareSync(password, hash);
@@ -175,14 +175,14 @@ function createApp({ store, jwtSecret, googleClientId = null, allowedOrigins = [
 
     try {
       // Validate kode via email whitelist (legacy v2 path — kept for compatibility)
-      const v = store.validateCode ? store.validateCode(email) : { valid: false };
+      const v = store.validateCode ? await store.validateCode(email) : { valid: false };
       if (!v.valid)
         return res.status(403).json({ success: false, pesan: v.reason || 'Email tidak terdaftar.' });
 
-      let user = store.findUserByEmail(email);
+      let user = await store.findUserByEmail(email);
       if (!user) {
         const passwordHash = bcrypt.hashSync(crypto.randomBytes(16).toString('hex'), 10);
-        const result = store.createGuru({ nama, email, passwordHash });
+        const result = await store.createGuru({ nama, email, passwordHash });
         if (result.error)
           return res.status(500).json({ success: false, pesan: result.error });
         user = result.user;
@@ -197,11 +197,11 @@ function createApp({ store, jwtSecret, googleClientId = null, allowedOrigins = [
   });
 
   // ── Validate kode (public) ───────────────────────────────────
-  app.post('/api/auth/validate-kode-guru', genLimiter, (req, res) => {
+  app.post('/api/auth/validate-kode-guru', genLimiter, async (req, res) => {
     const { kode } = req.body || {};
     if (!kode) return res.status(400).json({ success: false, pesan: 'Kode wajib diisi.' });
     try {
-      const result = store.validateCode(kode);
+      const result = await store.validateCode(kode);
       res.json({ success: true, valid: result.valid, pesan: result.reason || 'Kode valid.' });
     } catch (e) {
       res.status(500).json({ success: false, pesan: 'Server error.' });
@@ -229,7 +229,7 @@ function createApp({ store, jwtSecret, googleClientId = null, allowedOrigins = [
       });
 
     // Pra-cek (non-atomic) — tolak cepat sebelum bcrypt
-    const preCheck = store.validateCode(kode);
+    const preCheck = await store.validateCode(kode);
     if (!preCheck.valid)
       return res.status(400).json({ success: false, pesan: preCheck.reason || 'Kode tidak valid.' });
 
@@ -241,7 +241,7 @@ function createApp({ store, jwtSecret, googleClientId = null, allowedOrigins = [
       if (!redeem.ok)
         return res.status(400).json({ success: false, pesan: redeem.reason || 'Kuota kode sudah habis.' });
 
-      const result = store.createGuru({ nama, email, passwordHash });
+      const result = await store.createGuru({ nama, email, passwordHash });
       if (result.error) {
         // Rollback: decrement usedCount (best-effort)
         const codeId = store._getCodeById
@@ -270,10 +270,10 @@ function createApp({ store, jwtSecret, googleClientId = null, allowedOrigins = [
   // ══════════════════════════════════════════════════════════
 
   // ── Generate kode undangan ───────────────────────────────────
-  app.post('/api/kode-guru', authMiddleware, kepalaOnly, genLimiter, (req, res) => {
+  app.post('/api/kode-guru', authMiddleware, kepalaOnly, genLimiter, async (req, res) => {
     const { max_uses, expires_in_days, label } = req.body || {};
     try {
-      const { code } = store.generateCode({
+      const { code } = await store.generateCode({
         dibuatOleh:   req.user.id,
         maxUses:      max_uses,
         expiresInDays: expires_in_days ?? null,
@@ -300,18 +300,18 @@ function createApp({ store, jwtSecret, googleClientId = null, allowedOrigins = [
   });
 
   // ── Daftar kode milik kepala ini ─────────────────────────────
-  app.get('/api/kode-guru', authMiddleware, kepalaOnly, (req, res) => {
+  app.get('/api/kode-guru', authMiddleware, kepalaOnly, async (req, res) => {
     try {
-      res.json({ success: true, data: store.listCodes(req.user.id) });
+      res.json({ success: true, data: await store.listCodes(req.user.id) });
     } catch (e) {
       res.status(500).json({ success: false, pesan: 'Server error.' });
     }
   });
 
   // ── Cabut kode ───────────────────────────────────────────────
-  app.patch('/api/kode-guru/:id/revoke', authMiddleware, kepalaOnly, (req, res) => {
+  app.patch('/api/kode-guru/:id/revoke', authMiddleware, kepalaOnly, async (req, res) => {
     try {
-      const { entry, error } = store.revokeCode(req.params.id, req.user.id);
+      const { entry, error } = await store.revokeCode(req.params.id, req.user.id);
       if (error) return res.status(404).json({ success: false, pesan: error });
       res.json({ success: true, pesan: 'Kode berhasil dicabut.', data: entry });
     } catch (e) {
@@ -320,9 +320,9 @@ function createApp({ store, jwtSecret, googleClientId = null, allowedOrigins = [
   });
 
   // ── Daftar guru terdaftar ────────────────────────────────────
-  app.get('/api/kepala/guru', authMiddleware, kepalaOnly, (req, res) => {
+  app.get('/api/kepala/guru', authMiddleware, kepalaOnly, async (req, res) => {
     try {
-      res.json({ success: true, data: store.listGuru() });
+      res.json({ success: true, data: await store.listGuru() });
     } catch (e) {
       res.status(500).json({ success: false, pesan: 'Server error.' });
     }

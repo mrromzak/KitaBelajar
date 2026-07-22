@@ -402,6 +402,25 @@ async function loadGuruList() {
 
 // ── Init: ambil Google Client ID dari server ─────────────────
 async function init() {
+  // Dark mode init
+  const isDarkMode = localStorage.getItem('darkMode') === 'true';
+  const toggleBtn = $('dark-mode-toggle');
+  if (isDarkMode) {
+    document.body.classList.add('dark-mode');
+    if (toggleBtn) toggleBtn.textContent = '☀️';
+  } else {
+    document.body.classList.remove('dark-mode');
+    if (toggleBtn) toggleBtn.textContent = '🌙';
+  }
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      const mode = document.body.classList.toggle('dark-mode');
+      localStorage.setItem('darkMode', mode);
+      toggleBtn.textContent = mode ? '☀️' : '🌙';
+    });
+  }
+
   try {
     const { ok, data } = await api('GET', '/api/config/google-client-id');
     if (ok && data.clientId) {

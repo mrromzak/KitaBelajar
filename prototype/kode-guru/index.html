@@ -437,6 +437,75 @@
       .dash-hero-icon { display: none; }
       main { padding: 20px 14px 60px; }
     }
+
+    /* ── DARK MODE ───────────────────────────────────────────── */
+    body.dark-mode {
+      --bg:           #0F0A1C;
+      --card:         #171224;
+      --border:       #2A2438;
+      --muted:        #9CA3AF;
+      --primary-light:#2D1E4E;
+    }
+    body.dark-mode, body.dark-mode input[type=text], body.dark-mode input[type=email], body.dark-mode input[type=password] {
+      color: #E2E8F0;
+    }
+    body.dark-mode header, body.dark-mode .login-card, body.dark-mode .card, body.dark-mode .tabs {
+      background: #171224;
+      border-color: #2A2438;
+    }
+    body.dark-mode .card-title {
+      color: #F8FAFC;
+    }
+    body.dark-mode input[type=text], body.dark-mode input[type=email], body.dark-mode input[type=password] {
+      background: #1B152B;
+      border-color: #2A2438;
+    }
+    body.dark-mode tr:hover td {
+      background: #1B152B;
+    }
+    body.dark-mode th {
+      background: #1B152B;
+      border-color: #2A2438;
+    }
+    body.dark-mode td {
+      border-color: #2A2438;
+    }
+    body.dark-mode .info-box {
+      background: #1E293B;
+      border-color: #334155;
+      color: #38BDF8;
+    }
+    body.dark-mode .role-tabs {
+      background: #1B152B;
+    }
+    body.dark-mode .role-tab.active {
+      background: #171224;
+      color: #C084FC;
+    }
+    body.dark-mode .btn-ghost {
+      background: transparent;
+      border-color: #2A2438;
+    }
+    body.dark-mode .btn-ghost:hover {
+      background: #1D172E;
+    }
+    body.dark-mode .tab-btn.active {
+      background: var(--primary);
+    }
+    .dark-mode-toggle {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+    }
+    .dark-mode-toggle:hover {
+      transform: scale(1.1);
+    }
   </style>
 </head>
 <body>
@@ -449,6 +518,7 @@
     <span style="font-size:11px;background:var(--primary-light);color:var(--primary);padding:3px 10px;border-radius:50px;font-weight:800">Portal Sekolah</span>
   </a>
   <div class="header-right">
+    <button class="dark-mode-toggle" id="dark-mode-toggle" title="Ubah tema" aria-label="Toggle dark mode">🌙</button>
     <span class="role-badge" id="badge-role"></span>
     <button class="btn btn-logout btn-sm" id="btn-logout">← Keluar</button>
   </div>

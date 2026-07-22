@@ -291,6 +291,101 @@
       .dash-hero-icon { display: none; }
       main { padding: 20px 14px 60px; }
     }
+
+    /* ── DARK MODE ───────────────────────────────────────────── */
+    body.dark-mode {
+      --bg:           #0F0A1C;
+      --card:         #171224;
+      --border:       #2A2438;
+      --muted:        #9CA3AF;
+      --primary-light:#2D1E4E;
+    }
+    body.dark-mode, body.dark-mode input[type=text], body.dark-mode input[type=email], body.dark-mode input[type=password], body.dark-mode input[type=number] {
+      color: #E2E8F0;
+    }
+    body.dark-mode header, body.dark-mode .login-card, body.dark-mode .card, body.dark-mode .tabs {
+      background: #171224;
+      border-color: #2A2438;
+    }
+    body.dark-mode .card-title {
+      color: #F8FAFC;
+    }
+    body.dark-mode input[type=text], body.dark-mode input[type=email], body.dark-mode input[type=password], body.dark-mode input[type=number] {
+      background: #1B152B;
+      border-color: #2A2438;
+    }
+    body.dark-mode tr:hover td {
+      background: #1B152B;
+    }
+    body.dark-mode th {
+      background: #1B152B;
+      border-color: #2A2438;
+    }
+    body.dark-mode td {
+      border-color: #2A2438;
+    }
+    body.dark-mode .info-box {
+      background: #1E293B;
+      border-color: #334155;
+      color: #38BDF8;
+    }
+    body.dark-mode .btn-ghost {
+      background: transparent;
+      border-color: #2A2438;
+    }
+    body.dark-mode .btn-ghost:hover {
+      background: #1D172E;
+    }
+    body.dark-mode .tab-btn.active {
+      background: var(--primary);
+    }
+    body.dark-mode .modal-content {
+      background: #171224;
+      color: #E2E8F0;
+      border: 1.5px solid #2A2438;
+    }
+    .dark-mode-toggle {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+    }
+    .dark-mode-toggle:hover {
+      transform: scale(1.1);
+    }
+
+    /* ── MODAL ───────────────────────────────────────────────── */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.4);
+      align-items: center;
+      justify-content: center;
+    }
+    .modal.active {
+      display: flex;
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: auto;
+      padding: 24px;
+      border: 1.5px solid var(--border);
+      width: 90%;
+      max-width: 500px;
+      border-radius: var(--radius);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
   </style>
 </head>
 <body>
@@ -303,6 +398,7 @@
     <span style="font-size:11px;background:var(--primary-light);color:var(--primary);padding:3px 10px;border-radius:50px;font-weight:800">Portal Sekolah</span>
   </a>
   <div class="header-right">
+    <button class="dark-mode-toggle" id="dark-mode-toggle" title="Ubah tema" aria-label="Toggle dark mode">🌙</button>
     <span class="role-badge" id="badge-role"></span>
     <button class="btn btn-logout btn-sm" id="btn-logout" onclick="logout()">← Keluar</button>
   </div>
@@ -431,7 +527,10 @@
     <div id="tab-guru" class="card tab-panel">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px">
         <div class="card-title" style="margin-bottom:0">👩‍🏫 Guru Terdaftar</div>
-        <button class="btn btn-ghost btn-sm" onclick="loadGuruList()">🔄 Refresh</button>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-primary btn-sm" onclick="openTambahGuruModal()">➕ Daftarkan Guru Manual</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadGuruList()">🔄 Refresh</button>
+        </div>
       </div>
       <div class="table-wrap">
         <table>
@@ -440,16 +539,62 @@
               <th>#</th>
               <th>Nama</th>
               <th>Email</th>
+              <th>Alamat</th>
+              <th>Umur</th>
+              <th>Asal Sekolah</th>
+              <th>Kode Guru</th>
               <th>Bergabung</th>
+              <th>Aksi</th>
             </tr>
           </thead>
           <tbody id="tbl-guru-body">
-            <tr><td colspan="4" class="empty"><span class="spinner spinner-dark"></span> Memuat...</td></tr>
+            <tr><td colspan="9" class="empty"><span class="spinner spinner-dark"></span> Memuat...</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </main>
+</div>
+
+<!-- Modal Tambah/Edit Guru -->
+<div id="modal-guru" class="modal">
+  <div class="modal-content">
+    <div class="card-title" id="modal-guru-title">Daftarkan Guru Manual</div>
+    <div class="form-grid">
+      <input type="hidden" id="guru-id">
+      <div class="form-group">
+        <label for="guru-nama">Nama Lengkap *</label>
+        <input type="text" id="guru-nama" placeholder="Contoh: Budi Hartono">
+      </div>
+      <div class="form-group">
+        <label for="guru-email">Email *</label>
+        <input type="email" id="guru-email" placeholder="guru@email.com">
+      </div>
+      <div class="form-group" id="group-guru-password">
+        <label for="guru-password">Password *</label>
+        <input type="password" id="guru-password" placeholder="Minimal 8 karakter">
+      </div>
+      <div class="form-group">
+        <label for="guru-alamat">Alamat (opsional)</label>
+        <input type="text" id="guru-alamat" placeholder="Alamat guru">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="guru-umur">Umur (opsional)</label>
+          <input type="number" id="guru-umur" placeholder="Contoh: 30" min="20" max="100">
+        </div>
+        <div class="form-group">
+          <label for="guru-sekolah">Asal Sekolah (opsional)</label>
+          <input type="text" id="guru-sekolah" placeholder="Contoh: SDN 1">
+        </div>
+      </div>
+      <div class="alert" id="guru-modal-alert"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+        <button class="btn btn-ghost" onclick="closeGuruModal()">Batal</button>
+        <button class="btn btn-primary" id="btn-save-guru" onclick="saveGuruData()">Simpan</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Toast -->
@@ -471,6 +616,25 @@ window.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
+
+  // Dark mode init
+  const isDarkMode = localStorage.getItem('kb_portal_dark_mode') === 'true';
+  const toggleBtn = document.getElementById('dark-mode-toggle');
+  if (isDarkMode) {
+    document.body.classList.add('dark-mode');
+    if (toggleBtn) toggleBtn.textContent = '☀️';
+  } else {
+    document.body.classList.remove('dark-mode');
+    if (toggleBtn) toggleBtn.textContent = '🌙';
+  }
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      const mode = document.body.classList.toggle('dark-mode');
+      localStorage.setItem('kb_portal_dark_mode', mode);
+      toggleBtn.textContent = mode ? '☀️' : '🌙';
+    });
+  }
 
   if (token && currentUser && currentUser.role === 'kepala_sekolah') {
     showDashboard();
@@ -703,27 +867,146 @@ async function revokeKode(id) {
 // ============================================================
 //  DAFTAR GURU
 // ============================================================
+let editingGuruId = null;
+
 async function loadGuruList() {
   const tbody = document.getElementById('tbl-guru-body');
-  tbody.innerHTML = '<tr><td colspan="4" class="empty"><span class="spinner spinner-dark"></span> Memuat...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="9" class="empty"><span class="spinner spinner-dark"></span> Memuat...</td></tr>';
   try {
     const data = await api('GET', '/kode-guru/guru');
     if (data.success && Array.isArray(data.data)) {
       if (data.data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="empty">Belum ada guru yang terdaftar.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="empty">Belum ada guru yang terdaftar.</td></tr>';
         return;
       }
       tbody.innerHTML = data.data.map((g, i) => `<tr>
         <td style="color:var(--muted);font-weight:700">${i + 1}</td>
         <td style="font-weight:800">${g.nama || '—'}</td>
         <td style="color:var(--muted)">${g.email || '—'}</td>
-        <td style="color:var(--muted)">${fmtDate(g.created_at)}</td>
+        <td>${g.alamat || '<span style="color:var(--muted)">—</span>'}</td>
+        <td>${g.umur || '<span style="color:var(--muted)">—</span>'}</td>
+        <td>${g.asal_sekolah || '<span style="color:var(--muted)">—</span>'}</td>
+        <td><code style="font-family:monospace;font-weight:900;font-size:14px;color:var(--orange)">${g.code_guru || '—'}</code></td>
+        <td style="color:var(--muted);font-size:12px">${fmtDate(g.created_at)}</td>
+        <td>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-outline btn-sm" onclick="openEditGuruModal('${g.id}', '${escapeHtml(g.nama)}', '${escapeHtml(g.email)}', '${escapeHtml(g.alamat || '')}', '${g.umur || ''}', '${escapeHtml(g.asal_sekolah || '')}')">✏️ Edit</button>
+            <button class="btn btn-ghost btn-sm" onclick="regenerateGuruCode('${g.id}')">🔄 Regenerate</button>
+          </div>
+        </td>
       </tr>`).join('');
     } else {
-      tbody.innerHTML = `<tr><td colspan="4" class="empty">${data.pesan || 'Gagal memuat data.'}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9" class="empty">${data.pesan || 'Gagal memuat data.'}</td></tr>`;
     }
   } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="4" class="empty">Tidak bisa terhubung ke server.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="empty">Tidak bisa terhubung ke server.</td></tr>';
+  }
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function openTambahGuruModal() {
+  editingGuruId = null;
+  document.getElementById('modal-guru-title').textContent = 'Daftarkan Guru Manual';
+  document.getElementById('guru-id').value = '';
+  document.getElementById('guru-nama').value = '';
+  document.getElementById('guru-email').value = '';
+  document.getElementById('guru-password').value = '';
+  document.getElementById('guru-alamat').value = '';
+  document.getElementById('guru-umur').value = '';
+  document.getElementById('guru-sekolah').value = '';
+  document.getElementById('group-guru-password').style.display = 'block';
+  hideAlert('guru-modal-alert');
+  document.getElementById('modal-guru').classList.add('active');
+}
+
+function openEditGuruModal(id, nama, email, alamat, umur, sekolah) {
+  editingGuruId = id;
+  document.getElementById('modal-guru-title').textContent = 'Edit Data Guru';
+  document.getElementById('guru-id').value = id;
+  document.getElementById('guru-nama').value = nama;
+  document.getElementById('guru-email').value = email;
+  document.getElementById('guru-password').value = '';
+  document.getElementById('guru-alamat').value = alamat;
+  document.getElementById('guru-umur').value = umur;
+  document.getElementById('guru-sekolah').value = sekolah;
+  document.getElementById('group-guru-password').style.display = 'none'; // sembunyikan password saat edit
+  hideAlert('guru-modal-alert');
+  document.getElementById('modal-guru').classList.add('active');
+}
+
+function closeGuruModal() {
+  document.getElementById('modal-guru').classList.remove('active');
+}
+
+async function saveGuruData() {
+  const id = document.getElementById('guru-id').value;
+  const nama = document.getElementById('guru-nama').value.trim();
+  const email = document.getElementById('guru-email').value.trim();
+  const password = document.getElementById('guru-password').value;
+  const alamat = document.getElementById('guru-alamat').value.trim();
+  const umur = document.getElementById('guru-umur').value.trim();
+  const asal_sekolah = document.getElementById('guru-sekolah').value.trim();
+
+  hideAlert('guru-modal-alert');
+
+  if (!nama || !email) {
+    showAlert('guru-modal-alert', 'Nama dan Email wajib diisi.');
+    return;
+  }
+
+  if (!id && !password) {
+    showAlert('guru-modal-alert', 'Password wajib diisi untuk pendaftaran baru.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-save-guru');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
+
+  try {
+    const body = { nama, email, alamat, umur: umur || null, asal_sekolah };
+    if (password) body.password = password;
+
+    const method = id ? 'PUT' : 'POST';
+    const path = id ? `/kode-guru/guru/${id}` : '/kode-guru/guru';
+
+    const data = await api(method, path, body);
+    if (data.success) {
+      toast(data.pesan || 'Data guru berhasil disimpan.', 'success');
+      closeGuruModal();
+      loadGuruList();
+    } else {
+      showAlert('guru-modal-alert', data.pesan || 'Gagal menyimpan data.');
+    }
+  } catch (e) {
+    showAlert('guru-modal-alert', 'Tidak bisa terhubung ke server.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Simpan';
+}
+
+async function regenerateGuruCode(id) {
+  if (!confirm('Apakah Anda yakin ingin me-regenerate kode untuk guru ini? Kode lama tidak akan berlaku lagi.')) return;
+  try {
+    const data = await api('POST', `/kode-guru/guru/${id}/regenerate`);
+    if (data.success) {
+      toast(data.pesan || 'Kode guru berhasil di-generate ulang.', 'success');
+      loadGuruList();
+    } else {
+      toast(data.pesan || 'Gagal me-regenerate kode.', 'error');
+    }
+  } catch (e) {
+    toast('Tidak bisa terhubung ke server.', 'error');
   }
 }
 </script>
