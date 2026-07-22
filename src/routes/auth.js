@@ -555,57 +555,8 @@ router.post('/login', async (req, res) => {
     if (!user || !bcrypt.compareSync(password, user.password))
       return res.status(401).json({ success: false, pesan: 'Email atau password salah.' });
 
-    // ── Validasi kode_guru_login untuk role guru saat login ────────────────
-    // Guru wajib memasukkan kode undangan (dari tabel kode_guru) yang didaftarkan
-    // oleh kepala sekolah/admin. Ini memastikan hanya guru resmi yang bisa login.
-    if (user.role === 'guru') {
-      if (!kode_guru_login || typeof kode_guru_login !== 'string' || !kode_guru_login.trim()) {
-        return res.status(403).json({
-          success: false,
-          needs_kode_guru: true,
-          pesan: 'Guru wajib memasukkan kode undangan dari kepala sekolah untuk login.'
-        });
-      }
-
-      const safeKode = kode_guru_login.trim().toUpperCase();
-      const { data: kodeEntry } = await supabase
-        .from('kode_guru')
-        .select('id, status, expires_at, max_uses, used_count, email_guru')
-        .eq('kode', safeKode)
-        .maybeSingle();
-
-      if (!kodeEntry)
-        return res.status(403).json({ success: false, pesan: 'Kode undangan tidak ditemukan. Minta kode dari kepala sekolah.' });
-
-      const now = new Date();
-      if (kodeEntry.status === 'revoked')
-        return res.status(403).json({ success: false, pesan: 'Kode undangan sudah dicabut oleh kepala sekolah.' });
-      if (kodeEntry.expires_at && new Date(kodeEntry.expires_at) < now)
-        return res.status(403).json({ success: false, pesan: 'Kode undangan sudah kadaluarsa.' });
-
-      // Jika kode punya email_guru spesifik, pastikan cocok dengan email yang login
-      if (kodeEntry.email_guru && kodeEntry.email_guru.toLowerCase().trim() !== normalEmail)
-        return res.status(403).json({ success: false, pesan: 'Kode undangan tidak sesuai dengan akun ini.' });
-
-      // Pastikan code_guru ada di akun guru (auto-generate jika belum ada)
-      if (!user.code_guru) {
-        const { data: generatedCode } = await supabase
-          .rpc('generate_code_guru_for_user', { p_user_id: user.id })
-          .catch(() => ({ data: null }));
-        if (!generatedCode) {
-          // Fallback manual
-          const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-          let newCode = '';
-          for (let i = 0; i < 8; i++) newCode += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
-          await supabase.from('users').update({ code_guru: newCode, code_guru_generated_at: new Date().toISOString() }).eq('id', user.id)
-            .catch(e => console.warn('[login] gagal set code_guru fallback:', e.message));
-        }
-        console.log(`[login] auto-generated code_guru untuk ${normalEmail}`);
-      }
-
-      console.log(`[login] guru ${normalEmail} login dengan kode undangan: ${safeKode}`);
-    }
-    // ─────────────────────────────────────────────────────────────────────
+    // Kode undangan (kode_guru) hanya diperlukan saat REGISTRASI, bukan saat login.
+    // Guru yang sudah terdaftar cukup login dengan email + password.
 
     const token = jwt.sign(
       { id: user.id, nama: user.nama, email: user.email, role: user.role },

@@ -386,18 +386,9 @@ async function doLogin() {
   if (!email || !password) { toast('Isi email dan password dulu ya! 😊', 'error'); return; }
   if (!isValidEmail(email)) { toast('Format email tidak valid. Contoh: nama@email.com', 'error'); return; }
 
-  // Kirim kode_guru_login jika field kode undangan guru terlihat dan terisi
-  const kodeGuruGroup = document.getElementById('login-kode-guru-group');
-  const kodeGuruEl = document.getElementById('login-kode-guru');
-  const body = { email, password };
-  const groupVisible = kodeGuruGroup && kodeGuruGroup.style.display !== 'none';
-  if (groupVisible && kodeGuruEl && kodeGuruEl.value.trim()) {
-    body.kode_guru_login = kodeGuruEl.value.trim().toUpperCase();
-  }
-
   showLoading(true);
   try {
-    const data = await api('POST', '/auth/login', body);
+    const data = await api('POST', '/auth/login', { email, password });
     if (data.success) {
       // Login terpadu: peran ditentukan backend, langsung diarahkan ke dashboard yang sesuai.
       token = data.token;
@@ -422,11 +413,6 @@ async function doLogin() {
         loadMuridDashboard();
         remindDataDiriIfNeeded();
       }
-    } else if (data.needs_kode_guru) {
-      // Backend mendeteksi akun guru tapi kode undangan belum diisi / salah
-      if (kodeGuruGroup) kodeGuruGroup.style.display = '';
-      if (kodeGuruEl) kodeGuruEl.focus();
-      toast(data.pesan || 'Masukkan kode undangan dari kepala sekolah.', 'error');
     } else {
       toast(data.pesan || 'Login gagal. Cek email & password kamu!', 'error');
     }
@@ -435,48 +421,6 @@ async function doLogin() {
   }
   showLoading(false);
 }
-
-// Deteksi email guru saat blur pada field login-email
-async function _checkGuruEmailOnBlur() {
-  const emailEl = document.getElementById('login-email');
-  const group   = document.getElementById('login-kode-guru-group');
-  if (!emailEl || !group) return;
-  const email = emailEl.value.trim();
-  if (!email || !isValidEmail(email)) {
-    group.style.display = 'none';
-    return;
-  }
-  try {
-    const res = await fetch('/api/auth/check-guru-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
-    });
-    const data = await res.json();
-    group.style.display = data.is_guru ? '' : 'none';
-    if (data.is_guru) {
-      const kodeEl = document.getElementById('login-kode-guru');
-      if (kodeEl) kodeEl.focus();
-    }
-  } catch (_) {
-    // Jika gagal, sembunyikan saja — tidak blokir login
-    group.style.display = 'none';
-  }
-}
-
-// Pasang listener blur pada login-email (dipanggil saat halaman login dimuat)
-(function _attachLoginEmailBlur() {
-  function attach() {
-    const el = document.getElementById('login-email');
-    if (el && !el._guruBlurAttached) {
-      el.addEventListener('blur', _checkGuruEmailOnBlur);
-      el._guruBlurAttached = true;
-    }
-  }
-  // Coba langsung, dan juga setelah DOMContentLoaded
-  attach();
-  document.addEventListener('DOMContentLoaded', attach);
-})();
 
 let _pendingRegEmail = null;
 
