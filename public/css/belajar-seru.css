@@ -1327,8 +1327,40 @@ body.dark-mode .gchat-input {
   border-color: var(--border-light);
   color: var(--text);
 }
+body.dark-mode .guru-chatbot-panel {
+  background: var(--card);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+}
+body.dark-mode .gchat-chips {
+  border-bottom-color: var(--border);
+}
+body.dark-mode .gchat-chip {
+  background: var(--input);
+  color: var(--text);
+}
+body.dark-mode .gchat-chip:hover {
+  background: var(--hover);
+  color: #C4B5FD;
+}
+body.dark-mode .gchat-messages {
+  background: var(--card);
+}
 body.dark-mode .gchat-msg.bot .gchat-bubble {
   background: var(--input);
+  color: var(--text);
+}
+body.dark-mode .gchat-typing {
+  background: var(--input);
+}
+body.dark-mode .gchat-attach {
+  background: var(--input);
+}
+body.dark-mode .gchat-attach:hover {
+  background: var(--hover);
+}
+body.dark-mode .gchat-file-chip {
+  background: var(--input);
+  border-color: var(--border-light);
   color: var(--text);
 }
 body.dark-mode .modal-overlay {
@@ -1563,6 +1595,7 @@ body.dark-mode .materi-detail .mapel-tag {
 body.dark-mode .ai-src-card {
   background: var(--card);
   border-color: var(--border-light);
+  color: var(--text);
 }
 body.dark-mode .ai-src-card:hover {
   background: var(--hover);
@@ -1571,6 +1604,29 @@ body.dark-mode .ai-src-card:hover {
 body.dark-mode .ai-src-card.active {
   background: var(--hover);
   border-color: #8B5CF6;
+}
+/* AI Materi modal — inline-styled elements */
+body.dark-mode #ai-pdf-dropzone {
+  background: var(--input) !important;
+  border-color: #7B5CF6 !important;
+}
+body.dark-mode #ai-pdf-label {
+  color: #C4B5FD !important;
+}
+body.dark-mode #ai-artikel-url,
+body.dark-mode #ai-youtube-url,
+body.dark-mode #ai-m-mapel,
+body.dark-mode #ai-m-target,
+body.dark-mode #ai-jumlah-soal {
+  background: var(--input) !important;
+  border-color: var(--border-light) !important;
+  color: var(--text) !important;
+}
+body.dark-mode #ai-materi-step2 > div:first-child {
+  background: var(--input) !important;
+}
+body.dark-mode #ai-materi-step2 > div:first-child > div:first-child {
+  color: #C4B5FD !important;
 }
 body.dark-mode .pr-question-card {
   background: var(--card);
