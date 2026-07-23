@@ -1331,6 +1331,38 @@ body.dark-mode .gchat-msg.bot .gchat-bubble {
   background: var(--input);
   color: var(--text);
 }
+/* AI chatbot panel dark mode — text/bg only, no structural changes */
+body.dark-mode .guru-chatbot-panel {
+  background: var(--card);
+}
+body.dark-mode .gchat-chips {
+  border-bottom-color: var(--border);
+}
+body.dark-mode .gchat-chip {
+  background: var(--input);
+  color: var(--text);
+}
+body.dark-mode .gchat-chip:hover {
+  background: var(--hover);
+  color: #B39DFF;
+}
+body.dark-mode .gchat-messages {
+  background: var(--card);
+}
+body.dark-mode .gchat-typing {
+  background: var(--input);
+}
+body.dark-mode .gchat-attach {
+  background: var(--input);
+}
+body.dark-mode .gchat-attach svg {
+  fill: var(--muted);
+}
+body.dark-mode .gchat-file-chip {
+  background: var(--input);
+  border-color: var(--border);
+  color: var(--text);
+}
 body.dark-mode .modal-overlay {
   background: rgba(0, 0, 0, 0.65);
 }
