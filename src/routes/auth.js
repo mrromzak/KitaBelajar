@@ -641,10 +641,6 @@ router.put('/profile', authMiddleware, async (req, res) => {
     }
 
     if (password_baru) {
-      if (!password_lama)
-        return res.status(400).json({ success: false, pesan: 'Password lama wajib diisi.' });
-      if (!bcrypt.compareSync(password_lama, user.password))
-        return res.status(401).json({ success: false, pesan: 'Password lama tidak sesuai.' });
       const pwError = validatePassword(password_baru);
       if (pwError) return res.status(400).json({ success: false, pesan: pwError });
       updates.password = bcrypt.hashSync(password_baru, 10);

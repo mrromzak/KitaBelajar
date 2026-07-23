@@ -1259,17 +1259,15 @@ function tutupCodeGuru() {
 }
 
 async function gantiPasswordMurid() {
-  const lama = document.getElementById('pm-pw-lama').value;
   const baru = document.getElementById('pm-pw-baru').value;
   const konfirm = document.getElementById('pm-pw-konfirm').value;
-  if (!lama || !baru) { toast('Isi semua field password!', 'error'); return; }
-  if (baru.length < 6) { toast('Password baru minimal 8 karakter!', 'error'); return; }
+  if (!baru || !konfirm) { toast('Isi password baru dan konfirmasi!', 'error'); return; }
+  if (baru.length < 8) { toast('Password baru minimal 8 karakter!', 'error'); return; }
   if (baru !== konfirm) { toast('Konfirmasi password tidak cocok!', 'error'); return; }
   showLoading(true);
   try {
-    const data = await api('PUT', '/auth/profile', { password_lama: lama, password_baru: baru });
+    const data = await api('PUT', '/auth/profile', { password_baru: baru });
     if (data.success) {
-      document.getElementById('pm-pw-lama').value = '';
       document.getElementById('pm-pw-baru').value = '';
       document.getElementById('pm-pw-konfirm').value = '';
       toast('Password berhasil diganti! 🔒', 'success');
@@ -1279,17 +1277,15 @@ async function gantiPasswordMurid() {
 }
 
 async function gantiPasswordGuru() {
-  const lama = document.getElementById('pg-pw-lama').value;
   const baru = document.getElementById('pg-pw-baru').value;
   const konfirm = document.getElementById('pg-pw-konfirm').value;
-  if (!lama || !baru) { toast('Isi semua field password!', 'error'); return; }
-  if (baru.length < 6) { toast('Password baru minimal 8 karakter!', 'error'); return; }
+  if (!baru || !konfirm) { toast('Isi password baru dan konfirmasi!', 'error'); return; }
+  if (baru.length < 8) { toast('Password baru minimal 8 karakter!', 'error'); return; }
   if (baru !== konfirm) { toast('Konfirmasi password tidak cocok!', 'error'); return; }
   showLoading(true);
   try {
-    const data = await api('PUT', '/auth/profile', { password_lama: lama, password_baru: baru });
+    const data = await api('PUT', '/auth/profile', { password_baru: baru });
     if (data.success) {
-      document.getElementById('pg-pw-lama').value = '';
       document.getElementById('pg-pw-baru').value = '';
       document.getElementById('pg-pw-konfirm').value = '';
       toast('Password berhasil diganti! 🔒', 'success');
