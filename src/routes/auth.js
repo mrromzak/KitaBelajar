@@ -8,7 +8,7 @@ const crypto = require('crypto');
 const { OAuth2Client } = require('google-auth-library');
 const supabase = require('../supabase');
 const { authMiddleware, JWT_SECRET } = require('../middleware/auth');
-const { cleanText, cleanAvatar } = require('../utils/sanitize');
+const { cleanText, cleanAvatar, findKodeGuruByBcrypt } = require('../utils/sanitize');
 
 // ── Google OAuth Client ──────────────────────────────────────
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
@@ -307,9 +307,7 @@ router.post('/send-otp', async (req, res) => {
         if (!kode_guru || typeof kode_guru !== 'string' || kode_guru.trim().length === 0)
           return res.status(400).json({ success: false, pesan: 'Guru wajib menyertakan kode undangan dari kepala sekolah.' });
 
-        const safeKodeGuru = kode_guru.trim().toUpperCase();
-        const { data: kodeEntry } = await supabase
-          .from('kode_guru').select('id, status').eq('kode', safeKodeGuru).maybeSingle();
+        const kodeEntry = await findKodeGuruByBcrypt(supabase, kode_guru, bcrypt);
 
         if (!kodeEntry)
           return res.status(400).json({ success: false, pesan: 'Kode undangan tidak ditemukan. Minta kode dari kepala sekolah.' });
@@ -878,22 +876,34 @@ router.post('/google', async (req, res) => {
         });
       }
 
-      // Verifikasi kode_guru_login dari tabel kode_guru
-      const safeKode = kode_guru_login.trim().toUpperCase();
-      const { data: loginKodeEntry } = await supabase
-        .from('kode_guru')
-        .select('id, status, email_guru')
-        .eq('kode', safeKode)
-        .maybeSingle();
+      // Verifikasi kode_guru_login:
+      // Coba 1: tabel kode_guru (bcrypt hash — alur undangan lama)
+      const loginKodeEntry = await findKodeGuruByBcrypt(supabase, kode_guru_login, bcrypt);
 
-      if (!loginKodeEntry)
-        return res.status(403).json({ success: false, pesan: 'Kode undangan tidak ditemukan. Minta kode dari kepala sekolah.' });
-      if (loginKodeEntry.status === 'revoked')
-        return res.status(403).json({ success: false, pesan: 'Kode undangan sudah dicabut oleh kepala sekolah.' });
-      if (loginKodeEntry.email_guru && loginKodeEntry.email_guru.toLowerCase().trim() !== normalEmail)
-        return res.status(403).json({ success: false, pesan: 'Kode undangan tidak sesuai dengan akun ini.' });
+      if (loginKodeEntry) {
+        // Validasi dari tabel kode_guru
+        if (loginKodeEntry.status === 'revoked')
+          return res.status(403).json({ success: false, pesan: 'Kode undangan sudah dicabut oleh kepala sekolah.' });
+        if (loginKodeEntry.email_guru && loginKodeEntry.email_guru.toLowerCase().trim() !== normalEmail)
+          return res.status(403).json({ success: false, pesan: 'Kode undangan tidak sesuai dengan akun ini.' });
+        console.log(`[google-auth] guru ${normalEmail} login via kode_guru table: ${kode_guru_login.trim().toUpperCase()}`);
+      } else {
+        // Coba 2: users.code_guru (plaintext — guru didaftarkan manual oleh kepala sekolah)
+        const { data: guruByCode } = await supabase
+          .from('users')
+          .select('id, email, code_guru')
+          .eq('email', normalEmail)
+          .eq('role', 'guru')
+          .maybeSingle();
 
-      console.log(`[google-auth] guru ${normalEmail} login dengan kode undangan: ${safeKode}`);
+        const inputKode = kode_guru_login.trim().toUpperCase();
+        const storedKode = (guruByCode && guruByCode.code_guru) ? guruByCode.code_guru.trim().toUpperCase() : null;
+
+        if (!storedKode || inputKode !== storedKode) {
+          return res.status(403).json({ success: false, pesan: 'Kode tidak valid. Minta kode terbaru dari kepala sekolah.' });
+        }
+        console.log(`[google-auth] guru ${normalEmail} login via users.code_guru: ${inputKode}`);
+      }
     }
 
     // ── Jika email ADA di whitelist → guru login/auto-create ──────────────
