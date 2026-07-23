@@ -109,10 +109,12 @@
 <!-- ========== LOGIN ========== -->
 <div class="page" id="page-login">
   <nav class="navbar">
-    <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="nav-btn back" onclick="showPage('page-login')">← Kembali</button>
+      <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+    </div>
     <div class="nav-links">
       <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">🌙</button>
-      <button class="nav-btn back" onclick="showPage('page-landing')">← Kembali</button>
     </div>
   </nav>
   <div class="login-wrap">
@@ -147,9 +149,11 @@
 <!-- ========== LUPA SANDI ========== -->
 <div class="page" id="page-forgot">
   <nav class="navbar">
-    <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
-    <div class="nav-links">
+    <div style="display:flex;align-items:center;gap:10px">
       <button class="nav-btn back" onclick="showPage('page-login')">← Kembali</button>
+      <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+    </div>
+    <div class="nav-links">
     </div>
   </nav>
   <div class="login-wrap">
@@ -225,10 +229,12 @@
 <!-- ========== REGISTER ========== -->
 <div class="page" id="page-register">
   <nav class="navbar">
-    <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="nav-btn back" onclick="showPage('page-login')">← Kembali</button>
+      <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+    </div>
     <div class="nav-links">
       <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">🌙</button>
-      <button class="nav-btn back" onclick="showPage('page-login')">← Kembali</button>
     </div>
   </nav>
   <div class="login-wrap">
@@ -289,7 +295,10 @@
 <!-- ========== DASHBOARD MURID ========== -->
 <div class="page" id="page-murid">
   <nav class="navbar">
-    <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="nav-btn back" onclick="doLogout()">← Keluar</button>
+      <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+    </div>
     <div class="nav-links">
       <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">🌙</button>
       <button onclick="bukaProfileMurid()" style="display:flex;align-items:center;gap:8px;background:none;border:2px solid #eee;padding:7px 14px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background='#F8F9FA'" onmouseout="this.style.background='none'">
@@ -299,7 +308,6 @@
       <button class="bell-btn" onclick="toggleBellDropdown()" title="Notifikasi">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="bell-badge" id="bell-badge-murid"></span>
       </button>
-      <button class="nav-btn back" onclick="doLogout()">← Keluar</button>
     </div>
   </nav>
   <div class="dashboard">
@@ -467,11 +475,13 @@
 <!-- ========== DASHBOARD ORANGTUA ========== -->
 <div class="page" id="page-orangtua">
   <nav class="navbar">
-    <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="nav-btn back" onclick="doLogout()">← Keluar</button>
+      <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+    </div>
     <div class="nav-links">
       <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">🌙</button>
       <span style="font-size:13px;font-weight:700;color:var(--muted)" id="ot-nav-name">Orangtua</span>
-      <button class="nav-btn back" onclick="doLogout()">← Keluar</button>
     </div>
   </nav>
   <div class="dashboard">
@@ -491,9 +501,11 @@
 <!-- ========== DETAIL AKTIVITAS ANAK (ORANGTUA) ========== -->
 <div class="page" id="page-orangtua-detail">
   <nav class="navbar">
-    <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
-    <div class="nav-links">
+    <div style="display:flex;align-items:center;gap:10px">
       <button class="nav-btn back" onclick="showPage('page-orangtua');loadOrangtuaDashboard()">← Kembali</button>
+      <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+    </div>
+    <div class="nav-links">
     </div>
   </nav>
   <div class="dashboard">
@@ -505,7 +517,10 @@
 
 <div class="page" id="page-guru">
   <nav class="navbar">
-    <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="nav-btn back" onclick="doLogout()">← Keluar</button>
+      <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+    </div>
     <div class="nav-links">
       <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">🌙</button>
       <button onclick="bukaProfileGuru()" style="display:flex;align-items:center;gap:8px;background:none;border:2px solid #eee;padding:7px 14px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background='#F8F9FA'" onmouseout="this.style.background='none'">
@@ -517,7 +532,6 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="bell-badge" id="bell-badge-guru"></span>
       </button>
       <button id="btn-error-log" onclick="bukaErrorLog()" title="Error Log" style="display:none;background:none;border:2px solid #FFCDD2;color:var(--red);padding:7px 12px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:700;font-size:12px;cursor:pointer">🐛 Log</button>
-      <button class="nav-btn back" onclick="doLogout()">← Keluar</button>
     </div>
   </nav>
   <div class="dashboard">
@@ -944,8 +958,10 @@
 
     <!-- Navbar -->
     <nav style="display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:58px;position:relative;z-index:2">
-      <div style="font-family:'Fredoka One',cursive;font-size:20px;color:white;display:flex;align-items:center;gap:8px"><span style="font-size:22px">⚡</span> Quiz Kilat</div>
-      <button onclick="kembaliKeDashboardUtama()" style="background:rgba(255,255,255,0.22);border:1.5px solid rgba(255,255,255,0.5);color:white;border-radius:50px;padding:7px 16px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer">← Kembali</button>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="kembaliKeDashboardUtama()" style="background:rgba(255,255,255,0.22);border:1.5px solid rgba(255,255,255,0.5);color:white;border-radius:50px;padding:7px 16px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer">← Kembali</button>
+        <div style="font-family:'Fredoka One',cursive;font-size:20px;color:white;display:flex;align-items:center;gap:8px"><span style="font-size:22px">⚡</span> Quiz Kilat</div>
+      </div>
     </nav>
 
     <!-- Stats pills -->
@@ -981,9 +997,11 @@
   <div id="qk-stars-bg" style="position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden"></div>
 
   <!-- Navbar -->
-  <nav style="position:sticky;top:0;z-index:100;background:rgba(26,26,110,0.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:58px">
-    <div style="font-family:'Fredoka One',cursive;font-size:18px;color:white;display:flex;align-items:center;gap:8px" id="qk-stage-title">📚 Kategori</div>
-    <button onclick="showPage('page-quiz-map');loadQuizKilatMap()" style="background:rgba(255,255,255,0.18);border:1.5px solid rgba(255,255,255,0.4);color:white;border-radius:50px;padding:6px 16px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer">← Kategori</button>
+  <nav style="position:sticky;top:0;z-index:100;background:rgba(26,26,110,0.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:space-between;padding:0 20px;min-height:58px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button onclick="showPage('page-quiz-map');loadQuizKilatMap()" style="background:rgba(255,255,255,0.18);border:1.5px solid rgba(255,255,255,0.4);color:white;border-radius:50px;padding:6px 16px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer">← Kategori</button>
+      <div style="font-family:'Fredoka One',cursive;font-size:18px;color:white;display:flex;align-items:center;gap:8px" id="qk-stage-title">📚 Kategori</div>
+    </div>
   </nav>
 
   <!-- Progress bar header -->
@@ -2330,10 +2348,12 @@
 <!-- ========== PROFILE & SETTINGS MURID ========== -->
 <div class="page" id="page-profile-murid">
   <nav class="navbar">
-    <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="nav-btn back" onclick="kembaliKeDashboardUtama()">← Kembali</button>
+      <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+    </div>
     <div class="nav-links">
       <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">🌙</button>
-      <button class="nav-btn back" onclick="kembaliKeDashboardUtama()">← Kembali</button>
     </div>
   </nav>
   <div style="max-width:560px;margin:32px auto;padding:0 20px">
@@ -2424,10 +2444,12 @@
 <!-- ========== PROFILE & SETTINGS GURU ========== -->
 <div class="page" id="page-profile-guru">
   <nav class="navbar">
-    <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="nav-btn back" onclick="kembaliKeDashboardUtama()">← Kembali</button>
+      <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+    </div>
     <div class="nav-links">
       <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">🌙</button>
-      <button class="nav-btn back" onclick="kembaliKeDashboardUtama()">← Kembali</button>
     </div>
   </nav>
   <div style="max-width:560px;margin:32px auto;padding:0 20px">
@@ -2565,10 +2587,12 @@
 <!-- ========== ERROR LOG ADMIN (hanya guru) ========== -->
 <div class="page" id="page-error-log">
   <nav class="navbar">
-    <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="nav-btn back" onclick="loadGuruDashboard()">← Kembali</button>
+      <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+    </div>
     <div class="nav-links">
       <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">🌙</button>
-      <button class="nav-btn back" onclick="loadGuruDashboard()">← Kembali</button>
     </div>
   </nav>
   <div class="dashboard">

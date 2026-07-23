@@ -173,12 +173,12 @@
 
   /* ===== NAVBAR ===== */
   .navbar {
-    background: white; padding: 6px 28px;
+    background: white; padding: 6px 24px;
     display: flex; align-items: center; justify-content: space-between;
     border-bottom: 3px solid var(--yellow);
     position: sticky; top: 0; z-index: 100;
     box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    min-height: 76px; /* tinggi konsisten di semua halaman */
+    min-height: 64px;
   }
   .logo { font-family: 'Fredoka One', cursive; font-size: 26px; color: var(--orange); display: flex; align-items: center; gap: 8px; cursor: pointer; }
   .logo:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; border-radius: 8px; }

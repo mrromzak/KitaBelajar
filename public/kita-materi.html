@@ -18,7 +18,7 @@
     @keyframes floatUp{0%{transform:translateY(110vh) rotate(0)}100%{transform:translateY(-120px) rotate(360deg)}}
 
     /* NAVBAR */
-    .navbar{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.93);backdrop-filter:blur(14px);border-bottom:2px solid #FFE0B2;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:62px;box-shadow:0 2px 16px rgba(255,107,0,.08)}
+    .navbar{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.93);backdrop-filter:blur(14px);border-bottom:2px solid #FFE0B2;display:flex;align-items:center;justify-content:space-between;padding:6px 24px;min-height:64px;box-shadow:0 2px 16px rgba(255,107,0,.08)}
     .nav-brand{display:flex;align-items:center;gap:8px;font-family:var(--ff-h);font-size:20px;color:var(--orange)}
     .nav-right{display:flex;align-items:center;gap:10px}
     .btn-nav{background:linear-gradient(135deg,#FF6B35,#FF9A5C);color:#fff;border:none;border-radius:50px;padding:8px 18px;font-family:var(--ff-b);font-weight:900;font-size:13px;cursor:pointer;transition:all .2s;box-shadow:0 3px 10px rgba(255,107,53,.3)}
@@ -209,9 +209,11 @@
 
 <!-- NAVBAR -->
 <nav class="navbar">
-  <div class="nav-brand">📚 AyoBelajar!</div>
-  <div class="nav-right">
+  <div style="display:flex;align-items:center;gap:10px">
     <button class="btn-back" id="btn-back" onclick="goBack()" style="display:none">← Kembali</button>
+    <div class="nav-brand">📚 AyoBelajar!</div>
+  </div>
+  <div class="nav-right">
     <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="Ubah tema" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center">🌙</button>
     <button class="btn-nav" onclick="window.location.href='belajar-seru.html'">🏠 Beranda</button>
   </div>
