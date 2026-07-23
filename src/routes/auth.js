@@ -876,33 +876,41 @@ router.post('/google', async (req, res) => {
         });
       }
 
-      // Verifikasi kode_guru_login:
-      // Coba 1: tabel kode_guru (bcrypt hash — alur undangan lama)
-      const loginKodeEntry = await findKodeGuruByBcrypt(supabase, kode_guru_login, bcrypt);
+      // Verifikasi kode_guru_login — dua jalur:
+      // Jalur A: guru punya users.code_guru (didaftarkan manual oleh kepala sekolah)
+      //          → bandingkan plaintext langsung (user sudah di-fetch di atas)
+      // Jalur B: guru ada di tabel kode_guru (bcrypt hash — alur undangan lama)
+      //          → gunakan findKodeGuruByBcrypt
+      const inputKode = kode_guru_login.trim().toUpperCase();
 
-      if (loginKodeEntry) {
-        // Validasi dari tabel kode_guru
+      if (isExistingGuru && user && user.code_guru) {
+        // Jalur A: cek users.code_guru dulu (lebih cepat, tanpa bcrypt scan)
+        const storedKode = user.code_guru.trim().toUpperCase();
+        if (inputKode !== storedKode) {
+          // Fallback ke Jalur B jika tidak cocok (guru mungkin juga punya kode_guru lama)
+          const loginKodeEntry = await findKodeGuruByBcrypt(supabase, kode_guru_login, bcrypt);
+          if (!loginKodeEntry) {
+            return res.status(403).json({ success: false, pesan: 'Kode tidak valid. Minta kode terbaru dari kepala sekolah.' });
+          }
+          if (loginKodeEntry.status === 'revoked')
+            return res.status(403).json({ success: false, pesan: 'Kode undangan sudah dicabut oleh kepala sekolah.' });
+          if (loginKodeEntry.email_guru && loginKodeEntry.email_guru.toLowerCase().trim() !== normalEmail)
+            return res.status(403).json({ success: false, pesan: 'Kode undangan tidak sesuai dengan akun ini.' });
+          console.log(`[google-auth] guru ${normalEmail} login via kode_guru table (fallback): ${inputKode}`);
+        } else {
+          console.log(`[google-auth] guru ${normalEmail} login via users.code_guru: ${inputKode}`);
+        }
+      } else {
+        // Jalur B: tidak ada users.code_guru → cek tabel kode_guru (bcrypt)
+        const loginKodeEntry = await findKodeGuruByBcrypt(supabase, kode_guru_login, bcrypt);
+        if (!loginKodeEntry) {
+          return res.status(403).json({ success: false, pesan: 'Kode tidak valid. Minta kode dari kepala sekolah.' });
+        }
         if (loginKodeEntry.status === 'revoked')
           return res.status(403).json({ success: false, pesan: 'Kode undangan sudah dicabut oleh kepala sekolah.' });
         if (loginKodeEntry.email_guru && loginKodeEntry.email_guru.toLowerCase().trim() !== normalEmail)
           return res.status(403).json({ success: false, pesan: 'Kode undangan tidak sesuai dengan akun ini.' });
-        console.log(`[google-auth] guru ${normalEmail} login via kode_guru table: ${kode_guru_login.trim().toUpperCase()}`);
-      } else {
-        // Coba 2: users.code_guru (plaintext — guru didaftarkan manual oleh kepala sekolah)
-        const { data: guruByCode } = await supabase
-          .from('users')
-          .select('id, email, code_guru')
-          .eq('email', normalEmail)
-          .eq('role', 'guru')
-          .maybeSingle();
-
-        const inputKode = kode_guru_login.trim().toUpperCase();
-        const storedKode = (guruByCode && guruByCode.code_guru) ? guruByCode.code_guru.trim().toUpperCase() : null;
-
-        if (!storedKode || inputKode !== storedKode) {
-          return res.status(403).json({ success: false, pesan: 'Kode tidak valid. Minta kode terbaru dari kepala sekolah.' });
-        }
-        console.log(`[google-auth] guru ${normalEmail} login via users.code_guru: ${inputKode}`);
+        console.log(`[google-auth] guru ${normalEmail} login via kode_guru table: ${inputKode}`);
       }
     }
 
