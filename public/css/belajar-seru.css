@@ -1350,6 +1350,23 @@ body.dark-mode .materi-card, body.dark-mode .soal-card, body.dark-mode .kelas-ca
   border-color: var(--border);
   color: var(--text);
 }
+body.dark-mode .kelas-card-header.bg-c1 { background: linear-gradient(135deg,#FF6B35,var(--orange-400)) !important; }
+body.dark-mode .kelas-card-header.bg-c2 { background: linear-gradient(135deg,#4D96FF,#6AADFF) !important; }
+body.dark-mode .kelas-card-header.bg-c3 { background: linear-gradient(135deg,#6BCB77,#8EDA98) !important; }
+body.dark-mode .kelas-card-header.bg-c4 { background: linear-gradient(135deg,#C77DFF,#D99CFF) !important; }
+body.dark-mode .kelas-card-header.bg-c5 { background: linear-gradient(135deg,#FF6B9D,#FF8FB5) !important; }
+body.dark-mode .kelas-card-header.bg-c6 { background: linear-gradient(135deg,#00C9A7,#00E5C0) !important; }
+body.dark-mode .kelas-card-header.bg-c7 { background: linear-gradient(135deg,var(--red),#FF6B78) !important; }
+body.dark-mode .kelas-card-header.bg-c8 { background: linear-gradient(135deg,#FFA502,#FFB52E) !important; }
+body.dark-mode .kelas-card-footer {
+  border-top-color: var(--border);
+}
+body.dark-mode .kelas-code, body.dark-mode .kelas-code-label {
+  color: var(--text);
+}
+body.dark-mode .kelas-stat {
+  color: var(--muted);
+}
 body.dark-mode .stream-post {
   border: 2px solid var(--border);
 }
