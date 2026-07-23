@@ -1327,23 +1327,16 @@ body.dark-mode .gchat-input {
   border-color: var(--border-light);
   color: var(--text);
 }
-body.dark-mode .guru-chatbot-panel {
-  background: var(--card);
-  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
-}
 body.dark-mode .gchat-chips {
   border-bottom-color: var(--border);
 }
 body.dark-mode .gchat-chip {
-  background: var(--input);
-  color: var(--text);
+  background: rgba(255,255,255,0.12);
+  color: #E2D9FF;
 }
 body.dark-mode .gchat-chip:hover {
-  background: var(--hover);
-  color: #C4B5FD;
-}
-body.dark-mode .gchat-messages {
-  background: var(--card);
+  background: rgba(255,255,255,0.2);
+  color: #fff;
 }
 body.dark-mode .gchat-msg.bot .gchat-bubble {
   background: var(--input);
@@ -1353,10 +1346,10 @@ body.dark-mode .gchat-typing {
   background: var(--input);
 }
 body.dark-mode .gchat-attach {
-  background: var(--input);
+  background: rgba(255,255,255,0.1);
 }
 body.dark-mode .gchat-attach:hover {
-  background: var(--hover);
+  background: rgba(255,255,255,0.2);
 }
 body.dark-mode .gchat-file-chip {
   background: var(--input);
@@ -1381,6 +1374,19 @@ body.dark-mode .materi-card, body.dark-mode .soal-card, body.dark-mode .kelas-ca
   background: var(--card);
   border-color: var(--border);
   color: var(--text);
+}
+body.dark-mode .kelas-card-footer {
+  border-top-color: var(--border);
+}
+body.dark-mode .kelas-code {
+  background: var(--input);
+  color: var(--text);
+}
+body.dark-mode .kelas-stat {
+  color: var(--muted);
+}
+body.dark-mode .kelas-code-label {
+  color: var(--muted);
 }
 body.dark-mode .stream-post {
   border: 2px solid var(--border);
