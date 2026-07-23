@@ -50,7 +50,7 @@ function getMapelStorageKey() {
   return 'kb_mapel_' + userId;
 }
 
-const MAPEL_ACCENT_COLORS = ['#FF6B35','#4D96FF','#6BCB77','#C77DFF','#FF6B9D','#FFD93D','#FF4757','#2ED573','#FFA502','#1E90FF','#A29BFE','#00CEC9'];
+const MAPEL_ACCENT_COLORS = ['#FF6B35','#4D96FF','#6BCB77','#C77DFF','#FF6B9D','#FFB99B','#D12B00','#2ED573','#FFA502','#1E90FF','#A29BFE','#00CEC9'];
 const QUICK_EMOJIS = ['\uD83C\uDFC3','\uD83C\uDFB5','\uD83D\uDDA5\uFE0F','\uD83E\uDDEA','\uD83C\uDF0D','\uD83C\uDFAD','\uD83D\uDCD0','\uD83D\uDD2C','\uD83D\uDD2D','\uD83C\uDFDB\uFE0F','\uD83E\uDDEE','\uD83C\uDFAF','\u26BD','\uD83C\uDFBB','\u271D\uFE0F','\u262A\uFE0F','\uD83C\uDF3A','\uD83C\uDFCB\uFE0F','\uD83D\uDCBB','\uD83E\uDDE0','\uD83D\uDCF8','\uD83D\uDDFF'];
 
 function getMapelList() {
@@ -647,7 +647,7 @@ function showDataDiriReward(reward) {
       <div style="font-size:64px;line-height:1;margin-bottom:8px;animation:ddBounce 1s ease infinite">🎁</div>
       <h3 style="margin:0 0 6px;font-size:22px;color:#333">Hadiah Didapat!</h3>
       <p style="color:#666;font-size:14px;margin:0 0 14px">Terima kasih sudah melengkapi data diri 😊</p>
-      <div style="background:linear-gradient(135deg,#FF6B35,#ff9a6c);color:#fff;border-radius:16px;padding:16px;font-weight:900;font-size:30px;letter-spacing:1px">+${xp} XP</div>
+      <div style="background:linear-gradient(135deg,#FF6B35,#FF8C42);color:#fff;border-radius:16px;padding:16px;font-weight:900;font-size:30px;letter-spacing:1px">+${xp} XP</div>
       ${levelLine}
       <button onclick="document.getElementById('datadiri-reward-overlay').remove()" style="margin-top:18px;width:100%;padding:13px;background:var(--orange,#FF6B35);color:#fff;border:none;border-radius:14px;font-family:inherit;font-weight:800;font-size:15px;cursor:pointer">Asyik! 🎉</button>
     </div>
@@ -1031,7 +1031,7 @@ function bukaGantiAvatar(role) {
       return `<div onclick="pilihAvatar('${a}','${role}')"
         style="font-size:32px;cursor:pointer;padding:8px;border-radius:10px;
                border:2px solid ${isActive ? accent : '#eee'};
-               background:${isActive ? '#FFF3E8' : 'white'};
+               background:${isActive ? '#FFEFE8' : 'white'};
                transition:all 0.2s"
         onmouseover="this.style.borderColor='${accent}';this.style.transform='scale(1.1)'"
         onmouseout="this.style.borderColor='${isActive ? accent : '#eee'}';this.style.transform=''"
@@ -1615,7 +1615,7 @@ function tampilDeadlineAlert(kuisList) {
     // Cari kelas_id untuk navigasi
     const kelasId = q.kelas_id || '';
     return `<div class="deadline-item" onclick="bukaKelasUntukKuis('${kelasId}','${q.id}')">
-      <div class="deadline-item-icon" style="background:${isUrgent ? '#FFF0F0' : '#FFF8E1'}">📝</div>
+      <div class="deadline-item-icon" style="background:${isUrgent ? '#FFEFE8' : '#FFEFE8'}">📝</div>
       <div class="deadline-item-info">
         <h4>${escapeHtml(q.judul)}</h4>
         <p>${escapeHtml(q.mapel || 'Tugas')} · ${q.total_soal || '?'} soal</p>
@@ -2187,9 +2187,9 @@ async function openKelas(kelasId, colorIdx) {
           📹 Mulai Meeting
         </button>
         <button onclick="konfirmasiHapusKelas('${k.id || kelasId}','${(k.nama||'').replace(/'/g,"\\'")}')"
-          style="width:100%;padding:12px;border-radius:12px;border:none;background:#FFF0F0;color:var(--red);font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s"
+          style="width:100%;padding:12px;border-radius:12px;border:none;background:#FFEFE8;color:var(--red);font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s"
           onmouseover="this.style.background='var(--red)';this.style.color='white'"
-          onmouseout="this.style.background='#FFF0F0';this.style.color='var(--red)'">
+          onmouseout="this.style.background='#FFEFE8';this.style.color='var(--red)'">
           🗑️ Hapus Kelas
         </button>
       </div>`;
@@ -2342,7 +2342,7 @@ async function loadKelasStream(kelasId) {
 
     stream.innerHTML += list.map(m => {
       const icon = m.jenis === 'video' ? '🎬' : m.jenis === 'pdf' ? '📄' : m.jenis === 'gambar' ? '🖼️' : '📝';
-      const iconBg = m.jenis === 'video' ? '#FFF0F5' : m.jenis === 'pdf' ? '#FFF3E8' : m.jenis === 'gambar' ? '#F0FFF4' : '#EEF5FF';
+      const iconBg = m.jenis === 'video' ? '#FFF0F5' : m.jenis === 'pdf' ? '#FFEFE8' : m.jenis === 'gambar' ? '#F0FFF4' : '#EEF5FF';
       const tgl = new Date(m.created_at).toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
       let bodyHtml = '';
 
@@ -3851,7 +3851,7 @@ function renderQuizPenilaianCard(q) {
         <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #eee">
           <div style="font-size:11px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">⏳ Belum ${q.tipe_submission ? 'Mengumpulkan' : 'Mengerjakan'} (${belum.length})</div>
           <div style="display:flex;flex-wrap:wrap;gap:6px">
-            ${belum.map(m => `<span style="background:#FFF0F0;color:var(--red);border-radius:50px;padding:4px 12px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:4px"><span style="width:16px;height:16px;border-radius:50%;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">${chatAvatarHtml(m.avatar||'🦁')}</span>${m.nama}</span>`).join('')}
+            ${belum.map(m => `<span style="background:#FFEFE8;color:var(--red);border-radius:50px;padding:4px 12px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:4px"><span style="width:16px;height:16px;border-radius:50%;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">${chatAvatarHtml(m.avatar||'🦁')}</span>${m.nama}</span>`).join('')}
           </div>
         </div>` : (totalMurid > 0 ? `<div style="margin-top:10px;padding:8px 12px;background:#F0FFF4;border-radius:10px;font-size:13px;font-weight:700;color:var(--green)">✅ Semua murid sudah ${q.tipe_submission ? 'mengumpulkan' : 'mengerjakan'}!</div>` : '')}
       </div>` : `
@@ -4625,7 +4625,7 @@ function switchTipeSoal(tipe) {
   const map = { pilihan_ganda: 'pg', essay: 'essay', benar_salah: 'bs' };
   const active = document.getElementById('tipe-' + map[tipe]);
   active.style.border = '2.5px solid var(--orange)';
-  active.style.background = '#FFF3E8';
+  active.style.background = '#FFEFE8';
   active.querySelector('div:last-child').style.color = 'var(--orange)';
   // Show/hide section
   document.getElementById('soal-pg-section').style.display    = tipe === 'pilihan_ganda' ? 'block' : 'none';
@@ -4639,7 +4639,7 @@ function selectBS(val) {
   document.getElementById('bs-benar').style.border = val === 'Benar' ? '2.5px solid var(--green)' : '2.5px solid #eee';
   document.getElementById('bs-benar').style.background = val === 'Benar' ? '#F0FFF4' : 'white';
   document.getElementById('bs-salah').style.border = val === 'Salah' ? '2.5px solid var(--red)' : '2.5px solid #eee';
-  document.getElementById('bs-salah').style.background = val === 'Salah' ? '#FFF0F0' : 'white';
+  document.getElementById('bs-salah').style.background = val === 'Salah' ? '#FFEFE8' : 'white';
 }
 
 function resetSoalForm() {
@@ -4962,7 +4962,7 @@ function sbPilihBS(val) {
   const benarEl = document.getElementById('sb-bs-benar');
   const salahEl = document.getElementById('sb-bs-salah');
   if (benarEl) benarEl.style.cssText = `border:3px solid ${val==='Benar'?'var(--green)':'#eee'};border-radius:14px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;background:${val==='Benar'?'#F0FFF4':'white'}`;
-  if (salahEl) salahEl.style.cssText = `border:3px solid ${val==='Salah'?'var(--red)':'#eee'};border-radius:14px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;background:${val==='Salah'?'#FFF0F0':'white'}`;
+  if (salahEl) salahEl.style.cssText = `border:3px solid ${val==='Salah'?'var(--red)':'#eee'};border-radius:14px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;background:${val==='Salah'?'#FFEFE8':'white'}`;
   sbAutoSave();
 }
 
@@ -5274,7 +5274,7 @@ const QK_SOAL_PER_STAGE = 6;
 const QK_STAGE_ICONS = ['🌱','⭐','🔥','💎','👑'];
 const QK_STAGE_NAMES = ['Pemula','Dasar','Menengah','Mahir','Master'];
 const QK_STAGE_XP    = [30, 50, 80, 120, 200];
-const QK_STAGE_COLORS= ['#6BCB77','#4D96FF','#FF6B35','#C77DFF','#FFD93D'];
+const QK_STAGE_COLORS= ['#6BCB77','#4D96FF','#FF6B35','#C77DFF','#FFB99B'];
 
 // ── Load halaman kategori ──────────────────────────────────
 async function startQuiz() {
@@ -5393,7 +5393,7 @@ function getMapelColor(mapel) {
   if (m.includes('ipa') || m.includes('sains')) return '#6BCB77';
   if (m.includes('musik') || m.includes('sbd') || m.includes('seni')) return '#FF6B9D';
   if (m.includes('olahraga')) return '#FF6B35';
-  if (m.includes('ips')) return '#FFD93D';
+  if (m.includes('ips')) return '#FFB99B';
   if (m.includes('tik')) return '#4D96FF';
   return '#C77DFF';
 }
@@ -5802,8 +5802,8 @@ function selectAnswer(i, btn) {
     document.getElementById('quiz-score').textContent = score;
     showFeedback(true, questions[qIdx].jawaban, bonus);
   } else {
-    btn.style.background = '#FFF0F0';
-    btn.style.borderColor = '#FF4757';
+    btn.style.background = '#FFEFE8';
+    btn.style.borderColor = '#D12B00';
     if (btns[correct]) { btns[correct].style.background = '#E8F8EE'; btns[correct].style.borderColor = '#6BCB77'; }
     qkLives = Math.max(0, qkLives - 1);
     document.getElementById('qk-lives').textContent = qkLives;
@@ -5815,7 +5815,7 @@ function selectAnswer(i, btn) {
 function showFeedback(benar, jawabanBenar, poin) {
   const fb = document.getElementById('qk-feedback');
   fb.style.display = 'block';
-  fb.style.background = benar ? '#E8F8EE' : '#FFF0F0';
+  fb.style.background = benar ? '#E8F8EE' : '#FFEFE8';
   document.getElementById('qk-feedback-title').textContent = benar ? `Benar! 🎉 +${poin} poin` : 'Kurang tepat 😅';
   document.getElementById('qk-feedback-title').style.color = benar ? '#27AE60' : '#E74C3C';
   document.getElementById('qk-feedback-sub').textContent = benar ? 'Pertahankan semangatmu!' : `Jawaban: ${jawabanBenar}`;
@@ -5845,7 +5845,7 @@ function stageFailed() {
   document.getElementById('result-stars').textContent = '';
   document.getElementById('result-title').textContent = 'Nyawa Habis!';
   document.getElementById('qk-result-stats').innerHTML = `
-    <div style="background:#FFF0F0;border-radius:16px;padding:16px">
+    <div style="background:#FFEFE8;border-radius:16px;padding:16px">
       <div style="font-family:'Fredoka One',cursive;font-size:28px;color:#E74C3C">${correctCount}</div>
       <div style="font-size:12px;color:var(--muted);font-weight:700">Benar</div>
     </div>
@@ -5853,7 +5853,7 @@ function stageFailed() {
       <div style="font-family:'Fredoka One',cursive;font-size:28px;color:#4D96FF">${pct}%</div>
       <div style="font-size:12px;color:var(--muted);font-weight:700">Akurasi</div>
     </div>
-    <div style="background:#FFF3E8;border-radius:16px;padding:16px">
+    <div style="background:#FFEFE8;border-radius:16px;padding:16px">
       <div style="font-family:'Fredoka One',cursive;font-size:28px;color:var(--orange)">${score}</div>
       <div style="font-size:12px;color:var(--muted);font-weight:700">Poin</div>
     </div>`;
@@ -5877,7 +5877,7 @@ function showResult() {
       <div style="font-family:'Fredoka One',cursive;font-size:28px;color:#27AE60">${correctCount}/${questions.length}</div>
       <div style="font-size:12px;color:var(--muted);font-weight:700">Benar</div>
     </div>
-    <div style="background:#FFF3E8;border-radius:16px;padding:16px">
+    <div style="background:#FFEFE8;border-radius:16px;padding:16px">
       <div style="font-family:'Fredoka One',cursive;font-size:28px;color:var(--orange)">${score}</div>
       <div style="font-size:12px;color:var(--muted);font-weight:700">Total Poin</div>
     </div>
@@ -6223,7 +6223,7 @@ function switchTipeKuis(tipe) {
     const el = document.getElementById('tipe-' + t);
     const active = t === tipe;
     el.style.border = active ? '2.5px solid var(--orange)' : '2.5px solid #eee';
-    el.style.background = active ? '#FFF3E8' : 'white';
+    el.style.background = active ? '#FFEFE8' : 'white';
     el.querySelector('div:nth-child(2)').style.color = active ? 'var(--orange)' : 'var(--muted)';
   });
   document.getElementById('kuis-deadline-wrap').style.display = tipe === 'pr' ? 'block' : 'none';
@@ -7211,7 +7211,7 @@ async function submitKuisKelas() {
   document.getElementById('hasil-stats').innerHTML = `
     <div style="background:#F8F9FA;border-radius:14px;padding:16px;text-align:center"><div style="font-family:'Fredoka One',cursive;font-size:28px;color:var(--green)">${benar}</div><div style="font-size:12px;color:var(--muted);font-weight:700">Benar</div></div>
     <div style="background:#F8F9FA;border-radius:14px;padding:16px;text-align:center"><div style="font-family:'Fredoka One',cursive;font-size:28px;color:var(--red)">${total_soal - benar}</div><div style="font-size:12px;color:var(--muted);font-weight:700">Salah</div></div>
-    <div style="background:#FFF3E8;border-radius:14px;padding:16px;text-align:center"><div style="font-family:'Fredoka One',cursive;font-size:28px;color:var(--orange)">${totalPoin}</div><div style="font-size:12px;color:var(--muted);font-weight:700">Poin</div></div>
+    <div style="background:#FFEFE8;border-radius:14px;padding:16px;text-align:center"><div style="font-family:'Fredoka One',cursive;font-size:28px;color:var(--orange)">${totalPoin}</div><div style="font-size:12px;color:var(--muted);font-weight:700">Poin</div></div>
   `;
   showPage('page-kuis-hasil');
 }

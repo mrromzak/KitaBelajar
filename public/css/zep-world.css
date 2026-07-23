@@ -1,4 +1,12 @@
 
+  :root {
+    --orange-50: #FFFAF7; --orange-100: #FFEFE8; --orange-200: #FFCFBA;
+    --orange-300: #FFB99B; --orange-400: #FF8C42; --orange-500: #FF6B35;
+    --orange-600: #D14500; --orange-700: #B33A00; --orange-800: #8A2A00;
+    --orange-900: #5C1A00; --orange-950: #7D0C00;
+    --orange: #FF6B35; --red: #D12B00;
+    --red-light: #FFE8E8; --red-lighter: #FFF5F0;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #0d0d1a; font-family: 'Nunito', sans-serif; overflow: hidden; width: 100vw; height: 100vh; }
 
@@ -11,9 +19,9 @@
     pointer-events: none;
   }
   #hud-left { display: flex; align-items: center; gap: 12px; pointer-events: all; }
-  #hud-logo { font-family: 'Press Start 2P', monospace; font-size: 11px; color: #FFD93D; text-shadow: 2px 2px 0 #FF6B35; }
+  #hud-logo { font-family: 'Press Start 2P', monospace; font-size: 11px; color: var(--orange-300); text-shadow: 2px 2px 0 #FF6B35; }
   #hud-player { background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); border-radius: 50px; padding: 6px 16px; font-size: 13px; font-weight: 800; color: white; display: flex; align-items: center; gap: 8px; }
-  #hud-skor { background: linear-gradient(135deg, #FFD93D, #FF6B35); border-radius: 50px; padding: 6px 16px; font-weight: 900; font-size: 14px; color: #1a1a2e; pointer-events: all; }
+  #hud-skor { background: linear-gradient(135deg, var(--orange-300), #FF6B35); border-radius: 50px; padding: 6px 16px; font-weight: 900; font-size: 14px; color: #1a1a2e; pointer-events: all; }
   #hud-right { display: flex; gap: 8px; pointer-events: all; }
   .hud-btn { background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2); border-radius: 50px; padding: 7px 16px; color: white; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.2s; }
   .hud-btn:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
@@ -51,7 +59,7 @@
   #soal-timer-wrap { display: flex; align-items: center; gap: 8px; }
   #soal-timer-bar-wrap { width: 100px; height: 8px; background: #eee; border-radius: 50px; overflow: hidden; }
   #soal-timer-bar { height: 100%; background: linear-gradient(90deg, #6BCB77, #4CAF50); border-radius: 50px; transition: width 1s linear; }
-  #soal-timer-text { font-family: 'Press Start 2P', monospace; font-size: 12px; color: #FF4757; width: 28px; text-align: right; }
+  #soal-timer-text { font-family: 'Press Start 2P', monospace; font-size: 12px; color: var(--red); width: 28px; text-align: right; }
   #soal-emoji { font-size: 52px; text-align: center; margin-bottom: 14px; }
   #soal-text { font-size: 18px; font-weight: 800; color: #1a1a2e; text-align: center; line-height: 1.5; margin-bottom: 24px; }
   #soal-opsi { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -63,12 +71,12 @@
   }
   .soal-opsi-btn:hover:not(:disabled) { transform: scale(1.03); border-color: #4D96FF; background: #EEF5FF; }
   .soal-opsi-btn .opsi-key { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; flex-shrink: 0; }
-  .opsi-key-A { background: #FFEAEA; color: #FF4757; }
+  .opsi-key-A { background: var(--orange-100); color: var(--red); }
   .opsi-key-B { background: #EEF5FF; color: #4D96FF; }
   .opsi-key-C { background: #EFFFEF; color: #2ed573; color: #27ae60; }
   .opsi-key-D { background: #FFFBE6; color: #f39c12; }
   .soal-opsi-btn.benar { background: #EFFFEF; border-color: #6BCB77; animation: pop 0.4s ease; }
-  .soal-opsi-btn.salah { background: #FFF0F0; border-color: #FF4757; animation: shake 0.4s ease; opacity: 0.6; }
+  .soal-opsi-btn.salah { background: var(--orange-100); border-color: var(--red); animation: shake 0.4s ease; opacity: 0.6; }
   .soal-opsi-btn.reveal { background: #EFFFEF; border-color: #6BCB77; }
   @keyframes pop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
   @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
@@ -122,12 +130,12 @@
   #voting-timer-wrap { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
   #voting-timer-circle {
     width: 72px; height: 72px; border-radius: 50%;
-    background: conic-gradient(#FFD93D 0deg, rgba(255,255,255,0.1) 0deg);
+    background: conic-gradient(var(--orange-300) 0deg, rgba(255,255,255,0.1) 0deg);
     display: flex; align-items: center; justify-content: center;
     position: relative; flex-shrink: 0;
   }
   #voting-timer-circle::before { content:''; position:absolute; inset:6px; background:#0d0d1a; border-radius:50%; }
-  #voting-timer-num { font-family: 'Press Start 2P', monospace; font-size: 16px; color: #FFD93D; position: relative; z-index: 1; }
+  #voting-timer-num { font-family: 'Press Start 2P', monospace; font-size: 16px; color: var(--orange-300); position: relative; z-index: 1; }
   #voting-timer-label { font-size: 14px; color: rgba(255,255,255,0.6); font-weight: 700; }
   #voting-maps { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; width: 100%; max-width: 900px; margin-bottom: 20px; }
   .vote-map-card {
@@ -136,15 +144,15 @@
     text-align: center; position: relative; overflow: hidden;
   }
   .vote-map-card:hover { transform: translateY(-4px); border-color: rgba(255,255,255,0.3); }
-  .vote-map-card.voted { border-color: #FFD93D; background: rgba(255,217,61,0.1); }
+  .vote-map-card.voted { border-color: var(--orange-300); background: rgba(255,192,133,0.1); }
   .vote-map-card.winner { border-color: #6BCB77; background: rgba(107,203,119,0.15); animation: winPulse 0.6s ease; }
   @keyframes winPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
   .vote-map-preview { font-size: 52px; margin-bottom: 10px; }
   .vote-map-name { font-family: 'Press Start 2P', monospace; font-size: 9px; color: white; margin-bottom: 10px; line-height: 1.6; }
   .vote-bar-wrap { background: rgba(255,255,255,0.1); border-radius: 50px; height: 8px; margin-bottom: 6px; overflow: hidden; }
-  .vote-bar { height: 100%; border-radius: 50px; background: linear-gradient(90deg, #FFD93D, #FF6B35); transition: width 0.4s ease; }
+  .vote-bar { height: 100%; border-radius: 50px; background: linear-gradient(90deg, var(--orange-300), #FF6B35); transition: width 0.4s ease; }
   .vote-count { font-size: 12px; color: rgba(255,255,255,0.6); font-weight: 800; }
-  .vote-badge { position: absolute; top: 10px; right: 10px; background: #FFD93D; color: #1a1a2e; font-size: 10px; font-weight: 900; padding: 3px 8px; border-radius: 50px; display: none; }
+  .vote-badge { position: absolute; top: 10px; right: 10px; background: var(--orange-300); color: #1a1a2e; font-size: 10px; font-weight: 900; padding: 3px 8px; border-radius: 50px; display: none; }
   .vote-map-card.voted .vote-badge { display: block; }
   #voting-pemain { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 16px; max-width: 900px; width: 100%; }
   .voting-pemain-chip { background: rgba(255,255,255,0.08); border-radius: 50px; padding: 6px 14px; font-size: 13px; font-weight: 700; color: white; display: flex; align-items: center; gap: 6px; }
@@ -165,12 +173,12 @@
     border-radius: 28px; padding: 32px 28px; max-width: 520px; width: 95%;
     text-align: center; max-height: 95vh; overflow-y: auto;
   }
-  #login-box h1 { font-family: 'Press Start 2P', monospace; font-size: 13px; color: #FFD93D; margin-bottom: 4px; text-shadow: 2px 2px 0 #FF6B35; }
+  #login-box h1 { font-family: 'Press Start 2P', monospace; font-size: 13px; color: var(--orange-300); margin-bottom: 4px; text-shadow: 2px 2px 0 #FF6B35; }
   #login-box p { color: rgba(255,255,255,0.5); font-size: 12px; margin-bottom: 20px; }
   .login-input { width: 100%; padding: 12px 16px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color: white; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700; outline: none; margin-bottom: 12px; transition: border-color 0.2s; }
-  .login-input:focus { border-color: #FFD93D; }
+  .login-input:focus { border-color: var(--orange-300); }
   .login-input::placeholder { color: rgba(255,255,255,0.3); font-weight: 400; }
-  #btn-masuk { width: 100%; padding: 14px; border-radius: 14px; border: none; background: linear-gradient(135deg, #FFD93D, #FF6B35); color: #1a1a2e; font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 16px; cursor: pointer; transition: all 0.2s; margin-top: 4px; }
+  #btn-masuk { width: 100%; padding: 14px; border-radius: 14px; border: none; background: linear-gradient(135deg, var(--orange-300), #FF6B35); color: #1a1a2e; font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 16px; cursor: pointer; transition: all 0.2s; margin-top: 4px; }
   #btn-masuk:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(255,107,53,0.4); }
   #btn-kembali { background: none; border: 1.5px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); border-radius: 50px; padding: 9px 22px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; margin-top: 12px; transition: all 0.2s; }
   #btn-kembali:hover { border-color: rgba(255,255,255,0.5); color: white; }
@@ -183,16 +191,16 @@
     border: 3px solid transparent; transition: all 0.2s; flex-shrink: 0;
   }
   .cc-swatch:hover { transform: scale(1.15); }
-  .cc-swatch.selected { border-color: #FFD93D; transform: scale(1.15); box-shadow: 0 0 0 2px rgba(255,217,61,0.4); }
+  .cc-swatch.selected { border-color: var(--orange-300); transform: scale(1.15); box-shadow: 0 0 0 2px rgba(255,192,133,0.4); }
   .cc-outfit {
     width: 36px; height: 36px; border-radius: 8px; cursor: pointer;
     border: 3px solid transparent; transition: all 0.2s;
   }
   .cc-outfit:hover { transform: scale(1.1); }
-  .cc-outfit.selected { border-color: #FFD93D; box-shadow: 0 0 0 2px rgba(255,217,61,0.4); }
+  .cc-outfit.selected { border-color: var(--orange-300); box-shadow: 0 0 0 2px rgba(255,192,133,0.4); }
   .cc-acc { font-size: 24px; cursor: pointer; padding: 4px 6px; border-radius: 8px; border: 2px solid transparent; transition: all 0.2s; }
   .cc-acc:hover { background: rgba(255,255,255,0.1); }
-  .cc-acc.selected { border-color: #FFD93D; background: rgba(255,217,61,0.15); }
+  .cc-acc.selected { border-color: var(--orange-300); background: rgba(255,192,133,0.15); }
   /* Character Preview */
   #cc-preview-wrap {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -230,7 +238,7 @@
   #npc-char-torso { width: 60px; height: 66px; border-radius: 10px; margin-top: -5px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 7px; box-shadow: 0 4px 14px rgba(0,0,0,0.3); }
   #npc-char-torso span { font-size: 10px; font-weight: 900; color: rgba(255,255,255,0.9); }
   #npc-char-name { font-size: 11px; font-weight: 800; color: white; text-shadow: 0 1px 4px rgba(0,0,0,0.5); margin-top: 5px; }
-  #npc-char-badge { font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 50px; margin-top: 3px; background: #FFD93D; color: #1a1a2e; }
+  #npc-char-badge { font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 50px; margin-top: 3px; background: var(--orange-300); color: #1a1a2e; }
   #npc-char-torso.anim-happy { animation: npcHappy 0.5s ease; }
   #npc-char-torso.anim-think { animation: npcThink 1.4s ease infinite; }
   @keyframes npcHappy { 0%,100%{transform:translateY(0)} 40%{transform:translateY(-10px)} }
@@ -242,7 +250,7 @@
   #npc-nama { font-size: 13px; font-weight: 800; color: #1a1a2e; }
   #npc-topik { font-size: 11px; color: #7A7A7A; font-weight: 600; }
   #npc-close { background: #F5F5F5; border: none; color: #7A7A7A; width: 28px; height: 28px; border-radius: 50%; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
-  #npc-close:hover { background: #FFE8E8; color: #FF4757; }
+  #npc-close:hover { background: var(--orange-100); color: var(--red); }
   #npc-quick-btns { display: flex; gap: 6px; flex-wrap: wrap; padding: 7px 12px 3px; }
   .npc-quick-btn { background: #F0F4FF; border: 1.5px solid #C5D5FF; color: #4D96FF; border-radius: 50px; padding: 4px 11px; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.2s; font-family: "Nunito", sans-serif; white-space: nowrap; }
   .npc-quick-btn:hover { background: #4D96FF; color: white; border-color: #4D96FF; }

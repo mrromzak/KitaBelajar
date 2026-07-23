@@ -167,7 +167,7 @@ function zepConnect() {
     if (el) {
       if (detik > 0) {
         el.textContent = `Game mulai dalam ${detik} detik... Siap-siap! 🎯`;
-        el.style.color = detik <= 3 ? '#FF6B6B' : '#FFD93D';
+        el.style.color = detik <= 3 ? '#FF6B6B' : '#FFB99B';
       } else {
         el.textContent = 'Mulai!';
       }
@@ -349,16 +349,16 @@ function setOnlineMode(mode) {
   const randomInfo = document.getElementById('online-random-info');
   const cariBtn   = document.getElementById('online-cari-btn');
   if (mode === 'random') {
-    btnRandom.style.borderColor = '#FFD93D';
-    btnRandom.style.background  = 'rgba(255,217,61,0.15)';
-    btnRandom.style.color       = '#FFD93D';
+    btnRandom.style.borderColor = '#FFB99B';
+    btnRandom.style.background  = 'rgba(255,185,155,0.15)';
+    btnRandom.style.color       = '#FFB99B';
     btnPilih.style.borderColor  = 'rgba(255,255,255,0.15)';
     btnPilih.style.background   = 'rgba(255,255,255,0.05)';
     btnPilih.style.color        = 'rgba(255,255,255,0.6)';
     mapelWrap.style.display     = 'none';
     randomInfo.style.display    = 'block';
     cariBtn.disabled = false;
-    cariBtn.style.background = 'linear-gradient(135deg,#FFD93D,#FFA500)';
+    cariBtn.style.background = 'linear-gradient(135deg,#FFB99B,#FFA500)';
     cariBtn.style.color = '#1a1a2e';
     cariBtn.innerHTML = '🎲 Cari Lawan Random';
   } else {
@@ -512,7 +512,7 @@ function pilihDiffAI(btn, diff) {
     b.style.borderColor = 'rgba(255,255,255,0.15)';
     b.style.color = 'rgba(255,255,255,0.6)';
   });
-  const colors = { mudah: '#6BCB77', sedang: '#FFD93D', sulit: '#FF6B6B' };
+  const colors = { mudah: '#6BCB77', sedang: '#FFB99B', sulit: '#FF6B6B' };
   btn.style.background = `rgba(${diff==='mudah'?'107,203,119':diff==='sedang'?'255,211,61':'255,107,107'},0.2)`;
   btn.style.borderColor = colors[diff];
   btn.style.color = colors[diff];
@@ -678,7 +678,7 @@ function zepVSAITampilKomparasi() {
         <div style="font-size:12px;font-weight:800;color:${benarAI?'#6BCB77':'#FF6B9D'}">${benarAI ? '+'+poinAI+' poin' : 'Salah'}</div>
       </div>
     </div>
-    <div style="text-align:center;font-size:12px;opacity:.6">Jawaban benar: <strong style="color:#FFD93D">${s.jawaban}</strong></div>
+    <div style="text-align:center;font-size:12px;opacity:.6">Jawaban benar: <strong style="color:#FFB99B">${s.jawaban}</strong></div>
   `;
 
   // Lanjut ke soal berikutnya setelah 3.5 detik
@@ -834,11 +834,11 @@ function zepStartTimer(detik) {
     circle.style.strokeDashoffset = CIRCUMFERENCE * (1 - ratio);
     numEl.textContent = zepTimerSisa;
     if (zepTimerSisa <= 5) {
-      circle.style.stroke = '#FF4757';
-      numEl.style.color = '#FF4757';
+      circle.style.stroke = '#D12B00';
+      numEl.style.color = '#D12B00';
     } else {
-      circle.style.stroke = '#FFD93D';
-      numEl.style.color = '#FFD93D';
+      circle.style.stroke = '#FFB99B';
+      numEl.style.color = '#FFB99B';
     }
   }
   update();

@@ -19,17 +19,19 @@
 
 :root{
 
-  --c1:#FF6B6B;--c2:#FFD93D;--c3:#6BCB77;--c4:#4D96FF;--c5:#C77DFF;--c6:#FF9F43;--c7:#00D2D3;--c8:#ff6b81;--c9:#a29bfe;
+  --c1:#FF6B6B;--c2:var(--orange-300);--c3:#6BCB77;--c4:#4D96FF;--c5:#C77DFF;--c6:#FF9F43;--c7:#00D2D3;--c8:#ff6b81;--c9:#a29bfe;
 
   --c10:#43e97b;--c11:#f093fb;--c12:#4facfe;--c13:#fa709a;
 
-  --bg:#FFF8F0;--card:#fff;--txt:#2D2D2D;--muted:#888;
+  --orange-50:#FFFAF7;--orange-100:#FFEFE8;--orange-200:#FFCFBA;--orange-300:#FFB99B;--orange-400:#FF8C42;--orange-500:#FF6B35;--orange-600:#D14500;--orange-700:#B33A00;--orange-800:#8A2A00;--orange-900:#5C1A00;--orange-950:#7D0C00;--orange:#FF6B35;--red:#D12B00;--red-light:#FFE8E8;--red-lighter:#FFF5F0;
+
+  --bg:#FFFAF7;--card:#fff;--txt:#2D2D2D;--muted:#888;
 
   --shadow:0 4px 20px rgba(0,0,0,.1);
 
 }
 
-body{font-family:'Nunito',sans-serif;background:radial-gradient(900px 650px at 0% 0%,rgba(255,154,46,.15),transparent 60%),radial-gradient(850px 620px at 100% 3%,rgba(255,107,157,.13),transparent 58%),radial-gradient(1000px 780px at 50% 110%,rgba(178,63,201,.12),transparent 62%),#FFFBF6;background-attachment:fixed;color:var(--txt);min-height:100vh;overflow-x:hidden}
+body{font-family:'Nunito',sans-serif;background:radial-gradient(900px 650px at 0% 0%,rgba(255,107,53,.15),transparent 60%),radial-gradient(850px 620px at 100% 3%,rgba(255,107,157,.13),transparent 58%),radial-gradient(1000px 780px at 50% 110%,rgba(178,63,201,.12),transparent 62%),var(--orange-50);background-attachment:fixed;color:var(--txt);min-height:100vh;overflow-x:hidden}
 
 .blobs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
 
@@ -69,7 +71,7 @@ body{font-family:'Nunito',sans-serif;background:radial-gradient(900px 650px at 0
 
 .game-card.c1{border-color:var(--c1)}.game-card.c1::before{background:linear-gradient(135deg,#FF6B6B18,transparent)}
 
-.game-card.c2{border-color:var(--c2)}.game-card.c2::before{background:linear-gradient(135deg,#FFD93D18,transparent)}
+.game-card.c2{border-color:var(--c2)}.game-card.c2::before{background:linear-gradient(135deg,#FFB99B18,transparent)}
 
 .game-card.c3{border-color:var(--c3)}.game-card.c3::before{background:linear-gradient(135deg,#6BCB7718,transparent)}
 
@@ -534,7 +536,7 @@ body{font-family:'Nunito',sans-serif;background:radial-gradient(900px 650px at 0
 
 .diff-cell.wrong-pick{animation:shake .3s ease}
 
-.diff-cell.found{border-color:#FFD93D!important;box-shadow:0 0 0 3px #FFD93D}
+.diff-cell.found{border-color:var(--orange-300)!important;box-shadow:0 0 0 3px var(--orange-300)}
 
 .diff-found-badge{text-align:center;margin-bottom:10px;font-size:.9rem;font-weight:700;color:var(--c12)}
 
@@ -3727,7 +3729,7 @@ const CBG_PICTURES = [
 
     name:'🌞 Matahari & Awan',
 
-    colors:{'1':'#FFD93D','2':'#4D96FF','3':'#6BCB77','4':'#FF9F43'},
+    colors:{'1':'#FFB99B','2':'#4D96FF','3':'#6BCB77','4':'#FF9F43'},
 
     colorNames:{'1':'Kuning','2':'Biru','3':'Hijau','4':'Oranye'},
 
@@ -3777,7 +3779,7 @@ const CBG_PICTURES = [
 
     name:'🏠 Rumah Kecil',
 
-    colors:{'1':'#FF6B6B','2':'#FFD93D','3':'#6BCB77','4':'#a29bfe','5':'#FF9F43'},
+    colors:{'1':'#FF6B6B','2':'#FFB99B','3':'#6BCB77','4':'#a29bfe','5':'#FF9F43'},
 
     colorNames:{'1':'Merah','2':'Kuning','3':'Hijau','4':'Ungu','5':'Oranye'},
 
@@ -3819,7 +3821,7 @@ const CBG_PICTURES = [
 
     name:'🐟 Ikan di Laut',
 
-    colors:{'1':'#4D96FF','2':'#FF9F43','3':'#6BCB77','4':'#FFD93D','5':'#ff6b81'},
+    colors:{'1':'#4D96FF','2':'#FF9F43','3':'#6BCB77','4':'#FFB99B','5':'#ff6b81'},
 
     colorNames:{'1':'Biru','2':'Oranye','3':'Hijau','4':'Kuning','5':'Pink'},
 
@@ -5543,7 +5545,7 @@ function showResult(game,score,total,emoji,title,detail){
 
 function confetti(){
 
-  const colors=['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#C77DFF','#FF9F43','#00D2D3'];
+  const colors=['#FF6B6B','#FFB99B','#6BCB77','#4D96FF','#C77DFF','#FF9F43','#00D2D3'];
 
   for(let i=0;i<70;i++){
 

@@ -7,10 +7,10 @@
   <link rel="icon" type="image/png" href="/assets/maskot-icon.png?v=1">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
   <style>
-    :root{--ff-h:'Fredoka One',cursive;--ff-b:'Nunito',sans-serif;--bg:#FFF9F0;--text:#1a1a2e;--muted:#888;--orange:#FF6B35;--blue:#4776E6;--green:#11998e;--purple:#6C5CE7}
+    :root{--ff-h:'Fredoka One',cursive;--ff-b:'Nunito',sans-serif;--orange-50:#FFFAF7;--orange-100:#FFEFE8;--orange-200:#FFCFBA;--orange-300:#FFB99B;--orange-400:#FF8C42;--orange-500:#FF6B35;--orange-600:#D14500;--orange-700:#B33A00;--orange-800:#8A2A00;--orange-900:#5C1A00;--orange-950:#7D0C00;--orange:#FF6B35;--red:#D12B00;--red-light:#FFE8E8;--red-lighter:#FFF5F0;--bg:#FFFAF7;--text:#1a1a2e;--muted:#888;--blue:#4776E6;--green:#11998e;--purple:#6C5CE7}
     *{box-sizing:border-box;margin:0;padding:0}
     html{scroll-behavior:smooth}
-    body{font-family:var(--ff-b);background:radial-gradient(900px 650px at 0% 0%,rgba(255,154,46,.15),transparent 60%),radial-gradient(850px 620px at 100% 3%,rgba(255,107,157,.13),transparent 58%),radial-gradient(1000px 780px at 50% 110%,rgba(178,63,201,.12),transparent 62%),#FFFBF6;background-attachment:fixed;color:var(--text);min-height:100vh;overflow-x:hidden}
+    body{font-family:var(--ff-b);background:radial-gradient(900px 650px at 0% 0%,rgba(255,107,53,.15),transparent 60%),radial-gradient(850px 620px at 100% 3%,rgba(255,107,157,.13),transparent 58%),radial-gradient(1000px 780px at 50% 110%,rgba(178,63,201,.12),transparent 62%),var(--orange-50);background-attachment:fixed;color:var(--text);min-height:100vh;overflow-x:hidden}
 
     /* BG */
     #bg-wrap{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
@@ -18,12 +18,12 @@
     @keyframes floatUp{0%{transform:translateY(110vh) rotate(0)}100%{transform:translateY(-120px) rotate(360deg)}}
 
     /* NAVBAR */
-    .navbar{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.93);backdrop-filter:blur(14px);border-bottom:2px solid #FFE0B2;display:flex;align-items:center;justify-content:space-between;padding:6px 24px;min-height:64px;box-shadow:0 2px 16px rgba(255,107,0,.08)}
+    .navbar{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.93);backdrop-filter:blur(14px);border-bottom:2px solid var(--orange-200);display:flex;align-items:center;justify-content:space-between;padding:6px 24px;min-height:64px;box-shadow:0 2px 16px rgba(255,107,53,.08)}
     .nav-brand{display:flex;align-items:center;gap:8px;font-family:var(--ff-h);font-size:20px;color:var(--orange)}
     .nav-right{display:flex;align-items:center;gap:10px}
-    .btn-nav{background:linear-gradient(135deg,#FF6B35,#FF9A5C);color:#fff;border:none;border-radius:50px;padding:8px 18px;font-family:var(--ff-b);font-weight:900;font-size:13px;cursor:pointer;transition:all .2s;box-shadow:0 3px 10px rgba(255,107,53,.3)}
+    .btn-nav{background:linear-gradient(135deg,#FF6B35,var(--orange-400));color:#fff;border:none;border-radius:50px;padding:8px 18px;font-family:var(--ff-b);font-weight:900;font-size:13px;cursor:pointer;transition:all .2s;box-shadow:0 3px 10px rgba(255,107,53,.3)}
     .btn-nav:hover{transform:translateY(-2px)}
-    .btn-back{background:#fff;border:2px solid #FFD0B0;color:var(--orange);border-radius:50px;padding:7px 16px;font-family:var(--ff-b);font-weight:900;font-size:13px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px}
+    .btn-back{background:#fff;border:2px solid var(--orange-200);color:var(--orange);border-radius:50px;padding:7px 16px;font-family:var(--ff-b);font-weight:900;font-size:13px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px}
     .btn-back:hover{background:var(--orange);color:#fff;border-color:var(--orange)}
 
     /* VIEWS */
@@ -42,7 +42,7 @@
     .hero-sub{font-size:14px;color:var(--muted);font-weight:700}
 
     /* SEARCH */
-    .search-box{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid #FFD0B0;border-radius:50px;padding:10px 18px;margin-bottom:28px;box-shadow:0 3px 14px rgba(0,0,0,.06);transition:border-color .2s}
+    .search-box{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid var(--orange-200);border-radius:50px;padding:10px 18px;margin-bottom:28px;box-shadow:0 3px 14px rgba(0,0,0,.06);transition:border-color .2s}
     .search-box:focus-within{border-color:var(--orange)}
     .search-box input{border:none;outline:none;flex:1;font-family:var(--ff-b);font-size:14px;font-weight:700;background:transparent;color:var(--text)}
     .search-box input::placeholder{color:#ccc}
@@ -134,7 +134,7 @@
     .mc-poin ul{padding-left:16px;display:flex;flex-direction:column;gap:7px}
     .mc-poin ul li{font-size:14px;font-weight:700;line-height:1.5;color:#1a3d2b}
 
-    .mc-rumus{background:linear-gradient(135deg,#FFF3E0,#FFE0B2);border-radius:14px;padding:16px 18px;margin-bottom:12px;border-left:4px solid var(--orange)}
+    .mc-rumus{background:linear-gradient(135deg,var(--orange-100),var(--orange-200));border-radius:14px;padding:16px 18px;margin-bottom:12px;border-left:4px solid var(--orange)}
     .mc-rumus-title{font-weight:900;font-size:12px;color:var(--orange);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
     .mc-rumus .formula{background:rgba(255,107,53,.12);border-radius:8px;padding:10px 14px;font-family:monospace;font-size:14px;font-weight:800;color:#7A3200;margin-bottom:6px;text-align:center}
     .mc-rumus p{font-size:13px;font-weight:700;color:#7A3200;line-height:1.5}
@@ -663,7 +663,7 @@ SD: {
   },
 
   'Bahasa Indonesia': {
-    icon:'📝', bg:'linear-gradient(145deg,#FF6B35,#FF9A5C)',
+    icon:'📝', bg:'linear-gradient(145deg,#FF6B35,var(--orange-400))',
     topics:[
       { j:'Teks Narasi', i:`
 <div class="mc-def"><div class="mc-def-title">📖 Pengertian</div><p>Teks narasi adalah teks yang menceritakan suatu peristiwa atau kejadian secara berurutan berdasarkan waktu (kronologis).</p></div>

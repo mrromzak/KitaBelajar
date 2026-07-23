@@ -219,7 +219,7 @@ let myPlayer = { id: '', nama: '', avatar: '🦁', skinColor: '#FFD3A3', outfitC
 
 // ── Character Creator ──
 const CC_SKINS    = ['#FFDBAC','#F1C27D','#E0AC69','#C68642','#8D5524','#FFDAB9'];
-const CC_OUTFITS  = ['#4D96FF','#FF6B35','#6BCB77','#C77DFF','#FF6B9D','#FFD93D','#FF4757','#2ed573'];
+const CC_OUTFITS  = ['#4D96FF','#FF6B35','#6BCB77','#C77DFF','#FF6B9D','#FFB99B','#D12B00','#2ed573'];
 const CC_ACCS     = ['','🎓','⛑️','🎩','👒','🧢','😎','🌟'];
 
 let selSkin    = 0;
@@ -515,7 +515,7 @@ function mulaiVotingTimer(detik) {
   function tick() {
     document.getElementById('voting-timer-num').textContent = sisa;
     const deg = (sisa / detik) * 360;
-    const col = sisa <= 10 ? '#FF4757' : '#FFD93D';
+    const col = sisa <= 10 ? '#D12B00' : '#FFB99B';
     circle.style.background = `conic-gradient(${col} ${deg}deg, rgba(255,255,255,0.1) ${deg}deg)`;
     document.getElementById('voting-timer-num').style.color = col;
   }
@@ -919,9 +919,9 @@ function create() {
 
   // ── Label zona dengan style bagus ──
   const zoneLabels = [
-    { text: '🌸 TAMAN', row: 3,  col: MAP_W/2, color: '#FFD93D', bg: 0x1B5E20 },
-    { text: '📚 AREA KELAS', row: 11, col: MAP_W/2, color: '#FFD93D', bg: 0x0D47A1 },
-    { text: '⚽ LAPANGAN', row: 19, col: MAP_W/2, color: '#FFD93D', bg: 0x1B5E20 },
+    { text: '🌸 TAMAN', row: 3,  col: MAP_W/2, color: '#FFB99B', bg: 0x1B5E20 },
+    { text: '📚 AREA KELAS', row: 11, col: MAP_W/2, color: '#FFB99B', bg: 0x0D47A1 },
+    { text: '⚽ LAPANGAN', row: 19, col: MAP_W/2, color: '#FFB99B', bg: 0x1B5E20 },
   ];
   zoneLabels.forEach(({ text, row, col, color, bg }) => {
     // Background pill
@@ -1081,7 +1081,7 @@ function buatZonaSoal() {
     }).setOrigin(0.5, 0.5);
     const numLabel = this.add.text(x, y + 18, `Soal ${i+1}`, {
       fontFamily: 'Nunito', fontSize: '10px', fontStyle: 'bold',
-      color: '#FFD93D', stroke: '#000', strokeThickness: 2
+      color: '#FFB99B', stroke: '#000', strokeThickness: 2
     }).setOrigin(0.5, 0);
 
     this.zonaSprites.push(zona, zonaRing, icon, numLabel);
@@ -1171,7 +1171,7 @@ function mulaiTimerSoal(detik, jawabanBenar, poin) {
     sisa--;
     document.getElementById('soal-timer-text').textContent = sisa;
     document.getElementById('soal-timer-bar').style.width = (sisa/detik*100) + '%';
-    if (sisa <= 5) document.getElementById('soal-timer-bar').style.background = 'linear-gradient(90deg,#FF4757,#e84393)';
+    if (sisa <= 5) document.getElementById('soal-timer-bar').style.background = 'linear-gradient(90deg,#D12B00,#e84393)';
     if (sisa <= 0) {
       clearInterval(soalTimer);
       if (!sudahJawab) {
@@ -1181,7 +1181,7 @@ function mulaiTimerSoal(detik, jawabanBenar, poin) {
         document.querySelectorAll('.soal-opsi-btn').forEach(b => {
           if (b.textContent.trim().includes(jawabanBenar)) b.classList.add('reveal');
         });
-        document.getElementById('soal-feedback').innerHTML = `⏰ <span style="color:#FF4757">Waktu habis! Jawaban: ${jawabanBenar}</span>`;
+        document.getElementById('soal-feedback').innerHTML = `⏰ <span style="color:#D12B00">Waktu habis! Jawaban: ${jawabanBenar}</span>`;
         setTimeout(tutupSoal, 2500);
       }
     }
@@ -1396,7 +1396,7 @@ function tampilNotif(msg, type='') {
 function tampilSkorPopup(teks, benar) {
   const el = document.createElement('div');
   el.className = 'skor-popup';
-  el.style.color = benar ? '#6BCB77' : '#FF4757';
+  el.style.color = benar ? '#6BCB77' : '#D12B00';
   el.style.left = (window.innerWidth/2 - 40) + 'px';
   el.style.top  = (window.innerHeight/2 - 80) + 'px';
   el.textContent = teks;
@@ -1619,7 +1619,7 @@ function bukaDialogNPC(npc) {
   if (!npcChatHistory[npc.id]) npcChatHistory[npc.id] = [];
 
   const hatMap = { prof:'🎓', ibu:'👒', robot:'⚙️', penjelajah:'🧭' };
-  const colorMap = { prof:'#4D96FF', ibu:'#FF6B9D', robot:'#6BCB77', penjelajah:'#FFD93D' };
+  const colorMap = { prof:'#4D96FF', ibu:'#FF6B9D', robot:'#6BCB77', penjelajah:'#FFB99B' };
   const labelMap = { prof:'Prof.', ibu:'Bu', robot:'AI', penjelajah:'Pak' };
   document.getElementById('npc-char-hat').textContent = hatMap[npc.id] || '🎓';
   document.getElementById('npc-char-head').textContent = npc.emoji;
