@@ -1,4 +1,4 @@
-lh
+
   :root {
     --orange-50: #FFFAF7;
     --orange-100: #FFEFE8;
@@ -1371,27 +1371,19 @@ body.dark-mode .bell-btn {
 body.dark-mode .bell-btn:hover {
   background: var(--input);
 }
-body.dark-mode #bell-dropdown, body.dark-mode .bell-dropdown, body.dark-mode .profile-dropdown {
+body.dark-mode .bell-dropdown, body.dark-mode .profile-dropdown {
   background: var(--elevated);
   border-color: var(--border);
   color: var(--text);
 }
-body.dark-mode .bell-notif-item, body.dark-mode .bell-item {
+body.dark-mode .bell-item {
   border-bottom-color: var(--border);
-  color: var(--text);
 }
-body.dark-mode .bell-notif-item:hover, body.dark-mode .bell-item:hover {
+body.dark-mode .bell-item:hover {
   background: var(--input);
 }
-body.dark-mode .bell-notif-item.unread, body.dark-mode .bell-item.unread {
+body.dark-mode .bell-item.unread {
   background: var(--unread);
-}
-body.dark-mode .bell-notif-judul {
-  color: var(--text);
-}
-body.dark-mode .bell-dd-header {
-  color: var(--text);
-  border-bottom-color: var(--border);
 }
 body.dark-mode .btn-meeting {
   background: var(--input);
@@ -1453,7 +1445,6 @@ body.dark-mode .sidebar-card {
 body.dark-mode .code-display {
   background: var(--input);
   border-color: var(--border-light);
-  color: var(--text);
 }
 body.dark-mode .code-display:hover {
   background: var(--hover);
