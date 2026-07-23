@@ -309,21 +309,13 @@ router.post('/send-otp', async (req, res) => {
 
         const safeKodeGuru = kode_guru.trim().toUpperCase();
         const { data: kodeEntry } = await supabase
-          .from('kode_guru').select('id, status, expires_at, max_uses, used_count').eq('kode', safeKodeGuru).maybeSingle();
+          .from('kode_guru').select('id, status').eq('kode', safeKodeGuru).maybeSingle();
 
         if (!kodeEntry)
           return res.status(400).json({ success: false, pesan: 'Kode undangan tidak ditemukan. Minta kode dari kepala sekolah.' });
 
-        // Cek status: expired jika expires_at sudah lewat, used_up jika kuota habis
-        const now = new Date();
-        const isExpired = kodeEntry.expires_at && new Date(kodeEntry.expires_at) < now;
-        const isUsedUp = (kodeEntry.used_count || 0) >= kodeEntry.max_uses;
         if (kodeEntry.status === 'revoked')
           return res.status(400).json({ success: false, pesan: 'Kode undangan sudah dicabut oleh kepala sekolah.' });
-        if (isExpired)
-          return res.status(400).json({ success: false, pesan: 'Kode undangan sudah kadaluarsa.' });
-        if (isUsedUp)
-          return res.status(400).json({ success: false, pesan: 'Kode undangan sudah habis kuotanya.' });
 
         kodeGuruId = kodeEntry.id;
       }
@@ -417,23 +409,14 @@ router.post('/register', async (req, res) => {
     });
     if (error) throw error;
 
-    // ── B3: Konsumsi kuota kode undangan guru setelah akun berhasil dibuat ──
+    // ── B3: Catat login_count kode undangan guru (v2 — tanpa kuota) ──
     if (role === 'guru' && kode_guru_id) {
-      if (typeof supabase.rpc === 'function') {
-        await supabase.rpc('increment_kode_guru_used', { kode_id: kode_guru_id })
-          .catch(async () => {
-            // Fallback jika RPC belum ada: update manual
-            const { data: k } = await supabase.from('kode_guru').select('used_count').eq('id', kode_guru_id).single();
-            if (k) {
-              await supabase.from('kode_guru').update({ used_count: (k.used_count || 0) + 1 }).eq('id', kode_guru_id);
-            }
-          });
-      } else {
-        const { data: k } = await supabase.from('kode_guru').select('used_count').eq('id', kode_guru_id).single();
+      await supabase.rpc('increment_kode_guru_login', { p_email: normalEmail }).catch(async () => {
+        const { data: k } = await supabase.from('kode_guru').select('login_count').eq('id', kode_guru_id).single();
         if (k) {
-          await supabase.from('kode_guru').update({ used_count: (k.used_count || 0) + 1 }).eq('id', kode_guru_id);
+          await supabase.from('kode_guru').update({ login_count: (k.login_count || 0) + 1 }).eq('id', kode_guru_id);
         }
-      }
+      });
     }
     // ─────────────────────────────────────────────────────────────────────
 
@@ -899,7 +882,7 @@ router.post('/google', async (req, res) => {
       const safeKode = kode_guru_login.trim().toUpperCase();
       const { data: loginKodeEntry } = await supabase
         .from('kode_guru')
-        .select('id, status, expires_at, email_guru')
+        .select('id, status, email_guru')
         .eq('kode', safeKode)
         .maybeSingle();
 
@@ -907,8 +890,6 @@ router.post('/google', async (req, res) => {
         return res.status(403).json({ success: false, pesan: 'Kode undangan tidak ditemukan. Minta kode dari kepala sekolah.' });
       if (loginKodeEntry.status === 'revoked')
         return res.status(403).json({ success: false, pesan: 'Kode undangan sudah dicabut oleh kepala sekolah.' });
-      if (loginKodeEntry.expires_at && new Date(loginKodeEntry.expires_at) < new Date())
-        return res.status(403).json({ success: false, pesan: 'Kode undangan sudah kadaluarsa.' });
       if (loginKodeEntry.email_guru && loginKodeEntry.email_guru.toLowerCase().trim() !== normalEmail)
         return res.status(403).json({ success: false, pesan: 'Kode undangan tidak sesuai dengan akun ini.' });
 

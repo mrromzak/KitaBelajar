@@ -2,50 +2,39 @@
 //  src/routes/kode-guru.js
 //  Endpoint KEPALA SEKOLAH untuk mengelola kode undangan guru.
 //  Mounted di server.js pada prefix '/api/kode-guru'.
-//  Lihat rancangan: dokumentasi/arsitektur-kode-guru.md
 //
+//  Skema database (v2):
+//    kode_guru (id, kode, nama_guru, email_guru, no_telepon,
+//                alamat, status, login_count, label, dibuat_oleh, created_at)
 //  Catatan:
-//  - Semua endpoint butuh authMiddleware + kepalaOnly.
-//  - Operasi di-scope ke kode milik kepala yang login (dibuat_oleh)
-//    → mencegah IDOR (kepala A tak bisa lihat/cabut kode kepala B).
-//  - Semua query lewat Supabase client (parameterized) → bebas SQL injection.
+//  - Semua endpoint butuh authMiddleware + kepalaOnly (kecuali /validate).
+//  - Operasi di-scope ke kode milik kepala yang login (dibuat_oleh).
 // =====================================================
 
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
-const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const supabase = require('../supabase');
 const { authMiddleware, kepalaOnly } = require('../middleware/auth');
 const { cleanText } = require('../utils/sanitize');
 
-// Charset tanpa karakter ambigu (tanpa I, O, 0, 1) — sama seperti kode_akses kelas.
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 function randomKode(len = 8) {
   let out = '';
-  for (let i = 0; i < len; i++) out += CODE_CHARS[crypto.randomInt(CODE_CHARS.length)]; // CSPRNG
+  for (let i = 0; i < len; i++) out += CODE_CHARS[crypto.randomInt(CODE_CHARS.length)];
   return out;
-}
-
-// Status turunan (dihitung saat baca — tanpa timer/cron → tanpa memory leak).
-function deriveStatus(c) {
-  if (c.status === 'revoked') return 'revoked';
-  if (c.expires_at && new Date(c.expires_at) < new Date()) return 'expired';
-  if ((c.used_count || 0) >= c.max_uses) return 'used_up';
-  return 'active';
 }
 
 function publicKode(c) {
   return {
     id: c.id,
     kode: c.kode,
-    status: deriveStatus(c),
-    max_uses: c.max_uses,
-    used_count: c.used_count || 0,
-    sisa_kuota: Math.max(0, c.max_uses - (c.used_count || 0)),
-    expires_at: c.expires_at,
+    status: c.status === 'revoked' ? 'revoked' : 'active',
+    nama_guru: c.nama_guru,
+    email_guru: c.email_guru,
+    login_count: c.login_count || 0,
     label: c.label,
     created_at: c.created_at
   };
@@ -56,39 +45,46 @@ function publicKode(c) {
 // =====================================================
 router.post('/', authMiddleware, kepalaOnly, async (req, res) => {
   try {
-    const { max_uses, expires_in_days, label } = req.body;
-
-    const maxUses = Math.min(Math.max(parseInt(max_uses, 10) || 1, 1), 1000);
-    let expiresAt = null;
-    if (expires_in_days !== undefined && expires_in_days !== null && String(expires_in_days).trim() !== '') {
-      const days = parseInt(expires_in_days, 10);
-      if (Number.isNaN(days) || days < 1 || days > 365)
-        return res.status(400).json({ success: false, pesan: 'Masa berlaku harus 1–365 hari.' });
-      expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+    const { nama_guru, email_guru, no_telepon, alamat, label } = req.body;
+    if (!nama_guru || !email_guru) {
+      return res.status(400).json({ success: false, pesan: 'Nama guru dan email guru wajib diisi.' });
     }
+
+    const normalEmail = email_guru.toLowerCase().trim();
     const safeLabel = label ? cleanText(label, 100) : null;
 
-    // Generate kode unik (cek duplikat ke DB, maks 10 percobaan).
+    // Cek duplikat email di kode_guru
+    const { data: dup } = await supabase.from('kode_guru').select('id').eq('email_guru', normalEmail).maybeSingle();
+    if (dup) {
+      return res.status(400).json({ success: false, pesan: 'Email guru sudah memiliki kode undangan.' });
+    }
+
     let kode;
     let attempts = 0;
     do {
       kode = randomKode(8);
-      const { data: dup } = await supabase.from('kode_guru').select('id').eq('kode', kode).maybeSingle();
-      if (!dup) break;
+      const { data: dupKode } = await supabase.from('kode_guru').select('id').eq('kode', kode).maybeSingle();
+      if (!dupKode) break;
       attempts++;
     } while (attempts < 10);
 
     const id = uuidv4();
     const { error } = await supabase.from('kode_guru').insert({
-      id, kode, dibuat_oleh: req.user.id, status: 'active',
-      max_uses: maxUses, used_count: 0, expires_at: expiresAt, label: safeLabel
+      id, kode, dibuat_oleh: req.user.id,
+      status: 'active',
+      nama_guru: cleanText(nama_guru, 100),
+      email_guru: normalEmail,
+      no_telepon: no_telepon ? cleanText(no_telepon, 20) : null,
+      alamat: alamat ? cleanText(alamat, 200) : null,
+      login_count: 0,
+      label: safeLabel
     });
     if (error) throw error;
 
     res.status(201).json({
       success: true,
       pesan: 'Kode undangan guru berhasil dibuat.',
-      data: publicKode({ id, kode, status: 'active', max_uses: maxUses, used_count: 0, expires_at: expiresAt, label: safeLabel })
+      data: publicKode({ id, kode, status: 'active', nama_guru: cleanText(nama_guru, 100), email_guru: normalEmail, login_count: 0, label: safeLabel })
     });
   } catch (err) {
     console.error('[kode-guru:create]', err.message);
@@ -146,6 +142,7 @@ router.post('/guru', authMiddleware, kepalaOnly, async (req, res) => {
       return res.status(400).json({ success: false, pesan: 'Email sudah terdaftar.' });
     }
 
+    const bcrypt = require('bcryptjs');
     const id = uuidv4();
     const hashedPassword = bcrypt.hashSync(password, 10);
 
@@ -173,7 +170,6 @@ router.post('/guru', authMiddleware, kepalaOnly, async (req, res) => {
     if (error) throw error;
 
     if (!newCode) {
-      // Panggil RPC ulang jika tadi tidak langsung di-insert (karena id user harus terdaftar dulu)
       await supabase.rpc('generate_code_guru_for_user', { p_user_id: id }).catch(() => {});
     }
 
@@ -195,13 +191,12 @@ router.put('/guru/:id', authMiddleware, kepalaOnly, async (req, res) => {
     const updates = {};
     if (nama) updates.nama = cleanText(nama, 100);
     if (email) updates.email = email.toLowerCase().trim();
-    if (password) updates.password = bcrypt.hashSync(password, 10);
+    if (password) { const bcrypt = require('bcryptjs'); updates.password = bcrypt.hashSync(password, 10); }
     if (alamat !== undefined) updates.alamat = alamat ? cleanText(alamat, 200) : null;
     if (umur !== undefined) updates.umur = umur ? parseInt(umur, 10) : null;
     if (asal_sekolah !== undefined) updates.asal_sekolah = asal_sekolah ? cleanText(asal_sekolah, 150) : null;
 
     if (updates.alamat !== undefined || updates.umur !== undefined || updates.asal_sekolah !== undefined) {
-      // Ambil user dulu untuk mengecek profil lengkap
       const { data: user } = await supabase.from('users').select('alamat, umur, asal_sekolah').eq('id', id).single();
       if (user) {
         const finalAlamat = updates.alamat !== undefined ? updates.alamat : user.alamat;
@@ -262,15 +257,8 @@ router.post('/validate', async (req, res) => {
     if (!entry)
       return res.status(404).json({ success: false, pesan: 'Kode tidak ditemukan.' });
 
-    const status = deriveStatus(entry);
-    if (status !== 'active')
-      return res.status(400).json({
-        success: false,
-        pesan: status === 'revoked' ? 'Kode sudah dicabut oleh kepala sekolah.'
-             : status === 'expired' ? 'Kode sudah kadaluarsa.'
-             : 'Kode sudah habis kuotanya.',
-        status
-      });
+    if (entry.status === 'revoked')
+      return res.status(400).json({ success: false, pesan: 'Kode sudah dicabut oleh kepala sekolah.', status: 'revoked' });
 
     res.json({
       success: true,
@@ -278,9 +266,9 @@ router.post('/validate', async (req, res) => {
       pesan: 'Kode valid. Silakan lanjutkan pendaftaran.',
       data: {
         kode: entry.kode,
-        label: entry.label,
-        sisa_kuota: Math.max(0, entry.max_uses - (entry.used_count || 0)),
-        expires_at: entry.expires_at
+        nama_guru: entry.nama_guru,
+        email_guru: entry.email_guru,
+        label: entry.label
       }
     });
   } catch (err) {
@@ -294,7 +282,6 @@ router.post('/validate', async (req, res) => {
 // =====================================================
 router.patch('/:id/revoke', authMiddleware, kepalaOnly, async (req, res) => {
   try {
-    // Hanya boleh mencabut kode milik sendiri (cegah IDOR).
     const { data: kode } = await supabase
       .from('kode_guru').select('id, status')
       .eq('id', req.params.id).eq('dibuat_oleh', req.user.id).maybeSingle();

@@ -90,7 +90,7 @@ async function dashboardKepala(req, res) {
       supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'murid'),
       supabase.from('kelas').select('id', { count: 'exact', head: true }),
       supabase.from('kode_guru')
-        .select('id, kode, status, max_uses, used_count, expires_at, label, created_at')
+        .select('id, kode, status, nama_guru, email_guru, login_count, label, created_at')
         .eq('dibuat_oleh', kepalaId)
         .order('created_at', { ascending: false })
         .limit(10),
@@ -101,23 +101,13 @@ async function dashboardKepala(req, res) {
         .limit(5)
     ]);
 
-    // Hitung status kode secara dinamis
-    const now = new Date();
-    function deriveKodeStatus(c) {
-      if (c.status === 'revoked') return 'revoked';
-      if (c.expires_at && new Date(c.expires_at) < now) return 'expired';
-      if ((c.used_count || 0) >= c.max_uses) return 'used_up';
-      return 'active';
-    }
-
     const kodePublic = (kodeList || []).map(c => ({
       id: c.id,
       kode: c.kode,
-      status: deriveKodeStatus(c),
-      max_uses: c.max_uses,
-      used_count: c.used_count || 0,
-      sisa_kuota: Math.max(0, c.max_uses - (c.used_count || 0)),
-      expires_at: c.expires_at,
+      status: c.status === 'revoked' ? 'revoked' : 'active',
+      nama_guru: c.nama_guru,
+      email_guru: c.email_guru,
+      login_count: c.login_count || 0,
       label: c.label,
       created_at: c.created_at
     }));
