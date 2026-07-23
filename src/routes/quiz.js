@@ -151,7 +151,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // ============================================================
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    let { judul, deskripsi, mapel, kelas_id, durasi, tipe, deadline, status, soal_ids, tipe_submission } = req.body;
+    let { judul, deskripsi, mapel, kelas_id, durasi, tipe, deadline, status, soal_ids, tipe_submission, max_attempt } = req.body;
     if (!judul) return res.status(400).json({ success: false, pesan: 'Judul wajib diisi' });
     judul = cleanText(judul, 150);
     mapel = mapel ? cleanText(mapel, 60) : mapel;
@@ -172,7 +172,8 @@ router.post('/', authMiddleware, async (req, res) => {
         tipe: tipe || 'fun',
         deadline: deadline || null,
         status: status || 'aktif',
-        tipe_submission: tipe_submission || null
+        tipe_submission: tipe_submission || null,
+        max_attempt: max_attempt || 1
       })
       .select()
       .single();
@@ -283,16 +284,23 @@ router.post('/hasil', authMiddleware, async (req, res) => {
     const murid_id = req.user.id || req.user.userId;
     if (!quiz_id) return res.status(400).json({ success: false, pesan: 'quiz_id wajib' });
 
-    // Cek apakah sudah pernah mengerjakan
-    const { data: existing } = await supabase
-      .from('hasil_quiz').select('id, skor, benar, total_soal')
-      .eq('murid_id', murid_id).eq('quiz_id', quiz_id).maybeSingle();
+    // Ambil max_attempt dari quiz
+    const { data: quizData } = await supabase
+      .from('quiz').select('max_attempt').eq('id', quiz_id).single();
+    const maxAttempt = quizData?.max_attempt ?? 1;
 
-    if (existing) {
+    // Cek jumlah percobaan yang sudah dilakukan
+    const { data: existing, count: attemptCount } = await supabase
+      .from('hasil_quiz').select('id, skor, benar, total_soal', { count: 'exact' })
+      .eq('murid_id', murid_id).eq('quiz_id', quiz_id);
+
+    if (existing && existing.length >= maxAttempt) {
+      const last = existing[existing.length - 1];
       return res.json({
-        success: true, pesan: 'Sudah pernah mengerjakan',
-        skor: existing.skor, benar: existing.benar,
-        total_soal: existing.total_soal, totalPoin: existing.skor || 0,
+        success: true, pesan: 'Batas percobaan habis',
+        skor: last.skor, benar: last.benar,
+        total_soal: last.total_soal, totalPoin: last.skor || 0,
+        attempt: existing.length, max_attempt: maxAttempt,
         detail: []
       });
     }
@@ -360,26 +368,31 @@ router.get('/hasil/cek', authMiddleware, async (req, res) => {
   try {
     const { quiz_id } = req.query;
     const murid_id = req.user.id || req.user.userId;
-    // Pakai limit(1) + order, BUKAN single/maybeSingle: bila murid mengerjakan
-    // kuis yang sama lebih dari sekali, ada >1 baris → single() melempar error
-    // "multiple rows returned". Ambil hasil terbaru saja.
+
+    const { data: quizData } = await supabase
+      .from('quiz').select('max_attempt').eq('id', quiz_id).single();
+    const maxAttempt = quizData?.max_attempt ?? 1;
+
     const { data, error } = await supabase
       .from('hasil_quiz')
       .select('id, skor, benar, total_soal')
       .eq('murid_id', murid_id)
       .eq('quiz_id', quiz_id)
-      .order('selesai_at', { ascending: false })
-      .limit(1);
+      .order('selesai_at', { ascending: false });
 
     if (error) {
       console.error('[GET /quiz/hasil/cek]', error.message);
-      return res.json({ success: true, sudah: false, hasil: null });
+      return res.json({ success: true, sudah: false, attempt: 0, max_attempt: maxAttempt, hasil: null });
     }
     const hasil = (data && data[0]) || null;
-    return res.json({ success: true, sudah: !!hasil, hasil });
+    return res.json({
+      success: true, sudah: !!hasil,
+      attempt: data?.length || 0, max_attempt: maxAttempt,
+      hasil
+    });
   } catch(e) {
     console.error('[GET /quiz/hasil/cek catch]', e.message);
-    return res.json({ success: true, sudah: false, hasil: null });
+    return res.json({ success: true, sudah: false, attempt: 0, max_attempt: 1, hasil: null });
   }
 });
 

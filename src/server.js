@@ -701,6 +701,12 @@ app.use((err, req, res, next) => {
 });
 
 
+// Jalankan migrasi database sebelum server mulai melayani request
+const runMigrations = require('./migration');
+(async () => {
+  try { await runMigrations(); } catch(e) { console.warn('⚠️  Migrasi startup gagal:', e.message); }
+})();
+
 httpServer.listen(PORT, () => {
   console.log('\n🌈 =====================================');
   console.log(`🚀  BelajarSeru API (Supabase) aktif!`);

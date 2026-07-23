@@ -7,6 +7,7 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "test": "node --test",
+    "migrate": "node -e \"require('./src/migration')()\"",
     "seed:dummy": "node seed_dummy.js",
     "seed:kepala": "node seed_kepala.js"
   },
@@ -26,7 +27,8 @@
     "uuid": "^9.0.0",
     "validator": "^13.15.26",
     "xss": "^1.0.15",
-    "youtube-transcript": "^1.3.0"
+    "youtube-transcript": "^1.3.0",
+    "pg": "^8.13.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.3"

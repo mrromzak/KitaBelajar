@@ -6090,6 +6090,8 @@ async function loadKelasKuis(kelasId) {
             const cek = await api('GET', `/quiz/hasil/cek?quiz_id=${q.id}`);
             q.sudah_dikerjakan = cek.sudah || false;
             q.skor_terakhir = cek.hasil?.skor || 0;
+            q.attempt = cek.attempt || 0;
+            q.max_attempt = cek.max_attempt || 1;
           }
         } catch(e) { q.sudah_dikerjakan = false; }
       }));
@@ -6163,21 +6165,38 @@ function renderKuisCard(q, isGuru) {
       actionHtml = `<button class="qsc-play-btn" style="background:var(--blue);color:white" onclick="bukaFormSubmission('${q.id}')">📤 Kumpulkan</button>`;
     }
   } else if (sudahDikerjakan) {
+    const attempt = q.attempt || 1;
+    const maxAtt = q.max_attempt || 1;
+    const sisa = maxAtt - attempt;
     const nilaiColor = q.skor_terakhir >= 80 ? 'var(--green)' : q.skor_terakhir >= 60 ? 'var(--orange)' : 'var(--red)';
-    actionHtml = `<div class="qsc-done-badge" style="flex-direction:column;align-items:flex-end;gap:2px">
-      <span>✅ Sudah dikerjakan</span>
-      <span style="font-size:15px;font-weight:900;color:${nilaiColor}">${q.skor_terakhir || 0}<span style="font-size:11px;font-weight:700"> / 100</span></span>
-    </div>`;
+    if (sisa > 0) {
+      actionHtml = `<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:12px;color:var(--muted);font-weight:700">${attempt}/${maxAtt}x</span>
+          <button class="qsc-play-btn" style="background:${isFun ? 'var(--orange)' : 'var(--blue)'};color:white;padding:6px 14px;font-size:12px" onclick="mulaiKuisKelas('${q.id}')">🔄 Coba Lagi</button>
+        </div>
+        <span style="font-size:14px;font-weight:900;color:${nilaiColor}">${q.skor_terakhir || 0}<span style="font-size:10px;font-weight:700"> / 100</span></span>
+      </div>`;
+    } else {
+      actionHtml = `<div class="qsc-done-badge" style="flex-direction:column;align-items:flex-end;gap:2px">
+        <span>✅ Selesai (${attempt}/${maxAtt}x)</span>
+        <span style="font-size:15px;font-weight:900;color:${nilaiColor}">${q.skor_terakhir || 0}<span style="font-size:11px;font-weight:700"> / 100</span></span>
+      </div>`;
+    }
   } else if (deadlineLewat) {
     actionHtml = `<div class="qsc-deadline deadline-over">⛔ Tenggat terlewat</div>`;
   } else {
     const totalSoal = q.total_soal || q.jumlah_soal || 0;
+    const maxAtt = q.max_attempt || 1;
     if (!isSubmission && totalSoal === 0) {
       actionHtml = `<div style="font-size:12px;color:var(--muted);font-weight:700;background:#F5F5F5;padding:7px 14px;border-radius:10px">📭 Belum ada soal</div>`;
     } else {
-      actionHtml = `<button class="qsc-play-btn" style="background:${isFun ? 'var(--orange)' : 'var(--blue)'};color:white" onclick="mulaiKuisKelas('${q.id}')">
-        ${isFun ? '⚡ Main!' : '📝 Kerjakan'}
-      </button>`;
+      actionHtml = `<div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:11px;color:var(--muted);font-weight:700">${maxAtt > 1 ? `${maxAtt}x percobaan` : ''}</span>
+        <button class="qsc-play-btn" style="background:${isFun ? 'var(--orange)' : 'var(--blue)'};color:white" onclick="mulaiKuisKelas('${q.id}')">
+          ${isFun ? '⚡ Main!' : '📝 Kerjakan'}
+        </button>
+      </div>`;
     }
   }
 
@@ -6692,6 +6711,7 @@ async function submitBuatKuis() {
   const deadlineRaw = document.getElementById('kuis-deadline').value;
   const deadline = deadlineRaw ? new Date(deadlineRaw).toISOString() : null;
   const durasi   = parseInt(document.getElementById('kuis-durasi').value) || 15;
+  const maxAttempt = parseInt(document.getElementById('kuis-max-attempt').value) || 1;
 
   // Soal dari bank
   const soalBankIds = Array.from(document.querySelectorAll('.soal-check:checked')).map(cb => cb.value);
@@ -6756,7 +6776,8 @@ async function submitBuatKuis() {
       deadline: deadline || null,
       status: 'aktif',
       soal_ids: semuaSoalIds.length > 0 ? semuaSoalIds : undefined,
-      tipe_submission: tipeSubmission || null
+      tipe_submission: tipeSubmission || null,
+      max_attempt: maxAttempt
     });
 
     if (!data.success) { toast(data.pesan || 'Gagal membuat kuis', 'error'); showLoading(false); return; }
@@ -7052,6 +7073,16 @@ async function mulaiKuisKelas(quizId) {
 
     const kuis = data.quiz;
     if (!kuis.soal || kuis.soal.length === 0) { toast('Kuis belum punya soal', 'error'); showLoading(false); return; }
+
+    // Cek batas percobaan
+    const cek = await api('GET', `/quiz/hasil/cek?quiz_id=${quizId}`);
+    const maxAtt = cek.max_attempt || 1;
+    const attempt = cek.attempt || 0;
+    if (attempt >= maxAtt) {
+      toast('Batas percobaan sudah habis!', 'error');
+      showLoading(false);
+      return;
+    }
 
     kuisKelasData = {
       id: quizId,

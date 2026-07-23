@@ -1275,6 +1275,14 @@
       <label>Durasi per Soal (detik)</label>
       <input type="number" id="kuis-durasi" value="15" min="5" max="120">
     </div>
+    <div class="form-group">
+      <label>Maksimal Percobaan</label>
+      <div style="display:flex;gap:10px;align-items:center">
+        <input type="number" id="kuis-max-attempt" value="1" min="1" max="99" style="width:80px;padding:10px 12px;border:2px solid #E8E8E8;border-radius:12px;font-family:Nunito,sans-serif;font-size:14px;outline:none;text-align:center">
+        <span style="font-size:13px;color:var(--muted);font-weight:600">kali</span>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">Murid bisa mengerjakan ulang sampai batas ini. Nilai terakhir yang tersimpan.</div>
+    </div>
 
     <!-- Tab Sumber Soal -->
     <div class="form-group">
@@ -1763,6 +1771,10 @@
         <option value="gambar">🖼️ Gambar (URL)</option>
       </select>
     </div>
+    <div class="form-group">
+      <label>Subjek</label>
+      <textarea id="m-deskripsi" rows="2" placeholder="Jelaskan topik materi ini..."></textarea>
+    </div>
     <div class="form-group" id="input-teks">
       <label>Isi Materi</label>
       <textarea id="m-konten" rows="4" placeholder="Tulis isi materi di sini..."></textarea>
@@ -1784,10 +1796,6 @@
     <div class="form-group" id="input-gambar" style="display:none">
       <label>URL Gambar</label>
       <input type="url" id="m-gambar-url" placeholder="https://contoh.com/gambar.jpg">
-    </div>
-    <div class="form-group">
-      <label>Deskripsi Singkat</label>
-      <textarea id="m-deskripsi" rows="2" placeholder="Jelaskan isi materi ini..."></textarea>
     </div>
     <div id="upload-progress" style="display:none;margin-bottom:12px">
       <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px" id="upload-label">Mengupload...</div>
