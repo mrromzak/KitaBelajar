@@ -3373,10 +3373,17 @@ async function loadBellNotifications() {
     (data.data || []).forEach(n => {
       let tipe = n.tipe || 'notif';
       let kelas_id = null;
-      if (n.data_extra) {
+      let dari_id = null;
+      let pengirim_nama = null;
+      let pengirim_avatar = null;
+      let data_extra = n.data_extra;
+      if (data_extra) {
         try {
-          const extra = typeof n.data_extra === 'string' ? JSON.parse(n.data_extra) : n.data_extra;
-          kelas_id = extra?.kelas_id || null;
+          const extra = typeof data_extra === 'string' ? JSON.parse(data_extra) : data_extra;
+          kelas_id       = extra?.kelas_id       || null;
+          dari_id        = extra?.dari_id        || null;
+          pengirim_nama  = extra?.pengirim_nama  || null;
+          pengirim_avatar= extra?.pengirim_avatar|| null;
         } catch(e) {}
       }
       bellNotifs.push({
@@ -3386,7 +3393,11 @@ async function loadBellNotifications() {
         pesan: n.pesan,
         created_at: n.created_at,
         dibaca: n.dibaca,
-        kelas_id
+        kelas_id,
+        dari_id,
+        pengirim_nama,
+        pengirim_avatar,
+        data_extra
       });
       if (!n.dibaca) bellUnreadCount++;
     });
