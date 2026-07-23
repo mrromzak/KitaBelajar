@@ -1525,6 +1525,7 @@ async function loadMuridDashboard() {
       _muridInitCache = init; // simpan cache untuk digunakan fungsi lain
       renderMuridKelas(init.kelas || []);
       tampilDeadlineAlert(init.deadlines || []);
+      cekDeadlineReminder(init.deadlines || []);
     }
   } catch(e) {
     // Fallback jika endpoint gagal
@@ -1560,6 +1561,7 @@ async function loadDeadlineAlertDashboard() {
     });
     await Promise.all(cekPromises);
     tampilDeadlineAlert(allQuiz);
+    cekDeadlineReminder(allQuiz);
   } catch(e) {}
 }
 
@@ -3272,7 +3274,7 @@ function renderBellDropdown() {
     return;
   }
   list.innerHTML = bellNotifs.slice(0, 30).map(n => {
-    const icon = { private: '💬', kelas: '🏫', materi: '📚', quiz: '📝', quiz_invite: '🎯' }[n.tipe] || '🔔';
+    const icon = { private: '💬', kelas: '🏫', materi: '📚', quiz: '📝', quiz_invite: '🎯', deadline: '⏰' }[n.tipe] || '🔔';
     const timeStr = n.created_at ? formatBellTime(new Date(n.created_at)) : '';
     const safe_id     = escapeHtml(n.id || '');
     const safe_tipe   = escapeHtml(n.tipe || '');
@@ -3326,6 +3328,17 @@ async function klikBellNotif(id, tipe, dariId, namaPengirim, avatarPengirim, kel
       bukaZepQuizDariKode(kode);
     } else {
       bukaZepQuizMurid();
+    }
+    return;
+  }
+
+  // Deadline reminder → buka kelas tab kuis
+  if (tipe === 'deadline' && kelasId) {
+    try {
+      await openKelas(kelasId, 0);
+      setTimeout(() => switchKelasTab('kuis'), 400);
+    } catch(e) {
+      toast('Gagal membuka kelas terkait.', 'error');
     }
     return;
   }
@@ -3415,11 +3428,14 @@ document.addEventListener('click', (e) => {
 
 // Socket: notifikasi materi/quiz dari backend
 socket.on('notif:baru', (notif) => {
-  let kelas_id = null;
+  let kelas_id = null, dari_id = null, pengirim_nama = null, pengirim_avatar = null;
   if (notif.data_extra) {
     try {
       const extra = typeof notif.data_extra === 'string' ? JSON.parse(notif.data_extra) : notif.data_extra;
-      kelas_id = extra?.kelas_id || null;
+      kelas_id        = extra?.kelas_id        || null;
+      dari_id         = extra?.dari_id         || null;
+      pengirim_nama   = extra?.pengirim_nama   || null;
+      pengirim_avatar = extra?.pengirim_avatar || null;
     } catch(e) {}
   }
   addBellNotif({
@@ -3429,11 +3445,50 @@ socket.on('notif:baru', (notif) => {
     pesan: notif.pesan,
     created_at: notif.created_at || new Date().toISOString(),
     dibaca: false,
-    kelas_id
+    kelas_id, dari_id, pengirim_nama, pengirim_avatar,
+    data_extra: notif.data_extra
   });
   // Browser notification saat tab tidak aktif
   showBrowserNotif(notif.judul || 'KitaBelajar', notif.pesan || '', 'notif-' + (notif.tipe || 'umum'));
 });
+
+// ─── Deadline reminder: tambah bell notif untuk tugas yang mau deadline ───
+let _deadlineReminderSent = new Set();
+
+function cekDeadlineReminder(deadlines) {
+  if (!Array.isArray(deadlines)) return;
+  const now = Date.now();
+  deadlines.forEach(q => {
+    if (!q.deadline || q.sudah_dikerjakan || q.tipe === 'fun') return;
+    const diff = new Date(q.deadline) - now;
+    if (diff <= 0 || diff > 86400000 * 2) return; // hanya 2 hari ke depan
+    const key = `deadline_${q.id}`;
+    if (_deadlineReminderSent.has(key)) return; // sudah pernah dikirim
+    _deadlineReminderSent.add(key);
+
+    const jamSisa = Math.floor(diff / 3600000);
+    const menitSisa = Math.floor(diff / 60000);
+    const label = menitSisa < 60
+      ? `${menitSisa} menit lagi`
+      : jamSisa < 24
+      ? `${jamSisa} jam lagi`
+      : `${Math.floor(diff / 86400000)} hari lagi`;
+
+    addBellNotif({
+      id: key,
+      tipe: 'deadline',
+      judul: `⏰ Deadline: ${q.judul}`,
+      pesan: `Tugas "${q.judul}" di kelas ${q.kelas_nama || ''} — ${label}!`,
+      created_at: new Date().toISOString(),
+      dibaca: false,
+      kelas_id: q.kelas_id || null,
+      dari_id: null,
+      pengirim_nama: null,
+      pengirim_avatar: null,
+      data_extra: null
+    });
+  });
+}
 
 async function bukaPrivateChat(userId, nama, avatar) {
   if (!userId) { toast('Tidak bisa membuka chat', 'error'); return; }

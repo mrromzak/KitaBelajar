@@ -1287,6 +1287,24 @@ body.dark-mode .login-card, body.dark-mode .panel, body.dark-mode .card, body.da
 }
 body.dark-mode .empty-state {
   color: var(--muted);
+  background: transparent;
+}
+body.dark-mode .kelas-code {
+  background: var(--input);
+  color: var(--text);
+}
+body.dark-mode .kelas-card-footer {
+  border-top-color: var(--border);
+}
+body.dark-mode .kelas-stat,
+body.dark-mode .kelas-code-label {
+  color: var(--muted);
+}
+body.dark-mode [style*="background:#FAFAFF"] {
+  background: var(--input) !important;
+}
+body.dark-mode [style*="background:#F3EEFF"] {
+  background: var(--hover) !important;
 }
 body.dark-mode .lb-tab, body.dark-mode .lb-filter, body.dark-mode .misi-filter {
   background: var(--input);
