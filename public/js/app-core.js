@@ -3345,7 +3345,10 @@ function joinPrivateChannel() {
   if (currentUser?.id) socket.emit('private:join', { userId: currentUser.id });
 }
 // Jika socket reconnect (misal setelah internet terputus), join ulang
-socket.on('connect', () => { joinPrivateChannel(); });
+socket.on('connect', () => {
+  console.log('[socket] connected, id:', socket.id);
+  joinPrivateChannel();
+});
 
 // ============================================================
 //  PUSH NOTIFICATION — Service Worker + Browser Notifications
