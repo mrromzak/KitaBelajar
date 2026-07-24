@@ -6030,6 +6030,13 @@ window.addEventListener('load', () => {
       loadMuridDashboard();
       remindDataDiriIfNeeded();
     }
+  } else {
+    // Jika tidak login, cek parameter show=login
+    const showParam = urlParams.get('show');
+    if (showParam === 'login') {
+      history.replaceState(null, '', '/');
+      showPage('page-login');
+    }
   }
   populateMapelSelects();
   populateBuatKelasMapel();
