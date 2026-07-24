@@ -51,7 +51,7 @@ function getMapelStorageKey() {
   return 'kb_mapel_' + userId;
 }
 
-const MAPEL_ACCENT_COLORS = ['#FF6B35','#4D96FF','#6BCB77','#C77DFF','#FF6B9D','#FFB99B','#D12B00','#2ED573','#FFA502','#1E90FF','#A29BFE','#00CEC9'];
+const MAPEL_ACCENT_COLORS = ['#FF6B35','#4A6FA5','#529B76','#8B6F97','#FF8C5A','#678CBF','#70B793','#A98CB5','#FFB97A','#7CA3D4','#7FC49E','#BCA1C8'];
 const QUICK_EMOJIS = ['\uD83C\uDFC3','\uD83C\uDFB5','\uD83D\uDDA5\uFE0F','\uD83E\uDDEA','\uD83C\uDF0D','\uD83C\uDFAD','\uD83D\uDCD0','\uD83D\uDD2C','\uD83D\uDD2D','\uD83C\uDFDB\uFE0F','\uD83E\uDDEE','\uD83C\uDFAF','\u26BD','\uD83C\uDFBB','\u271D\uFE0F','\u262A\uFE0F','\uD83C\uDF3A','\uD83C\uDFCB\uFE0F','\uD83D\uDCBB','\uD83E\uDDE0','\uD83D\uDCF8','\uD83D\uDDFF'];
 
 function getMapelList() {
