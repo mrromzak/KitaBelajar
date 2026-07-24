@@ -2325,6 +2325,8 @@ let currentKelas = null;
 
 async function openKelas(kelasId, colorIdx) {
   showLoading(true);
+  classChatUnreadCount = 0;
+  updateClassChatBadge();
   try {
     // Pakai data card yang sudah ada sebagai tampilan awal
     const cached = (window._kelasList || []).find(x => x.id === kelasId);
@@ -2373,12 +2375,15 @@ async function openKelas(kelasId, colorIdx) {
         <button id="vc-meeting-btn" class="btn-meeting" onclick="vcJoinMeeting()" style="display:none">
           📹 Gabung Meeting
         </button>
-        <button onclick="chatDenganGuru()"
-          style="width:100%;padding:12px;border-radius:12px;border:none;background:#EEF5FF;color:var(--blue);font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s"
-          onmouseover="this.style.background='var(--blue)';this.style.color='white'"
-          onmouseout="this.style.background='#EEF5FF';this.style.color='var(--blue)'">
-          💬 Chat dengan Guru
-        </button>
+        <div style="position:relative;width:100%">
+          <button onclick="chatDenganGuru()"
+            style="width:100%;padding:12px;border-radius:12px;border:none;background:#EEF5FF;color:var(--blue);font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s"
+            onmouseover="this.style.background='var(--blue)';this.style.color='white'"
+            onmouseout="this.style.background='#EEF5FF';this.style.color='var(--blue)'">
+            💬 Chat dengan Guru
+          </button>
+          <span id="pc-unread-badge-guru" style="display:none;position:absolute;top:-5px;right:-5px;background:var(--red);color:white;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2.5px solid white">!</span>
+        </div>
         <button onclick="konfirmasiKeluarKelas('${k.id || kelasId}','${(k.nama||'').replace(/'/g,"\\'")}')"
           style="width:100%;padding:12px;border-radius:12px;border:none;background:#FFF0F5;color:var(--pink);font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s"
           onmouseover="this.style.background='var(--pink)';this.style.color='white'"
@@ -2386,6 +2391,18 @@ async function openKelas(kelasId, colorIdx) {
           🚪 Keluar dari Kelas
         </button>
       </div>`;
+
+      if (guruId) {
+        api('GET', '/chat/inbox').then(inboxData => {
+          if (inboxData.success) {
+            const conv = (inboxData.data || []).find(c => c.partner.id === guruId);
+            if (conv && conv.unread > 0) {
+              const bg = document.getElementById('pc-unread-badge-guru');
+              if (bg) bg.style.display = 'flex';
+            }
+          }
+        }).catch(() => {});
+      }
     }
 
     showPage('page-kelas');
@@ -2712,8 +2729,17 @@ async function loadKelasMurid(kelasId) {
   const el = document.getElementById('kelas-murid-stream');
   el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat daftar murid...</div>';
   try {
-    const data = await api('GET', `/kelas/${kelasId}`);
-    const muridList = data.data?.murid || [];
+    const [kelasData, inboxData] = await Promise.all([
+      api('GET', `/kelas/${kelasId}`),
+      currentUser?.role === 'guru' ? api('GET', '/chat/inbox') : Promise.resolve({ data: [] })
+    ]);
+    const muridList = kelasData.data?.murid || [];
+    window._privateChatUnreadMap = {};
+    if (inboxData?.success) {
+      (inboxData.data || []).forEach(c => {
+        if (c.unread > 0) window._privateChatUnreadMap[c.partner.id] = c.unread;
+      });
+    }
     renderMuridList(muridList);
   } catch(e) {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat murid</p></div>';
@@ -2743,6 +2769,10 @@ function renderMuridList(muridList) {
         return sortedList.map(m => {
           window._muridAvatarMap[m.id] = m.avatar || '🦁';
           const isOnline = onlineIds.has(m.id);
+          const unreadCount = window._privateChatUnreadMap?.[m.id] || 0;
+          const unreadBadge = unreadCount > 0
+            ? `<span id="pc-unread-badge-${m.id}" style="position:absolute;top:-5px;right:-5px;background:var(--red);color:white;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2.5px solid white">!</span>`
+            : '';
           return `<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:white;border-radius:14px;border:2px solid ${isOnline ? '#D1FAE5' : '#F3F4F6'};transition:all 0.2s">
           <div style="position:relative;flex-shrink:0">
             <div style="width:40px;height:40px;border-radius:50%;background:${isOnline ? '#D1FAE5' : '#F3F4F6'};display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden">${chatAvatarHtml(m.avatar || '🦁')}</div>
@@ -2757,9 +2787,13 @@ function renderMuridList(muridList) {
               <div style="font-size:12px;color:var(--muted);font-weight:700">Lv.${m.level || 1}</div>
               <div style="font-size:11px;color:var(--orange);font-weight:700">${m.xp || 0} XP</div>
             </div>
-            ${currentUser?.role === 'guru' ? `<button onclick="bukaPrivateChat('${m.id}','${m.nama.replace(/'/g,"\\'")}',window._muridAvatarMap['${m.id}']||'🦁')"
-              style="background:var(--blue);color:white;border:none;padding:7px 12px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:12px;cursor:pointer;flex-shrink:0"
-              title="Chat privat dengan ${m.nama}">💬</button>` : ''}
+            ${currentUser?.role === 'guru' ? `
+              <div style="position:relative">
+                <button onclick="bukaPrivateChat('${m.id}','${m.nama.replace(/'/g,"\\'")}',window._muridAvatarMap['${m.id}']||'🦁')"
+                  style="background:var(--blue);color:white;border:none;padding:7px 12px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:12px;cursor:pointer;flex-shrink:0"
+                  title="Chat privat dengan ${m.nama}">💬</button>
+                ${unreadBadge}
+              </div>` : ''}
           </div>
         </div>`;
         }).join('');
@@ -2785,6 +2819,41 @@ async function loadKelasChatHistory(kelasId) {
   } catch(e) {
     box.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">Gagal memuat chat</div>';
   }
+}
+
+let classChatUnreadCount = 0;
+
+function updateClassChatBadge() {
+  const btn = document.getElementById('tab-chat-btn');
+  if (!btn) return;
+  if (classChatUnreadCount > 0) {
+    const displayCount = classChatUnreadCount > 99 ? '99+' : classChatUnreadCount;
+    btn.innerHTML = `💬 Chat <span style="background:var(--red);color:white;border-radius:50px;padding:2px 8px;font-size:11px;font-weight:800;margin-left:4px">${displayCount}</span>`;
+  } else {
+    btn.innerHTML = '💬 Chat';
+  }
+}
+
+function formatChatContent(isi, isSelf) {
+  const fileRegex = /^\[FILE:(https?:\/\/[/A-Za-z0-9_.-]+\/[/A-Za-z0-9_.-]+)\|([^\]]+)\]$/;
+  const match = String(isi || '').match(fileRegex);
+  if (match) {
+    const url = match[1];
+    const name = match[2];
+    const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(name);
+    if (isImage) {
+      return `<div style="margin-top:4px"><a href="${escapeHtml(url)}" target="_blank"><img src="${escapeHtml(url)}" style="max-width:100%;max-height:200px;border-radius:12px;border:1px solid #eee;display:block"></a><div style="font-size:11px;margin-top:4px;opacity:0.8">${escapeHtml(name)}</div></div>`;
+    }
+    return `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:${isSelf ? 'rgba(255,255,255,0.18)' : '#F3F4F6'};border-radius:10px;margin-top:4px">
+        <span style="font-size:20px">📁</span>
+        <div style="flex:1;min-width:0;text-align:left">
+          <div style="font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${isSelf ? 'white' : 'var(--text)'}">${escapeHtml(name)}</div>
+        </div>
+        <a href="${escapeHtml(url)}" target="_blank" style="background:${isSelf ? 'white' : 'var(--blue)'};color:${isSelf ? 'var(--blue)' : 'white'};border:none;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;text-decoration:none">Unduh</a>
+      </div>`;
+  }
+  return escapeHtml(isi);
 }
 
 // Render avatar di dalam chat (emoji atau foto kecil)
@@ -2818,7 +2887,7 @@ function appendChatMessage(p) {
     </span>` : '';
   div.innerHTML = `
     ${!isSelf ? `<div style="font-size:11px;color:var(--muted);font-weight:700;padding:0 8px;display:flex;align-items:center;gap:4px">${chatAvatarHtml(pengirim.avatar, '18px')} ${escapeHtml(pengirim.nama)}${isGuru ? ' 👩‍🏫' : ''}</div>` : ''}
-    <div id="msg-bubble-${msgId}" data-isi="${escapeHtml(p.isi)}" style="max-width:75%;padding:10px 14px;border-radius:${isSelf ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isSelf ? 'var(--orange)' : 'white'};color:${isSelf ? 'white' : 'var(--text)'};font-size:14px;font-weight:600;border:${isSelf ? 'none' : '1.5px solid #E8E8E8'};word-break:break-word">${escapeHtml(p.isi)}</div>
+    <div id="msg-bubble-${msgId}" data-isi="${escapeHtml(p.isi)}" style="max-width:75%;padding:10px 14px;border-radius:${isSelf ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isSelf ? 'var(--orange)' : 'white'};color:${isSelf ? 'white' : 'var(--text)'};font-size:14px;font-weight:600;border:${isSelf ? 'none' : '1.5px solid #E8E8E8'};word-break:break-word">${formatChatContent(p.isi, isSelf)}</div>
     <div style="display:flex;align-items:center;gap:6px;padding:0 8px">
       <span style="font-size:10px;color:var(--muted)">${waktu}</span>
       ${actionBtns}
@@ -2980,8 +3049,8 @@ socket.on('kelas:pesan_baru', (pesan) => {
   scrollChatToBottom();
   // Notifikasi jika tidak sedang di tab chat
   if (currentKelasTab !== 'chat') {
-    const btn = document.getElementById('tab-chat-btn');
-    if (btn) btn.textContent = '💬 Chat 🔴';
+    classChatUnreadCount++;
+    updateClassChatBadge();
   }
   // Tambah ke bell notification
   addBellNotif({
@@ -3346,6 +3415,10 @@ socket.on('private:receive', (pesan) => {
     // Simpan data untuk tombol "Balas"
     _notifPrivateChatData = pesan;
     tampilkanNotifPrivateChat(pesan);
+
+    // Tampilkan badge di UI jika ada
+    const badge = document.getElementById('pc-unread-badge-' + pesan.dari_id) || document.getElementById('pc-unread-badge-guru');
+    if (badge) badge.style.display = 'flex';
   }
   // Selalu tambah ke bell notification (private = prioritas tinggi)
   addBellNotif({
@@ -3675,6 +3748,9 @@ async function bukaPrivateChat(userId, nama, avatar) {
   privateChatTargetNama = nama;
   privateChatTargetAvatar = avatar;
 
+  const badge = document.getElementById('pc-unread-badge-' + userId) || document.getElementById('pc-unread-badge-guru');
+  if (badge) badge.style.display = 'none';
+
   setAvatarEl(document.getElementById('pc-avatar'), avatar, 'big');
   document.getElementById('pc-nama').textContent = nama;
   document.getElementById('pc-status').textContent = 'Chat Privat';
@@ -3718,7 +3794,7 @@ function appendPrivateMessage(p, isSelf) {
          onmouseleave="${isSelf && msgId && isRecent ? `this.querySelector('.pc-msg-actions')&&(this.querySelector('.pc-msg-actions').style.display='none')` : ''}">
       <div style="font-size:18px;flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:50%">${chatAvatarHtml(ava)}</div>
       <div style="max-width:78%">
-        <div class="pc-msg-bubble" style="padding:10px 14px;border-radius:${isSelf ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isSelf ? 'var(--blue)' : 'white'};color:${isSelf ? 'white' : 'var(--text)'};font-size:14px;font-weight:600;border:${isSelf ? 'none' : '1.5px solid #E8E8E8'};word-break:break-word">${escapeHtml(p.isi)}${editedLabel}</div>
+        <div class="pc-msg-bubble" style="padding:10px 14px;border-radius:${isSelf ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isSelf ? 'var(--blue)' : 'white'};color:${isSelf ? 'white' : 'var(--text)'};font-size:14px;font-weight:600;border:${isSelf ? 'none' : '1.5px solid #E8E8E8'};word-break:break-word">${formatChatContent(p.isi, isSelf)}${editedLabel}</div>
         ${selfActions}
       </div>
     </div>
@@ -6221,6 +6297,17 @@ window.addEventListener('load', () => {
     });
   });
 
+  function initChatPasteHandlers() {
+    const kelasInput = document.getElementById('kelas-chat-input');
+    if (kelasInput) {
+      kelasInput.addEventListener('paste', (e) => handleChatPaste(e, 'kelas'));
+    }
+    const pcInput = document.getElementById('pc-input');
+    if (pcInput) {
+      pcInput.addEventListener('paste', (e) => handleChatPaste(e, 'private'));
+    }
+  }
+
   // Inisialisasi Google login setelah semua fungsi dan DOM siap
   // Polling karena library Google load async — tunggu max 5 detik
   let _gTry = 0;
@@ -6233,6 +6320,7 @@ window.addEventListener('load', () => {
       clearInterval(_gPoll); // timeout 5 detik
     }
   }, 100);
+  initChatPasteHandlers();
 });
 
 // ============================================================
@@ -6255,7 +6343,8 @@ function switchKelasTab(tab) {
   if (tab === 'murid' && currentKelas) loadKelasMurid(currentKelas.id);
   if (tab === 'penilaian' && currentKelas) loadPenilaianKelas(currentKelas.id);
   if (tab === 'chat') {
-    document.getElementById('tab-chat-btn').textContent = '💬 Chat';
+    classChatUnreadCount = 0;
+    updateClassChatBadge();
     scrollChatToBottom();
   }
 }
@@ -7674,4 +7763,65 @@ async function konfirmasiHapus() {
     toast('Tidak bisa terhubung ke server', 'error');
   }
   showLoading(false);
+}
+
+async function prosesUploadFileChat(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = ''; // Reset input
+  await uploadAndSendFileChat(file, input.dataset.targetChat);
+}
+
+async function handleChatPaste(e, targetChat) {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.kind === 'file') {
+      const file = item.getAsFile();
+      if (file) {
+        e.preventDefault();
+        await uploadAndSendFileChat(file, targetChat);
+      }
+    }
+  }
+}
+
+async function uploadAndSendFileChat(file, targetChat) {
+  if (file.size > 10 * 1024 * 1024) {
+    toast('Berkas terlalu besar. Maksimal 10MB.', 'error');
+    return;
+  }
+  showLoading(true, 'Mengirim berkas...');
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const response = await fetch(API + '/chat/upload', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+    const data = await response.json();
+    showLoading(false);
+
+    if (data.success) {
+      const fileMessage = `[FILE:${data.file_url}|${data.file_nama}]`;
+      if (targetChat === 'kelas') {
+        const input = document.getElementById('kelas-chat-input');
+        input.value = fileMessage;
+        await kirimPesanKelas();
+      } else {
+        const input = document.getElementById('pc-input');
+        input.value = fileMessage;
+        await kirimPrivateChat();
+      }
+    } else {
+      toast(data.pesan || 'Gagal mengirim berkas', 'error');
+    }
+  } catch (err) {
+    showLoading(false);
+    toast('Gagal mengunggah berkas ke server', 'error');
+  }
 }

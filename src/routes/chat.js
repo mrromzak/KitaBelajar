@@ -5,6 +5,9 @@ const validator = require('validator');
 const supabase = require('../supabase');
 const { authMiddleware } = require('../middleware/auth');
 const { encrypt, decrypt } = require('../utils/crypto');
+const multer = require('multer');
+const upload = multer({ limits: { fileSize: 10 * 1024 * 1024 } }); // 10MB limit
+const { validateUpload, EXT_FOR_MIME } = require('../utils/fileType');
 
 // GET /api/chat/private/:userId — ambil riwayat chat privat dengan user tertentu
 router.get('/private/:userId', authMiddleware, async (req, res) => {
@@ -58,6 +61,18 @@ router.post('/private/:userId', authMiddleware, async (req, res) => {
       isi: encrypt(plainIsi)
     });
     if (error) throw error;
+
+    // Kirim notifikasi offline ke database untuk penerima
+    const senderNama = req.user.nama || 'Seseorang';
+    const senderAvatar = req.user.avatar || '🦁';
+    await supabase.from('notifikasi').insert({
+      id: uuidv4(),
+      user_id: req.params.userId,
+      judul: '💬 Pesan Privat Baru',
+      pesan: `Pesan baru dari "${senderNama}": "${plainIsi.startsWith('[FILE:') ? 'Mengirim lampiran berkas' : (plainIsi.length > 60 ? plainIsi.substring(0, 60) + '...' : plainIsi)}"`,
+      tipe: 'private',
+      data_extra: JSON.stringify({ dari_id: req.user.id, pengirim_nama: senderNama, pengirim_avatar: senderAvatar })
+    }).catch(err => console.warn('[notifikasi chat] gagal simpan:', err.message));
 
     res.status(201).json({
       success: true,
@@ -152,6 +167,39 @@ router.get('/inbox', authMiddleware, async (req, res) => {
     res.json({ success: true, data: conversations });
   } catch (err) {
     console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
+  }
+});
+
+// POST /api/chat/upload — upload file attachment untuk chat
+router.post('/upload', authMiddleware, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, pesan: 'Tidak ada file yang diunggah.' });
+
+    const CHAT_ALLOWED_MIME = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+      'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'text/plain', 'application/zip', 'application/x-zip-compressed'
+    ];
+
+    const check = validateUpload(req.file.buffer, CHAT_ALLOWED_MIME);
+    if (!check.valid) return res.status(400).json({ success: false, pesan: 'Tipe file tidak didukung.' });
+
+    const ext = EXT_FOR_MIME[check.mime] || 'bin';
+    const filename = `chat-attachments/${uuidv4()}.${ext}`;
+
+    const { error } = await supabase.storage
+      .from('materi-files')
+      .upload(filename, req.file.buffer, { contentType: check.mime, upsert: false });
+
+    if (error) throw error;
+
+    const { data } = supabase.storage.from('materi-files').getPublicUrl(filename);
+    res.json({ success: true, file_url: data.publicUrl, file_nama: req.file.originalname });
+  } catch (err) {
+    console.error('[chat-upload]', err.message);
+    res.status(500).json({ success: false, pesan: 'Gagal mengunggah berkas.' });
   }
 });
 

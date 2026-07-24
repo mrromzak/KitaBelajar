@@ -288,9 +288,9 @@ router.post('/hasil', authMiddleware, async (req, res) => {
     const murid_id = req.user.id || req.user.userId;
     if (!quiz_id) return res.status(400).json({ success: false, pesan: 'quiz_id wajib' });
 
-    // Ambil max_attempt dari quiz
+    // Ambil max_attempt, guru_id, judul, kelas_id dari quiz
     const { data: quizData } = await supabase
-      .from('quiz').select('max_attempt').eq('id', quiz_id).single();
+      .from('quiz').select('max_attempt, guru_id, judul, kelas_id').eq('id', quiz_id).single();
     const maxAttempt = quizData?.max_attempt ?? 1;
 
     // Cek jumlah percobaan yang sudah dilakukan
@@ -349,6 +349,27 @@ router.post('/hasil', authMiddleware, async (req, res) => {
     if (error) {
       console.error('[POST /quiz/hasil] insert error:', error.message);
       return res.status(500).json({ success: false, pesan: 'Gagal menyimpan hasil: ' + error.message });
+    }
+
+    // Notif ke guru jika kuis dikerjakan
+    if (quizData?.guru_id) {
+      const studentNama = req.user.nama || 'Seseorang';
+      await supabase.from('notifikasi').insert({
+        id: uuidv4(), user_id: quizData.guru_id,
+        judul: '✍️ Kuis Selesai Dikerjakan',
+        pesan: `Murid bernama "${studentNama}" telah menyelesaikan kuis "${quizData.judul}"`,
+        data_extra: JSON.stringify({ kelas_id: quizData.kelas_id })
+      }).catch(err => console.warn('[notifikasi kuis] gagal simpan:', err.message));
+      
+      const io = req.app.get('io');
+      if (io) {
+        io.to('user:' + quizData.guru_id).emit('notif:baru', {
+          tipe: 'quiz_selesai',
+          judul: '✍️ Kuis Selesai Dikerjakan',
+          pesan: `Murid bernama "${studentNama}" telah menyelesaikan kuis "${quizData.judul}"`,
+          created_at: new Date().toISOString()
+        });
+      }
     }
 
     // Update XP + stats + cek misi
@@ -483,13 +504,15 @@ router.post('/:id/submission', authMiddleware, (req, res, next) => {
     if (quiz.kelas_id) {
       const { data: kelas } = await supabase.from('kelas').select('guru_id').eq('id', quiz.kelas_id).single();
       if (kelas?.guru_id) {
+        const studentNama = req.user.nama || 'Seseorang';
         await supabase.from('notifikasi').insert({
           id: uuidv4(), user_id: kelas.guru_id,
           judul: '📤 Submission Tugas Baru',
-          pesan: `Ada murid yang mengumpulkan tugas "${quiz.judul}"`
+          pesan: `Murid bernama "${studentNama}" mengumpulkan tugas "${quiz.judul}"`,
+          data_extra: JSON.stringify({ kelas_id: quiz.kelas_id })
         });
         const io = req.app.get('io');
-        if (io) io.to('user:' + kelas.guru_id).emit('notif:baru', { tipe: 'submission', judul: '📤 Submission Tugas Baru', pesan: `Ada murid yang mengumpulkan tugas "${quiz.judul}"`, created_at: new Date().toISOString() });
+        if (io) io.to('user:' + kelas.guru_id).emit('notif:baru', { tipe: 'submission', judul: '📤 Submission Tugas Baru', pesan: `Murid bernama "${studentNama}" mengumpulkan tugas "${quiz.judul}"`, created_at: new Date().toISOString() });
       }
     }
 
