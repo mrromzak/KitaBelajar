@@ -31,4 +31,26 @@ function cleanAvatar(input, maxLen = 500) {
   return s;
 }
 
-module.exports = { cleanText, cleanAvatar };
+// ── Bcrypt-based kode_guru lookup ──────────────────────────────
+// Digunakan ketika kode_guru sudah di-hash dengan bcrypt (bukan plaintext).
+// Ambil semua kode aktif, lalu bcrypt-compare input sampai match.
+async function findKodeGuruByBcrypt(supabase, inputKode, bcrypt) {
+  if (!inputKode || typeof inputKode !== 'string') return null;
+  const safeKode = inputKode.trim().toUpperCase();
+  // Ambil semua kode yang statusnya active
+  const { data: entries } = await supabase
+    .from('kode_guru')
+    .select('*')
+    .eq('status', 'active');
+  if (!entries || entries.length === 0) return null;
+  for (const entry of entries) {
+    try {
+      if (await bcrypt.compare(safeKode, entry.kode)) {
+        return entry;
+      }
+    } catch (_) { /* skip invalid hash */ }
+  }
+  return null;
+}
+
+module.exports = { cleanText, cleanAvatar, findKodeGuruByBcrypt };

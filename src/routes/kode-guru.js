@@ -14,10 +14,11 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const supabase = require('../supabase');
 const { authMiddleware, kepalaOnly } = require('../middleware/auth');
-const { cleanText } = require('../utils/sanitize');
+const { cleanText, findKodeGuruByBcrypt } = require('../utils/sanitize');
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
@@ -30,7 +31,7 @@ function randomKode(len = 8) {
 function publicKode(c) {
   return {
     id: c.id,
-    kode: c.kode,
+    kode: c.kode ? '••••••••' : null,
     status: c.status === 'revoked' ? 'revoked' : 'active',
     nama_guru: c.nama_guru,
     email_guru: c.email_guru,
@@ -42,6 +43,7 @@ function publicKode(c) {
 
 // =====================================================
 //  POST /api/kode-guru — kepala generate kode baru
+//  Kode di-hash dengan bcrypt sebelum disimpan.
 // =====================================================
 router.post('/', authMiddleware, kepalaOnly, async (req, res) => {
   try {
@@ -59,18 +61,14 @@ router.post('/', authMiddleware, kepalaOnly, async (req, res) => {
       return res.status(400).json({ success: false, pesan: 'Email guru sudah memiliki kode undangan.' });
     }
 
-    let kode;
-    let attempts = 0;
-    do {
-      kode = randomKode(8);
-      const { data: dupKode } = await supabase.from('kode_guru').select('id').eq('kode', kode).maybeSingle();
-      if (!dupKode) break;
-      attempts++;
-    } while (attempts < 10);
+    // Generate random kode (plaintext — dikembalikan sekali ke frontend)
+    const plainKode = randomKode(8);
+    // Hash dengan bcrypt
+    const hashedKode = await bcrypt.hash(plainKode, 10);
 
     const id = uuidv4();
     const { error } = await supabase.from('kode_guru').insert({
-      id, kode, dibuat_oleh: req.user.id,
+      id, kode: hashedKode, dibuat_oleh: req.user.id,
       status: 'active',
       nama_guru: cleanText(nama_guru, 100),
       email_guru: normalEmail,
@@ -84,7 +82,8 @@ router.post('/', authMiddleware, kepalaOnly, async (req, res) => {
     res.status(201).json({
       success: true,
       pesan: 'Kode undangan guru berhasil dibuat.',
-      data: publicKode({ id, kode, status: 'active', nama_guru: cleanText(nama_guru, 100), email_guru: normalEmail, login_count: 0, label: safeLabel })
+      plain_kode: plainKode,
+      data: publicKode({ id, kode: hashedKode, status: 'active', nama_guru: cleanText(nama_guru, 100), email_guru: normalEmail, login_count: 0, label: safeLabel })
     });
   } catch (err) {
     console.error('[kode-guru:create]', err.message);
@@ -241,7 +240,7 @@ router.post('/guru/:id/regenerate', authMiddleware, kepalaOnly, async (req, res)
 // =====================================================
 //  POST /api/kode-guru/validate — cek kode (publik, tanpa auth)
 //  Body: { kode: "ABCD1234" }
-//  Dipakai frontend sebelum submit form register guru.
+//  Kode sudah di-hash bcrypt → lookup pakai compare.
 // =====================================================
 router.post('/validate', async (req, res) => {
   try {
@@ -249,11 +248,7 @@ router.post('/validate', async (req, res) => {
     if (!kode || typeof kode !== 'string' || kode.trim().length === 0)
       return res.status(400).json({ success: false, pesan: 'Kode wajib diisi.' });
 
-    const safeKode = kode.trim().toUpperCase();
-    const { data: entry, error } = await supabase
-      .from('kode_guru').select('*').eq('kode', safeKode).maybeSingle();
-
-    if (error) throw error;
+    const entry = await findKodeGuruByBcrypt(supabase, kode, bcrypt);
     if (!entry)
       return res.status(404).json({ success: false, pesan: 'Kode tidak ditemukan.' });
 
@@ -265,7 +260,7 @@ router.post('/validate', async (req, res) => {
       valid: true,
       pesan: 'Kode valid. Silakan lanjutkan pendaftaran.',
       data: {
-        kode: entry.kode,
+        kode: '••••••••',
         nama_guru: entry.nama_guru,
         email_guru: entry.email_guru,
         label: entry.label

@@ -103,7 +103,7 @@ async function dashboardKepala(req, res) {
 
     const kodePublic = (kodeList || []).map(c => ({
       id: c.id,
-      kode: c.kode,
+      kode: '••••••••',
       status: c.status === 'revoked' ? 'revoked' : 'active',
       nama_guru: c.nama_guru,
       email_guru: c.email_guru,

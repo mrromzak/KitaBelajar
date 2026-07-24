@@ -279,8 +279,15 @@ function openModal(id) {
   if (id === 'modal-buat-kelas') {
     const mapelList = getMapelList();
     if (!mapelList || mapelList.length === 0) {
-      toast('Buat mata pelajaran dulu sebelum membuat kelas! 📖', 'error');
-      setTimeout(() => openTambahMapel(), 300);
+      const konfirmasi = confirm(
+        '📖 Kamu belum memiliki mata pelajaran.\n\n' +
+        'Untuk membuat kelas, kamu perlu menambahkan mata pelajaran terlebih dahulu.\n\n' +
+        'Klik "OK" untuk menambah mata pelajaran sekarang.\n' +
+        'Klik "Batal" jika ingin kembali.'
+      );
+      if (konfirmasi) {
+        openTambahMapel();
+      }
       return;
     }
   }
@@ -3825,7 +3832,12 @@ async function loadGuruDashboard() {
     if (list.length > 0) {
       grid.innerHTML = list.map((k, i) => renderKelasCard(k, i, 'guru')).join('');
     } else {
-      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏫</div><p>Belum ada kelas. Klik <strong>Buat Kelas</strong> untuk mulai!</p></div>';
+      const mapelList = getMapelList();
+      if (!mapelList || mapelList.length === 0) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📖</div><p>Tambahkan <strong>Mata Pelajaran</strong> dulu, lalu buat kelas!</p><button onclick="openTambahMapel()" style="margin-top:12px;background:var(--orange);color:white;border:none;padding:8px 20px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer">＋ Tambah Mapel</button></div>';
+      } else {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏫</div><p>Belum ada kelas. Klik <strong>Buat Kelas</strong> untuk mulai!</p></div>';
+      }
     }
   } catch(e) {
     toast('Gagal memuat data dashboard', 'error');
