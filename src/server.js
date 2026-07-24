@@ -50,9 +50,9 @@ const aiLimiter = rateLimit({
 // ── Socket.io setup ─────────────────────────────────────────
 const io = new Server(httpServer, {
   cors: { origin: corsOriginFn, credentials: true },
-  pingTimeout: 60000,     // tunggu 60s sebelum anggap disconnect
-  pingInterval: 25000,    // kirim ping tiap 25s
-  connectTimeout: 45000,  // timeout saat connect awal
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  connectTimeout: 45000,
   transports: ['websocket', 'polling']
 });
 
@@ -64,10 +64,7 @@ io.use((socket, next) => {
   if (token) {
     try {
       socket.user = jwt.verify(token, process.env.JWT_SECRET);
-      if (socket.user?.id) {
-        socket.join('user:' + socket.user.id);
-        console.log(`[socket] auto-join user:${socket.user.id}`);
-      }
+      if (socket.user?.id) socket.join('user:' + socket.user.id);
     } catch {
       socket.user = null;
     }
@@ -91,13 +88,20 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(antiJudolMiddleware);        // Blokir konten judol di body
 
-// Static files: assets berat (gambar/font) di-cache 7 hari, CSS/JS/HTML no-cache
+// Static files: aset statis dengan cache optimal
+// Cache JS/CSS 1 tahun jika pakai ?v= versioning, gambar/font 7 hari, HTML no-cache
+app.use(/^\/(js|css|assets)/, (req, res, next) => {
+  if (/\.(png|jpg|jpeg|gif|svg|webp|woff2?|ttf)$/i.test(req.path)) {
+    res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+  } else if (/\.(js|css)$/i.test(req.path) && req.query.v) {
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  }
+  next();
+});
 app.use(express.static(path.join(__dirname, '../public'), {
   setHeaders(res, filePath) {
     if (/\.(png|jpg|jpeg|gif|svg|webp|woff2?|ttf)$/i.test(filePath)) {
-      res.setHeader('Cache-Control', 'public, max-age=604800'); // 7 hari
-    } else {
-      res.setHeader('Cache-Control', 'no-cache');
+      if (!res.getHeader('Cache-Control')) res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
     }
   }
 }));

@@ -78,7 +78,6 @@ router.post('/private/:userId', authMiddleware, async (req, res) => {
     try {
       const io = req.app.get('io');
       if (io) {
-        console.log(`[chat] emit private:receive to user:${req.params.userId}`);
         io.to('user:' + req.params.userId).emit('private:receive', {
           id,
           dari_id: req.user.id,

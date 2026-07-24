@@ -3345,10 +3345,7 @@ function joinPrivateChannel() {
   if (currentUser?.id) socket.emit('private:join', { userId: currentUser.id });
 }
 // Jika socket reconnect (misal setelah internet terputus), join ulang
-socket.on('connect', () => {
-  console.log('[socket] connected, id:', socket.id);
-  joinPrivateChannel();
-});
+socket.on('connect', () => { joinPrivateChannel(); });
 
 // ============================================================
 //  PUSH NOTIFICATION — Service Worker + Browser Notifications
@@ -3445,7 +3442,6 @@ let _notifPrivateChatData = null;
 let _notifPrivateChatTimer = null;
 
 socket.on('private:receive', (pesan) => {
-  console.log('📬 Socket private:receive event fired with payload:', pesan);
   const modalOpen = document.getElementById('modal-private-chat')?.classList.contains('open');
   if (modalOpen && privateChatTargetId === pesan.dari_id) {
     // Modal sudah terbuka dengan pengirim ini — langsung tampilkan
@@ -3486,7 +3482,6 @@ socket.on('private:receive', (pesan) => {
 });
 
 function tampilkanNotifPrivateChat(pesan) {
-  console.log('🖥️ tampilkanNotifPrivateChat called with:', pesan);
   const nama = pesan.pengirim_nama || 'Seseorang';
   const ava  = pesan.pengirim_avatar || '🦁';
   const isi  = pesan.isi || '';
