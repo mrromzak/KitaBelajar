@@ -147,7 +147,9 @@ router.post('/guru', authMiddleware, kepalaOnly, async (req, res) => {
 
     // Generate code_guru baru
     let newCode = '';
-    const { data: generated } = await supabase.rpc('generate_code_guru_for_user', { p_user_id: id }).catch(() => ({ data: null }));
+    let generated;
+    try { generated = (await supabase.rpc('generate_code_guru_for_user', { p_user_id: id })).data; }
+    catch { generated = null; }
     if (!generated) {
       for (let i = 0; i < 8; i++) newCode += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
     }
@@ -169,7 +171,8 @@ router.post('/guru', authMiddleware, kepalaOnly, async (req, res) => {
     if (error) throw error;
 
     if (!newCode) {
-      await supabase.rpc('generate_code_guru_for_user', { p_user_id: id }).catch(() => {});
+      try { await supabase.rpc('generate_code_guru_for_user', { p_user_id: id }); }
+      catch {}
     }
 
     res.status(201).json({ success: true, pesan: 'Guru berhasil didaftarkan secara manual.' });

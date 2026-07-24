@@ -354,12 +354,12 @@ router.post('/hasil', authMiddleware, async (req, res) => {
     // Notif ke guru jika kuis dikerjakan
     if (quizData?.guru_id) {
       const studentNama = req.user.nama || 'Seseorang';
-      await supabase.from('notifikasi').insert({
+      try { await supabase.from('notifikasi').insert({
         id: uuidv4(), user_id: quizData.guru_id,
         judul: '✍️ Kuis Selesai Dikerjakan',
         pesan: `Murid bernama "${studentNama}" telah menyelesaikan kuis "${quizData.judul}"`,
         data_extra: JSON.stringify({ kelas_id: quizData.kelas_id })
-      }).catch(err => console.warn('[notifikasi kuis] gagal simpan:', err.message));
+      }); } catch (err) { console.warn('[notifikasi kuis] gagal simpan:', err.message); }
       
       const io = req.app.get('io');
       if (io) {

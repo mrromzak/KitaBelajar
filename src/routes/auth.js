@@ -409,33 +409,34 @@ router.post('/register', async (req, res) => {
 
     // ── B3: Catat login_count kode undangan guru (v2 — tanpa kuota) ──
     if (role === 'guru' && kode_guru_id) {
-      await supabase.rpc('increment_kode_guru_login', { p_email: normalEmail }).catch(async () => {
+      try { await supabase.rpc('increment_kode_guru_login', { p_email: normalEmail }); }
+      catch {
         const { data: k } = await supabase.from('kode_guru').select('login_count').eq('id', kode_guru_id).single();
         if (k) {
           await supabase.from('kode_guru').update({ login_count: (k.login_count || 0) + 1 }).eq('id', kode_guru_id);
         }
-      });
+      }
     }
     // ─────────────────────────────────────────────────────────────────────
 
     // ── Auto-generate code_guru untuk guru baru ────────────────────────────
     if (role === 'guru') {
       if (typeof supabase.rpc === 'function') {
-        await supabase.rpc('generate_code_guru_for_user', { p_user_id: id })
-          .catch(async () => {
-            // Fallback manual jika RPC belum ada
-            const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let newCode = '';
-            for (let i = 0; i < 8; i++) newCode += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
-            await supabase.from('users').update({ code_guru: newCode, code_guru_generated_at: new Date().toISOString() }).eq('id', id)
-              .catch(e => console.warn('[register] gagal set code_guru fallback:', e.message));
-          });
+        try { await supabase.rpc('generate_code_guru_for_user', { p_user_id: id }); }
+        catch {
+          // Fallback manual jika RPC belum ada
+          const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+          let newCode = '';
+          for (let i = 0; i < 8; i++) newCode += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+          try { await supabase.from('users').update({ code_guru: newCode, code_guru_generated_at: new Date().toISOString() }).eq('id', id); }
+          catch (e) { console.warn('[register] gagal set code_guru fallback:', e.message); }
+        }
       } else {
         const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
         let newCode = '';
         for (let i = 0; i < 8; i++) newCode += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
-        await supabase.from('users').update({ code_guru: newCode, code_guru_generated_at: new Date().toISOString() }).eq('id', id)
-          .catch(e => console.warn('[register] gagal set code_guru fallback:', e.message));
+        try { await supabase.from('users').update({ code_guru: newCode, code_guru_generated_at: new Date().toISOString() }).eq('id', id); }
+        catch (e) { console.warn('[register] gagal set code_guru fallback:', e.message); }
       }
       console.log(`[register] code_guru di-generate untuk guru baru: ${normalEmail}`);
     }
@@ -932,20 +933,20 @@ router.post('/google', async (req, res) => {
 
       // Auto-generate code_guru
       if (typeof supabase.rpc === 'function') {
-        await supabase.rpc('generate_code_guru_for_user', { p_user_id: id })
-          .catch(async () => {
-            const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let newCode = '';
-            for (let i = 0; i < 8; i++) newCode += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
-            await supabase.from('users').update({ code_guru: newCode, code_guru_generated_at: new Date().toISOString() }).eq('id', id)
-              .catch(e => console.warn('[google-auth] gagal set code_guru fallback:', e.message));
-          });
+        try { await supabase.rpc('generate_code_guru_for_user', { p_user_id: id }); }
+        catch {
+          const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+          let newCode = '';
+          for (let i = 0; i < 8; i++) newCode += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+          try { await supabase.from('users').update({ code_guru: newCode, code_guru_generated_at: new Date().toISOString() }).eq('id', id); }
+          catch (e) { console.warn('[google-auth] gagal set code_guru fallback:', e.message); }
+        }
       } else {
         const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
         let newCode = '';
         for (let i = 0; i < 8; i++) newCode += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
-        await supabase.from('users').update({ code_guru: newCode, code_guru_generated_at: new Date().toISOString() }).eq('id', id)
-          .catch(e => console.warn('[google-auth] gagal set code_guru fallback:', e.message));
+        try { await supabase.from('users').update({ code_guru: newCode, code_guru_generated_at: new Date().toISOString() }).eq('id', id); }
+        catch (e) { console.warn('[google-auth] gagal set code_guru fallback:', e.message); }
       }
 
       await supabase.from('notifikasi').insert({
@@ -1059,9 +1060,9 @@ router.post('/send-code-guru-otp', authMiddleware, async (req, res) => {
 
     // Jika belum punya code_guru, generate dulu
     if (!user.code_guru) {
-      const { data: newCode } = await supabase
-        .rpc('generate_code_guru_for_user', { p_user_id: user.id })
-        .catch(() => ({ data: null }));
+      let newCode;
+      try { newCode = (await supabase.rpc('generate_code_guru_for_user', { p_user_id: user.id })).data; }
+      catch { newCode = null; }
       if (!newCode) {
         // Fallback manual
         const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -1161,9 +1162,9 @@ router.post('/verify-code-guru-otp', authMiddleware, async (req, res) => {
     // Jika belum punya code_guru (edge case), generate sekarang
     let finalCode = user.code_guru;
     if (!finalCode) {
-      const { data: newCode } = await supabase
-        .rpc('generate_code_guru_for_user', { p_user_id: user.id })
-        .catch(() => ({ data: null }));
+      let newCode;
+      try { newCode = (await supabase.rpc('generate_code_guru_for_user', { p_user_id: user.id })).data; }
+      catch { newCode = null; }
       finalCode = newCode;
       if (!finalCode) {
         // Fallback manual

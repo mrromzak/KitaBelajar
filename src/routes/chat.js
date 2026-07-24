@@ -65,14 +65,14 @@ router.post('/private/:userId', authMiddleware, async (req, res) => {
     // Kirim notifikasi offline ke database untuk penerima
     const senderNama = req.user.nama || 'Seseorang';
     const senderAvatar = req.user.avatar || '🦁';
-    await supabase.from('notifikasi').insert({
+    try { await supabase.from('notifikasi').insert({
       id: uuidv4(),
       user_id: req.params.userId,
       judul: '💬 Pesan Privat Baru',
       pesan: `Pesan baru dari "${senderNama}": "${plainIsi.startsWith('[FILE:') ? 'Mengirim lampiran berkas' : (plainIsi.length > 60 ? plainIsi.substring(0, 60) + '...' : plainIsi)}"`,
       tipe: 'private',
       data_extra: JSON.stringify({ dari_id: req.user.id, pengirim_nama: senderNama, pengirim_avatar: senderAvatar })
-    }).catch(err => console.warn('[notifikasi chat] gagal simpan:', err.message));
+    }); } catch (err) { console.warn('[notifikasi chat] gagal simpan:', err.message); }
 
     // Emit real-time event via socket — lebih reliable daripada client-side emit
     try {
