@@ -24,7 +24,7 @@ function cleanText(input, maxLen = 200) {
 
 // Avatar boleh berupa emoji, data URI gambar, atau URL http(s).
 // Buang karakter yang memungkinkan breakout atribut src="...".
-function cleanAvatar(input, maxLen = 500) {
+function cleanAvatar(input, maxLen = 200000) {
   if (input === undefined || input === null) return input;
   let s = String(input).replace(AVATAR_DANGER, '').replace(CONTROL_CHARS, '').trim();
   if (maxLen) s = s.slice(0, maxLen);
