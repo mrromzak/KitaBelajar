@@ -1122,7 +1122,7 @@ function uploadFotoProfil(role) {
   input.onchange = () => {
     const file = input.files[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { toast('Foto terlalu besar. Maksimal 5MB.', 'error'); return; }
+    if (file.size > 10 * 1024 * 1024) { toast('Foto terlalu besar. Maksimal 10MB.', 'error'); return; }
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -2788,9 +2788,9 @@ async function loadKelasChatHistory(kelasId) {
 }
 
 // Render avatar di dalam chat (emoji atau foto kecil)
-function chatAvatarHtml(avatarStr) {
+function chatAvatarHtml(avatarStr, size = '100%') {
   if (avatarStr && (avatarStr.startsWith('data:') || avatarStr.startsWith('http'))) {
-    return `<img src="${escapeHtml(avatarStr)}" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:middle;display:inline-block;flex-shrink:0">`;
+    return `<img src="${escapeHtml(avatarStr)}" style="width:${size};height:${size};border-radius:50%;object-fit:cover;vertical-align:middle;display:inline-block;flex-shrink:0">`;
   }
   return `<span>${escapeHtml(avatarStr || '🦁')}</span>`;
 }
@@ -2814,7 +2814,7 @@ function appendChatMessage(p) {
       <button onclick="hapusPesanKelas('${msgId}')" title="Hapus" style="background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;border-radius:6px;color:inherit">🗑️</button>
     </span>` : '';
   div.innerHTML = `
-    ${!isSelf ? `<div style="font-size:11px;color:var(--muted);font-weight:700;padding:0 8px;display:flex;align-items:center;gap:4px">${chatAvatarHtml(pengirim.avatar)} ${escapeHtml(pengirim.nama)}${isGuru ? ' 👩‍🏫' : ''}</div>` : ''}
+    ${!isSelf ? `<div style="font-size:11px;color:var(--muted);font-weight:700;padding:0 8px;display:flex;align-items:center;gap:4px">${chatAvatarHtml(pengirim.avatar, '18px')} ${escapeHtml(pengirim.nama)}${isGuru ? ' 👩‍🏫' : ''}</div>` : ''}
     <div id="msg-bubble-${msgId}" data-isi="${escapeHtml(p.isi)}" style="max-width:75%;padding:10px 14px;border-radius:${isSelf ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isSelf ? 'var(--orange)' : 'white'};color:${isSelf ? 'white' : 'var(--text)'};font-size:14px;font-weight:600;border:${isSelf ? 'none' : '1.5px solid #E8E8E8'};word-break:break-word">${escapeHtml(p.isi)}</div>
     <div style="display:flex;align-items:center;gap:6px;padding:0 8px">
       <span style="font-size:10px;color:var(--muted)">${waktu}</span>
