@@ -886,12 +886,12 @@ router.post('/google', async (req, res) => {
           // Fallback ke Jalur B jika tidak cocok (guru mungkin juga punya kode_guru lama)
           const loginKodeEntry = await findKodeGuruByBcrypt(supabase, kode_guru_login, bcrypt);
           if (!loginKodeEntry) {
-            return res.status(403).json({ success: false, pesan: 'Kode tidak valid. Minta kode terbaru dari kepala sekolah.' });
+            return res.status(403).json({ success: false, pesan: 'Kode guru tidak sesuai' });
           }
           if (loginKodeEntry.status === 'revoked')
             return res.status(403).json({ success: false, pesan: 'Kode undangan sudah dicabut oleh kepala sekolah.' });
           if (loginKodeEntry.email_guru && loginKodeEntry.email_guru.toLowerCase().trim() !== normalEmail)
-            return res.status(403).json({ success: false, pesan: 'Kode undangan tidak sesuai dengan akun ini.' });
+            return res.status(403).json({ success: false, pesan: 'Kode guru tidak sesuai' });
           console.log(`[google-auth] guru ${normalEmail} login via kode_guru table (fallback): ${inputKode}`);
         } else {
           console.log(`[google-auth] guru ${normalEmail} login via users.code_guru: ${inputKode}`);
@@ -900,12 +900,12 @@ router.post('/google', async (req, res) => {
         // Jalur B: tidak ada users.code_guru → cek tabel kode_guru (bcrypt)
         const loginKodeEntry = await findKodeGuruByBcrypt(supabase, kode_guru_login, bcrypt);
         if (!loginKodeEntry) {
-          return res.status(403).json({ success: false, pesan: 'Kode tidak valid. Minta kode dari kepala sekolah.' });
+          return res.status(403).json({ success: false, pesan: 'Kode guru tidak sesuai' });
         }
         if (loginKodeEntry.status === 'revoked')
           return res.status(403).json({ success: false, pesan: 'Kode undangan sudah dicabut oleh kepala sekolah.' });
         if (loginKodeEntry.email_guru && loginKodeEntry.email_guru.toLowerCase().trim() !== normalEmail)
-          return res.status(403).json({ success: false, pesan: 'Kode undangan tidak sesuai dengan akun ini.' });
+          return res.status(403).json({ success: false, pesan: 'Kode guru tidak sesuai' });
         console.log(`[google-auth] guru ${normalEmail} login via kode_guru table: ${inputKode}`);
       }
     }
