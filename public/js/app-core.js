@@ -2800,7 +2800,10 @@ function appendChatMessage(p) {
   if (!box) return;
   const isSelf = p.pengirim?.id === currentUser?.id || p.pengirim_id === currentUser?.id;
   const isGuruUser = currentUser?.role === 'guru';
-  const canEdit = isSelf || isGuruUser;
+  const msgAgeMs = new Date() - new Date(p.created_at);
+  const isRecent = msgAgeMs <= 5 * 60 * 1000;
+  const canDelete = (isSelf && isRecent) || (isGuruUser && !isSelf);
+  const canEditMsg = isSelf && isRecent;
   const pengirim = p.pengirim || { nama: 'Pengguna', avatar: '🦁', role: 'murid' };
   const waktu = new Date(p.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   const isGuru = pengirim.role === 'guru';
@@ -2808,10 +2811,10 @@ function appendChatMessage(p) {
   const div = document.createElement('div');
   div.id = 'msg-' + msgId;
   div.style.cssText = `display:flex;flex-direction:column;align-items:${isSelf ? 'flex-end' : 'flex-start'};gap:2px`;
-  const actionBtns = canEdit && msgId ? `
+  const actionBtns = msgId && (canEditMsg || canDelete) ? `
     <span style="display:inline-flex;gap:4px;opacity:0.6">
-      ${isSelf ? `<button onclick="editPesanKelas('${msgId}')" title="Edit" style="background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;border-radius:6px;color:inherit">✏️</button>` : ''}
-      <button onclick="hapusPesanKelas('${msgId}')" title="Hapus" style="background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;border-radius:6px;color:inherit">🗑️</button>
+      ${canEditMsg ? `<button onclick="editPesanKelas('${msgId}')" title="Edit" style="background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;border-radius:6px;color:inherit">✏️</button>` : ''}
+      ${canDelete ? `<button onclick="hapusPesanKelas('${msgId}')" title="Hapus" style="background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;border-radius:6px;color:inherit">🗑️</button>` : ''}
     </span>` : '';
   div.innerHTML = `
     ${!isSelf ? `<div style="font-size:11px;color:var(--muted);font-weight:700;padding:0 8px;display:flex;align-items:center;gap:4px">${chatAvatarHtml(pengirim.avatar, '18px')} ${escapeHtml(pengirim.nama)}${isGuru ? ' 👩‍🏫' : ''}</div>` : ''}
@@ -3702,15 +3705,17 @@ function appendPrivateMessage(p, isSelf) {
   div.dataset.msgId = msgId;
   div.style.cssText = `display:flex;flex-direction:column;align-items:${isSelf ? 'flex-end' : 'flex-start'};gap:2px`;
   const editedLabel = p.edited ? '<span style="font-size:10px;opacity:0.7;font-style:italic"> (diedit)</span>' : '';
-  const selfActions = isSelf && msgId ? `
+  const msgAgeMs = new Date() - new Date(p.created_at);
+  const isRecent = msgAgeMs <= 5 * 60 * 1000;
+  const selfActions = isSelf && msgId && isRecent ? `
     <div class="pc-msg-actions" style="display:none;gap:4px;margin-top:2px">
       <button onclick="editPesanPrivat('${msgId}',this)" style="background:none;border:1px solid #ddd;border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:Nunito,sans-serif;font-weight:700;color:var(--blue)">✏️ Edit</button>
       <button onclick="hapusPesanPrivat('${msgId}',this)" style="background:none;border:1px solid #ddd;border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:Nunito,sans-serif;font-weight:700;color:var(--red)">🗑️ Hapus</button>
     </div>` : '';
   div.innerHTML = `
     <div style="display:flex;align-items:flex-end;gap:6px;flex-direction:${isSelf ? 'row-reverse' : 'row'}"
-         onmouseenter="${isSelf && msgId ? `this.querySelector('.pc-msg-actions')&&(this.querySelector('.pc-msg-actions').style.display='flex')` : ''}"
-         onmouseleave="${isSelf && msgId ? `this.querySelector('.pc-msg-actions')&&(this.querySelector('.pc-msg-actions').style.display='none')` : ''}">
+         onmouseenter="${isSelf && msgId && isRecent ? `this.querySelector('.pc-msg-actions')&&(this.querySelector('.pc-msg-actions').style.display='flex')` : ''}"
+         onmouseleave="${isSelf && msgId && isRecent ? `this.querySelector('.pc-msg-actions')&&(this.querySelector('.pc-msg-actions').style.display='none')` : ''}">
       <div style="font-size:18px;flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:50%">${chatAvatarHtml(ava)}</div>
       <div style="max-width:78%">
         <div class="pc-msg-bubble" style="padding:10px 14px;border-radius:${isSelf ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isSelf ? 'var(--blue)' : 'white'};color:${isSelf ? 'white' : 'var(--text)'};font-size:14px;font-weight:600;border:${isSelf ? 'none' : '1.5px solid #E8E8E8'};word-break:break-word">${escapeHtml(p.isi)}${editedLabel}</div>

@@ -73,11 +73,24 @@ router.put('/private/msg/:msgId', authMiddleware, async (req, res) => {
   try {
     const { isi } = req.body;
     if (!isi?.trim()) return res.status(400).json({ success: false, pesan: 'Pesan tidak boleh kosong.' });
+
+    const { data: msg } = await supabase
+      .from('pesan_private')
+      .select('id, dari_id, created_at')
+      .eq('id', req.params.msgId)
+      .single();
+    if (!msg) return res.status(404).json({ success: false, pesan: 'Pesan tidak ditemukan.' });
+    if (msg.dari_id !== req.user.id) return res.status(403).json({ success: false, pesan: 'Tidak punya akses.' });
+
+    const diffMinutes = (new Date() - new Date(msg.created_at)) / (1000 * 60);
+    if (diffMinutes > 5) {
+      return res.status(400).json({ success: false, pesan: 'Pesan yang sudah lebih dari 5 menit tidak dapat diubah atau dihapus.' });
+    }
+
     const { data, error } = await supabase
       .from('pesan_private')
       .update({ isi: encrypt(isi.trim()), edited: true })
       .eq('id', req.params.msgId)
-      .eq('dari_id', req.user.id)
       .select().single();
     if (error || !data) return res.status(404).json({ success: false, pesan: 'Pesan tidak ditemukan.' });
     res.json({ success: true, data: { ...data, isi: isi.trim() } });
@@ -89,11 +102,23 @@ router.put('/private/msg/:msgId', authMiddleware, async (req, res) => {
 // DELETE /api/chat/private/msg/:msgId — hapus pesan privat (hanya milik sendiri)
 router.delete('/private/msg/:msgId', authMiddleware, async (req, res) => {
   try {
+    const { data: msg } = await supabase
+      .from('pesan_private')
+      .select('id, dari_id, created_at')
+      .eq('id', req.params.msgId)
+      .single();
+    if (!msg) return res.status(404).json({ success: false, pesan: 'Pesan tidak ditemukan.' });
+    if (msg.dari_id !== req.user.id) return res.status(403).json({ success: false, pesan: 'Tidak punya akses.' });
+
+    const diffMinutes = (new Date() - new Date(msg.created_at)) / (1000 * 60);
+    if (diffMinutes > 5) {
+      return res.status(400).json({ success: false, pesan: 'Pesan yang sudah lebih dari 5 menit tidak dapat diubah atau dihapus.' });
+    }
+
     const { error } = await supabase
       .from('pesan_private')
       .delete()
-      .eq('id', req.params.msgId)
-      .eq('dari_id', req.user.id);
+      .eq('id', req.params.msgId);
     if (error) return res.status(500).json({ success: false, pesan: 'Gagal hapus.' });
     res.json({ success: true });
   } catch(err) {
