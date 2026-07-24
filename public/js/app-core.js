@@ -35,6 +35,7 @@ function kembaliKeDashboardUtama() {
   if (currentUser) {
     if (currentUser.role === 'guru') showPage('page-guru');
     else if (currentUser.role === 'orangtua') showPage('page-orangtua');
+    else if (currentUser.role === 'kepala_sekolah') window.location.href = '/portal-kepala.html';
     else showPage('page-murid');
   } else {
     showPage('page-landing');
@@ -228,6 +229,10 @@ function goHome() {
   if (currentUser && currentUser.role === 'guru') return showPage('page-guru');
   if (currentUser && currentUser.role === 'murid') return showPage('page-murid');
   if (currentUser && currentUser.role === 'orangtua') return showPage('page-orangtua');
+  if (currentUser && currentUser.role === 'kepala_sekolah') {
+    window.location.href = '/portal-kepala.html';
+    return;
+  }
   showPage('page-landing');
 }
 
@@ -812,7 +817,7 @@ async function _handleGoogleCredential(response) {
       setTimeout(() => subscribePush(), 2000);
       toast(`Selamat datang, ${currentUser.nama}! 🎉`, 'success');
       if (currentUser.role === 'guru') { loadGuruDashboard(); remindDataDiriIfNeeded(); }
-      else if (currentUser.role === 'kepala_sekolah') loadKepalaSekolahDashboard();
+      else if (currentUser.role === 'kepala_sekolah') window.location.href = '/portal-kepala.html';
       else if (currentUser.role === 'orangtua') loadOrangtuaDashboard();
       else { loadMuridDashboard(); remindDataDiriIfNeeded(); }
     } else {
@@ -3370,7 +3375,10 @@ async function klikBellNotif(id, tipe, dariId, namaPengirim, avatarPengirim, kel
 
   // Fallback: buka halaman sesuai role
   if (currentUser) {
-    showPage(currentUser.role === 'guru' ? 'page-guru' : 'page-murid');
+    if (currentUser.role === 'guru') showPage('page-guru');
+    else if (currentUser.role === 'orangtua') showPage('page-orangtua');
+    else if (currentUser.role === 'kepala_sekolah') window.location.href = '/portal-kepala.html';
+    else showPage('page-murid');
   }
 }
 
@@ -6016,6 +6024,8 @@ window.addEventListener('load', () => {
       remindDataDiriIfNeeded();
     } else if (currentUser.role === 'orangtua') {
       loadOrangtuaDashboard();
+    } else if (currentUser.role === 'kepala_sekolah') {
+      window.location.href = '/portal-kepala.html';
     } else {
       loadMuridDashboard();
       remindDataDiriIfNeeded();
