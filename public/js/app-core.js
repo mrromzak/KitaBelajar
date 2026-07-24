@@ -2368,6 +2368,14 @@ async function openKelas(kelasId, colorIdx) {
           🗑️ Hapus Kelas
         </button>
       </div>`;
+
+      updateMuridTabBadge(false);
+      api('GET', '/chat/inbox').then(inboxData => {
+        if (inboxData.success) {
+          const hasUnread = (inboxData.data || []).some(c => c.unread > 0);
+          updateMuridTabBadge(hasUnread);
+        }
+      }).catch(() => {});
     } else {
       const guruNama = k.guru?.nama || k.guru_nama || 'Guru';
       const guruId = k.guru_id || '';
@@ -2834,6 +2842,16 @@ function updateClassChatBadge() {
   }
 }
 
+function updateMuridTabBadge(hasUnread) {
+  const btn = document.getElementById('tab-murid-btn');
+  if (!btn) return;
+  if (hasUnread) {
+    btn.innerHTML = `👥 Murid <span id="murid-tab-unread-dot" style="background:var(--red);color:white;border-radius:50%;padding:1px 6px;font-size:10px;font-weight:800;margin-left:4px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle">!</span>`;
+  } else {
+    btn.innerHTML = '👥 Murid';
+  }
+}
+
 function formatChatContent(isi, isSelf) {
   const fileRegex = /^\[FILE:(https?:\/\/[/A-Za-z0-9_.-]+\/[/A-Za-z0-9_.-]+)\|([^\]]+)\]$/;
   const match = String(isi || '').match(fileRegex);
@@ -3037,7 +3055,9 @@ socket.on('kelas:online_list', (list) => {
     // Re-render list murid dengan status online terbaru
     api('GET', `/kelas/${currentKelas.id}`).then(data => {
       const muridList = data.data?.murid || [];
-      renderMuridList(muridList);
+    const hasUnread = Object.keys(window._privateChatUnreadMap).length > 0;
+    updateMuridTabBadge(hasUnread);
+    renderMuridList(muridList);
     }).catch(() => {});
   }
 });
@@ -3419,6 +3439,9 @@ socket.on('private:receive', (pesan) => {
     // Tampilkan badge di UI jika ada
     const badge = document.getElementById('pc-unread-badge-' + pesan.dari_id) || document.getElementById('pc-unread-badge-guru');
     if (badge) badge.style.display = 'flex';
+    if (currentUser?.role === 'guru') {
+      updateMuridTabBadge(true);
+    }
   }
   // Selalu tambah ke bell notification (private = prioritas tinggi)
   addBellNotif({
@@ -3750,6 +3773,12 @@ async function bukaPrivateChat(userId, nama, avatar) {
 
   const badge = document.getElementById('pc-unread-badge-' + userId) || document.getElementById('pc-unread-badge-guru');
   if (badge) badge.style.display = 'none';
+
+  if (window._privateChatUnreadMap) {
+    delete window._privateChatUnreadMap[userId];
+    const hasUnread = Object.keys(window._privateChatUnreadMap).length > 0;
+    updateMuridTabBadge(hasUnread);
+  }
 
   setAvatarEl(document.getElementById('pc-avatar'), avatar, 'big');
   document.getElementById('pc-nama').textContent = nama;

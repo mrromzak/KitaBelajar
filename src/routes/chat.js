@@ -180,11 +180,12 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req, res) =
       'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      'text/plain', 'application/zip', 'application/x-zip-compressed'
+      'text/plain', 'application/zip', 'application/x-zip-compressed',
+      'application/x-rar-compressed', 'application/x-7z-compressed'
     ];
 
     const check = validateUpload(req.file.buffer, CHAT_ALLOWED_MIME);
-    if (!check.valid) return res.status(400).json({ success: false, pesan: 'Tipe file tidak didukung.' });
+    if (!check.ok) return res.status(400).json({ success: false, pesan: 'Tipe file tidak didukung.' });
 
     const ext = EXT_FOR_MIME[check.mime] || 'bin';
     const filename = `chat-attachments/${uuidv4()}.${ext}`;

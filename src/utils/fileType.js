@@ -31,6 +31,16 @@ function sniffMime(buf) {
   if (b[0] === 0xd0 && b[1] === 0xcf && b[2] === 0x11 && b[3] === 0xe0) return 'application/msword';
   // ZIP (mencakup DOCX) — "PK\x03\x04"
   if (b[0] === 0x50 && b[1] === 0x4b && b[2] === 0x03 && b[3] === 0x04) return 'application/zip';
+  // RAR
+  if (b.length >= 6 && b[0] === 0x52 && b[1] === 0x61 && b[2] === 0x72 && b[3] === 0x21 && b[4] === 0x1a && b[5] === 0x07) return 'application/x-rar-compressed';
+  // 7z
+  if (b.length >= 6 && b[0] === 0x37 && b[1] === 0x7a && b[2] === 0xbc && b[3] === 0xaf && b[4] === 0x27 && b[5] === 0x1c) return 'application/x-7z-compressed';
+  // Text
+  let isText = true;
+  for (let i = 0; i < Math.min(b.length, 128); i++) {
+    if (b[i] < 9 || (b[i] > 13 && b[i] < 32)) { isText = false; break; }
+  }
+  if (isText && b[0] !== 0x3c) return 'text/plain';
 
   return null;
 }
@@ -45,7 +55,10 @@ const EXT_FOR_MIME = {
   'video/mp4': 'mp4',
   'video/webm': 'webm',
   'application/msword': 'doc',
-  'application/zip': 'docx'
+  'application/zip': 'docx',
+  'application/x-rar-compressed': 'rar',
+  'application/x-7z-compressed': '7z',
+  'text/plain': 'txt'
 };
 
 // Validasi buffer: kembalikan { ok, mime } jika isi nyata termasuk allowed.
