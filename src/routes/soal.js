@@ -126,8 +126,30 @@ router.put('/:id', authMiddleware, guruOnly, async (req, res) => {
 // =====================================================
 router.delete('/:id', authMiddleware, guruOnly, async (req, res) => {
   try {
-    await supabase.from('quiz_soal').delete().eq('soal_id', req.params.id);
-    await supabase.from('soal').delete().eq('id', req.params.id).eq('guru_id', req.user.id);
+    const soalId = req.params.id;
+    const { data: soal } = await supabase
+      .from('soal').select('id').eq('id', soalId).eq('guru_id', req.user.id).single();
+    if (!soal) return res.status(404).json({ success: false, pesan: 'Soal tidak ditemukan.' });
+
+    const { data: relasi } = await supabase
+      .from('quiz_soal').select('quiz_id').eq('soal_id', soalId);
+    const quizIds = [...new Set((relasi || []).map(r => r.quiz_id).filter(Boolean))];
+
+    const { error: relErr } = await supabase.from('quiz_soal').delete().eq('soal_id', soalId);
+    if (relErr) throw relErr;
+
+    const { error: delErr } = await supabase.from('soal').delete().eq('id', soalId).eq('guru_id', req.user.id);
+    if (delErr) throw delErr;
+
+    // Jika soal yang terhapus membuat kuis kosong, sembunyikan kuis itu dari murid.
+    for (const quizId of quizIds) {
+      const { count } = await supabase
+        .from('quiz_soal').select('*', { count: 'exact', head: true }).eq('quiz_id', quizId);
+      if ((count || 0) === 0) {
+        await supabase.from('quiz').update({ status: 'nonaktif' }).eq('id', quizId).eq('guru_id', req.user.id);
+      }
+    }
+
     res.json({ success: true, pesan: 'Soal berhasil dihapus.' });
   } catch (err) {
     console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
@@ -327,7 +349,7 @@ router.get('/quiz/:id', authMiddleware, async (req, res) => {
       .eq('quiz_id', req.params.id)
       .order('urutan');
 
-    let soalList = quizSoal?.map(qs => ({ ...qs.soal, urutan: qs.urutan })) || [];
+    let soalList = quizSoal?.filter(qs => qs.soal).map(qs => ({ ...qs.soal, urutan: qs.urutan })) || [];
     if (req.user.role === 'murid') {
       soalList = soalList.map(({ jawaban, ...rest }) => rest);
     }

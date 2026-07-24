@@ -280,10 +280,18 @@ router.put('/:id', authMiddleware, guruOnly, async (req, res) => {
 router.delete('/:id', authMiddleware, guruOnly, async (req, res) => {
   try {
     const { data: materi } = await supabase
-      .from('materi').select('judul').eq('id', req.params.id).eq('guru_id', req.user.id).single();
+      .from('materi').select('judul, kelas_id').eq('id', req.params.id).eq('guru_id', req.user.id).single();
     if (!materi) return res.status(404).json({ success: false, pesan: 'Materi tidak ditemukan.' });
 
-    await supabase.from('materi').delete().eq('id', req.params.id);
+    const materiId = req.params.id;
+
+    // Bersihkan jejak murid terlebih dahulu agar materi yang dihapus tidak muncul dari progres/notifikasi lama.
+    await supabase.from('progres_materi').delete().eq('materi_id', materiId);
+    await supabase.from('notifikasi').delete().eq('tipe', 'materi').ilike('pesan', `%${materi.judul}%`);
+
+    const { error } = await supabase.from('materi').delete().eq('id', materiId).eq('guru_id', req.user.id);
+    if (error) throw error;
+
     res.json({ success: true, pesan: `Materi "${materi.judul}" berhasil dihapus.` });
   } catch (err) {
     console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });

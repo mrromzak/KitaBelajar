@@ -257,14 +257,18 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 
     // Pastikan kuis milik guru ini
     const { data: quiz } = await supabase
-      .from('quiz').select('id, guru_id').eq('id', id).single();
+      .from('quiz').select('id, guru_id, judul').eq('id', id).single();
 
     if (!quiz) return res.status(404).json({ success: false, pesan: 'Kuis tidak ditemukan' });
     if (quiz.guru_id !== guru_id) return res.status(403).json({ success: false, pesan: 'Bukan hak kamu' });
 
-    // Hapus quiz_soal dulu (cascade harusnya otomatis, tapi untuk keamanan)
+    // Hapus data turunan dulu agar tugas/kuis yang dihapus tidak tersisa di akun murid.
+    await supabase.from('tugas_submission').delete().eq('quiz_id', id);
+    await supabase.from('hasil_quiz').delete().eq('quiz_id', id);
     await supabase.from('quiz_soal').delete().eq('quiz_id', id);
-    const { error } = await supabase.from('quiz').delete().eq('id', id);
+    await supabase.from('notifikasi').delete().in('tipe', ['quiz', 'tugas']).ilike('pesan', `%${quiz.judul}%`);
+
+    const { error } = await supabase.from('quiz').delete().eq('id', id).eq('guru_id', guru_id);
     if (error) throw error;
 
     return res.json({ success: true, pesan: 'Kuis berhasil dihapus' });
