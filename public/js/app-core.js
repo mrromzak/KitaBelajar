@@ -7171,6 +7171,7 @@ async function simpanNilaiSubmission(quizId, subId) {
 // ============================================================
 let kuisKelasData = null;
 let kuisJawaban = {};
+let kuisPassed = {};
 let kuisCurrentQ = 0;
 let kuisFunTimer = null;
 
@@ -7207,6 +7208,7 @@ async function mulaiKuisKelas(quizId) {
       }))
     };
     kuisJawaban = {};
+    kuisPassed = {};
     kuisCurrentQ = 0;
     kuisStartTime = Date.now();
     clearInterval(kuisFunTimer);
@@ -7235,7 +7237,12 @@ function renderPrSoal() {
   document.getElementById('pr-q-dots').innerHTML = soal.map((s, i) => {
     const answered = kuisJawaban[i] !== undefined;
     const current = i === kuisCurrentQ;
-    return `<div class="q-dot ${answered ? 'answered' : ''} ${current ? 'current' : ''}" onclick="goToSoal(${i})">${i + 1}</div>`;
+    const passed = kuisPassed[i] === true;
+    let dotClass = '';
+    if (current) dotClass = 'current';
+    else if (passed) dotClass = 'passed';
+    else if (answered) dotClass = 'answered';
+    return `<div class="q-dot ${dotClass}" onclick="goToSoal(${i})">${i + 1}</div>`;
   }).join('');
 
   // Render soal saat ini
@@ -7256,21 +7263,39 @@ function renderPrSoal() {
 
   // Nav
   const isLast = kuisCurrentQ === soal.length - 1;
-  const sudahSemua = Object.keys(kuisJawaban).length === soal.length;
+  const isPassed = kuisPassed[kuisCurrentQ] === true;
   document.getElementById('pr-nav-area').innerHTML = `
-    <div class="pr-nav">
+    <div class="pr-nav" style="display:flex;gap:8px;justify-content:space-between;width:100%">
       <button class="pr-nav-btn" style="background:#F5F5F5;color:var(--muted)" onclick="goToSoal(${kuisCurrentQ - 1})" ${kuisCurrentQ === 0 ? 'disabled style="opacity:0.4"' : ''}>← Sebelumnya</button>
+      
+      ${!isFun ? `
+        <button class="pr-nav-btn" style="background:${isPassed ? 'var(--warning)' : '#FEF3C7'};color:${isPassed ? 'white' : '#D97706'};border:1.5px solid #FDE68A" onclick="togglePassSoal()">
+          ${isPassed ? '⭐ Batal Pass' : '⚠️ Pass (Lewati)'}
+        </button>
+      ` : ''}
+
       ${isLast
-        ? `<button class="pr-submit-btn" onclick="submitKuisKelas()">✅ Kumpulkan (${Object.keys(kuisJawaban).length}/${soal.length} dijawab)</button>`
+        ? `<button class="pr-submit-btn" onclick="submitKuisKelas(true)">✅ Kumpulkan (${Object.keys(kuisJawaban).length}/${soal.length} dijawab)</button>`
         : `<button class="pr-nav-btn" style="background:var(--blue);color:white" onclick="goToSoal(${kuisCurrentQ + 1})">Selanjutnya →</button>`
       }
     </div>`;
+}
+
+function togglePassSoal() {
+  if (kuisPassed[kuisCurrentQ]) {
+    kuisPassed[kuisCurrentQ] = false;
+  } else {
+    kuisPassed[kuisCurrentQ] = true;
+    delete kuisJawaban[kuisCurrentQ]; // hapus jawaban jika di-pass
+  }
+  renderPrSoal();
 }
 
 function pilihJawaban(idx) {
   const isFun = (kuisKelasData?.info?.tipe || 'fun') === 'fun';
   if (isFun && kuisJawaban[kuisCurrentQ] !== undefined) return; // sudah jawab di fun quiz
   kuisJawaban[kuisCurrentQ] = idx;
+  kuisPassed[kuisCurrentQ] = false; // hapus pass jika dijawab
   renderPrSoal();
   if (isFun) {
     // Auto next setelah 1.2 detik
@@ -7308,9 +7333,27 @@ function jalankanFunTimer(durasi) {
   }, 1000);
 }
 
-async function submitKuisKelas() {
-  clearInterval(kuisFunTimer);
+async function submitKuisKelas(isManual = false) {
   const soal = kuisKelasData.soal;
+
+  if (isManual) {
+    // 1. Cek soal belum dikerjakan
+    const unanswered = [];
+    soal.forEach((q, i) => {
+      if (kuisJawaban[i] === undefined) unanswered.push(i + 1);
+    });
+    if (unanswered.length > 0) {
+      alert(`Ada soal yang belum dikerjakan! Silakan periksa kembali soal nomor: ${unanswered.join(', ')}`);
+      return;
+    }
+
+    // 2. Konfirmasi yakin
+    if (!confirm('Apakah kamu yakin dengan jawaban kamu?')) {
+      return;
+    }
+  }
+
+  clearInterval(kuisFunTimer);
   const durasi_detik = Math.round((Date.now() - (kuisStartTime || Date.now())) / 1000);
 
   // Kirim jawaban murid ke server — validasi & scoring dilakukan server-side
@@ -7320,6 +7363,7 @@ async function submitKuisKelas() {
   }));
 
   let skor = 0, benar = 0, totalPoin = 0, total_soal = soal.length;
+  let attempt = 1, max_attempt = 1;
 
   try {
     const simpan = await api('POST', '/quiz/hasil', {
@@ -7332,6 +7376,8 @@ async function submitKuisKelas() {
       benar      = simpan.benar      ?? 0;
       total_soal = simpan.total_soal ?? soal.length;
       totalPoin  = simpan.totalPoin  ?? 0;
+      attempt    = simpan.attempt    ?? 1;
+      max_attempt = simpan.max_attempt ?? 1;
     } else {
       console.warn('Gagal simpan hasil:', simpan.pesan);
     }
@@ -7353,6 +7399,15 @@ async function submitKuisKelas() {
     <div style="background:#F8F9FA;border-radius:14px;padding:16px;text-align:center"><div style="font-family:'Fredoka One',cursive;font-size:28px;color:var(--red)">${total_soal - benar}</div><div style="font-size:12px;color:var(--muted);font-weight:700">Salah</div></div>
     <div style="background:#FFEFE8;border-radius:14px;padding:16px;text-align:center"><div style="font-family:'Fredoka One',cursive;font-size:28px;color:var(--orange)">${totalPoin}</div><div style="font-size:12px;color:var(--muted);font-weight:700">Poin</div></div>
   `;
+
+  // Render navigation buttons on results page
+  const sisaAttempt = max_attempt - attempt;
+  let buttonsHtml = `<button onclick="kembaliDariHasil()" style="background:var(--blue);color:white;border:none;padding:14px 32px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">🏫 Kembali ke Kelas</button>`;
+  if (sisaAttempt > 0) {
+    buttonsHtml += `<button onclick="mulaiKuisKelas('${kuisKelasData.id}')" style="background:var(--orange);color:white;border:none;padding:14px 32px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">🔄 Coba Lagi (${sisaAttempt}x sisa)</button>`;
+  }
+  document.getElementById('hasil-nav-btns').innerHTML = buttonsHtml;
+
   showPage('page-kuis-hasil');
 }
 

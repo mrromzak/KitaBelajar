@@ -358,7 +358,18 @@ router.post('/hasil', authMiddleware, async (req, res) => {
       await checkMisi(murid_id, { tipe_aktivitas: 'quiz', nilai: skor, xpDapat: xpGain });
     } catch(xpErr) { console.warn('[XP update]', xpErr.message); }
 
-    return res.status(201).json({ success: true, pesan: 'Hasil tersimpan!', hasil, skor, benar, total_soal, totalPoin, detail });
+    return res.status(201).json({
+      success: true,
+      pesan: 'Hasil tersimpan!',
+      hasil,
+      skor,
+      benar,
+      total_soal,
+      totalPoin,
+      detail,
+      attempt: (existing ? existing.length : 0) + 1,
+      max_attempt: maxAttempt
+    });
   } catch(e) {
     console.error('[POST /quiz/hasil]', e.message);
     return res.status(500).json({ success: false, pesan: 'Gagal menyimpan hasil.' });
