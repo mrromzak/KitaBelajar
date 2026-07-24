@@ -3933,14 +3933,6 @@ async function kirimPrivateChat() {
     const data = await api('POST', `/chat/private/${privateChatTargetId}`, { isi });
     if (data.success) {
       const msgId = data.data?.id;
-      socket.emit('private:send', {
-        toUserId: privateChatTargetId,
-        isi,
-        dari_id: currentUser.id,
-        pengirim_nama: currentUser.nama,
-        pengirim_avatar: currentUser.avatar,
-        created_at: new Date().toISOString()
-      });
       appendPrivateMessage({ id: msgId, isi, created_at: new Date().toISOString() }, true);
       scrollPrivateChatToBottom();
     }

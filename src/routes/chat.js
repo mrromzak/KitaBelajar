@@ -74,6 +74,23 @@ router.post('/private/:userId', authMiddleware, async (req, res) => {
       data_extra: JSON.stringify({ dari_id: req.user.id, pengirim_nama: senderNama, pengirim_avatar: senderAvatar })
     }).catch(err => console.warn('[notifikasi chat] gagal simpan:', err.message));
 
+    // Emit real-time event via socket — lebih reliable daripada client-side emit
+    try {
+      const io = req.app.get('io');
+      if (io) {
+        io.to('user:' + req.params.userId).emit('private:receive', {
+          id,
+          dari_id: req.user.id,
+          pengirim_nama: senderNama,
+          pengirim_avatar: senderAvatar,
+          isi: plainIsi,
+          created_at: new Date().toISOString()
+        });
+      }
+    } catch (socketErr) {
+      console.warn('[chat socket] gagal emit private:receive:', socketErr.message);
+    }
+
     res.status(201).json({
       success: true,
       data: { id, dari_id: req.user.id, ke_id: req.params.userId, isi: plainIsi, created_at: new Date().toISOString() }
