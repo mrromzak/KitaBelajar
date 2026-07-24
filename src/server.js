@@ -35,14 +35,6 @@ function corsOriginFn(origin, callback) {
 }
 
 // ── Rate limiters ───────────────────────────────────────────
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 menit
-  max: 200,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, pesan: 'Terlalu banyak request. Coba lagi nanti.' }
-});
-
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10, // max 10 percobaan login per 15 menit per IP
@@ -90,7 +82,6 @@ app.set('trust proxy', 1);
 app.use(compression());              // Gzip semua response
 app.use(helmetMiddleware);           // Security headers + CSP
 app.use(blockBadReferer);            // Blokir referer judol/berbahaya
-app.use(globalLimiter);              // Rate limit global
 app.use(cors({ origin: corsOriginFn, credentials: true }));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
