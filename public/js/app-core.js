@@ -4124,6 +4124,7 @@ function populateBuatKelasMapel() {
 //  MATERI HELPERS
 // ============================================================
 let selectedPdfFile = null;
+let selectedGambarFile = null;
 
 // ============================================================
 //  AI MATERI — PDF, Artikel, YouTube
@@ -4528,6 +4529,17 @@ function handlePdfSelect(input) {
   document.getElementById('pdf-dropzone').style.borderColor = 'var(--green)';
 }
 
+function handleGambarSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const allowed = ['image/png', 'image/jpeg', 'image/webp'];
+  if (!allowed.includes(file.type)) { toast('Format gambar harus PNG, JPEG, atau WebP!', 'error'); return; }
+  if (file.size > 10 * 1024 * 1024) { toast('File terlalu besar! Maksimal 10MB', 'error'); return; }
+  selectedGambarFile = file;
+  document.getElementById('gambar-label').textContent = '✅ ' + file.name;
+  document.getElementById('gambar-dropzone').style.borderColor = 'var(--green)';
+}
+
 function setUploadProgress(pct, label) {
   document.getElementById('upload-progress').style.display = pct < 100 ? 'block' : 'none';
   document.getElementById('upload-bar').style.width = pct + '%';
@@ -4562,12 +4574,14 @@ async function submitMateri() {
       konten = convertYoutubeUrl(url);
       file_url = url;
 
-    } else if (jenis === 'pdf') {
-      if (!selectedPdfFile) { toast('Pilih file PDF dulu!', 'error'); showLoading(false); document.getElementById('btn-simpan-materi').disabled = false; return; }
-      // Upload PDF ke Supabase Storage via backend
-      setUploadProgress(30, 'Mengupload PDF...');
+    } else if (jenis === 'pdf' || jenis === 'gambar') {
+      const selectedFile = jenis === 'pdf' ? selectedPdfFile : selectedGambarFile;
+      const label = jenis === 'pdf' ? 'PDF' : 'gambar';
+      if (!selectedFile) { toast(`Pilih file ${label} dulu!`, 'error'); showLoading(false); document.getElementById('btn-simpan-materi').disabled = false; return; }
+
+      setUploadProgress(30, `Mengupload ${label}...`);
       const formData = new FormData();
-      formData.append('file', selectedPdfFile);
+      formData.append('file', selectedFile);
       formData.append('judul', judul);
       formData.append('mapel', mapel);
       formData.append('jenis', jenis);
@@ -4586,21 +4600,20 @@ async function submitMateri() {
       setUploadProgress(100, 'Selesai!');
 
       if (data.success) {
-        toast('PDF berhasil diupload! 📄', 'success');
+        toast(`${label.charAt(0).toUpperCase() + label.slice(1)} berhasil diupload! 📚`, 'success');
         resetMateriForm();
         closeModal('modal-materi');
-        loadGuruDashboard();
+        if (currentKelas) {
+          await loadKelasStream(currentKelas.id);
+        } else {
+          loadGuruDashboard();
+        }
       } else {
-        toast(data.pesan || 'Gagal upload PDF', 'error');
+        toast(data.pesan || `Gagal upload ${label}`, 'error');
       }
       showLoading(false);
       document.getElementById('btn-simpan-materi').disabled = false;
       return;
-
-    } else if (jenis === 'gambar') {
-      file_url = document.getElementById('m-gambar-url').value.trim();
-      konten = file_url;
-      if (!file_url) { toast('URL gambar harus diisi!', 'error'); showLoading(false); document.getElementById('btn-simpan-materi').disabled = false; return; }
     }
 
     const data = await api('POST', '/materi', { judul, mapel, jenis, konten, file_url, deskripsi: deskripsi || konten, status: 'aktif', kelas_id: document.getElementById('m-kelas-id').value || undefined });
@@ -4658,13 +4671,16 @@ function resetMateriForm() {
   document.getElementById('m-konten').value = '';
   document.getElementById('m-deskripsi').value = '';
   document.getElementById('m-video-url').value = '';
-  document.getElementById('m-gambar-url').value = '';
   document.getElementById('m-jenis').value = 'teks';
   document.getElementById('m-pdf-file').value = '';
+  document.getElementById('m-gambar-file').value = '';
   document.getElementById('pdf-label').textContent = 'Klik untuk pilih file PDF';
+  document.getElementById('gambar-label').textContent = 'Klik untuk pilih gambar PNG/JPEG';
   document.getElementById('pdf-dropzone').style.borderColor = '#ddd';
+  document.getElementById('gambar-dropzone').style.borderColor = '#ddd';
   document.getElementById('upload-progress').style.display = 'none';
   selectedPdfFile = null;
+  selectedGambarFile = null;
   toggleMateriInput();
 }
 

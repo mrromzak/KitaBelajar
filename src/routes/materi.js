@@ -9,7 +9,11 @@ const { cleanText } = require('../utils/sanitize');
 const { validateUpload, EXT_FOR_MIME } = require('../utils/fileType');
 
 // Tipe yang benar-benar diizinkan untuk materi (dicek dari isi file).
-const MATERI_ALLOWED_MIME = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm'];
+const MATERI_ALLOWED_MIME = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+const MATERI_MIME_BY_JENIS = {
+  pdf: ['application/pdf'],
+  gambar: ['image/jpeg', 'image/png', 'image/webp']
+};
 
 // Cek kepemilikan kelas (anti mass-assignment kelas_id milik guru lain).
 async function guruMemilikiKelas(guruId, kelasId) {
@@ -23,8 +27,7 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
   fileFilter: (req, file, cb) => {
-    const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm'];
-    if (allowed.includes(file.mimetype)) cb(null, true);
+    if (MATERI_ALLOWED_MIME.includes(file.mimetype)) cb(null, true);
     else cb(new Error('Format file tidak didukung.'));
   }
 });
@@ -53,12 +56,16 @@ router.post('/upload', authMiddleware, guruOnly, upload.single('file'), async (r
   try {
     if (!req.file) return res.status(400).json({ success: false, pesan: 'File tidak ditemukan.' });
 
-    // Validasi isi file (magic bytes), bukan sekadar Content-Type yang bisa dipalsukan.
-    const check = validateUpload(req.file.buffer, MATERI_ALLOWED_MIME);
-    if (!check.ok)
-      return res.status(400).json({ success: false, pesan: 'Isi file tidak cocok dengan format yang diizinkan (PDF/gambar/video).' });
-
     let { judul, deskripsi, mapel, jenis, kelas_id, status } = req.body;
+    jenis = jenis || 'pdf';
+    const allowedMime = MATERI_MIME_BY_JENIS[jenis];
+    if (!allowedMime) return res.status(400).json({ success: false, pesan: 'Jenis upload tidak valid.' });
+
+    // Validasi isi file (magic bytes), bukan sekadar Content-Type yang bisa dipalsukan.
+    const check = validateUpload(req.file.buffer, allowedMime);
+    if (!check.ok)
+      return res.status(400).json({ success: false, pesan: jenis === 'gambar' ? 'Gambar harus berupa PNG, JPEG, atau WebP.' : 'File harus berupa PDF.' });
+
     if (!judul || !mapel) return res.status(400).json({ success: false, pesan: 'Judul dan mapel wajib diisi.' });
     // KEAMANAN: cegah guru menempel materi ke kelas milik guru lain.
     if (kelas_id && !(await guruMemilikiKelas(req.user.id, kelas_id)))
@@ -75,7 +82,7 @@ router.post('/upload', authMiddleware, guruOnly, upload.single('file'), async (r
       judul,
       deskripsi: deskripsi || null,
       mapel,
-      jenis: jenis || 'pdf',
+      jenis,
       konten: file_url,
       file_url,
       guru_id: req.user.id,

@@ -1796,8 +1796,13 @@
       <input type="file" id="m-pdf-file" accept=".pdf" style="display:none" onchange="handlePdfSelect(this)">
     </div>
     <div class="form-group" id="input-gambar" style="display:none">
-      <label>URL Gambar</label>
-      <input type="url" id="m-gambar-url" placeholder="https://contoh.com/gambar.jpg">
+      <label>Upload Gambar</label>
+      <div id="gambar-dropzone" style="border:2.5px dashed #ddd;border-radius:12px;padding:24px;text-align:center;cursor:pointer;transition:all 0.2s" onclick="document.getElementById('m-gambar-file').click()">
+        <div style="font-size:32px;margin-bottom:8px">🖼️</div>
+        <div style="font-weight:700;font-size:14px" id="gambar-label">Klik untuk pilih gambar PNG/JPEG</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">File disimpan sebagai URL agar ringan untuk murid. Maksimal 10MB</div>
+      </div>
+      <input type="file" id="m-gambar-file" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="handleGambarSelect(this)">
     </div>
     <div id="upload-progress" style="display:none;margin-bottom:12px">
       <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px" id="upload-label">Mengupload...</div>
