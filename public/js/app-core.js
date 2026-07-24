@@ -1105,51 +1105,214 @@ async function pilihAvatar(avatar, role) {
   } catch(e) { toast('Tidak bisa terhubung ke server', 'error'); }
 }
 
-// Kompres gambar ke max 120x120 dan simpan sebagai avatar
+// Avatar Cropper Variables
+let cropImage = null;
+let cropZoom = 1;
+let cropX = 0;
+let cropY = 0;
+let isDraggingCrop = false;
+let startDragX = 0;
+let startDragY = 0;
+let cropTargetRole = 'murid';
+
 function uploadFotoProfil(role) {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
-  input.onchange = async () => {
+  input.onchange = () => {
     const file = input.files[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) { toast('Foto terlalu besar. Maksimal 5MB.', 'error'); return; }
+
     const reader = new FileReader();
-    reader.onload = async (e) => {
+    reader.onload = (e) => {
       const img = new Image();
-      img.onload = async () => {
-        const canvas = document.createElement('canvas');
-        const maxSize = 120;
-        const ratio = Math.min(maxSize / img.width, maxSize / img.height);
-        canvas.width = Math.round(img.width * ratio);
-        canvas.height = Math.round(img.height * ratio);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-        showLoading(true);
-        try {
-          const data = await api('PUT', '/auth/profile', { avatar: dataUrl });
-          if (data.success) {
-            currentUser.avatar = dataUrl;
-            localStorage.setItem('kb_user', JSON.stringify(currentUser));
-            if (role === 'murid') {
-              setAvatarEl(document.getElementById('pm-avatar-display'), dataUrl);
-              document.getElementById('pm-avatar-picker').style.display = 'none';
-              syncAvatarUI(dataUrl, 'murid');
-            } else {
-              setAvatarEl(document.getElementById('pg-avatar-display'), dataUrl);
-              document.getElementById('pg-avatar-picker').style.display = 'none';
-              syncAvatarUI(dataUrl, 'guru');
-            }
-            toast('Foto profil berhasil diubah! 📸', 'success');
-          } else toast(data.pesan || 'Gagal upload foto', 'error');
-        } catch(e) { toast('Tidak bisa terhubung ke server', 'error'); }
-        showLoading(false);
+      img.onload = () => {
+        cropImage = img;
+        cropTargetRole = role;
+
+        const w = img.width;
+        const h = img.height;
+        // Hitung scale minimal agar menutupi lingkaran 200x200
+        const minScale = Math.max(200 / w, 200 / h);
+        cropZoom = minScale;
+
+        // Atur range slider
+        const slider = document.getElementById('crop-zoom');
+        slider.min = minScale;
+        slider.max = minScale * 4;
+        slider.step = 0.01;
+        slider.value = minScale;
+
+        // Pusatkan gambar secara horizontal & vertikal
+        cropX = (200 - w * minScale) / 2;
+        cropY = (200 - h * minScale) / 2;
+
+        const previewImg = document.getElementById('crop-preview-img');
+        previewImg.src = img.src;
+        previewImg.style.width = w + 'px';
+        previewImg.style.height = h + 'px';
+
+        updateCropPreview();
+        openModal('modal-crop-avatar');
       };
       img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   };
   input.click();
+}
+
+function updateCropPreview() {
+  const imgEl = document.getElementById('crop-preview-img');
+  if (!imgEl) return;
+  imgEl.style.transform = `translate(${cropX}px, ${cropY}px) scale(${cropZoom})`;
+}
+
+function initCropDragging() {
+  const container = document.getElementById('crop-viewport-container');
+  if (!container) return;
+
+  const startDrag = (clientX, clientY) => {
+    isDraggingCrop = true;
+    startDragX = clientX - cropX;
+    startDragY = clientY - cropY;
+  };
+
+  const doDrag = (clientX, clientY) => {
+    if (!isDraggingCrop || !cropImage) return;
+    cropX = clientX - startDragX;
+    cropY = clientY - startDragY;
+
+    // Batasi pergeseran agar gambar selalu menutupi lingkaran 200x200
+    const w = cropImage.width * cropZoom;
+    const h = cropImage.height * cropZoom;
+
+    if (w >= 200) {
+      if (cropX > 0) cropX = 0;
+      if (cropX < 200 - w) cropX = 200 - w;
+    } else {
+      cropX = (200 - w) / 2;
+    }
+
+    if (h >= 200) {
+      if (cropY > 0) cropY = 0;
+      if (cropY < 200 - h) cropY = 200 - h;
+    } else {
+      cropY = (200 - h) / 2;
+    }
+
+    updateCropPreview();
+  };
+
+  const endDrag = () => {
+    isDraggingCrop = false;
+  };
+
+  container.addEventListener('mousedown', e => {
+    e.preventDefault();
+    startDrag(e.clientX, e.clientY);
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (isDraggingCrop) doDrag(e.clientX, e.clientY);
+  });
+
+  window.addEventListener('mouseup', endDrag);
+
+  // Sentuhan (Mobile)
+  container.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) {
+      startDrag(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  });
+
+  container.addEventListener('touchmove', e => {
+    if (isDraggingCrop && e.touches.length === 1) {
+      doDrag(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  });
+
+  container.addEventListener('touchend', endDrag);
+
+  // Event listener untuk zoom slider
+  const slider = document.getElementById('crop-zoom');
+  if (slider) {
+    slider.addEventListener('input', e => {
+      if (!cropImage) return;
+      const newZoom = parseFloat(e.target.value);
+      const cx = 100;
+      const cy = 100;
+
+      // Zoom terpusat ke tengah lingkaran
+      cropX = cx - (cx - cropX) * (newZoom / cropZoom);
+      cropY = cy - (cy - cropY) * (newZoom / cropZoom);
+      cropZoom = newZoom;
+
+      // Batasi setelah zoom
+      const w = cropImage.width * cropZoom;
+      const h = cropImage.height * cropZoom;
+
+      if (w >= 200) {
+        if (cropX > 0) cropX = 0;
+        if (cropX < 200 - w) cropX = 200 - w;
+      } else {
+        cropX = (200 - w) / 2;
+      }
+
+      if (h >= 200) {
+        if (cropY > 0) cropY = 0;
+        if (cropY < 200 - h) cropY = 200 - h;
+      } else {
+        cropY = (200 - h) / 2;
+      }
+
+      updateCropPreview();
+    });
+  }
+}
+
+async function selesaiCropAvatar() {
+  if (!cropImage) return;
+  showLoading(true, 'Menyimpan foto...');
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 150;
+  canvas.height = 150;
+  const ctx = canvas.getContext('2d');
+
+  // Konversi koordinat viewport 200x200 ke ukuran asli gambar
+  const sx = -cropX / cropZoom;
+  const sy = -cropY / cropZoom;
+  const sWidth = 200 / cropZoom;
+  const sHeight = 200 / cropZoom;
+
+  ctx.drawImage(cropImage, sx, sy, sWidth, sHeight, 0, 0, 150, 150);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+
+  try {
+    const data = await api('PUT', '/auth/profile', { avatar: dataUrl });
+    if (data.success) {
+      currentUser.avatar = dataUrl;
+      localStorage.setItem('kb_user', JSON.stringify(currentUser));
+      if (cropTargetRole === 'murid') {
+        setAvatarEl(document.getElementById('pm-avatar-display'), dataUrl);
+        document.getElementById('pm-avatar-picker').style.display = 'none';
+        syncAvatarUI(dataUrl, 'murid');
+      } else {
+        setAvatarEl(document.getElementById('pg-avatar-display'), dataUrl);
+        document.getElementById('pg-avatar-picker').style.display = 'none';
+        syncAvatarUI(dataUrl, 'guru');
+      }
+      closeModal('modal-crop-avatar');
+      toast('Foto profil berhasil diperbarui! 🎉', 'success');
+    } else {
+      toast(data.pesan || 'Gagal mengganti foto', 'error');
+    }
+  } catch (e) {
+    toast('Tidak bisa terhubung ke server', 'error');
+  }
+  showLoading(false);
 }
 
 async function simpanProfilMurid() {
@@ -6040,6 +6203,7 @@ window.addEventListener('load', () => {
   }
   populateMapelSelects();
   populateBuatKelasMapel();
+  initCropDragging();
 
   // Logo navbar bisa diklik -> kembali ke beranda sesuai peran
   document.querySelectorAll('.navbar .logo').forEach(logo => {

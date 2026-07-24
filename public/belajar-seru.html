@@ -2360,6 +2360,31 @@
   </div>
 </div>
 
+<!-- Modal Crop Avatar -->
+<div class="modal-overlay" id="modal-crop-avatar">
+  <div class="modal" style="max-width:360px;text-align:center">
+    <h3>✂️ Sesuaikan Foto</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Geser dan perbesar foto agar pas di dalam lingkaran</p>
+    
+    <div style="display:flex;justify-content:center;margin-bottom:16px">
+      <!-- Circular crop viewport container -->
+      <div id="crop-viewport-container" style="width:200px;height:200px;border-radius:50%;border:3px solid var(--orange);overflow:hidden;position:relative;background:#eee;box-shadow:inset 0 4px 12px rgba(0,0,0,0.15);touch-action:none">
+        <img id="crop-preview-img" style="position:absolute;top:0;left:0;transform-origin:0 0;user-select:none;-webkit-user-drag:none;cursor:move" alt="Crop Preview">
+      </div>
+    </div>
+    
+    <div class="form-group" style="margin-bottom:20px;text-align:left">
+      <label style="display:block;font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase">Perbesar / Perkecil</label>
+      <input type="range" id="crop-zoom" min="0.1" max="3" step="0.01" value="1" style="width:100%;accent-color:var(--orange)">
+    </div>
+    
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modal-crop-avatar')">Batal</button>
+      <button class="btn-submit" onclick="selesaiCropAvatar()">💾 Simpan Foto</button>
+    </div>
+  </div>
+</div>
+
 <!-- ========== PROFILE & SETTINGS MURID ========== -->
 <div class="page" id="page-profile-murid">
   <nav class="navbar">
