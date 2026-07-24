@@ -2395,11 +2395,12 @@ async function loadKelasStream(kelasId) {
           <button
             class="materi-ceklis-btn ${sudah ? 'done' : ''}"
             id="ceklis-btn-${m.id}"
+            data-xp-claimed="${m.xp_sudah_diklaim ? 'true' : 'false'}"
             onclick="toggleMateriDibaca('${m.id}', '${(m.judul||'').replace(/'/g,"\\'")}', this)"
             title="${sudah ? 'Klik untuk batal tandai dibaca' : 'Tandai sudah dibaca'}">
             <span class="ceklis-box">${sudah ? '✓' : ''}</span>
             <span class="ceklis-label">${sudah ? 'Sudah dibaca' : 'Tandai sudah dibaca'}</span>
-            ${sudah ? '' : '<span class="ceklis-xp">+20 XP</span>'}
+            ${(!sudah && !m.xp_sudah_diklaim) ? '<span class="ceklis-xp">+20 XP</span>' : ''}
           </button>
         </div>` : '';
 
@@ -2453,8 +2454,11 @@ async function toggleMateriDibaca(materiId, judulMateri, btnEl) {
 
     if (json.success) {
       btnEl.classList.remove('loading');
-      setMateriDibacaUI(materiId, btnEl, !wasDone);
-      toast(!wasDone ? `✅ "${judulMateri}" selesai! +${json.xp_dapat || 20} XP` : `↩️ "${judulMateri}" ditandai belum dibaca`);
+      const isDone = json.selesai !== undefined ? json.selesai === true : !wasDone;
+      if (json.xp_sudah_diklaim) btnEl.dataset.xpClaimed = 'true';
+      setMateriDibacaUI(materiId, btnEl, isDone);
+      const xp = json.xp_dapat || 0;
+      toast(isDone ? `✅ "${judulMateri}" sudah dibaca${xp > 0 ? `! +${xp} XP` : ''}` : `↩️ "${judulMateri}" ditandai belum dibaca`);
       updateMateriProgressBar();
     } else {
       btnEl.classList.remove('loading');
@@ -2476,7 +2480,7 @@ function setMateriDibacaUI(materiId, btnEl, done) {
 
   let xpEl = btnEl.querySelector('.ceklis-xp');
   if (done && xpEl) xpEl.remove();
-  if (!done && !xpEl) {
+  if (!done && !xpEl && btnEl.dataset.xpClaimed !== 'true') {
     xpEl = document.createElement('span');
     xpEl.className = 'ceklis-xp';
     xpEl.textContent = '+20 XP';

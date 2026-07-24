@@ -229,8 +229,11 @@ router.get('/', authMiddleware, async (req, res) => {
       const { data: progres } = await supabase
         .from('progres_materi').select('materi_id, selesai').eq('murid_id', req.user.id);
       const progresMap = {};
-      progres?.forEach(p => { progresMap[p.materi_id] = p.selesai; });
-      data.forEach(m => { m.sudah_dibaca = progresMap[m.id] === true; });
+      progres?.forEach(p => { progresMap[p.materi_id] = p; });
+      data.forEach(m => {
+        m.sudah_dibaca = progresMap[m.id]?.selesai === true;
+        m.xp_sudah_diklaim = !!progresMap[m.id];
+      });
     }
 
     // Return dengan key 'materi' supaya frontend bisa baca
@@ -310,19 +313,23 @@ router.post('/:id/selesai', authMiddleware, async (req, res) => {
   try {
     const { data: existing } = await supabase
       .from('progres_materi').select('selesai')
-      .eq('murid_id', req.user.id).eq('materi_id', req.params.id).single();
+      .eq('murid_id', req.user.id).eq('materi_id', req.params.id).maybeSingle();
 
     if (existing?.selesai)
-      return res.json({ success: true, pesan: 'Materi sudah pernah diselesaikan.', xp_dapat: 0, selesai: true });
+      return res.json({ success: true, pesan: 'Materi sudah pernah diselesaikan.', xp_dapat: 0, selesai: true, xp_sudah_diklaim: true });
 
     await supabase.from('progres_materi').upsert({
-      murid_id: req.user.id, materi_id: req.params.id, selesai: true
+      murid_id: req.user.id, materi_id: req.params.id, selesai: true, updated_at: new Date().toISOString()
     });
+
+    if (existing) {
+      return res.json({ success: true, pesan: 'Materi ditandai sudah dibaca.', xp_dapat: 0, selesai: true, xp_sudah_diklaim: true });
+    }
 
     const statsResult = await updateUserStats(req.user.id, { xpDapat: 20, tipe: 'materi' });
     await checkMisi(req.user.id, { tipe_aktivitas: 'materi', xpDapat: 20 });
 
-    res.json({ success: true, pesan: '+20 XP! Materi berhasil diselesaikan.', xp_dapat: 20, total_xp: statsResult?.newXp || 0, selesai: true });
+    res.json({ success: true, pesan: '+20 XP! Materi berhasil diselesaikan.', xp_dapat: 20, total_xp: statsResult?.newXp || 0, selesai: true, xp_sudah_diklaim: true });
   } catch (err) {
     console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
@@ -333,12 +340,12 @@ router.delete('/:id/selesai', authMiddleware, async (req, res) => {
   try {
     const { error } = await supabase
       .from('progres_materi')
-      .delete()
+      .update({ selesai: false, updated_at: new Date().toISOString() })
       .eq('murid_id', req.user.id)
       .eq('materi_id', req.params.id);
     if (error) throw error;
 
-    res.json({ success: true, pesan: 'Materi ditandai belum dibaca.', selesai: false });
+    res.json({ success: true, pesan: 'Materi ditandai belum dibaca.', selesai: false, xp_sudah_diklaim: true });
   } catch (err) {
     console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
