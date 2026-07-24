@@ -2395,9 +2395,8 @@ async function loadKelasStream(kelasId) {
           <button
             class="materi-ceklis-btn ${sudah ? 'done' : ''}"
             id="ceklis-btn-${m.id}"
-            onclick="tandaiMateriSelesai('${m.id}', '${(m.judul||'').replace(/'/g,"\\'")}', this)"
-            ${sudah ? 'disabled' : ''}
-            title="${sudah ? 'Sudah selesai dibaca' : 'Tandai sudah dibaca'}">
+            onclick="toggleMateriDibaca('${m.id}', '${(m.judul||'').replace(/'/g,"\\'")}', this)"
+            title="${sudah ? 'Klik untuk batal tandai dibaca' : 'Tandai sudah dibaca'}">
             <span class="ceklis-box">${sudah ? '✓' : ''}</span>
             <span class="ceklis-label">${sudah ? 'Sudah dibaca' : 'Tandai sudah dibaca'}</span>
             ${sudah ? '' : '<span class="ceklis-xp">+20 XP</span>'}
@@ -2436,68 +2435,67 @@ function kembaliDashboard() {
   else loadMuridDashboard();
 }
 
-// ── Tandai materi sudah dibaca (ceklis) ────────────────────
-async function tandaiMateriSelesai(materiId, judulMateri, btnEl) {
-  if (btnEl.classList.contains('done') || btnEl.disabled) return;
+// ── Toggle materi sudah/belum dibaca (ceklis) ────────────────────
+async function toggleMateriDibaca(materiId, judulMateri, btnEl) {
+  if (btnEl.classList.contains('loading')) return;
 
+  const wasDone = btnEl.classList.contains('done');
   btnEl.classList.add('loading');
   btnEl.querySelector('.ceklis-label').textContent = 'Menyimpan...';
 
   try {
     const token = localStorage.getItem('kb_token') || '';
-    const res   = await fetch(`/api/materi/${materiId}/selesai`, {
-      method:  'POST',
+    const res = await fetch(`/api/materi/${materiId}/selesai`, {
+      method: wasDone ? 'DELETE' : 'POST',
       headers: { Authorization: 'Bearer ' + token }
     });
     const json = await res.json();
 
     if (json.success) {
-      // Update tombol → done
       btnEl.classList.remove('loading');
-      btnEl.classList.add('done');
-      btnEl.disabled = true;
-      btnEl.querySelector('.ceklis-box').textContent  = '✓';
-      btnEl.querySelector('.ceklis-label').textContent = 'Sudah dibaca';
-      const xpEl = btnEl.querySelector('.ceklis-xp');
-      if (xpEl) xpEl.remove();
-
-      // Update kartu → border hijau
-      const card = document.getElementById(`stream-post-${materiId}`);
-      if (card) {
-        card.classList.add('materi-done');
-        // Tambah ikon ✅ di header kalau belum ada
-        const header = card.querySelector('.stream-post-header');
-        if (header && !header.querySelector('.materi-done-icon')) {
-          const badge = document.createElement('span');
-          badge.className = 'materi-done-icon';
-          badge.style.cssText = 'font-size:18px;color:#00C851;flex-shrink:0';
-          badge.textContent = '✅';
-          header.appendChild(badge);
-        }
-      }
-
-      // Toast XP
-      const xp = json.xp_dapat || 20;
-      toast(`✅ "${judulMateri}" selesai! +${xp} XP`);
-
-      // Update progress bar di atas stream
+      setMateriDibacaUI(materiId, btnEl, !wasDone);
+      toast(!wasDone ? `✅ "${judulMateri}" selesai! +${json.xp_dapat || 20} XP` : `↩️ "${judulMateri}" ditandai belum dibaca`);
       updateMateriProgressBar();
-    } else if (json.pesan?.includes('sudah pernah')) {
-      // Materi sudah pernah diselesaikan — update UI saja
-      btnEl.classList.remove('loading');
-      btnEl.classList.add('done');
-      btnEl.disabled = true;
-      btnEl.querySelector('.ceklis-box').textContent  = '✓';
-      btnEl.querySelector('.ceklis-label').textContent = 'Sudah dibaca';
     } else {
       btnEl.classList.remove('loading');
-      btnEl.querySelector('.ceklis-label').textContent = 'Tandai sudah dibaca';
+      setMateriDibacaUI(materiId, btnEl, wasDone);
       toast('Gagal menyimpan. Coba lagi.');
     }
   } catch(e) {
     btnEl.classList.remove('loading');
-    btnEl.querySelector('.ceklis-label').textContent = 'Tandai sudah dibaca';
+    setMateriDibacaUI(materiId, btnEl, wasDone);
     toast('Gagal terhubung ke server.');
+  }
+}
+
+function setMateriDibacaUI(materiId, btnEl, done) {
+  btnEl.classList.toggle('done', done);
+  btnEl.title = done ? 'Klik untuk batal tandai dibaca' : 'Tandai sudah dibaca';
+  btnEl.querySelector('.ceklis-box').textContent = done ? '✓' : '';
+  btnEl.querySelector('.ceklis-label').textContent = done ? 'Sudah dibaca' : 'Tandai sudah dibaca';
+
+  let xpEl = btnEl.querySelector('.ceklis-xp');
+  if (done && xpEl) xpEl.remove();
+  if (!done && !xpEl) {
+    xpEl = document.createElement('span');
+    xpEl.className = 'ceklis-xp';
+    xpEl.textContent = '+20 XP';
+    btnEl.appendChild(xpEl);
+  }
+
+  const card = document.getElementById(`stream-post-${materiId}`);
+  if (!card) return;
+  card.classList.toggle('materi-done', done);
+  const header = card.querySelector('.stream-post-header');
+  const icon = header?.querySelector('.materi-done-icon, .stream-post-header > span[style*="#00C851"]');
+  if (done && header && !icon) {
+    const badge = document.createElement('span');
+    badge.className = 'materi-done-icon';
+    badge.style.cssText = 'font-size:18px;color:#00C851;flex-shrink:0';
+    badge.textContent = '✅';
+    header.appendChild(badge);
+  } else if (!done && icon) {
+    icon.remove();
   }
 }
 

@@ -313,7 +313,7 @@ router.post('/:id/selesai', authMiddleware, async (req, res) => {
       .eq('murid_id', req.user.id).eq('materi_id', req.params.id).single();
 
     if (existing?.selesai)
-      return res.json({ success: true, pesan: 'Materi sudah pernah diselesaikan.', xp_dapat: 0 });
+      return res.json({ success: true, pesan: 'Materi sudah pernah diselesaikan.', xp_dapat: 0, selesai: true });
 
     await supabase.from('progres_materi').upsert({
       murid_id: req.user.id, materi_id: req.params.id, selesai: true
@@ -322,7 +322,23 @@ router.post('/:id/selesai', authMiddleware, async (req, res) => {
     const statsResult = await updateUserStats(req.user.id, { xpDapat: 20, tipe: 'materi' });
     await checkMisi(req.user.id, { tipe_aktivitas: 'materi', xpDapat: 20 });
 
-    res.json({ success: true, pesan: '+20 XP! Materi berhasil diselesaikan.', xp_dapat: 20, total_xp: statsResult?.newXp || 0 });
+    res.json({ success: true, pesan: '+20 XP! Materi berhasil diselesaikan.', xp_dapat: 20, total_xp: statsResult?.newXp || 0, selesai: true });
+  } catch (err) {
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
+  }
+});
+
+// DELETE /api/materi/:id/selesai – Murid batal tandai selesai
+router.delete('/:id/selesai', authMiddleware, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('progres_materi')
+      .delete()
+      .eq('murid_id', req.user.id)
+      .eq('materi_id', req.params.id);
+    if (error) throw error;
+
+    res.json({ success: true, pesan: 'Materi ditandai belum dibaca.', selesai: false });
   } catch (err) {
     console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
   }
