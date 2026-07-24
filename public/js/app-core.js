@@ -1041,7 +1041,7 @@ function bukaGantiAvatar(role) {
     document.getElementById(listId).innerHTML = avatars.map(a => {
       const isActive = a === current;
       return `<div onclick="pilihAvatar('${a}','${role}')"
-        style="font-size:32px;cursor:pointer;padding:8px;border-radius:10px;
+        style="font-size:32px;cursor:pointer;width:56px;height:56px;display:flex;align-items:center;justify-content:center;border-radius:50%;
                border:2px solid ${isActive ? accent : '#eee'};
                background:${isActive ? '#FFEFE8' : 'white'};
                transition:all 0.2s"
@@ -2745,7 +2745,7 @@ function renderMuridList(muridList) {
           const isOnline = onlineIds.has(m.id);
           return `<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:white;border-radius:14px;border:2px solid ${isOnline ? '#D1FAE5' : '#F3F4F6'};transition:all 0.2s">
           <div style="position:relative;flex-shrink:0">
-            <div style="width:40px;height:40px;border-radius:12px;background:${isOnline ? '#D1FAE5' : '#F3F4F6'};display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden">${chatAvatarHtml(m.avatar || '🦁')}</div>
+            <div style="width:40px;height:40px;border-radius:50%;background:${isOnline ? '#D1FAE5' : '#F3F4F6'};display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden">${chatAvatarHtml(m.avatar || '🦁')}</div>
             <div style="position:absolute;bottom:-2px;right:-2px;width:12px;height:12px;border-radius:50%;background:${isOnline ? '#22C55E' : '#9CA3AF'};border:2px solid white"></div>
           </div>
           <div style="flex:1">
@@ -3369,7 +3369,7 @@ function tampilkanNotifPrivateChat(pesan) {
   const ava  = pesan.pengirim_avatar || '🦁';
   const isi  = pesan.isi || '';
 
-  setAvatarEl(document.getElementById('notif-pc-avatar'), ava, 'nav');
+  setAvatarEl(document.getElementById('notif-pc-avatar'), ava, 'big');
   document.getElementById('notif-pc-nama').textContent   = nama;
   document.getElementById('notif-pc-isi').textContent    = isi.length > 50 ? isi.substring(0, 50) + '…' : isi;
 
@@ -3672,7 +3672,7 @@ async function bukaPrivateChat(userId, nama, avatar) {
   privateChatTargetNama = nama;
   privateChatTargetAvatar = avatar;
 
-  setAvatarEl(document.getElementById('pc-avatar'), avatar, 'nav');
+  setAvatarEl(document.getElementById('pc-avatar'), avatar, 'big');
   document.getElementById('pc-nama').textContent = nama;
   document.getElementById('pc-status').textContent = 'Chat Privat';
   document.getElementById('pc-messages').innerHTML =

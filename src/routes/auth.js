@@ -646,7 +646,11 @@ router.put('/profile', authMiddleware, async (req, res) => {
       updates.password = bcrypt.hashSync(password_baru, 10);
     }
 
-    await supabase.from('users').update(updates).eq('id', req.user.id);
+    const { error: updateError } = await supabase.from('users').update(updates).eq('id', req.user.id);
+    if (updateError) {
+      console.error('❌ Database update error:', updateError);
+      return res.status(500).json({ success: false, pesan: 'Gagal memperbarui profil di database.' });
+    }
     if (reward) sendDataDiriRewardNotif(req.user.id).then(() => {}).catch(() => {});
     res.json({ success: true, pesan: reward ? `Profil diperbarui! Kamu dapat +${reward.xp} XP 🎁` : 'Profil berhasil diperbarui.', reward });
   } catch (err) {
