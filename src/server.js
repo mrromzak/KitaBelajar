@@ -64,6 +64,8 @@ io.use((socket, next) => {
   if (token) {
     try {
       socket.user = jwt.verify(token, process.env.JWT_SECRET);
+      // Auto-join private room agar bisa terima pesan privat real-time
+      if (socket.user?.id) socket.join('user:' + socket.user.id);
     } catch {
       socket.user = null;
     }
