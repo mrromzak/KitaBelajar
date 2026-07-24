@@ -6,6 +6,12 @@ let token = localStorage.getItem('kb_token') || null;
 const socket = io(window.location.origin, {
   auth: { token }
 });
+function refreshSocketConnection() {
+  if (socket) {
+    socket.auth = { token };
+    socket.disconnect().connect();
+  }
+}
 let currentUser = JSON.parse(localStorage.getItem('kb_user') || 'null');
 let currentRole = 'murid'; // for login page
 let currentRegRole = 'murid';
@@ -272,6 +278,7 @@ async function api(method, path, body) {
     if (isTokenError) {
       localStorage.removeItem('kb_token');
       token = null;
+      if (socket) socket.disconnect();
       toast('Sesi habis. Silakan login ulang.', 'error');
       setTimeout(() => showPage('page-login'), 1500);
       return { success: false, _authExpired: true };
@@ -431,6 +438,7 @@ async function doLogin() {
       token = data.token;
       currentUser = data.user;
       localStorage.setItem('kb_token', token);
+      refreshSocketConnection();
       localStorage.setItem('kb_user', JSON.stringify(currentUser));
       // Bersihkan key mapel lama yang shared (migrasi ke per-user)
       localStorage.removeItem('kb_mapel_list');
@@ -811,6 +819,7 @@ async function _handleGoogleCredential(response) {
       token = data.token;
       currentUser = data.user;
       localStorage.setItem('kb_token', token);
+      refreshSocketConnection();
       localStorage.setItem('kb_user', JSON.stringify(currentUser));
       joinPrivateChannel();
       loadBellNotifications();
@@ -846,6 +855,7 @@ async function completeGoogleGuruKode() {
       token = data.token;
       currentUser = data.user;
       localStorage.setItem('kb_token', token);
+      refreshSocketConnection();
       localStorage.setItem('kb_user', JSON.stringify(currentUser));
       localStorage.removeItem('kb_mapel_list');
       joinPrivateChannel();
@@ -893,6 +903,7 @@ async function completeGoogleRegister(role) {
       token = data.token;
       currentUser = data.user;
       localStorage.setItem('kb_token', token);
+      refreshSocketConnection();
       localStorage.setItem('kb_user', JSON.stringify(currentUser));
       joinPrivateChannel();
       loadBellNotifications();
@@ -1473,6 +1484,7 @@ function doLogout() {
   token = null; currentUser = null;
   localStorage.removeItem('kb_token');
   localStorage.removeItem('kb_user');
+  if (socket) socket.disconnect();
   onGuruPageHidden();
   showPage('page-landing');
   toast('Sampai jumpa! 👋');
@@ -2853,25 +2865,22 @@ function updateMuridTabBadge(hasUnread) {
 }
 
 function formatChatContent(isi, isSelf) {
-  const fileRegex = /^\[FILE:([^|]+)\|([^\]]+)\]$/;
-  const match = String(isi || '').match(fileRegex);
-  if (match) {
-    const url = match[1];
-    const name = match[2];
-    const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(name);
-    if (isImage) {
-      return `<div style="margin-top:4px"><a href="${escapeHtml(url)}" target="_blank"><img src="${escapeHtml(url)}" style="max-width:100%;max-height:200px;border-radius:12px;border:1px solid #eee;display:block"></a><div style="font-size:11px;margin-top:4px;opacity:0.8">${escapeHtml(name)}</div></div>`;
+  const parts = String(isi || '').split(/(\[FILE:[^|\]]+\|[^\]]+\])/g);
+  if (parts.length === 1) return escapeHtml(parts[0]);
+  const fileRe = /^\[FILE:([^|\]]+)\|([^\]]+)\]$/;
+  return parts.map(part => {
+    const m = part.match(fileRe);
+    if (m) {
+      const url = m[1], name = m[2];
+      const safeUrl = escapeHtml(url), safeName = escapeHtml(name);
+      const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(name);
+      if (isImage) {
+        return `<div style="margin-top:4px"><a href="${safeUrl}" target="_blank"><img src="${safeUrl}" style="max-width:100%;max-height:200px;border-radius:12px;border:1px solid #eee;display:block"></a><div style="font-size:11px;margin-top:4px;opacity:0.8">${safeName}</div></div>`;
+      }
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:${isSelf ? 'rgba(255,255,255,0.18)' : '#F3F4F6'};border-radius:10px;margin-top:4px"><span style="font-size:20px">📁</span><div style="flex:1;min-width:0;text-align:left"><div style="font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${isSelf ? 'white' : 'var(--text)'}">${safeName}</div></div><a href="${safeUrl}" target="_blank" style="background:${isSelf ? 'white' : 'var(--blue)'};color:${isSelf ? 'var(--blue)' : 'white'};border:none;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;text-decoration:none">Unduh</a></div>`;
     }
-    return `
-      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:${isSelf ? 'rgba(255,255,255,0.18)' : '#F3F4F6'};border-radius:10px;margin-top:4px">
-        <span style="font-size:20px">📁</span>
-        <div style="flex:1;min-width:0;text-align:left">
-          <div style="font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${isSelf ? 'white' : 'var(--text)'}">${escapeHtml(name)}</div>
-        </div>
-        <a href="${escapeHtml(url)}" target="_blank" style="background:${isSelf ? 'white' : 'var(--blue)'};color:${isSelf ? 'var(--blue)' : 'white'};border:none;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;text-decoration:none">Unduh</a>
-      </div>`;
-  }
-  return escapeHtml(isi);
+    return escapeHtml(part);
+  }).join('');
 }
 
 // Render avatar di dalam chat (emoji atau foto kecil)
@@ -7816,6 +7825,8 @@ async function konfirmasiHapus() {
 
 let pendingKelasAttachment = null;
 let pendingPrivateAttachment = null;
+let uploadXhrKelas = null;
+let uploadXhrPrivate = null;
 
 function showChatFilePreview(targetChat, url, name) {
   const containerId = targetChat === 'kelas' ? 'kelas-chat-file-preview' : 'pc-chat-file-preview';
@@ -7843,10 +7854,15 @@ function clearChatFileAttachment(targetChat) {
   const container = document.getElementById(containerId);
   if (container) container.style.display = 'none';
 
+  const xhr = targetChat === 'kelas' ? uploadXhrKelas : uploadXhrPrivate;
+  if (xhr) { xhr.abort(); }
+
   if (targetChat === 'kelas') {
     pendingKelasAttachment = null;
+    uploadXhrKelas = null;
   } else {
     pendingPrivateAttachment = null;
+    uploadXhrPrivate = null;
   }
 }
 
@@ -7876,29 +7892,73 @@ async function uploadAndSendFileChat(file, targetChat) {
     toast('Berkas terlalu besar. Maksimal 10MB.', 'error');
     return;
   }
-  showLoading(true, 'Mengunggah berkas...');
-  const formData = new FormData();
-  formData.append('file', file);
 
-  try {
-    const response = await fetch(API + '/chat/upload', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      body: formData
-    });
-    const data = await response.json();
-    showLoading(false);
+  const previewContainerId = targetChat === 'kelas' ? 'kelas-chat-file-preview' : 'pc-chat-file-preview';
+  const container = document.getElementById(previewContainerId);
+  if (!container) return;
 
-    if (data.success) {
-      showChatFilePreview(targetChat, data.file_url, data.file_nama);
-      toast('Berkas berhasil dilampirkan! 📎', 'success');
-    } else {
-      toast(data.pesan || 'Gagal mengunggah berkas', 'error');
-    }
-  } catch (err) {
-    showLoading(false);
-    toast('Gagal mengunggah berkas ke server', 'error');
-  }
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <span style="font-size:16px">📤</span>
+      <div style="flex:1;font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(file.name)}</div>
+      <span id="${targetChat}-upload-pct" style="font-size:11px;font-weight:700;color:var(--blue)">0%</span>
+      <button onclick="clearChatFileAttachment('${targetChat}')" style="background:none;border:none;color:var(--muted);font-weight:800;font-size:14px;cursor:pointer;padding:2px 6px">✕</button>
+    </div>
+    <div style="width:100%;height:4px;background:#E5E7EB;border-radius:4px;overflow:hidden;margin-top:4px">
+      <div id="${targetChat}-upload-bar" style="width:0%;height:100%;background:var(--blue);border-radius:4px;transition:width 0.3s ease"></div>
+    </div>
+  `;
+
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest();
+    if (targetChat === 'kelas') { uploadXhrKelas = xhr; } else { uploadXhrPrivate = xhr; }
+
+    xhr.open('POST', API + '/chat/upload');
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+
+    xhr.upload.onprogress = (e) => {
+      if (!e.lengthComputable) return;
+      const pct = Math.round((e.loaded / e.total) * 100);
+      const bar = document.getElementById(`${targetChat}-upload-bar`);
+      const pctEl = document.getElementById(`${targetChat}-upload-pct`);
+      if (bar) bar.style.width = pct + '%';
+      if (pctEl) pctEl.textContent = pct + '%';
+    };
+
+    xhr.onload = () => {
+      const stillMine = targetChat === 'kelas' ? uploadXhrKelas === xhr : uploadXhrPrivate === xhr;
+      if (targetChat === 'kelas') uploadXhrKelas = null; else uploadXhrPrivate = null;
+      if (!stillMine) { resolve(); return; }
+
+      try {
+        const data = JSON.parse(xhr.responseText);
+        if (data.success) {
+          showChatFilePreview(targetChat, data.file_url, data.file_nama);
+          toast('Berkas berhasil dilampirkan! 📎', 'success');
+        } else {
+          clearChatFileAttachment(targetChat);
+          toast(data.pesan || 'Gagal mengunggah berkas', 'error');
+        }
+      } catch (e) {
+        clearChatFileAttachment(targetChat);
+        toast('Gagal membaca respons server', 'error');
+      }
+      resolve();
+    };
+
+    xhr.onerror = () => {
+      const stillMine = targetChat === 'kelas' ? uploadXhrKelas === xhr : uploadXhrPrivate === xhr;
+      if (targetChat === 'kelas') uploadXhrKelas = null; else uploadXhrPrivate = null;
+      if (!stillMine) { resolve(); return; }
+      clearChatFileAttachment(targetChat);
+      toast('Gagal mengunggah berkas ke server', 'error');
+      resolve();
+    };
+
+    const formData = new FormData();
+    formData.append('file', file);
+    xhr.send(formData);
+  });
 }
