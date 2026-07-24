@@ -3025,9 +3025,16 @@ function showConfirmHapusPesan(msgId) {
 
 async function kirimPesanKelas() {
   const input = document.getElementById('kelas-chat-input');
-  const isi = input.value.trim();
+  let isi = input.value.trim();
+
+  if (pendingKelasAttachment) {
+    const fileMessage = `[FILE:${pendingKelasAttachment.url}|${pendingKelasAttachment.name}]`;
+    isi = isi ? `${isi}\n${fileMessage}` : fileMessage;
+  }
+
   if (!isi || !kelasChatKelasId) return;
   input.value = '';
+  clearChatFileAttachment('kelas');
   try {
     const data = await api('POST', `/kelas/${kelasChatKelasId}/chat`, { isi });
     if (data.success) {
@@ -3402,9 +3409,9 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 // Tampilkan browser notification saat halaman di background
-function showBrowserNotif(judul, pesan, tag) {
+function showBrowserNotif(judul, pesan, tag, force = false) {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
-  if (document.visibilityState === 'visible') return; // tab aktif, tidak perlu notif
+  if (document.visibilityState === 'visible' && !force) return;
   try {
     if (_swRegistration) {
       _swRegistration.showNotification(judul, {
@@ -3456,11 +3463,13 @@ socket.on('private:receive', (pesan) => {
     pengirim_nama: pesan.pengirim_nama,
     pengirim_avatar: pesan.pengirim_avatar
   });
-  // Tampilkan browser notification jika tab tidak aktif
+  // Tampilkan browser notification jika chat dengan pengirim ini tidak sedang terbuka
+  const isTargetChatOpen = modalOpen && privateChatTargetId === pesan.dari_id;
   showBrowserNotif(
     `💬 Pesan dari ${pesan.pengirim_nama || 'Seseorang'}`,
     pesan.isi || 'Pesan baru',
-    'private-' + pesan.dari_id
+    'private-' + pesan.dari_id,
+    !isTargetChatOpen
   );
 });
 
@@ -3728,7 +3737,7 @@ socket.on('notif:baru', (notif) => {
     data_extra: notif.data_extra
   });
   // Browser notification saat tab tidak aktif
-  showBrowserNotif(notif.judul || 'KitaBelajar', notif.pesan || '', 'notif-' + (notif.tipe || 'umum'));
+  showBrowserNotif(notif.judul || 'KitaBelajar', notif.pesan || '', 'notif-' + (notif.tipe || 'umum'), true);
 });
 
 // ─── Deadline reminder: tambah bell notif untuk tugas yang mau deadline ───
@@ -3901,9 +3910,16 @@ function scrollPrivateChatToBottom() {
 
 async function kirimPrivateChat() {
   const input = document.getElementById('pc-input');
-  const isi = input.value.trim();
+  let isi = input.value.trim();
+
+  if (pendingPrivateAttachment) {
+    const fileMessage = `[FILE:${pendingPrivateAttachment.url}|${pendingPrivateAttachment.name}]`;
+    isi = isi ? `${isi}\n${fileMessage}` : fileMessage;
+  }
+
   if (!isi || !privateChatTargetId) return;
   input.value = '';
+  clearChatFileAttachment('private');
   try {
     const data = await api('POST', `/chat/private/${privateChatTargetId}`, { isi });
     if (data.success) {
@@ -7798,6 +7814,42 @@ async function konfirmasiHapus() {
   showLoading(false);
 }
 
+let pendingKelasAttachment = null;
+let pendingPrivateAttachment = null;
+
+function showChatFilePreview(targetChat, url, name) {
+  const containerId = targetChat === 'kelas' ? 'kelas-chat-file-preview' : 'pc-chat-file-preview';
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  if (targetChat === 'kelas') {
+    pendingKelasAttachment = { url, name };
+  } else {
+    pendingPrivateAttachment = { url, name };
+  }
+
+  container.innerHTML = `
+    <span style="font-size:18px">📎</span>
+    <div style="flex:1;min-width:0;text-align:left;font-size:12px;font-weight:700;color:var(--blue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+      ${escapeHtml(name)}
+    </div>
+    <button onclick="clearChatFileAttachment('${targetChat}')" style="background:none;border:none;color:var(--muted);font-weight:800;font-size:14px;cursor:pointer;padding:2px 6px">✕</button>
+  `;
+  container.style.display = 'flex';
+}
+
+function clearChatFileAttachment(targetChat) {
+  const containerId = targetChat === 'kelas' ? 'kelas-chat-file-preview' : 'pc-chat-file-preview';
+  const container = document.getElementById(containerId);
+  if (container) container.style.display = 'none';
+
+  if (targetChat === 'kelas') {
+    pendingKelasAttachment = null;
+  } else {
+    pendingPrivateAttachment = null;
+  }
+}
+
 async function prosesUploadFileChat(input) {
   const file = input.files[0];
   if (!file) return;
@@ -7824,7 +7876,7 @@ async function uploadAndSendFileChat(file, targetChat) {
     toast('Berkas terlalu besar. Maksimal 10MB.', 'error');
     return;
   }
-  showLoading(true, 'Mengirim berkas...');
+  showLoading(true, 'Mengunggah berkas...');
   const formData = new FormData();
   formData.append('file', file);
 
@@ -7840,18 +7892,10 @@ async function uploadAndSendFileChat(file, targetChat) {
     showLoading(false);
 
     if (data.success) {
-      const fileMessage = `[FILE:${data.file_url}|${data.file_nama}]`;
-      if (targetChat === 'kelas') {
-        const input = document.getElementById('kelas-chat-input');
-        input.value = fileMessage;
-        await kirimPesanKelas();
-      } else {
-        const input = document.getElementById('pc-input');
-        input.value = fileMessage;
-        await kirimPrivateChat();
-      }
+      showChatFilePreview(targetChat, data.file_url, data.file_nama);
+      toast('Berkas berhasil dilampirkan! 📎', 'success');
     } else {
-      toast(data.pesan || 'Gagal mengirim berkas', 'error');
+      toast(data.pesan || 'Gagal mengunggah berkas', 'error');
     }
   } catch (err) {
     showLoading(false);
