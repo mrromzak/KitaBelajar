@@ -2357,7 +2357,7 @@ body.dark-mode .lp-footer-links a:hover { color: #FF9A6B; }
   align-items: center;
 }
 .analitik-murid { display: flex; align-items: center; gap: 10px; }
-.analitik-avatar { font-size: 22px; }
+.analitik-avatar { font-size: 22px; width:32px;height:32px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#f0efeb; }
 .analitik-nama { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px; color: var(--text); }
 .analitik-xp { font-family: 'Nunito', sans-serif; font-size: 12px; color: #7A7A7A; }
 .analitik-sinyal { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
