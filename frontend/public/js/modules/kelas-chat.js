@@ -127,7 +127,7 @@ async function openKelas(kelasId, colorIdx) {
             onmouseout="this.style.background='#EEF5FF';this.style.color='var(--blue)'">
             💬 Chat dengan Guru
           </button>
-          <span id="pc-unread-badge-guru" style="display:none;position:absolute;top:-5px;right:-5px;background:var(--red);color:white;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2.5px solid white">!</span>
+          <span id="pc-unread-badge-guru" style="display:none;position:absolute;top:-5px;right:-5px;background:var(--red);color:white;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:800;align-items:center;justify-content:center;border:2.5px solid white">!</span>
         </div>
         <button onclick="konfirmasiKeluarKelas('${k.id || kelasId}','${(k.nama||'').replace(/'/g,"\\'")}')"
           style="width:100%;padding:12px;border-radius:12px;border:none;background:#FFF0F5;color:var(--pink);font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s"
@@ -141,9 +141,11 @@ async function openKelas(kelasId, colorIdx) {
         api('GET', '/chat/inbox').then(inboxData => {
           if (inboxData.success) {
             const conv = (inboxData.data || []).find(c => c.partner.id === guruId);
+            const bg = document.getElementById('pc-unread-badge-guru');
             if (conv && conv.unread > 0) {
-              const bg = document.getElementById('pc-unread-badge-guru');
               if (bg) bg.style.display = 'flex';
+            } else if (bg) {
+              bg.style.display = 'none';
             }
           }
         }).catch(() => {});
