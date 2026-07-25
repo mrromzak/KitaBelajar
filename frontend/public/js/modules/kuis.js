@@ -89,11 +89,14 @@ function switchKelasTab(tab) {
   document.getElementById('tab-murid-btn').classList.toggle('active', tab === 'murid');
   document.getElementById('tab-chat-btn').classList.toggle('active', tab === 'chat');
   document.getElementById('tab-penilaian-btn')?.classList.toggle('active', tab === 'penilaian');
+  document.getElementById('tab-analitik-btn')?.classList.remove('active');
   document.getElementById('kelas-stream').style.display = tab === 'materi' ? 'block' : 'none';
   document.getElementById('kelas-kuis-stream').style.display = tab === 'kuis' ? 'block' : 'none';
   document.getElementById('kelas-murid-stream').style.display = tab === 'murid' ? 'block' : 'none';
   document.getElementById('kelas-chat-stream').style.display = tab === 'chat' ? 'block' : 'none';
   document.getElementById('kelas-penilaian-stream').style.display = tab === 'penilaian' ? 'block' : 'none';
+  const analitikStream = document.getElementById('kelas-analitik-stream');
+  if (analitikStream) analitikStream.style.display = 'none';
   if (tab === 'murid' && currentKelas) loadKelasMurid(currentKelas.id);
   if (tab === 'penilaian' && currentKelas) loadPenilaianKelas(currentKelas.id);
   if (tab === 'chat') {
@@ -1657,4 +1660,4 @@ async function uploadAndSendFileChat(file, targetChat) {
     formData.append('file', file);
     xhr.send(formData);
   });
-}
+}

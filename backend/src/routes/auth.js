@@ -560,6 +560,11 @@ router.post('/login', async (req, res) => {
     // Kode undangan (kode_guru) hanya diperlukan saat REGISTRASI, bukan saat login.
     // Guru yang sudah terdaftar cukup login dengan email + password.
 
+    // Catat waktu login (dipakai sinyal "aktivitas login" di analitik guru).
+    // Non-blocking: kalau gagal, login tetap lanjut — ini bukan hal kritis.
+    supabase.from('users').update({ last_login_at: new Date().toISOString() }).eq('id', user.id)
+      .then(() => {}).catch(err => console.warn('[login] gagal catat last_login_at:', err.message));
+
     const token = jwt.sign(
       { id: user.id, nama: user.nama, email: user.email, role: user.role },
       JWT_SECRET, { expiresIn: '30d' }

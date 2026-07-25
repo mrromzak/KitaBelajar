@@ -85,6 +85,12 @@ async function openKelas(kelasId, colorIdx) {
     document.getElementById('kelas-code-card').style.display = isGuru ? 'block' : 'none';
     document.getElementById('tab-murid-btn').style.display = '';
     document.getElementById('tab-penilaian-btn').style.display = isGuru ? '' : 'none';
+    if (isGuru && typeof AnalitikGuru !== 'undefined') {
+      AnalitikGuru.aktifkanTab(k.id || kelasId);
+    } else {
+      const btnAnalitik = document.getElementById('tab-analitik-btn');
+      if (btnAnalitik) btnAnalitik.style.display = 'none';
+    }
 
     document.getElementById('kelas-info-sidebar').innerHTML = `
       <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted);font-weight:600">Mapel</span><span style="font-weight:700">${k.mapel || '–'}</span></div>
@@ -1262,4 +1268,3 @@ function bukaNotifPrivateChat() {
     p.pengirim_avatar || '🦁'
   );
 }
-

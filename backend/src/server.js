@@ -126,6 +126,7 @@ app.use('/api/zepquiz',   require('./routes/zepquiz'));
 app.use('/api/chat',      require('./routes/chat'));
 app.use('/api/notifikasi', require('./routes/notifikasi'));
 app.use('/api/orangtua',  require('./routes/orangtua'));
+app.use('/api/analitik',  require('./routes/analitik'));
 app.use('/api/misi',      require('./routes/misi'));
 app.use('/api/latihan',   require('./routes/latihan'));
 app.use('/api/belajar',   require('./routes/belajar'));

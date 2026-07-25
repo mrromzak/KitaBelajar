@@ -2113,6 +2113,21 @@ body.dark-mode .bell-btn svg{color:var(--muted)!important}
 }
 .lp-signal-dot.dot-a { background: #FF6B35; }
 .lp-signal-dot.dot-b { background: #2FA894; }
+.lp-signal-item-roadmap .lp-signal-dot {
+  background: transparent;
+  border: 1.5px dashed rgba(255,255,255,0.4);
+}
+.lp-signal-roadmap-tag {
+  display: inline-block;
+  font-family: 'Nunito', sans-serif;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.65);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 50px;
+  padding: 2px 10px;
+  margin-bottom: 8px;
+}
 .lp-signal-item h3 {
   font-family: 'Nunito', sans-serif;
   font-weight: 800; font-size: 15px;
@@ -2305,3 +2320,58 @@ body.dark-mode .lp-footer { border-color: #2A2D3E; background: #1E2132; }
 body.dark-mode .lp-footer-brand { color: #fff; }
 body.dark-mode .lp-footer-links a { color: #7A7D8E; }
 body.dark-mode .lp-footer-links a:hover { color: #FF9A6B; }
+/* ===================================================================
+   PANEL ANALITIK GURU — sinyal per murid, terpisah (bukan skor gabungan)
+   =================================================================== */
+.analitik-header-row {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  gap: 12px;
+  padding: 10px 16px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.05em; color: #7A7A7A;
+  border-bottom: 2px solid #eee;
+}
+.analitik-row {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0efeb;
+  align-items: center;
+}
+.analitik-murid { display: flex; align-items: center; gap: 10px; }
+.analitik-avatar { font-size: 22px; }
+.analitik-nama { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px; color: var(--text); }
+.analitik-xp { font-family: 'Nunito', sans-serif; font-size: 12px; color: #7A7A7A; }
+.analitik-sinyal { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.analitik-detail { font-family: 'Nunito', sans-serif; font-size: 11px; color: #7A7A7A; }
+.analitik-chip {
+  display: inline-block;
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px; font-weight: 700;
+  padding: 4px 10px; border-radius: 50px;
+}
+.analitik-chip.chip-perlu-perhatian { background: #fee8e8; color: #c12b00; }
+.analitik-chip.chip-agak-perhatian { background: #fff3e0; color: #c78200; }
+.analitik-chip.chip-baik { background: #e8f5e9; color: #2e7d32; }
+.analitik-chip.chip-netral { background: #f0f0f0; color: #7A7A7A; }
+.analitik-loading, .analitik-empty {
+  padding: 40px 16px; text-align: center;
+  font-family: 'Nunito', sans-serif; color: #7A7A7A; font-size: 14px;
+}
+.analitik-catatan {
+  padding: 14px 16px; margin-top: 8px;
+  background: #fff0e8; border-radius: 12px;
+  font-family: 'Nunito', sans-serif; font-size: 12px; line-height: 1.6;
+  color: #5A5D6E;
+}
+@media (max-width: 640px) {
+  .analitik-header-row { display: none; }
+  .analitik-row { grid-template-columns: 1fr; gap: 8px; }
+}
+body.dark-mode .analitik-header-row { border-color: #2A2D3E; color: #7A7D8E; }
+body.dark-mode .analitik-row { border-color: #2A2D3E; }
+body.dark-mode .analitik-nama { color: #fff; }
+body.dark-mode .analitik-catatan { background: rgba(255,107,53,0.1); color: #7A7D8E; }
