@@ -273,6 +273,10 @@ function renderMuridKelas(list) {
   if (!grid) return;
   if (list.length > 0) {
     grid.innerHTML = list.map((k, i) => renderKelasCard(k, i, 'murid')).join('');
+    // Pulihkan badge unread setelah render ulang
+    if (typeof chatUnreadPerKelas !== 'undefined') {
+      list.forEach(k => { if (chatUnreadPerKelas[k.id]) updateClassCardChatBadge(k.id); });
+    }
   } else {
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
       <div class="empty-icon">🏫</div>

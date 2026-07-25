@@ -43,6 +43,7 @@ function renderKelasCard(k, i, role) {
       ` : `<div class="kelas-stat">👨‍🏫 ${k.guru_nama || k.guru?.nama || 'Guru'}</div>`}
       <div style="display:flex;align-items:center;gap:8px">
         <div class="kelas-stat">📚 ${k.total_materi || 0} materi</div>
+        ${!isGuru ? `<span id="card-chat-badge-${k.id}" style="display:none;background:var(--red);color:white;border-radius:50px;padding:1px 7px;font-size:10px;font-weight:800;line-height:1.5">0</span>` : ''}
         ${isGuru
           ? `<button class="btn-icon btn-delete" onclick="event.stopPropagation();konfirmasiHapusKelas('${k.id}','${k.nama.replace(/'/g,"\\'")}')" title="Hapus kelas" style="width:28px;height:28px;font-size:13px">🗑️</button>`
           : `<button class="btn-icon" onclick="event.stopPropagation();konfirmasiKeluarKelas('${k.id}','${k.nama.replace(/'/g,"\\'")}')" title="Keluar dari kelas" style="width:28px;height:28px;font-size:13px;background:#FFF0F5;color:var(--pink)">🚪</button>`
@@ -60,7 +61,9 @@ let currentKelas = null;
 async function openKelas(kelasId, colorIdx) {
   showLoading(true);
   classChatUnreadCount = 0;
+  chatUnreadPerKelas[kelasId] = 0;
   updateClassChatBadge();
+  updateClassCardChatBadge(kelasId);
   try {
     // Pakai data card yang sudah ada sebagai tampilan awal
     const cached = (window._kelasList || []).find(x => x.id === kelasId);
@@ -564,6 +567,19 @@ async function loadKelasChatHistory(kelasId) {
 }
 
 let classChatUnreadCount = 0;
+let chatUnreadPerKelas = {};
+
+function updateClassCardChatBadge(kelasId) {
+  const badge = document.getElementById('card-chat-badge-' + kelasId);
+  if (!badge) return;
+  const count = chatUnreadPerKelas[kelasId] || 0;
+  if (count > 0) {
+    badge.textContent = count > 99 ? '99+' : count;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
 
 function updateClassChatBadge() {
   const btn = document.getElementById('tab-chat-btn');
@@ -809,6 +825,15 @@ socket.on('kelas:pesan_baru', (pesan) => {
   if (currentKelasTab !== 'chat') {
     classChatUnreadCount++;
     updateClassChatBadge();
+  }
+  // Per-class unread untuk dashboard card badge
+  if (pesan.kelas_id) {
+    chatUnreadPerKelas[pesan.kelas_id] = (chatUnreadPerKelas[pesan.kelas_id] || 0) + 1;
+    // Hanya update badge card jika halaman murid sedang aktif
+    if (document.getElementById('page-murid')?.classList.contains('active') ||
+        !document.getElementById('page-kelas-detail')?.classList.contains('active')) {
+      updateClassCardChatBadge(pesan.kelas_id);
+    }
   }
   // Tambah ke bell notification
   addBellNotif({
