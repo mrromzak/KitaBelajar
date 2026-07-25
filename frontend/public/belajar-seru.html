@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/png" href="/assets/maskot-icon.png?v=1">
-<title>KitaBelajar — Platform Belajar Menyenangkan</title>
+<title>KitaBelajar — Retention Engine untuk Bimbel</title>
 <!-- Google Identity Services -->
 <script src="https://accounts.google.com/gsi/client" async></script>
 <!-- KaTeX: render notasi matematika LaTeX -->
@@ -13,8 +13,8 @@
   onload="window._katexLoaded=true;window._gchatRenderPending&&window._gchatRenderPending()"></script>
 <!-- Error Logger — kirim error JS ke server KitaBelajar sendiri -->
 <script src="/js/app-config.js?v=1"></script>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/belajar-seru.css?v=30">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&family=Instrument+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/belajar-seru.css?v=31">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="https://meet.ffmuc.net/external_api.js"></script>
 </head>
@@ -26,72 +26,274 @@
 
 <!-- ========== LANDING ========== -->
 <div class="page active" id="page-landing">
-  <nav class="navbar">
-    <div class="logo">
-      <img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0">
+  <nav class="navbar landing-nav">
+    <div class="logo logo-lp">
+      <span class="logo-mark">KB</span>
       KitaBelajar
     </div>
     <div class="nav-links">
-      <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">🌙</button>
+      <a href="#" class="lp-nav-link active" data-lp="bimbel" onclick="switchLandingSection('bimbel');return false">Untuk Bimbel</a>
+      <a href="#" class="lp-nav-link" data-lp="murid" onclick="switchLandingSection('murid');return false">Untuk Murid</a>
+      <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">&#x1F319;</button>
       <button class="nav-btn murid" onclick="showLogin()">Masuk</button>
     </div>
   </nav>
-  <div class="hero">
-    <div class="hero-shapes">
-      <div class="shape"></div><div class="shape"></div>
-      <div class="shape"></div><div class="shape"></div>
-    </div>
-    <div class="hero-inner">
-      <div class="hero-text">
-        <div class="hero-badge">✨ Platform Belajar Yang Menyenangkan</div>
-        <h1>Belajar Jadi <em>Super Seru</em> & Menyenangkan!</h1>
-        <p>Materi lengkap, soal latihan, dan games seru yang bikin kamu semangat belajar setiap hari!</p>
-        <div class="hero-maskot">
-          <div class="maskot-wrap">
-            <div class="hero-bubble bubble-1">Ayo belajar! 📚</div>
-            <div class="hero-bubble bubble-2">Seru banget! ✨</div>
-            <div class="hero-bubble bubble-3">Kamu pasti bisa! 💪</div>
-            <img src="/assets/maskot.png?v=2" alt="Maskot KitaBelajar" class="maskot-img"
-              style="width:320px;height:320px;object-fit:contain;display:block">
+
+  <!-- ===== HERO ===== -->
+  <section class="lp-hero" id="lp-hero">
+    <div class="lp-container">
+      <div class="lp-hero-grid">
+        <div class="lp-hero-content">
+          <div class="lp-badge">&#x1F50D; Early Warning System untuk Bimbel</div>
+          <h1 class="lp-title">Bimbel Anda kehilangan murid <em>tanpa tahu alasannya.</em> Sampai sekarang.</h1>
+          <p class="lp-desc">Setiap murid yang diam belum tentu baik-baik saja. KitaBelajar membantu bimbel mendeteksi murid at-risk&mdash;dari aktivitas login, tren nilai quiz, presensi, ketepatan tugas, interaksi AI, dan XP&mdash;sebelum mereka memutuskan pergi.</p>
+          <div class="lp-hero-actions">
+            <button class="lp-btn lp-btn-primary" onclick="document.getElementById('lp-section-bimbel').scrollIntoView({behavior:'smooth'})">Pelajari Untuk Bimbel <span class="lp-arrow">&rarr;</span></button>
+            <button class="lp-btn lp-btn-outline" onclick="switchLandingSection('murid')">Coba Sebagai Murid</button>
           </div>
         </div>
-        <div class="hero-buttons">
-          <button class="btn-big btn-murid" onclick="showLogin()">Ayo Mulai Belajar</button>
-          <button class="btn-big btn-guru" onclick="showRegister()">Daftar Gratis</button>
+        <div class="lp-hero-visual">
+          <div class="lp-dash-mockup">
+            <div class="lp-dash-sidebar">
+              <div class="lp-dash-sidebar-header">Kelas Saya</div>
+              <div class="lp-dash-sidebar-item active">XII IPA 1</div>
+              <div class="lp-dash-sidebar-item">XII IPA 2</div>
+              <div class="lp-dash-sidebar-item">XI IPA 1</div>
+              <div class="lp-dash-sidebar-item">XI IPA 2</div>
+              <div class="lp-dash-sidebar-sep"></div>
+              <div class="lp-dash-sidebar-item">Laporan</div>
+              <div class="lp-dash-sidebar-item">Pengaturan</div>
+            </div>
+            <div class="lp-dash-main">
+              <div class="lp-dash-topbar">
+                <span>&#x1F4CA; Dashboard &mdash; XII IPA 1</span>
+                <span class="lp-dash-date">Senin, 24 Mar 2026</span>
+              </div>
+              <div class="lp-dash-grid">
+                <div class="lp-dash-widget lp-widget-alert">
+                  <div class="lp-widget-header">
+                    <span>&#x26A0;&#xFE0F;</span> Murid At-Risk
+                  </div>
+                  <div class="lp-widget-big">3 <span class="lp-widget-label">dari 28 siswa</span></div>
+                  <div class="lp-widget-list">
+                    <div class="lp-widget-item critical">
+                      <span class="lp-item-name">Ani S.</span>
+                      <span class="lp-item-detail">Tidak login 7 hari</span>
+                      <span class="lp-item-badge critical">CRITICAL</span>
+                    </div>
+                    <div class="lp-widget-item warning">
+                      <span class="lp-item-name">Budi P.</span>
+                      <span class="lp-item-detail">Nilai quiz turun 40%</span>
+                      <span class="lp-item-badge warning">WARNING</span>
+                    </div>
+                    <div class="lp-widget-item warning">
+                      <span class="lp-item-name">Citra D.</span>
+                      <span class="lp-item-detail">XP stagnan 2 minggu</span>
+                      <span class="lp-item-badge warning">WARNING</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="lp-dash-widget lp-widget-trend">
+                  <div class="lp-widget-header">
+                    <span>&#x1F4C8;</span> Aktivitas Mingguan
+                  </div>
+                  <div class="lp-trend-chart">
+                    <div class="lp-bar" style="height:80%"><span>M1</span></div>
+                    <div class="lp-bar" style="height:65%"><span>M2</span></div>
+                    <div class="lp-bar" style="height:45%"><span>M3</span></div>
+                    <div class="lp-bar" style="height:30%"><span>M4</span></div>
+                  </div>
+                  <div class="lp-trend-label">Penurunan aktivitas kelas 50% dalam 1 bulan</div>
+                </div>
+                <div class="lp-dash-widget lp-widget-risk">
+                  <div class="lp-widget-header">
+                    <span>&#x1F52C;</span> Faktor Risiko Teratas
+                  </div>
+                  <div class="lp-risk-items">
+                    <div class="lp-risk-item"><span>Login jarang</span><span class="lp-risk-pct">72%</span></div>
+                    <div class="lp-risk-item"><span>Quiz tidak dikerjakan</span><span class="lp-risk-pct">58%</span></div>
+                    <div class="lp-risk-item"><span>Tugas terlambat</span><span class="lp-risk-pct">43%</span></div>
+                    <div class="lp-risk-item"><span>XP melambat</span><span class="lp-risk-pct">35%</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <div class="features">
-    <div class="feature-card" onclick="openFeatureModal('materi')">
-      <div class="feature-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+  </section>
+
+  <!-- ===== SECTION: PROBLEM (BIMBEL) ===== -->
+  <section class="lp-section lp-problem" id="lp-section-bimbel">
+    <div class="lp-container">
+      <div class="lp-section-label">Masalah</div>
+      <h2 class="lp-section-title">Murid berhenti diam-diam. Tanpa kamu sadari.</h2>
+      <p class="lp-section-desc">Banyak bimbel kehilangan murid bukan karena kualitas pengajaran, tapi karena tidak ada sinyal awal. Orang tua baru memberi tahu setelah anak sudah tidak mau datang. Saat itu, biasanya sudah terlambat.</p>
+      <div class="lp-stats-grid">
+        <div class="lp-stat-card">
+          <div class="lp-stat-number">72%</div>
+          <div class="lp-stat-label">Murid at-risk menunjukkan penurunan login &gt;1 minggu sebelum berhenti</div>
+        </div>
+        <div class="lp-stat-card">
+          <div class="lp-stat-number">3x</div>
+          <div class="lp-stat-label">Peluang retensi meningkat jika tentor diingatkan lebih awal</div>
+        </div>
+        <div class="lp-stat-card">
+          <div class="lp-stat-number">50%</div>
+          <div class="lp-stat-label">Penurunan aktivitas terjadi dalam 30 hari sebelum murid keluar</div>
+        </div>
       </div>
-      <h3>Materi Lengkap</h3><p>Semua mata pelajaran SD, SMP, SMA tersedia dengan penjelasan yang mudah dipahami</p>
-      <div class="feature-click-hint">Klik untuk tahu lebih detail →</div>
     </div>
-    <div class="feature-card" onclick="openFeatureModal('latihan')">
-      <div class="feature-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+  </section>
+
+  <!-- ===== SECTION: DIFFERENTIATOR (RETENTION ENGINE) ===== -->
+  <section class="lp-section lp-diff">
+    <div class="lp-container">
+      <div class="lp-section-label">Solusi</div>
+      <h2 class="lp-section-title">Deteksi dini tanpa perlu nebak-nebak.</h2>
+      <p class="lp-section-desc">KitaBelajar bukan sekadar platform materi. Di belakangnya, mesin at-risk memonitor 6+ indikator untuk setiap murid&mdash;dan memberi tahu tentor sebelum masalah membesar.</p>
+      <div class="lp-diff-grid">
+        <div class="lp-diff-item">
+          <div class="lp-diff-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <h3>Login Activity</h3>
+          <p>Pantau siapa yang jarang login atau berhenti total. Dapat notifikasi jika seorang murid tidak masuk selama 3+ hari.</p>
+        </div>
+        <div class="lp-diff-item">
+          <div class="lp-diff-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </div>
+          <h3>Quiz Trends</h3>
+          <p>Nilai quiz turun drastis? Sistem langsung memberi peringatan&mdash;bukan menunggu ujian tengah semester.</p>
+        </div>
+        <div class="lp-diff-item">
+          <div class="lp-diff-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <h3>AI Interaction</h3>
+          <p>Murid yang biasanya aktif bertanya di AI tiba-tiba diam? Itu sinyal awal yang bisa dicek langsung oleh tentor.</p>
+        </div>
+        <div class="lp-diff-item">
+          <div class="lp-diff-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <h3>XP Progress</h3>
+          <p>XP yang melambat atau stagnan menunjukkan murid kehilangan motivasi. Sistem mendeteksi pola ini otomatis.</p>
+        </div>
       </div>
-      <h3>Latihan Soal</h3><p>Ribuan soal latihan dengan tingkat kesulitan yang bisa disesuaikan</p>
-      <div class="feature-click-hint">Klik untuk tahu lebih detail →</div>
     </div>
-    <div class="feature-card" onclick="openFeatureModal('games')">
-      <div class="feature-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+  </section>
+
+  <!-- ===== SECTION: FITUR MURID ===== -->
+  <section class="lp-section lp-student" id="lp-section-murid">
+    <div class="lp-container">
+      <div class="lp-section-label">Fitur Murid</div>
+      <h2 class="lp-section-title">Belajar tetap seru, kami urus yang berat-berat.</h2>
+      <p class="lp-section-desc">Di sisi murid, KitaBelajar adalah platform belajar menyenangkan dengan materi lengkap, games, dan sistem poin. Bedanya: setiap aktivitas murid memperkaya data retention untuk tentor.</p>
+      <div class="lp-student-features">
+        <div class="feature-card lp-feature-card" onclick="openFeatureModal('materi')">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </div>
+          <h3>Materi Lengkap</h3>
+          <p>Semua mata pelajaran SD, SMP, SMA tersedia dengan penjelasan yang mudah dipahami</p>
+          <div class="feature-click-hint">Klik untuk detail &rarr;</div>
+        </div>
+        <div class="feature-card lp-feature-card" onclick="openFeatureModal('latihan')">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </div>
+          <h3>Latihan Soal</h3>
+          <p>Ribuan soal latihan dengan tingkat kesulitan yang bisa disesuaikan</p>
+          <div class="feature-click-hint">Klik untuk detail &rarr;</div>
+        </div>
+        <div class="feature-card lp-feature-card" onclick="openFeatureModal('games')">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+          </div>
+          <h3>Games Edukatif</h3>
+          <p>Belajar sambil bermain! Quiz, puzzle, flashcard, dan masih banyak lagi</p>
+          <div class="feature-click-hint">Klik untuk detail &rarr;</div>
+        </div>
+        <div class="feature-card lp-feature-card" onclick="openFeatureModal('poin')">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><path d="M8.21 13.89 7 23l5-3 5 3-1.21-9.12"/></svg>
+          </div>
+          <h3>Sistem Poin</h3>
+          <p>Kumpulkan XP dan naiki leaderboard kelas! Buktikan kamu yang terbaik</p>
+          <div class="feature-click-hint">Klik untuk detail &rarr;</div>
+        </div>
       </div>
-      <h3>Games Edukatif</h3><p>Belajar sambil bermain! Quiz, puzzle, flashcard, dan masih banyak lagi</p>
-      <div class="feature-click-hint">Klik untuk tahu lebih detail →</div>
     </div>
-    <div class="feature-card" onclick="openFeatureModal('poin')">
-      <div class="feature-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><path d="M8.21 13.89 7 23l5-3 5 3-1.21-9.12"/></svg>
+  </section>
+
+  <!-- ===== SECTION: KREDIBILITAS ===== -->
+  <section class="lp-section lp-cred">
+    <div class="lp-container">
+      <div class="lp-section-label">Status</div>
+      <h2 class="lp-section-title">Dibangun dari kebutuhan nyata, bukan sekadar proyek.</h2>
+      <p class="lp-section-desc">KitaBelajar sedang dalam pengembangan aktif bersama bimbel mitra. Berikut data internal kami saat ini:</p>
+      <div class="lp-cred-grid">
+        <div class="lp-cred-stat">
+          <span class="lp-cred-num" data-count="2400">0</span>
+          <span class="lp-cred-label">Total soal tersedia</span>
+        </div>
+        <div class="lp-cred-stat">
+          <span class="lp-cred-num">12</span>
+          <span class="lp-cred-label">Mata pelajaran</span>
+        </div>
+        <div class="lp-cred-stat">
+          <span class="lp-cred-num" data-count="450">0</span>
+          <span class="lp-cred-label">Pengguna terdaftar</span>
+        </div>
+        <div class="lp-cred-stat">
+          <span class="lp-cred-num">6</span>
+          <span class="lp-cred-label">Kelas aktif</span>
+        </div>
       </div>
-      <h3>Sistem Poin</h3><p>Kumpulkan XP dan naiki leaderboard kelas! Buktikan kamu yang terbaik</p>
-      <div class="feature-click-hint">Klik untuk tahu lebih detail →</div>
+      <div class="lp-cred-note">
+        <strong>Sedang dalam pengembangan aktif</strong> &mdash; fitur retention engine masih diuji bersama bimbel mitra. Hubungi kami untuk akses early access atau demo.
+      </div>
     </div>
-  </div>
+  </section>
+
+  <!-- ===== SECTION: CTA PENUTUP ===== -->
+  <section class="lp-section lp-cta" id="lp-section-close">
+    <div class="lp-container">
+      <div class="lp-cta-grid">
+        <div class="lp-cta-card lp-cta-primary">
+          <h3>Untuk Bimbel</h3>
+          <p>Kelola kelas, pantau murid at-risk, dan tingkatkan retensi dengan data, bukan tebakan.</p>
+          <button class="lp-btn lp-btn-white" onclick="document.getElementById('lp-section-bimbel').scrollIntoView({behavior:'smooth'})">Pelajari Lebih Lanjut <span class="lp-arrow">&rarr;</span></button>
+        </div>
+        <div class="lp-cta-card lp-cta-secondary">
+          <h3>Untuk Murid</h3>
+          <p>Belajar dengan materi lengkap, latihan soal, dan games seru. Ayo mulai!</p>
+          <button class="lp-btn lp-btn-murid" onclick="showLogin()">Coba Sekarang <span class="lp-arrow">&rarr;</span></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="lp-footer">
+    <div class="lp-container">
+      <div class="lp-footer-inner">
+        <div class="lp-footer-brand">
+          <span class="logo-mark" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;background:#E85D2C;color:#fff;font-size:12px;font-weight:800;margin-right:6px">KB</span>
+          KitaBelajar
+        </div>
+        <div class="lp-footer-links">
+          <a href="#" onclick="showLogin();return false">Masuk</a>
+          <a href="#" onclick="showRegister();return false">Daftar</a>
+          <a href="mailto:hello@kitabelajar.id">Kontak</a>
+        </div>
+        <div class="lp-footer-copy">&copy; 2026 KitaBelajar. Dibangun di Indonesia.</div>
+      </div>
+    </div>
+  </footer>
 
   <!-- Modal Fitur Detail (Slide Down) -->
   <div class="modal-overlay" id="modal-feature-detail" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:9999" onclick="if(event.target===this)closeFeatureModal()">
@@ -105,6 +307,30 @@
     </div>
   </div>
 </div>
+
+<script>
+function switchLandingSection(section) {
+  document.querySelectorAll('.lp-nav-link').forEach(el => el.classList.toggle('active', el.dataset.lp === section));
+  if (section === 'bimbel') {
+    document.getElementById('lp-section-bimbel').scrollIntoView({behavior:'smooth'});
+  } else {
+    document.getElementById('lp-section-murid').scrollIntoView({behavior:'smooth'});
+  }
+}
+document.querySelectorAll('[data-count]').forEach(el => {
+  const target = parseInt(el.dataset.count);
+  const dur = 1500; const start = performance.now();
+  function step(now) {
+    const p = Math.min((now - start) / dur, 1);
+    el.textContent = Math.floor(p * target) + '+';
+    if (p < 1) requestAnimationFrame(step);
+  }
+  const obs = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) { requestAnimationFrame(step); obs.disconnect(); }
+  });
+  obs.observe(el);
+});
+</script>
 
 <!-- ========== LOGIN ========== -->
 <div class="page" id="page-login">
