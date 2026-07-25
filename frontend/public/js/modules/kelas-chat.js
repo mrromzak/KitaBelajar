@@ -85,10 +85,11 @@ async function openKelas(kelasId, colorIdx) {
     document.getElementById('kelas-code-card').style.display = isGuru ? 'block' : 'none';
     document.getElementById('tab-murid-btn').style.display = '';
     document.getElementById('tab-penilaian-btn').style.display = isGuru ? '' : 'none';
-    if (isGuru && typeof AnalitikGuru !== 'undefined') {
-      AnalitikGuru.aktifkanTab(k.id || kelasId);
+    const btnAnalitik = document.getElementById('tab-analitik-btn');
+    if (isGuru) {
+      if (btnAnalitik) btnAnalitik.style.display = '';
+      if (typeof AnalitikGuru !== 'undefined') AnalitikGuru.aktifkanTab(k.id || kelasId);
     } else {
-      const btnAnalitik = document.getElementById('tab-analitik-btn');
       if (btnAnalitik) btnAnalitik.style.display = 'none';
     }
 
