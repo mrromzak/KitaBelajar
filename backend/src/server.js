@@ -663,7 +663,13 @@ app.get('/api', (req, res) => {
   });
 });
 
-app.use((req, res) => res.status(404).json({ success: false, pesan: `Endpoint tidak ditemukan: ${req.method} ${req.path}` }));
+// 404 — balikin text biasa untuk file statis biar gak kena MIME type error
+app.use((req, res) => {
+  if (/^\/(js|css|assets|favicon)/.test(req.path)) {
+    return res.status(404).type('text').send('Not found');
+  }
+  res.status(404).json({ success: false, pesan: `Endpoint tidak ditemukan: ${req.method} ${req.path}` });
+});
 
 // Redaksi field sensitif sebelum disimpan ke error_logs (dibaca guru via
 // /api/error-logs). Tanpa ini, password/OTP/token dari body request auth
