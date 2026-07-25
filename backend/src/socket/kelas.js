@@ -64,7 +64,12 @@ module.exports = function (io) {
         id: id || Date.now().toString(),
         kelas_id: kelasId,
         isi: cleanText(isi || '', 5000),
-        pengirim: cleanText(pengirim || ''),
+        pengirim: {
+          id: pengirim?.id || '',
+          nama: cleanText(pengirim?.nama || '', 100),
+          avatar: cleanText(pengirim?.avatar || '', 200),
+          role: cleanText(pengirim?.role || '', 20)
+        },
         created_at: new Date().toISOString()
       };
       io.to('kelas:' + kelasId).emit('kelas:pesan_baru', pesan);
