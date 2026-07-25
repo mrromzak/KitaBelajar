@@ -78,13 +78,6 @@ const AnalitikGuru = (() => {
     return div.innerHTML;
   }
 
-  function analitikAvatar(avatar) {
-    if (avatar && (avatar.startsWith('data:') || avatar.startsWith('http'))) {
-      return `<img src="${escapeHtml(avatar)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;display:block">`;
-    }
-    return `<span style="font-size:22px">${escapeHtml(avatar || '👤')}</span>`;
-  }
-
   const LABEL_QUIZ = {
     turun_tajam: { teks: 'Nilai turun tajam', kelas: 'perlu-perhatian' },
     turun: { teks: 'Nilai turun', kelas: 'agak-perhatian' },
@@ -137,7 +130,7 @@ const AnalitikGuru = (() => {
       return `
         <div class="analitik-row">
           <div class="analitik-murid">
-            <span class="analitik-avatar">${analitikAvatar(d.murid.avatar)}</span>
+            <span class="analitik-avatar">${chatAvatarHtml(d.murid.avatar || '👤', '32px')}</span>
             <div>
               <div class="analitik-nama">${escapeHtml(d.murid.nama)}</div>
               <div class="analitik-xp">Level ${d.murid.level || 1} · ${d.murid.xp || 0} XP</div>
