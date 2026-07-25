@@ -61,6 +61,9 @@ const AnalitikGuru = (() => {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
       const json = await res.json();
+      // Guard: kalau user sudah pindah tab saat fetch, jangan render
+      const tabBtn = document.getElementById('tab-analitik-btn');
+      if (!tabBtn || !tabBtn.classList.contains('active')) return;
       if (!json.success) {
         wrap.innerHTML = `<div class="analitik-empty">${escapeHtml(json.pesan || 'Gagal memuat data.')}</div>`;
         return;

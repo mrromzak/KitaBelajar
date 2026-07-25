@@ -431,15 +431,8 @@ window.addEventListener('popstate', e => {
   _popStateHandling = false;
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-  const activePage = document.querySelector('.page.active');
-  history.replaceState(
-    { kbPage: activePage ? activePage.id : 'page-landing' },
-    '', location.pathname
-  );
-});
-// Script loaded at bottom of <body>, DOM already parsed — but wrap in
-// DOMContentLoaded anyway for safety; dupe callback is harmless.
+// ── INITIAL HISTORY STATE ─────────────────────────────────────
+// Script loaded at bottom of <body>, DOM sudah siap
 if (document.readyState !== 'loading') {
   const activePage = document.querySelector('.page.active');
   history.replaceState(
@@ -447,4 +440,13 @@ if (document.readyState !== 'loading') {
     '', location.pathname
   );
 }
+
+// ── FEATURE CARD CLICK (delegated) ────────────────────────────
+document.addEventListener('click', e => {
+  const card = e.target.closest('[data-feature]');
+  if (!card) return;
+  const key = card.dataset.feature;
+  if (!featureData[key]) return;
+  openFeatureModal(key);
+});
 
