@@ -223,10 +223,11 @@ function toggleMateri(postId, btn) {
   }
 }
 
-function showPage(id) {
+function showPage(id, _skipHistoryPush) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0, 0);
+  if (!_skipHistoryPush) history.pushState({ kbPage: id }, '', location.pathname);
 }
 
 // Klik logo di navbar -> kembali ke "beranda" yang sesuai peran user.
@@ -405,4 +406,45 @@ function closeFeatureModal() {
 document.querySelectorAll('.modal-overlay').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
 });
+
+// ── BACK BUTTON (History API) ─────────────────────────────────
+let _popStateHandling = false;
+
+window.addEventListener('popstate', e => {
+  if (_popStateHandling) return;
+  _popStateHandling = true;
+
+  const anyModalOpen = document.querySelector('.modal.open');
+  if (anyModalOpen) {
+    anyModalOpen.classList.remove('open');
+    const activePage = document.querySelector('.page.active');
+    if (activePage) history.pushState({ kbPage: activePage.id }, '', location.pathname);
+    _popStateHandling = false;
+    return;
+  }
+
+  if (e.state && e.state.kbPage) {
+    showPage(e.state.kbPage, true);
+  } else {
+    goHome();
+  }
+  _popStateHandling = false;
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const activePage = document.querySelector('.page.active');
+  history.replaceState(
+    { kbPage: activePage ? activePage.id : 'page-landing' },
+    '', location.pathname
+  );
+});
+// Script loaded at bottom of <body>, DOM already parsed — but wrap in
+// DOMContentLoaded anyway for safety; dupe callback is harmless.
+if (document.readyState !== 'loading') {
+  const activePage = document.querySelector('.page.active');
+  history.replaceState(
+    { kbPage: activePage ? activePage.id : 'page-landing' },
+    '', location.pathname
+  );
+}
 
