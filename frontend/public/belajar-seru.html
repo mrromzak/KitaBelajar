@@ -14,7 +14,7 @@
 <!-- Error Logger — kirim error JS ke server KitaBelajar sendiri -->
 <script src="/js/app-config.js?v=1"></script>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&family=Instrument+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/belajar-seru.css?v=31">
+<link rel="stylesheet" href="/css/belajar-seru.css?v=32">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="https://meet.ffmuc.net/external_api.js"></script>
 </head>
@@ -164,22 +164,38 @@
       <div class="lp-section-label">Fitur Murid</div>
       <h2 class="lp-section-title">Belajar tetap seru, kami urus yang berat-berat.</h2>
       <p class="lp-section-desc">Di sisi murid, KitaBelajar adalah platform belajar menyenangkan dengan materi lengkap, games, dan sistem poin. Bedanya: setiap aktivitas murid memperkaya data yang bisa dilihat tentor.</p>
-      <div class="lp-student-list">
-        <div class="lp-student-item" onclick="openFeatureModal('materi')">
+      <div class="lp-student-grid">
+        <div class="lp-student-card" onclick="openFeatureModal('materi')">
+          <div class="lp-student-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </div>
           <h3>Materi Lengkap</h3>
           <p>Semua mata pelajaran SD, SMP, SMA tersedia dengan penjelasan yang mudah dipahami</p>
+          <span class="lp-student-cta">Lihat detail <span class="lp-arrow">&rarr;</span></span>
         </div>
-        <div class="lp-student-item" onclick="openFeatureModal('latihan')">
+        <div class="lp-student-card" onclick="openFeatureModal('latihan')">
+          <div class="lp-student-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </div>
           <h3>Latihan Soal</h3>
           <p>Ribuan soal latihan dengan tingkat kesulitan yang bisa disesuaikan</p>
+          <span class="lp-student-cta">Lihat detail <span class="lp-arrow">&rarr;</span></span>
         </div>
-        <div class="lp-student-item" onclick="openFeatureModal('games')">
+        <div class="lp-student-card" onclick="openFeatureModal('games')">
+          <div class="lp-student-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+          </div>
           <h3>Games Edukatif</h3>
           <p>Belajar sambil bermain! Quiz, puzzle, flashcard, dan masih banyak lagi</p>
+          <span class="lp-student-cta">Lihat detail <span class="lp-arrow">&rarr;</span></span>
         </div>
-        <div class="lp-student-item" onclick="openFeatureModal('poin')">
+        <div class="lp-student-card" onclick="openFeatureModal('poin')">
+          <div class="lp-student-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><path d="M8.21 13.89 7 23l5-3 5 3-1.21-9.12"/></svg>
+          </div>
           <h3>Sistem Poin</h3>
           <p>Kumpulkan XP dan naiki leaderboard kelas! Buktikan kamu yang terbaik</p>
+          <span class="lp-student-cta">Lihat detail <span class="lp-arrow">&rarr;</span></span>
         </div>
       </div>
     </div>

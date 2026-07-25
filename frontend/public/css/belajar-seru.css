@@ -2140,30 +2140,43 @@ body.dark-mode .bell-btn svg{color:var(--muted)!important}
 /* ---- Fitur Murid: hairline list, no icon boxes ---- */
 .lp-student { background: #FAF9F7; }
 .lp-student .lp-section-desc { max-width: 600px; }
-.lp-student-list {
+.lp-student-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  border-top: 1px solid #e5e3dd;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
 }
-.lp-student-item {
-  padding: 22px 20px;
-  border-bottom: 1px solid #e5e3dd;
+.lp-student-card {
+  background: #fff; border-radius: 16px;
+  padding: 28px 22px 22px;
+  border: 1px solid #eae8e3;
   cursor: pointer;
-  transition: transform 0.2s, border-color 0.2s;
-  border-left: 2px solid transparent;
+  transition: all 0.25s cubic-bezier(0.22,1,0.36,1);
+  display: flex; flex-direction: column;
 }
-.lp-student-item:nth-child(odd) { border-right: 1px solid #e5e3dd; }
-.lp-student-item:hover {
-  transform: translateX(6px);
-  border-left-color: #FF6B35;
+.lp-student-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.06);
+  border-color: #FF6B35;
 }
-.lp-student-item h3 {
+.lp-student-icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: #fff0e8; color: #FF6B35;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 14px; flex-shrink: 0;
+}
+.lp-student-icon svg { width: 22px; height: 22px; }
+.lp-student-card h3 {
   font-family: 'Nunito', sans-serif;
-  font-weight: 800; font-size: 15px;
-  margin-bottom: 6px; color: #1A1D2E;
+  font-weight: 800; font-size: 16px;
+  margin-bottom: 8px; color: #1A1D2E;
 }
-.lp-student-item p {
+.lp-student-card p {
   font-size: 13px; line-height: 1.6; color: #5A5D6E;
+  flex: 1; margin-bottom: 14px;
+}
+.lp-student-cta {
+  font-size: 12px; font-weight: 700; color: #FF6B35;
+  display: flex; align-items: center; gap: 4px;
 }
 
 /* ---- Kredibilitas: open two-column layout ---- */
@@ -2258,8 +2271,7 @@ body.dark-mode .bell-btn svg{color:var(--muted)!important}
   .lp-signal-strip { grid-template-columns: 1fr 1fr; row-gap: 28px; }
   .lp-signal-item::before { display: none; }
   .lp-signal-item { padding-right: 0; }
-  .lp-student-list { grid-template-columns: 1fr; }
-  .lp-student-item:nth-child(odd) { border-right: none; }
+  .lp-student-grid { grid-template-columns: repeat(2, 1fr); }
   .lp-cta-grid { grid-template-columns: 1fr; }
   .lp-footer-inner { flex-direction: column; gap: 12px; text-align: center; }
   .lp-dash-mockup { grid-template-columns: 1fr; }
@@ -2272,6 +2284,7 @@ body.dark-mode .bell-btn svg{color:var(--muted)!important}
   .lp-signal-strip { grid-template-columns: 1fr; }
   .lp-hero-actions { flex-direction: column; }
   .lp-hero-actions .lp-btn { width: 100%; justify-content: center; }
+  .lp-student-grid { grid-template-columns: 1fr; }
 }
 
 /* ---- Dark mode overrides ---- */
@@ -2303,10 +2316,12 @@ body.dark-mode .lp-stats-strip { border-color: #2A2D3E; }
 body.dark-mode .lp-stat-item { border-color: #2A2D3E; }
 body.dark-mode .lp-stat-label { color: #7A7D8E; }
 body.dark-mode .lp-student { background: #1E2132; }
-body.dark-mode .lp-student-list { border-color: #2A2D3E; }
-body.dark-mode .lp-student-item { border-color: #2A2D3E; }
-body.dark-mode .lp-student-item h3 { color: #fff; }
-body.dark-mode .lp-student-item p { color: #7A7D8E; }
+body.dark-mode .lp-student-card { background: #252839; border-color: #2A2D3E; }
+body.dark-mode .lp-student-card:hover { border-color: #FF6B35; }
+body.dark-mode .lp-student-card h3 { color: #fff; }
+body.dark-mode .lp-student-card p { color: #7A7D8E; }
+body.dark-mode .lp-student-icon { background: rgba(232,93,44,0.15); color: #FF6B35; }
+body.dark-mode .lp-student-cta { color: #FF6B35; }
 body.dark-mode .lp-cred-row { border-color: #2A2D3E; }
 body.dark-mode .lp-cred-label { color: #7A7D8E; }
 body.dark-mode .lp-cred-note { background: rgba(255,107,53,0.1); color: #7A7D8E; }
