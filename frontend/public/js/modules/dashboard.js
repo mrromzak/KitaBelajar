@@ -3,6 +3,24 @@
 // ============================================================
 
 // ============================================================
+//  UTILITY: render badge icon (emoji vs PNG)
+// ============================================================
+function _iconHtml(icon, fallback) {
+  if (!icon) icon = fallback || '🏅';
+  if (icon.startsWith('/') || icon.startsWith('http://') || icon.startsWith('https://') || icon.startsWith('data:')) {
+    return `<img src="${icon}" alt="" style="width:auto;height:100%;max-width:100%;object-fit:contain">`;
+  }
+  return icon;
+}
+function _iconInline(icon) {
+  if (!icon) return '🏅';
+  if (icon.startsWith('/') || icon.startsWith('http://') || icon.startsWith('https://') || icon.startsWith('data:')) {
+    return `<img src="${icon}" alt="" style="height:16px;width:16px;vertical-align:middle;display:inline-block">`;
+  }
+  return icon;
+}
+
+// ============================================================
 //  DASHBOARD ORANGTUA
 // ============================================================
 async function loadOrangtuaDashboard() {
@@ -596,7 +614,7 @@ function showBadgeCelebration(badges) {
     overlay.innerHTML = `
       <div class="badge-modal-box">
         <div style="font-size:13px;font-weight:800;color:#aaa;letter-spacing:1px;margin-bottom:8px">BADGE BARU DIRAIH!</div>
-        <div class="badge-modal-icon">${b.icon || '🏅'}</div>
+        <div class="badge-modal-icon">${_iconHtml(b.icon, '🏅')}</div>
         <div class="badge-modal-title">${b.nama}</div>
         <div class="badge-modal-desc">${b.deskripsi || ''}</div>
         <button class="badge-modal-btn" onclick="badgeCelebrationNext()">
@@ -631,7 +649,7 @@ function showBadgeCelebration(badges) {
         newOverlay.innerHTML = `
           <div class="badge-modal-box">
             <div style="font-size:13px;font-weight:800;color:#aaa;letter-spacing:1px;margin-bottom:8px">BADGE BARU DIRAIH!</div>
-            <div class="badge-modal-icon">${b.icon || '🏅'}</div>
+            <div class="badge-modal-icon">${_iconHtml(b.icon, '🏅')}</div>
             <div class="badge-modal-title">${b.nama}</div>
             <div class="badge-modal-desc">${b.deskripsi || ''}</div>
             <button class="badge-modal-btn" onclick="badgeCelebrationNext()">${btnLabel}</button>
@@ -669,7 +687,7 @@ function renderMisiGroup(tipe, list) {
   el.innerHTML = list.map((m, idx) => {
     const pct    = Math.min(100, Math.round((m.progres / m.target) * 100));
     const cls    = m.reward_claimed ? 'claimed' : m.selesai ? 'selesai' : '';
-    const badge  = m.reward_badge ? ` + badge ${m.reward_badge.icon}` : '';
+    const badge  = m.reward_badge ? ` + badge ${_iconInline(m.reward_badge.icon)}` : '';
     const reward = m.reward_xp > 0 ? `+${m.reward_xp} XP${badge}` : badge.trim() || '';
 
     // Tombol kanan: claimed / klaim / mulai
@@ -775,14 +793,14 @@ async function loadBadges() {
     } else {
       elDimiliki.innerHTML = dimiliki.map(b => `
         <div class="badge-card dimiliki" title="${b.deskripsi}">
-          <div class="badge-icon">${b.icon}</div>
+          <div class="badge-icon">${_iconHtml(b.icon)}</div>
           <div class="badge-nama">${b.nama}</div>
         </div>`).join('');
     }
 
     elSemua.innerHTML = semua.map(b => `
       <div class="badge-card ${b.dimiliki ? 'dimiliki' : 'locked'}" title="${b.deskripsi}">
-        <div class="badge-icon">${b.icon}</div>
+        <div class="badge-icon">${_iconHtml(b.icon)}</div>
         <div class="badge-nama">${b.nama}</div>
       </div>`).join('');
   } catch(e) { toast('Gagal memuat badge.'); }
