@@ -2252,6 +2252,13 @@ async function loadBadges() {
     const json = await res.json();
     if (!json.success) return;
 
+    const renderIcon = (icon) => {
+      if (icon && /\.(png|jpg|jpeg|webp)$/i.test(icon)) {
+        return `<img src="/assets/badges/${icon}" alt="" style="width:48px;height:48px;object-fit:contain">`;
+      }
+      return icon || '🏅';
+    };
+
     const dimiliki = json.data.filter(b => b.dimiliki);
     const semua    = json.data;
 
@@ -2263,14 +2270,14 @@ async function loadBadges() {
     } else {
       elDimiliki.innerHTML = dimiliki.map(b => `
         <div class="badge-card dimiliki" title="${b.deskripsi}">
-          <div class="badge-icon">${b.icon}</div>
+          <div class="badge-icon">${renderIcon(b.icon)}</div>
           <div class="badge-nama">${b.nama}</div>
         </div>`).join('');
     }
 
     elSemua.innerHTML = semua.map(b => `
       <div class="badge-card ${b.dimiliki ? 'dimiliki' : 'locked'}" title="${b.deskripsi}">
-        <div class="badge-icon">${b.icon}</div>
+        <div class="badge-icon">${renderIcon(b.icon)}</div>
         <div class="badge-nama">${b.nama}</div>
       </div>`).join('');
   } catch(e) { toast('Gagal memuat badge.'); }
