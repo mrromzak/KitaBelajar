@@ -1835,7 +1835,7 @@ body.dark-mode .bell-btn svg{color:var(--muted)!important}
   font-family: 'Nunito', sans-serif;
   font-weight: 800;
   font-size: 20px;
-  color: #1A1D2E;
+  color: var(--orange);
   gap: 6px;
 }
 .logo-lp .logo-mark {
