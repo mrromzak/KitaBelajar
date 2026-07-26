@@ -2,6 +2,7 @@ const express = require('express');
 const router  = express.Router();
 const { authMiddleware } = require('../middleware/auth');
 const { updateUserStats, checkMisi } = require('../utils/gamification');
+const { checkBadges } = require('../utils/badgeChecker');
 
 // ── POST /api/latihan/selesai — catat selesai 1 sesi latihan ──
 // Body: { xpDapat: number, skor: number (0-100) }
@@ -24,6 +25,8 @@ router.post('/selesai', authMiddleware, async (req, res) => {
       xpDapat
     });
 
+    const badgeBaru = await checkBadges(murid_id, 'latihan');
+
     res.json({
       success:      true,
       stats,
@@ -31,7 +34,8 @@ router.post('/selesai', authMiddleware, async (req, res) => {
         judul:    m.misi.judul,
         xp:       m.xp,
         badge_id: m.badge_id
-      }))
+      })),
+      badge_baru:   badgeBaru.length > 0 ? badgeBaru : undefined
     });
   } catch (err) {
     console.error('[POST /latihan/selesai]', err.message);

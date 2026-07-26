@@ -1,4 +1,4 @@
-﻿﻿<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
@@ -2062,6 +2062,7 @@ function showView(name) {
 }
 
 function goBack() {
+  _SesiBelajar.selesai();
   if (currentSubj) { currentSubj = null; showView('subjects'); }
   else if (currentGrade) { currentGrade = null; showView('home'); }
   else { showView('home'); }
@@ -2131,7 +2132,10 @@ function toggleAcc(idx) {
   const item = document.getElementById('acc-' + idx);
   const wasOpen = item.classList.contains('open');
   document.querySelectorAll('.acc-item').forEach(el => el.classList.remove('open'));
-  if (!wasOpen) item.classList.add('open');
+  if (!wasOpen) {
+    item.classList.add('open');
+    _SesiBelajar.mulai(null);
+  }
 }
 
 // ═══════════════════════════════════════════════════
@@ -2218,6 +2222,99 @@ async function _trackBukaBelajar() {
     }
   } catch(e) { /* silent */ }
 }
+
+// ═══════════════════════════════════════════════════
+//  SESI BELAJAR — Active Reading Time Tracker
+// ═══════════════════════════════════════════════════
+const _SesiBelajar = {
+  sessionId: null,
+  materiId: null,
+  activeSeconds: 0,
+  _interval: null,
+  _lastActivity: 0,
+  _isIdle: false,
+  IDLE_TIMEOUT: 120000,
+  _token: null,
+
+  _getToken() {
+    if (!this._token) this._token = localStorage.getItem('kb_token') || localStorage.getItem('token') || '';
+    return this._token;
+  },
+
+  async mulai(materiId) {
+    if (this.sessionId) return; // sudah ada sesi aktif
+    this.materiId = materiId;
+    this.activeSeconds = 0;
+    try {
+      const res = await fetch('/api/sesi-belajar/mulai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this._getToken() },
+        body: JSON.stringify({ materi_id: materiId })
+      });
+      const json = await res.json();
+      if (!json.success) return;
+      this.sessionId = json.session_id;
+      this._startTracking();
+    } catch (e) { /* silent */ }
+  },
+
+  async selesai() {
+    if (!this.sessionId) return;
+    const sessionId = this.sessionId;
+    const detik = Math.round(this.activeSeconds);
+    this._stopTracking();
+    this.sessionId = null;
+    this.materiId = null;
+    this.activeSeconds = 0;
+    if (detik < 1) return;
+    try {
+      const body = JSON.stringify({ session_id: sessionId, durasi_aktif_detik: detik });
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon('/api/sesi-belajar/selesai', body);
+      } else {
+        await fetch('/api/sesi-belajar/selesai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this._getToken() },
+          body
+        });
+      }
+    } catch (e) { /* silent */ }
+  },
+
+  _startTracking() {
+    if (this._interval) return;
+    this._lastActivity = Date.now();
+    this._isIdle = false;
+
+    const activity = () => { this._lastActivity = Date.now(); this._isIdle = false; };
+    window.addEventListener('mousemove', activity, { passive: true });
+    window.addEventListener('mousedown', activity, { passive: true });
+    window.addEventListener('scroll', activity, { passive: true });
+    window.addEventListener('keydown', activity, { passive: true });
+    window.addEventListener('touchstart', activity, { passive: true });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { this._isIdle = true; }
+      else { this._lastActivity = Date.now(); this._isIdle = false; }
+    });
+
+    window.addEventListener('beforeunload', () => this.selesai());
+
+    this._interval = setInterval(() => {
+      if (document.hidden) return;
+      if (Date.now() - this._lastActivity > this.IDLE_TIMEOUT) {
+        this._isIdle = true;
+        return;
+      }
+      this._isIdle = false;
+      this.activeSeconds += 1;
+    }, 1000);
+  },
+
+  _stopTracking() {
+    if (this._interval) { clearInterval(this._interval); this._interval = null; }
+  }
+};
 
 let _materiToastTimer = null;
 function _materiToast(msg, dur = 4000) {

@@ -4,6 +4,7 @@
  */
 
 const supabase = require('../supabase');
+const { checkBadges } = require('./badgeChecker');
 
 // ── Hitung tanggal awal minggu (Senin) ─────────────────────
 function getMondayDate(date = new Date()) {

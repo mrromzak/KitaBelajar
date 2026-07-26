@@ -2,6 +2,7 @@ const express = require('express');
 const router  = express.Router();
 const { authMiddleware } = require('../middleware/auth');
 const { checkMisi } = require('../utils/gamification');
+const { checkBadges } = require('../utils/badgeChecker');
 
 // ── POST /api/belajar/buka — catat murid membuka AyoBelajar ──
 // Dipanggil satu kali per sesi dari kita-materi.html
@@ -15,13 +16,16 @@ router.post('/buka', authMiddleware, async (req, res) => {
       xpDapat:        0
     });
 
+    const badgeBaru = await checkBadges(murid_id, 'belajar');
+
     res.json({
       success:      true,
       misi_selesai: misiSelesai.map(m => ({
         judul:    m.misi.judul,
         xp:       m.xp,
         badge_id: m.badge_id
-      }))
+      })),
+      badge_baru:   badgeBaru.length > 0 ? badgeBaru : undefined
     });
   } catch (err) {
     console.error('[POST /belajar/buka]', err.message);

@@ -279,6 +279,32 @@ router.get('/leaderboard', authMiddleware, async (req, res) => {
   }
 });
 
+// GET /api/dashboard/waktu-belajar — total waktu belajar murid yang login
+router.get('/waktu-belajar', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'murid') return res.status(403).json({ success: false, pesan: 'Hanya murid.' });
+  try {
+    const { data: user } = await supabase
+      .from('users')
+      .select('total_waktu_belajar_detik')
+      .eq('id', req.user.id)
+      .maybeSingle();
+    const totalDetik = user?.total_waktu_belajar_detik || 0;
+    const jam = Math.floor(totalDetik / 3600);
+    const menit = Math.floor((totalDetik % 3600) / 60);
+    const detik = totalDetik % 60;
+    res.json({
+      success: true,
+      data: {
+        total_detik: totalDetik,
+        formatted: `${jam}j ${menit}m ${detik}d`,
+        breakdown: { jam, menit, detik }
+      }
+    });
+  } catch (err) {
+    console.error(err.message); res.status(500).json({ success: false, pesan: 'Terjadi kesalahan.' });
+  }
+});
+
 // GET /api/dashboard/notifikasi
 router.get('/notifikasi', authMiddleware, async (req, res) => {
   try {

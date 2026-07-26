@@ -12,6 +12,7 @@ const { v4: uuidv4 } = require('uuid');
 const multer = require('multer');
 const { decrypt } = require('../utils/crypto');
 const { updateUserStats, checkMisi } = require('../utils/gamification');
+const { checkBadges } = require('../utils/badgeChecker');
 const { cleanText } = require('../utils/sanitize');
 const { validateUpload, EXT_FOR_MIME } = require('../utils/fileType');
 
@@ -375,6 +376,8 @@ router.post('/hasil', authMiddleware, async (req, res) => {
       await checkMisi(murid_id, { tipe_aktivitas: 'quiz', nilai: skor, xpDapat: xpGain });
     } catch(xpErr) { console.warn('[XP update]', xpErr.message); }
 
+    const badgeBaru = await checkBadges(murid_id, 'quiz');
+
     return res.status(201).json({
       success: true,
       pesan: 'Hasil tersimpan!',
@@ -385,7 +388,8 @@ router.post('/hasil', authMiddleware, async (req, res) => {
       totalPoin,
       detail,
       attempt: (existing ? existing.length : 0) + 1,
-      max_attempt: maxAttempt
+      max_attempt: maxAttempt,
+      badge_baru: badgeBaru.length > 0 ? badgeBaru : undefined
     });
   } catch(e) {
     console.error('[POST /quiz/hasil]', e.message);

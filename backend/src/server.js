@@ -130,6 +130,7 @@ app.use('/api/analitik',  require('./routes/analitik'));
 app.use('/api/misi',      require('./routes/misi'));
 app.use('/api/latihan',   require('./routes/latihan'));
 app.use('/api/belajar',   require('./routes/belajar'));
+app.use('/api/sesi-belajar', require('./routes/sesi-belajar'));
 
 const quizRoutes = require('./routes/quiz');
 app.use('/api/quiz', quizRoutes);
