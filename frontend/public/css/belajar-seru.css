@@ -2390,3 +2390,19 @@ body.dark-mode .analitik-header-row { border-color: #2A2D3E; color: #7A7D8E; }
 body.dark-mode .analitik-row { border-color: #2A2D3E; }
 body.dark-mode .analitik-nama { color: #fff; }
 body.dark-mode .analitik-catatan { background: rgba(255,107,53,0.1); color: #7A7D8E; }
+/* ── BADGE PREVIEW MODAL ── */
+.badge-card{cursor:pointer}
+.badge-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10050;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px)}
+.badge-modal-overlay.open{display:flex}
+.badge-modal-card{background:#fff;border-radius:24px;padding:32px 28px 26px;max-width:320px;width:100%;text-align:center;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:badgeModalIn .2s ease}
+@keyframes badgeModalIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.badge-modal-close{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#F0F0F0;color:#666;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.badge-modal-close:hover{background:#e74c3c;color:#fff}
+.badge-modal-icon{display:flex;align-items:center;justify-content:center;height:130px;margin-bottom:10px}
+.badge-modal-nama{font-weight:900;font-size:19px;color:#1a1a2e;margin-bottom:6px}
+.badge-modal-status{font-size:13px;font-weight:800;margin-bottom:12px}
+.badge-modal-deskripsi{font-size:13.5px;color:#666;line-height:1.6}
+body.dark-mode .badge-modal-card{background:#14142C}
+body.dark-mode .badge-modal-nama{color:#E4E4F0}
+body.dark-mode .badge-modal-deskripsi{color:#9494B0}
+body.dark-mode .badge-modal-close{background:#1C1C38;color:#9494B0}

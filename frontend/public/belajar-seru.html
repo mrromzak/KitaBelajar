@@ -2546,6 +2546,18 @@ document.querySelectorAll('[data-count]').forEach(el => {
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-konfirmasi-kuis">
+  <div class="modal" style="max-width:400px;text-align:center">
+    <div style="font-size:56px;margin-bottom:12px">📝</div>
+    <h3 style="margin-bottom:8px" id="konfirmasi-kuis-judul">Kumpulkan Jawaban?</h3>
+    <p id="konfirmasi-kuis-pesan" style="font-size:14px;color:var(--muted);margin-bottom:24px;font-weight:600">Apakah kamu yakin dengan jawaban kamu?</p>
+    <div style="display:flex;gap:10px">
+      <button class="btn-cancel" style="flex:1;padding:13px" onclick="closeModal('modal-konfirmasi-kuis')">Batal</button>
+      <button id="btn-konfirmasi-kuis" style="flex:1;padding:13px;background:var(--blue);color:white;border:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer" onclick="konfirmasiKirimKuis()">✅ Ya, Kumpulkan!</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Edit Materi -->
 <div class="modal-overlay" id="modal-edit-materi">
   <div class="modal" style="max-width:460px">

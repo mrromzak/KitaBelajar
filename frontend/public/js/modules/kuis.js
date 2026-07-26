@@ -835,7 +835,7 @@ async function submitBuatKuis() {
   const deadlineRaw = document.getElementById('kuis-deadline').value;
   const deadline = deadlineRaw ? new Date(deadlineRaw).toISOString() : null;
   const durasi   = parseInt(document.getElementById('kuis-durasi').value) || 15;
-  const maxAttempt = parseInt(document.getElementById('kuis-max-attempt').value) || 1;
+  const maxAttempt = parseInt(document.getElementById('kuis-max-attempt').value) || 0;
 
   // Soal dari bank
   const soalBankIds = Array.from(document.querySelectorAll('.soal-check:checked')).map(cb => cb.value);
@@ -1201,9 +1201,9 @@ async function mulaiKuisKelas(quizId) {
 
     // Cek batas percobaan
     const cek = await api('GET', `/quiz/hasil/cek?quiz_id=${quizId}`);
-    const maxAtt = cek.max_attempt || 1;
+    const maxAtt = cek.max_attempt ?? 0;
     const attempt = cek.attempt || 0;
-    if (attempt >= maxAtt) {
+    if (maxAtt > 0 && attempt >= maxAtt) {
       toast('Batas percobaan sudah habis!', 'error');
       showLoading(false);
       return;
@@ -1358,16 +1358,34 @@ async function submitKuisKelas(isManual = false) {
       if (kuisJawaban[i] === undefined) unanswered.push(i + 1);
     });
     if (unanswered.length > 0) {
-      alert(`Ada soal yang belum dikerjakan! Silakan periksa kembali soal nomor: ${unanswered.join(', ')}`);
+      toast('❌ Ada soal yang belum dikerjakan! Periksa soal nomor: ' + unanswered.join(', '), 'error');
       return;
     }
 
-    // 2. Konfirmasi yakin
-    if (!confirm('Apakah kamu yakin dengan jawaban kamu?')) {
-      return;
-    }
+    // 2. Konfirmasi yakin — pakai modal kustom
+    window._konfirmasiKuisCallback = () => simpanHasilKuisKelas();
+    document.getElementById('konfirmasi-kuis-judul').textContent = 'Kumpulkan Jawaban?';
+    document.getElementById('konfirmasi-kuis-pesan').textContent = 'Kamu yakin sudah selesai mengerjakan semua soal?';
+    document.getElementById('btn-konfirmasi-kuis').textContent = '✅ Ya, Kumpulkan!';
+    openModal('modal-konfirmasi-kuis');
+    return;
   }
 
+  // Auto-submit (fun quiz timer habis) — langsung simpan tanpa konfirmasi
+  await simpanHasilKuisKelas();
+}
+
+let kuisStartTime = null;
+
+function konfirmasiKirimKuis() {
+  closeModal('modal-konfirmasi-kuis');
+  if (typeof window._konfirmasiKuisCallback === 'function') {
+    window._konfirmasiKuisCallback();
+    window._konfirmasiKuisCallback = null;
+  }
+}
+
+async function simpanHasilKuisKelas() {
   clearInterval(kuisFunTimer);
   const durasi_detik = Math.round((Date.now() - (kuisStartTime || Date.now())) / 1000);
 
@@ -1421,17 +1439,18 @@ async function submitKuisKelas(isManual = false) {
   window._kuisHasilDetail = hasilDetail;
 
   // Render navigation buttons on results page
-  const sisaAttempt = max_attempt - attempt;
+  const sisaAttempt = max_attempt > 0 ? max_attempt - attempt : -1;
   let buttonsHtml = `<button onclick="kembaliDariHasil()" style="background:var(--blue);color:white;border:none;padding:14px 32px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">🏫 Kembali ke Kelas</button>`;
-  if (hasilDetail.length > 0) {
-    buttonsHtml += `<button onclick="toggleHasilReview()" style="background:white;color:var(--blue);border:2px solid var(--blue);padding:14px 32px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">📋 Review Jawaban</button>`;
-  }
   if (sisaAttempt > 0) {
     buttonsHtml += `<button onclick="mulaiKuisKelas('${kuisKelasData.id}')" style="background:var(--orange);color:white;border:none;padding:14px 32px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">🔄 Coba Lagi (${sisaAttempt}x sisa)</button>`;
   }
   document.getElementById('hasil-nav-btns').innerHTML = buttonsHtml;
 
-  document.getElementById('hasil-review').style.display = 'none';
+  // Tampilkan review otomatis
+  if (hasilDetail.length > 0) {
+    renderHasilReview();
+    document.getElementById('hasil-review').style.display = 'block';
+  }
 
   showPage('page-kuis-hasil');
 }

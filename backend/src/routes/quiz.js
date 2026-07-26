@@ -170,7 +170,7 @@ router.post('/', authMiddleware, async (req, res) => {
         deadline: deadline || null,
         status: status || 'aktif',
         tipe_submission: tipe_submission || null,
-        max_attempt: max_attempt || 1
+        max_attempt: max_attempt ?? 0
       })
       .select()
       .single();
@@ -287,15 +287,20 @@ router.post('/hasil', authMiddleware, async (req, res) => {
 
     // Ambil max_attempt, guru_id, judul, kelas_id dari quiz
     const { data: quizData } = await supabase
-      .from('quiz').select('max_attempt, guru_id, judul, kelas_id').eq('id', quiz_id).single();
-    const maxAttempt = quizData?.max_attempt ?? 1;
+      .from('quiz').select('max_attempt, guru_id, judul, kelas_id, deadline').eq('id', quiz_id).single();
+    const maxAttempt = quizData?.max_attempt ?? 0;
+
+    // Cek deadline
+    if (quizData?.deadline && new Date(quizData.deadline) < new Date()) {
+      return res.status(403).json({ success: false, pesan: 'Batas waktu pengerjaan sudah lewat' });
+    }
 
     // Cek jumlah percobaan yang sudah dilakukan
     const { data: existing, count: attemptCount } = await supabase
       .from('hasil_quiz').select('id, skor, benar, total_soal', { count: 'exact' })
       .eq('murid_id', murid_id).eq('quiz_id', quiz_id);
 
-    if (existing && existing.length >= maxAttempt) {
+    if (maxAttempt > 0 && existing && existing.length >= maxAttempt) {
       const last = existing[existing.length - 1];
       return res.json({
         success: true, pesan: 'Batas percobaan habis',
@@ -429,8 +434,8 @@ router.get('/hasil/cek', authMiddleware, async (req, res) => {
     const murid_id = req.user.id || req.user.userId;
 
     const { data: quizData } = await supabase
-      .from('quiz').select('max_attempt').eq('id', quiz_id).single();
-    const maxAttempt = quizData?.max_attempt ?? 1;
+      .from('quiz').select('max_attempt, deadline').eq('id', quiz_id).single();
+    const maxAttempt = quizData?.max_attempt ?? 0;
 
     const { data, error } = await supabase
       .from('hasil_quiz')
