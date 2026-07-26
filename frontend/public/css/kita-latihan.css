@@ -18,8 +18,8 @@
       --red-lighter: #FFF5F0;
     }
     *{box-sizing:border-box;margin:0;padding:0}
-    html{scroll-behavior:smooth}
-    body{font-family:var(--ff-body);background:radial-gradient(900px 650px at 0% 0%,rgba(255,107,53,.15),transparent 60%),radial-gradient(850px 620px at 100% 3%,rgba(255,107,157,.13),transparent 58%),radial-gradient(1000px 780px at 50% 110%,rgba(178,63,201,.12),transparent 62%),var(--orange-50);background-attachment:fixed;color:#1a1a2e;overflow-x:hidden;min-height:100vh}
+    html{scroll-behavior:smooth;overscroll-behavior-y:none}
+    body{font-family:var(--ff-body);background:radial-gradient(900px 650px at 0% 0%,rgba(255,107,53,.15),transparent 60%),radial-gradient(850px 620px at 100% 3%,rgba(255,107,157,.13),transparent 58%),radial-gradient(1000px 780px at 50% 110%,rgba(178,63,201,.12),transparent 62%),var(--orange-50);background-attachment:fixed;color:#1a1a2e;overflow-x:hidden;min-height:100vh;overscroll-behavior-y:none}
 
     /* â”€â”€ BG FLOATING SHAPES â”€â”€ */
     #bg-wrap{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
