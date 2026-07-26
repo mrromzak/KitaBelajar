@@ -1375,8 +1375,6 @@ async function submitKuisKelas(isManual = false) {
   await simpanHasilKuisKelas();
 }
 
-let kuisStartTime = null;
-
 function konfirmasiKirimKuis() {
   closeModal('modal-konfirmasi-kuis');
   if (typeof window._konfirmasiKuisCallback === 'function') {
