@@ -1114,6 +1114,23 @@ async function initServiceWorker() {
   try {
     _swRegistration = await navigator.serviceWorker.register('/sw.js');
     console.log('[SW] Service worker terdaftar.');
+
+    // Auto-deteksi SW baru: kalau ada versi baru terpasang,
+    // tampilkan toast + reload otomatis setelah 3 detik
+    _swRegistration.addEventListener('updatefound', () => {
+      const newWorker = _swRegistration.installing;
+      if (!newWorker) return;
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          // Ada SW baru menunggu — paksa reload supaya aset lama tidak ke-cache
+          console.log('[SW] Versi baru tersedia, reload...');
+          if (typeof toast === 'function') {
+            toast('Versi baru tersedia. Halaman akan diperbarui...', 'info');
+          }
+          setTimeout(() => location.reload(), 3000);
+        }
+      });
+    });
   } catch(e) {
     console.warn('[SW] Gagal daftar service worker:', e.message);
   }
