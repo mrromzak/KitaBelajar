@@ -2254,7 +2254,7 @@ async function loadBadges() {
 
     const renderIcon = (icon) => {
       if (icon && /\.(png|jpg|jpeg|webp)$/i.test(icon)) {
-        return `<img src="/assets/badges/${icon}" alt="" style="width:48px;height:48px;object-fit:contain">`;
+        return `<img src="/assets/badge/${icon}" alt="" style="width:48px;height:48px;object-fit:contain">`;
       }
       return icon || '🏅';
     };
