@@ -309,7 +309,7 @@ router.post('/hasil', authMiddleware, async (req, res) => {
     // Ambil soal quiz dengan jawaban terenkripsi untuk validasi
     const { data: qs, error: sErr } = await supabase
       .from('quiz_soal')
-      .select('soal(id, jawaban, poin, jenis)')
+      .select('soal(id, jawaban, poin, jenis, pertanyaan, emoji, mapel, opsi)')
       .eq('quiz_id', quiz_id)
       .order('urutan');
     if (sErr) throw sErr;
@@ -327,7 +327,17 @@ router.post('/hasil', authMiddleware, async (req, res) => {
         jawabanUser.trim().toLowerCase() === jawabanBenar.trim().toLowerCase();
       const poinDapat = isBenar ? (q.poin || 100) : 0;
       if (isBenar) { benar++; totalPoin += poinDapat; }
-      detail.push({ soal_id: q.id, benar: isBenar, poin_dapat: poinDapat });
+      detail.push({
+        soal_id: q.id,
+        pertanyaan: q.pertanyaan,
+        emoji: q.emoji,
+        mapel: q.mapel,
+        opsi: q.opsi,
+        jawaban_benar: jawabanBenar,
+        jawaban_user: jawabanUser,
+        benar: isBenar,
+        poin_dapat: poinDapat
+      });
     });
 
     const skor = total_soal > 0 ? Math.round((benar / total_soal) * 100) : 0;
@@ -346,6 +356,19 @@ router.post('/hasil', authMiddleware, async (req, res) => {
     if (error) {
       console.error('[POST /quiz/hasil] insert error:', error.message);
       return res.status(500).json({ success: false, pesan: 'Gagal menyimpan hasil: ' + error.message });
+    }
+
+    // Simpan detail jawaban per-soal ke tabel detail_jawaban
+    const detailInsert = detail.map(d => ({
+      hasil_id: hasil.id,
+      soal_id: d.soal_id,
+      jawaban_user: d.jawaban_user,
+      benar: d.benar,
+      poin_dapat: d.poin_dapat
+    }));
+    const { error: detailErr } = await supabase.from('detail_jawaban').insert(detailInsert);
+    if (detailErr) {
+      console.warn('[POST /quiz/hasil] detail_jawaban insert error:', detailErr.message);
     }
 
     // Notif ke guru jika kuis dikerjakan
@@ -597,6 +620,54 @@ router.get('/:id/submission/cek', authMiddleware, async (req, res) => {
     res.json({ success: true, sudah: !!data, submission: data || null });
   } catch(e) {
     res.json({ success: true, sudah: false, submission: null });
+  }
+});
+
+// ============================================================
+//  GET /api/quiz/hasil/:hasil_id/detail  — detail jawaban per soal
+// ============================================================
+router.get('/hasil/:hasil_id/detail', authMiddleware, async (req, res) => {
+  try {
+    const { hasil_id } = req.params;
+    const murid_id = req.user.id || req.user.userId;
+
+    // Verifikasi hasil_quiz milik murid ini
+    const { data: hasil, error: hErr } = await supabase
+      .from('hasil_quiz').select('id, murid_id, quiz_id, skor, benar, total_soal')
+      .eq('id', hasil_id).single();
+    if (hErr || !hasil) {
+      return res.status(404).json({ success: false, pesan: 'Hasil tidak ditemukan' });
+    }
+    if (hasil.murid_id !== murid_id) {
+      return res.status(403).json({ success: false, pesan: 'Akses ditolak' });
+    }
+
+    // Ambil detail jawaban + join soal untuk teks dan opsi
+    const { data: raw, error: dErr } = await supabase
+      .from('detail_jawaban')
+      .select(`
+        id, soal_id, jawaban_user, benar, poin_dapat,
+        soal:soal_id(pertanyaan, emoji, mapel, opsi, jawaban, poin, jenis)
+      `)
+      .eq('hasil_id', hasil_id);
+    if (dErr) throw dErr;
+
+    const detail = (raw || []).map(d => ({
+      soal_id: d.soal_id,
+      pertanyaan: d.soal?.pertanyaan || '',
+      emoji: d.soal?.emoji || '❓',
+      mapel: d.soal?.mapel || '',
+      opsi: d.soal?.opsi || [],
+      jawaban_benar: d.soal?.jawaban ? decrypt(d.soal.jawaban) : '',
+      jawaban_user: d.jawaban_user,
+      benar: d.benar,
+      poin_dapat: d.poin_dapat
+    }));
+
+    res.json({ success: true, hasil, detail });
+  } catch(e) {
+    console.error('[GET /quiz/hasil/:id/detail]', e.message);
+    res.status(500).json({ success: false, pesan: 'Gagal memuat detail jawaban' });
   }
 });
 

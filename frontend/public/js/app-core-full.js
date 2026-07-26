@@ -2245,19 +2245,52 @@ async function klaimMisi(misiMuridId, btn) {
 }
 
 // ── BADGES ─────────────────────────────────────────
+function renderBadgeIcon(icon) {
+  if (icon && /\.(png|jpg|jpeg|webp)$/i.test(icon)) {
+    return `<img src="/assets/badges/${icon}" alt="" style="width:48px;height:48px;object-fit:contain">`;
+  }
+  return icon || '🏅';
+}
+
+function openBadgeModal(b) {
+  let overlay = document.getElementById('badge-modal-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'badge-modal-overlay';
+    overlay.className = 'badge-modal-overlay';
+    overlay.innerHTML = `
+      <div class="badge-modal-card">
+        <button class="badge-modal-close" aria-label="Tutup">✕</button>
+        <div class="badge-modal-icon"></div>
+        <div class="badge-modal-nama"></div>
+        <div class="badge-modal-status"></div>
+        <div class="badge-modal-deskripsi"></div>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.classList.remove('open');
+    });
+    overlay.querySelector('.badge-modal-close').addEventListener('click', () => {
+      overlay.classList.remove('open');
+    });
+  }
+  const iconSrc = b.icon && /\.(png|jpg|jpeg|webp)$/i.test(b.icon) ? `/assets/badges/${b.icon}` : null;
+  overlay.querySelector('.badge-modal-icon').innerHTML = iconSrc
+    ? `<img src="${iconSrc}" alt="" style="width:120px;height:120px;object-fit:contain">`
+    : `<span style="font-size:64px">${b.icon || '🏅'}</span>`;
+  overlay.querySelector('.badge-modal-nama').textContent = b.nama;
+  overlay.querySelector('.badge-modal-status').textContent = b.dimiliki ? '✅ Sudah kamu miliki' : '🔒 Belum diperoleh';
+  overlay.querySelector('.badge-modal-status').style.color = b.dimiliki ? '#12B886' : '#999';
+  overlay.querySelector('.badge-modal-deskripsi').textContent = b.deskripsi || '';
+  overlay.classList.add('open');
+}
+
 async function loadBadges() {
   const token = localStorage.getItem('kb_token') || '';
   try {
     const res  = await fetch('/api/misi/badges/semua', { headers: { Authorization: 'Bearer ' + token } });
     const json = await res.json();
     if (!json.success) return;
-
-    const renderIcon = (icon) => {
-      if (icon && /\.(png|jpg|jpeg|webp)$/i.test(icon)) {
-        return `<img src="/assets/badge/${icon}" alt="" style="width:48px;height:48px;object-fit:contain">`;
-      }
-      return icon || '🏅';
-    };
 
     const dimiliki = json.data.filter(b => b.dimiliki);
     const semua    = json.data;
@@ -2268,20 +2301,27 @@ async function loadBadges() {
     if (dimiliki.length === 0) {
       elDimiliki.innerHTML = '<div style="color:var(--muted);font-size:13px">Belum punya badge. Selesaikan misi untuk dapat badge!</div>';
     } else {
-      elDimiliki.innerHTML = dimiliki.map(b => `
-        <div class="badge-card dimiliki" title="${b.deskripsi}">
-          <div class="badge-icon">${renderIcon(b.icon)}</div>
+      elDimiliki.innerHTML = dimiliki.map((b, i) => `
+        <div class="badge-card dimiliki" title="${b.deskripsi}" data-badge-idx="${i}" data-badge-group="dimiliki">
+          <div class="badge-icon">${renderBadgeIcon(b.icon)}</div>
           <div class="badge-nama">${b.nama}</div>
         </div>`).join('');
+      elDimiliki.querySelectorAll('.badge-card').forEach((el, i) => {
+        el.addEventListener('click', () => openBadgeModal(dimiliki[i]));
+      });
     }
 
-    elSemua.innerHTML = semua.map(b => `
-      <div class="badge-card ${b.dimiliki ? 'dimiliki' : 'locked'}" title="${b.deskripsi}">
-        <div class="badge-icon">${renderIcon(b.icon)}</div>
+    elSemua.innerHTML = semua.map((b, i) => `
+      <div class="badge-card ${b.dimiliki ? 'dimiliki' : 'locked'}" title="${b.deskripsi}" data-badge-idx="${i}" data-badge-group="semua">
+        <div class="badge-icon">${renderBadgeIcon(b.icon)}</div>
         <div class="badge-nama">${b.nama}</div>
       </div>`).join('');
+    elSemua.querySelectorAll('.badge-card').forEach((el, i) => {
+      el.addEventListener('click', () => openBadgeModal(semua[i]));
+    });
   } catch(e) { toast('Gagal memuat badge.'); }
 }
+
 
 // ============================================================
 //  KELAS CARD RENDERER
@@ -7677,6 +7717,7 @@ async function submitKuisKelas(isManual = false) {
 
   let skor = 0, benar = 0, totalPoin = 0, total_soal = soal.length;
   let attempt = 1, max_attempt = 1;
+  let hasilDetail = [];
 
   try {
     const simpan = await api('POST', '/quiz/hasil', {
@@ -7691,6 +7732,7 @@ async function submitKuisKelas(isManual = false) {
       totalPoin  = simpan.totalPoin  ?? 0;
       attempt    = simpan.attempt    ?? 1;
       max_attempt = simpan.max_attempt ?? 1;
+      hasilDetail = simpan.detail || [];
     } else {
       console.warn('Gagal simpan hasil:', simpan.pesan);
     }
@@ -7713,18 +7755,73 @@ async function submitKuisKelas(isManual = false) {
     <div style="background:#FFEFE8;border-radius:14px;padding:16px;text-align:center"><div style="font-family:'Fredoka One',cursive;font-size:28px;color:var(--orange)">${totalPoin}</div><div style="font-size:12px;color:var(--muted);font-weight:700">Poin</div></div>
   `;
 
+  // Simpan hasil detail untuk review
+  window._kuisHasilDetail = hasilDetail;
+
   // Render navigation buttons on results page
   const sisaAttempt = max_attempt - attempt;
   let buttonsHtml = `<button onclick="kembaliDariHasil()" style="background:var(--blue);color:white;border:none;padding:14px 32px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">🏫 Kembali ke Kelas</button>`;
+  if (hasilDetail.length > 0) {
+    buttonsHtml += `<button onclick="toggleHasilReview()" style="background:white;color:var(--blue);border:2px solid var(--blue);padding:14px 32px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">📋 Review Jawaban</button>`;
+  }
   if (sisaAttempt > 0) {
     buttonsHtml += `<button onclick="mulaiKuisKelas('${kuisKelasData.id}')" style="background:var(--orange);color:white;border:none;padding:14px 32px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">🔄 Coba Lagi (${sisaAttempt}x sisa)</button>`;
   }
   document.getElementById('hasil-nav-btns').innerHTML = buttonsHtml;
 
+  document.getElementById('hasil-review').style.display = 'none';
+
   showPage('page-kuis-hasil');
 }
 
 let kuisStartTime = null;
+
+function toggleHasilReview() {
+  const el = document.getElementById('hasil-review');
+  if (el.style.display === 'none') {
+    renderHasilReview();
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function renderHasilReview() {
+  const detail = window._kuisHasilDetail || [];
+  const list = document.getElementById('hasil-review-list');
+  list.innerHTML = detail.map((d, i) => {
+    const opsiHtml = Array.isArray(d.opsi)
+      ? d.opsi.map((o, oi) => {
+          const letter = String.fromCharCode(65 + oi);
+          const isUserAnswer = d.jawaban_user && d.jawaban_user.trim().toLowerCase() === o.trim().toLowerCase();
+          const isCorrectAnswer = d.jawaban_benar && d.jawaban_benar.trim().toLowerCase() === o.trim().toLowerCase();
+          let bg = 'white', border = '#E8E8E8', text = 'var(--text)', badge = '';
+          if (isCorrectAnswer) { bg = '#E8F8EE'; border = '#6BCB77'; text = '#27AE60'; }
+          if (isUserAnswer && !d.benar) { bg = '#FFEFE8'; border = '#E74C3C'; text = '#E74C3C'; }
+          if (isUserAnswer && d.benar) { badge = ' ✅'; }
+          return `<div style="padding:10px 14px;border-radius:12px;border:2px solid ${border};background:${bg};display:flex;align-items:center;gap:10px;margin-top:6px;font-weight:700;font-size:14px;color:${text}">
+            <span style="width:28px;height:28px;border-radius:50%;background:#F0F0F0;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:900">${letter}</span>
+            <span style="flex:1">${o}</span>
+            ${isUserAnswer && d.benar ? '<span style="font-size:16px">✅</span>' : ''}
+            ${isUserAnswer && !d.benar ? '<span style="font-size:13px;color:#E74C3C;font-weight:800">Jawabanmu</span>' : ''}
+            ${isCorrectAnswer && !isUserAnswer ? '<span style="font-size:13px;color:#27AE60;font-weight:800">✓ Benar</span>' : ''}
+          </div>`;
+        }).join('')
+      : `<div style="padding:10px 14px;border-radius:12px;border:2px solid #E8E8E8;background:white;font-size:14px;color:var(--muted)">Tidak ada opsi</div>`;
+
+    const statusIcon = d.benar ? '✅' : '❌';
+    const statusLabel = d.benar ? 'Benar' : 'Salah';
+
+    return `<div style="background:#F8F9FA;border-radius:16px;padding:18px;border:1.5px solid ${d.benar ? '#6BCB77' : '#FFB3B3'}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:13px;color:var(--muted);font-weight:700">${d.mapel || ''} · Soal ${i + 1}</div>
+        <div style="font-size:13px;font-weight:800;color:${d.benar ? '#27AE60' : '#E74C3C'}">${statusIcon} ${statusLabel}</div>
+      </div>
+      <div style="font-weight:800;font-size:16px;margin-bottom:10px">${d.emoji || ''} ${d.pertanyaan}</div>
+      ${opsiHtml}
+    </div>`;
+  }).join('');
+}
 
 function batalKuisKelas() {
   clearInterval(kuisFunTimer);
