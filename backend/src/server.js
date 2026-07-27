@@ -100,6 +100,18 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(antiJudolMiddleware);        // Blokir konten judol di body
 
+// Pastikan semua response HTML pakai charset UTF-8 (cegah mojibake)
+app.use((req, res, next) => {
+  const send = res.send;
+  res.send = function (body) {
+    if (typeof body === 'string' && !res.getHeader('Content-Type')) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    }
+    return send.call(this, body);
+  };
+  next();
+});
+
 // Static files: aset statis dengan cache optimal
 // Cache JS/CSS 1 tahun jika pakai ?v= versioning, gambar/font 7 hari, HTML no-cache
 app.use(/^\/(js|css|assets)/, (req, res, next) => {
