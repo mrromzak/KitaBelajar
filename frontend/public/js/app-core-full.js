@@ -415,6 +415,15 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
 });
 
+// ── FEATURE CARD CLICK (delegated) ────────────────────────────
+document.addEventListener('click', e => {
+  const card = e.target.closest('[data-feature]');
+  if (!card) return;
+  const key = card.dataset.feature;
+  if (!featureData[key]) return;
+  openFeatureModal(key);
+});
+
 // ============================================================
 //  AUTH
 // ============================================================
