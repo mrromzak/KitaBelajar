@@ -1531,16 +1531,10 @@ body.dark-mode .badge-modal-sub {
   color: var(--muted);
 }
 body.dark-mode .logo-maskot, body.dark-mode .logo img {
-  background: white;
-  border-radius: 50%;
-  padding: 3px;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+  filter: none;
 }
 body.dark-mode .maskot-img {
-  background: white;
-  border-radius: 50%;
-  padding: 12px;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.5));
 }
 body.dark-mode .lp-hero-mascot {
   filter: drop-shadow(0 0 18px rgba(255,255,255,0.35));
