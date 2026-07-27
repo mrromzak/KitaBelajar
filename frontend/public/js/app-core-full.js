@@ -1,6 +1,15 @@
 // ============================================================
 //  CONFIG
 // ============================================================
+const SENTRY_DSN = window._sentryDsn || null;
+if (typeof Sentry !== 'undefined' && SENTRY_DSN) {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    environment: 'production',
+    tracesSampleRate: 0.1,
+  });
+}
+
 const API = window.location.origin + '/api';
 let token = localStorage.getItem('kb_token') || null;
 const socket = io(window.location.origin, {

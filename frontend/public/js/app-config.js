@@ -1,4 +1,7 @@
   (function() {
+    // Konfigurasi Sentry — ganti dengan DSN dari sentry.io
+    window._sentryDsn = null; // 'https://xxx@xxx.ingest.de.sentry.io/xxx'
+
     function kirimError(pesan, stack, extra) {
       try {
         fetch('/api/log-error', {
