@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/png" href="/assets/maskot-icon.png?v=1">
-<title>KitaBelajar — Retention Engine untuk Bimbel</title>
+<title>KitaBelajar — Platform Belajar Menyenangkan</title>
 <!-- Google Identity Services -->
 <script src="https://accounts.google.com/gsi/client" async></script>
 <!-- KaTeX: render notasi matematika LaTeX -->
@@ -13,7 +13,7 @@
   onload="window._katexLoaded=true;window._gchatRenderPending&&window._gchatRenderPending()"></script>
 <!-- Error Logger — kirim error JS ke server KitaBelajar sendiri -->
 <script src="/js/app-config.js?v=1"></script>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&family=Instrument+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/belajar-seru.css?v=37">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="https://meet.ffmuc.net/external_api.js"></script>
@@ -26,204 +26,72 @@
 
 <!-- ========== LANDING ========== -->
 <div class="page active" id="page-landing">
-  <nav class="navbar landing-nav">
-    <div class="logo logo-lp" onclick="document.getElementById('lp-hero').scrollIntoView({behavior:'smooth'})" style="cursor:pointer;color:#FF6B35">
-      <img src="/assets/maskot-icon.png?v=4" alt="KitaBelajar" class="logo-maskot" style="height:42px;width:auto;object-fit:contain">
+  <nav class="navbar">
+    <div class="logo">
+      <img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0">
       KitaBelajar
     </div>
     <div class="nav-links">
-      <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">&#x1F319;</button>
+      <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">🌙</button>
       <button class="nav-btn murid" onclick="showLogin()">Masuk</button>
     </div>
   </nav>
-
-  <!-- ===== HERO ===== -->
-  <section class="lp-hero" id="lp-hero">
-    <div class="lp-container">
-      <div class="lp-hero-grid">
-        <div class="lp-hero-content">
-          <div class="lp-badge">Platform belajar yang menyenangkan</div>
-          <h1 class="lp-title">Belajar jadi <em>super seru</em> & menyenangkan!</h1>
-          <p class="lp-desc">Materi lengkap, soal latihan, dan games seru yang bikin kamu semangat belajar setiap hari.</p>
-          <div class="lp-hero-actions">
-            <button class="lp-btn lp-btn-primary" onclick="showLogin()">Ayo Mulai Belajar</button>
-            <button class="lp-btn lp-btn-outline" onclick="document.getElementById('lp-section-murid').scrollIntoView({behavior:'smooth'})">Pelajari Selengkapnya <span class="lp-arrow">&rarr;</span></button>
+  <div class="hero">
+    <div class="hero-shapes">
+      <div class="shape"></div><div class="shape"></div>
+      <div class="shape"></div><div class="shape"></div>
+    </div>
+    <div class="hero-inner">
+      <div class="hero-text">
+        <div class="hero-badge">✨ Platform Belajar Yang Menyenangkan</div>
+        <h1>Belajar Jadi <em>Super Seru</em> & Menyenangkan!</h1>
+        <p>Materi lengkap, soal latihan, dan games seru yang bikin kamu semangat belajar setiap hari!</p>
+        <div class="hero-maskot">
+          <div class="maskot-wrap">
+            <div class="hero-bubble bubble-1">Ayo belajar! 📚</div>
+            <div class="hero-bubble bubble-2">Seru banget! ✨</div>
+            <div class="hero-bubble bubble-3">Kamu pasti bisa! 💪</div>
+            <img src="/assets/maskot.png?v=2" alt="Maskot KitaBelajar" class="maskot-img"
+              style="width:320px;height:320px;object-fit:contain;display:block">
           </div>
         </div>
-        <div class="lp-hero-visual lp-hero-mascot-wrap">
-          <img src="/assets/maskot.png?v=3" alt="Maskot KitaBelajar" class="lp-hero-mascot">
-          <div class="lp-bubble lp-bubble-1"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;min-width:16px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Ayo belajar!</div>
-          <div class="lp-bubble lp-bubble-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;min-width:16px"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg>Seru banget!</div>
-          <div class="lp-bubble lp-bubble-3"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;min-width:16px"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>Kamu pasti bisa!</div>
+        <div class="hero-buttons">
+          <button class="btn-big btn-murid" onclick="showLogin()">Ayo Mulai Belajar</button>
+          <button class="btn-big btn-guru" onclick="showRegister()">Daftar Gratis</button>
         </div>
       </div>
     </div>
-  </section>
-
-  <!-- ===== SECTION: PROBLEM (BIMBEL) ===== -->
-  <section class="lp-section lp-problem" id="lp-section-bimbel">
-    <div class="lp-container">
-      <div class="lp-section-label">Masalah</div>
-      <h2 class="lp-section-title">Murid berhenti diam-diam. Tanpa kamu sadari.</h2>
-      <p class="lp-section-desc">Banyak bimbel kehilangan murid bukan karena kualitas pengajaran, tapi karena tidak ada sinyal awal. Orang tua baru memberi tahu setelah anak sudah tidak mau datang. Saat itu, biasanya sudah terlambat.</p>
-      <div class="lp-stats-strip">
-        <div class="lp-stat-item">
-          <div class="lp-stat-number">72%</div>
-          <div class="lp-stat-label">Murid at-risk menunjukkan penurunan login &gt;1 minggu sebelum berhenti</div>
-        </div>
-        <div class="lp-stat-item">
-          <div class="lp-stat-number">3x</div>
-          <div class="lp-stat-label">Peluang retensi meningkat jika tentor diingatkan lebih awal</div>
-        </div>
-        <div class="lp-stat-item">
-          <div class="lp-stat-number">50%</div>
-          <div class="lp-stat-label">Penurunan aktivitas terjadi dalam 30 hari sebelum murid keluar</div>
-        </div>
+  </div>
+  <div class="features">
+    <div class="feature-card" onclick="openFeatureModal('materi')">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
       </div>
+      <h3>Materi Lengkap</h3><p>Semua mata pelajaran SD, SMP, SMA tersedia dengan penjelasan yang mudah dipahami</p>
+      <div class="feature-click-hint">Klik untuk tahu lebih detail →</div>
     </div>
-  </section>
-
-  <!-- ===== SECTION: DIFFERENTIATOR (SIGNAL STRIP) ===== -->
-  <section class="lp-section lp-diff">
-    <div class="lp-container">
-      <h2 class="lp-section-title lp-diff-title">Datanya sudah kami kumpulkan. Notifikasi otomatisnya sedang kami bangun.</h2>
-      <p class="lp-section-desc lp-diff-desc">KitaBelajar sudah mencatat sebagian besar sinyal ini di setiap kelas — satu lagi masih di roadmap. Bersama bimbel mitra, kami sedang menggabungkannya jadi satu skor risiko dengan notifikasi otomatis ke tentor.</p>
-      <div class="lp-signal-strip">
-        <div class="lp-signal-item">
-          <span class="lp-signal-dot dot-a"></span>
-          <h3>Aktivitas Login</h3>
-          <p>Tercatat otomatis setiap kali murid masuk ke kelas.</p>
-        </div>
-        <div class="lp-signal-item">
-          <span class="lp-signal-dot dot-b"></span>
-          <h3>Tren Nilai Quiz</h3>
-          <p>Setiap hasil quiz tersimpan, siap dibandingkan antar minggu.</p>
-        </div>
-        <div class="lp-signal-item lp-signal-item-roadmap">
-          <span class="lp-signal-dot dot-a"></span>
-          <span class="lp-signal-roadmap-tag">Roadmap</span>
-          <h3>Interaksi AI</h3>
-          <p>Direncanakan setelah asisten AI untuk murid dirilis — belum tersedia saat ini.</p>
-        </div>
-        <div class="lp-signal-item">
-          <span class="lp-signal-dot dot-b"></span>
-          <h3>Progres XP</h3>
-          <p>Kecepatan naik level jadi indikator keterlibatan murid.</p>
-        </div>
+    <div class="feature-card" onclick="openFeatureModal('latihan')">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
       </div>
+      <h3>Latihan Soal</h3><p>Ribuan soal latihan dengan tingkat kesulitan yang bisa disesuaikan</p>
+      <div class="feature-click-hint">Klik untuk tahu lebih detail →</div>
     </div>
-  </section>
-
-  <!-- ===== SECTION: FITUR MURID ===== -->
-  <section class="lp-section lp-student" id="lp-section-murid">
-    <div class="lp-container">
-      <div class="lp-section-label">Fitur Murid</div>
-      <h2 class="lp-section-title">Setiap langkah belajar kamu berarti.</h2>
-      <p class="lp-section-desc">Di sisi murid, KitaBelajar adalah platform belajar menyenangkan dengan materi lengkap, games, dan sistem poin. Bedanya: setiap aktivitas murid memperkaya data yang bisa dilihat tentor.</p>
-      <div class="lp-student-grid">
-        <div class="lp-student-card" data-feature="materi">
-          <div class="lp-student-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-          </div>
-          <h3>Materi Lengkap</h3>
-          <p>Semua mata pelajaran SD, SMP, SMA tersedia dengan penjelasan yang mudah dipahami</p>
-          <span class="lp-student-cta">Lihat detail <span class="lp-arrow">&rarr;</span></span>
-        </div>
-        <div class="lp-student-card" data-feature="latihan">
-          <div class="lp-student-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          </div>
-          <h3>Latihan Soal</h3>
-          <p>Ribuan soal latihan dengan tingkat kesulitan yang bisa disesuaikan</p>
-          <span class="lp-student-cta">Lihat detail <span class="lp-arrow">&rarr;</span></span>
-        </div>
-        <div class="lp-student-card" data-feature="games">
-          <div class="lp-student-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
-          </div>
-          <h3>Games Edukatif</h3>
-          <p>Belajar sambil bermain! Quiz, puzzle, flashcard, dan masih banyak lagi</p>
-          <span class="lp-student-cta">Lihat detail <span class="lp-arrow">&rarr;</span></span>
-        </div>
-        <div class="lp-student-card" data-feature="poin">
-          <div class="lp-student-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><path d="M8.21 13.89 7 23l5-3 5 3-1.21-9.12"/></svg>
-          </div>
-          <h3>Sistem Poin</h3>
-          <p>Kumpulkan XP dan naiki leaderboard kelas! Buktikan kamu yang terbaik</p>
-          <span class="lp-student-cta">Lihat detail <span class="lp-arrow">&rarr;</span></span>
-        </div>
+    <div class="feature-card" onclick="openFeatureModal('games')">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
       </div>
+      <h3>Games Edukatif</h3><p>Belajar sambil bermain! Quiz, puzzle, flashcard, dan masih banyak lagi</p>
+      <div class="feature-click-hint">Klik untuk tahu lebih detail →</div>
     </div>
-  </section>
-
-  <!-- ===== SECTION: KREDIBILITAS ===== -->
-  <section class="lp-section lp-cred">
-    <div class="lp-container lp-cred-layout">
-      <div class="lp-cred-text">
-        <div class="lp-section-label">Status</div>
-        <h2 class="lp-section-title">Dibangun dari kebutuhan nyata, bukan sekadar proyek.</h2>
-        <p class="lp-section-desc">KitaBelajar sedang dalam pengembangan aktif bersama bimbel mitra.</p>
-        <div class="lp-cred-note">
-          <strong>Sedang dalam pengembangan aktif</strong> &mdash; fitur retention engine masih diuji bersama bimbel mitra. Hubungi kami untuk akses early access atau demo.
-        </div>
+    <div class="feature-card" onclick="openFeatureModal('poin')">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><path d="M8.21 13.89 7 23l5-3 5 3-1.21-9.12"/></svg>
       </div>
-      <div class="lp-cred-numbers">
-        <div class="lp-cred-row">
-          <span class="lp-cred-num" data-count="2400">0</span>
-          <span class="lp-cred-label">Total soal tersedia</span>
-        </div>
-        <div class="lp-cred-row">
-          <span class="lp-cred-num">12</span>
-          <span class="lp-cred-label">Mata pelajaran</span>
-        </div>
-        <div class="lp-cred-row">
-          <span class="lp-cred-num" data-count="450">0</span>
-          <span class="lp-cred-label">Pengguna terdaftar</span>
-        </div>
-        <div class="lp-cred-row">
-          <span class="lp-cred-num">6</span>
-          <span class="lp-cred-label">Kelas aktif</span>
-        </div>
-      </div>
+      <h3>Sistem Poin</h3><p>Kumpulkan XP dan naiki leaderboard kelas! Buktikan kamu yang terbaik</p>
+      <div class="feature-click-hint">Klik untuk tahu lebih detail →</div>
     </div>
-  </section>
-
-  <!-- ===== SECTION: CTA PENUTUP ===== -->
-  <section class="lp-section lp-cta" id="lp-section-close">
-    <div class="lp-container">
-      <div class="lp-cta-grid">
-        <div class="lp-cta-card lp-cta-primary">
-          <h3>Untuk Bimbel</h3>
-          <p>Kelola kelas dan lihat sinyal keterlibatan murid di satu tempat&mdash;dengan data, bukan tebakan.</p>
-          <button class="lp-btn lp-btn-white" onclick="document.getElementById('lp-section-bimbel').scrollIntoView({behavior:'smooth'})">Pelajari Lebih Lanjut <span class="lp-arrow">&rarr;</span></button>
-        </div>
-        <div class="lp-cta-card lp-cta-secondary">
-          <h3>Untuk Murid</h3>
-          <p>Belajar dengan materi lengkap, latihan soal, dan games seru. Ayo mulai!</p>
-          <button class="lp-btn lp-btn-murid" onclick="showLogin()">Coba Sekarang <span class="lp-arrow">&rarr;</span></button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== FOOTER ===== -->
-  <footer class="lp-footer">
-    <div class="lp-container">
-      <div class="lp-footer-inner">
-        <div class="lp-footer-brand">
-          <img src="/assets/maskot.png?v=3" alt="KitaBelajar" style="height:24px;width:auto;object-fit:contain;margin-right:8px">
-          KitaBelajar
-        </div>
-        <div class="lp-footer-links">
-          <a href="#" onclick="showLogin();return false">Masuk</a>
-          <a href="#" onclick="showRegister();return false">Daftar</a>
-          <a href="mailto:kitabelajar1124@gmail.com">Kontak</a>
-        </div>
-        <div class="lp-footer-copy">&copy; 2026 KitaBelajar. Dibangun di Indonesia.</div>
-      </div>
-    </div>
-  </footer>
+  </div>
 
   <!-- Modal Fitur Detail (Slide Down) -->
   <div class="modal-overlay" id="modal-feature-detail" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:9999" onclick="if(event.target===this)closeFeatureModal()">
@@ -238,36 +106,12 @@
   </div>
 </div>
 
-<script>
-function switchLandingSection(section) {
-  document.querySelectorAll('.lp-nav-link').forEach(el => el.classList.toggle('active', el.dataset.lp === section));
-  if (section === 'bimbel') {
-    document.getElementById('lp-section-bimbel').scrollIntoView({behavior:'smooth'});
-  } else {
-    document.getElementById('lp-section-murid').scrollIntoView({behavior:'smooth'});
-  }
-}
-document.querySelectorAll('[data-count]').forEach(el => {
-  const target = parseInt(el.dataset.count);
-  const dur = 1500; const start = performance.now();
-  function step(now) {
-    const p = Math.min((now - start) / dur, 1);
-    el.textContent = Math.floor(p * target) + '+';
-    if (p < 1) requestAnimationFrame(step);
-  }
-  const obs = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting) { requestAnimationFrame(step); obs.disconnect(); }
-  });
-  obs.observe(el);
-});
-</script>
-
 <!-- ========== LOGIN ========== -->
 <div class="page" id="page-login">
   <nav class="navbar">
     <div style="display:flex;align-items:center;gap:10px">
       <button class="nav-btn back" onclick="showPage('page-landing')">← Kembali</button>
-      <div class="logo"><img src="/assets/maskot-icon.png?v=4" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+      <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
     </div>
     <div class="nav-links">
       <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">🌙</button>
@@ -307,7 +151,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
   <nav class="navbar">
     <div style="display:flex;align-items:center;gap:10px">
       <button class="nav-btn back" onclick="showPage('page-login')">← Kembali</button>
-      <div class="logo"><img src="/assets/maskot-icon.png?v=4" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+      <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
     </div>
     <div class="nav-links">
     </div>
@@ -363,7 +207,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
 <!-- ========== RESET SANDI (via link lama — tetap untuk kompatibilitas) ========== -->
 <div class="page" id="page-reset">
   <nav class="navbar">
-    <div class="logo"><img src="/assets/maskot-icon.png?v=4" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+    <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
   </nav>
   <div class="login-wrap">
     <div class="login-card">
@@ -387,7 +231,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
   <nav class="navbar">
     <div style="display:flex;align-items:center;gap:10px">
       <button class="nav-btn back" onclick="showPage('page-login')">← Kembali</button>
-      <div class="logo"><img src="/assets/maskot-icon.png?v=4" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+      <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
     </div>
     <div class="nav-links">
       <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">🌙</button>
@@ -452,7 +296,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
 <div class="page" id="page-murid">
   <nav class="navbar">
     <div style="display:flex;align-items:center;gap:10px">
-      <div class="logo"><img src="/assets/maskot-icon.png?v=4" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+      <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
     </div>
     <div class="nav-links">
       <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">🌙</button>
@@ -504,7 +348,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
 
     <div class="section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Belajar &amp; Latihan</div>
     <div style="display:flex;flex-direction:column;gap:12px">
-      <div class="kb-latihan-banner" onclick="window.location.href='kita-latihan.html'" style="background:linear-gradient(90deg,#E8420A,#FF7A3D);box-shadow:0 6px 24px rgba(250,74,12,0.32)">
+      <div class="kb-latihan-banner" onclick="window.location.href='kita-latihan.html'">
         <div class="kb-latihan-banner-left">
           <div class="kb-latihan-banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></div>
           <div class="kb-latihan-banner-text">
@@ -514,7 +358,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
         </div>
         <div class="kb-latihan-banner-btn">Latihan →</div>
       </div>
-      <div class="kb-latihan-banner" onclick="window.location.href='kita-materi.html'" style="background:linear-gradient(90deg,#E8420A,#FF7A3D);box-shadow:0 6px 24px rgba(250,74,12,0.35)">
+      <div class="kb-latihan-banner" onclick="window.location.href='kita-materi.html'" style="background:linear-gradient(135deg,#B23FC9,#FF7E5F)">
         <div class="kb-latihan-banner-left">
           <div class="kb-latihan-banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg></div>
           <div class="kb-latihan-banner-text">
@@ -531,7 +375,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
 <!-- ========== LEADERBOARD & MISI ========== -->
 <div class="page" id="page-leaderboard">
   <nav class="navbar">
-    <div class="logo"><img src="/assets/maskot-icon.png?v=4" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+    <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
     <div class="nav-links">
       <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">🌙</button>
       <button class="nav-btn back" onclick="kembaliKeDashboardUtama()">← Kembali</button>
@@ -631,7 +475,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
 <div class="page" id="page-orangtua">
   <nav class="navbar">
     <div style="display:flex;align-items:center;gap:10px">
-      <div class="logo"><img src="/assets/maskot-icon.png?v=4" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+      <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
     </div>
     <div class="nav-links">
       <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">🌙</button>
@@ -662,7 +506,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
   <nav class="navbar">
     <div style="display:flex;align-items:center;gap:10px">
       <button class="nav-btn back" onclick="showPage('page-orangtua');loadOrangtuaDashboard()">← Kembali</button>
-      <div class="logo"><img src="/assets/maskot-icon.png?v=4" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+      <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
     </div>
     <div class="nav-links">
     </div>
@@ -677,7 +521,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
 <div class="page" id="page-guru">
   <nav class="navbar">
     <div style="display:flex;align-items:center;gap:10px">
-      <div class="logo"><img src="/assets/maskot-icon.png?v=4" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+      <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
     </div>
     <div class="nav-links">
       <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">🌙</button>
@@ -1272,8 +1116,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
         <button class="tab-btn" id="tab-kuis-btn" onclick="switchKelasTab('kuis')">📋 Tugas & Kuis</button>
         <button class="tab-btn" id="tab-murid-btn" onclick="switchKelasTab('murid')">👥 Murid</button>
         <button class="tab-btn" id="tab-chat-btn" onclick="switchKelasTab('chat')">💬 Chat</button>
-        <button class="tab-btn" id="tab-penilaian-btn" onclick="switchKelasTab('penilaian')">📊 Penilaian</button>
-        <button class="tab-btn" id="tab-analitik-btn" onclick="AnalitikGuru.bukaTab()">🔍 Analitik</button>
+        <button class="tab-btn" id="tab-penilaian-btn" onclick="switchKelasTab('penilaian')" style="display:none">📊 Penilaian</button>
       </div>
       <!-- Banner meeting — muncul di tab Materi saat guru share link -->
       <div id="kelas-meeting-banner" style="display:none;margin-bottom:12px;border-radius:16px;overflow:hidden;border:2px solid #1d6fe8;background:linear-gradient(135deg,#EEF5FF,#E0EEFF)">
@@ -1307,7 +1150,6 @@ document.querySelectorAll('[data-count]').forEach(el => {
         </div>
       </div>
       <div id="kelas-penilaian-stream" style="display:none;padding-top:4px"></div>
-      <div id="kelas-analitik-stream" style="display:none;padding-top:4px"></div>
       <div id="kelas-kuis-stream" style="display:none">
         <!-- Filter bar -->
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap" id="kuis-filter-bar">
@@ -1364,10 +1206,6 @@ document.querySelectorAll('[data-count]').forEach(el => {
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:32px" id="hasil-stats"></div>
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap" id="hasil-nav-btns">
       <button onclick="kembaliDariHasil()" style="background:var(--blue);color:white;border:none;padding:14px 32px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">🏫 Kembali ke Kelas</button>
-    </div>
-    <div id="hasil-review" style="display:none;margin-top:28px;text-align:left">
-      <div style="font-family:'Fredoka One',cursive;font-size:22px;margin-bottom:16px">📋 Review Jawaban</div>
-      <div id="hasil-review-list" style="display:flex;flex-direction:column;gap:16px"></div>
     </div>
   </div>
 </div>
@@ -1702,7 +1540,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
           <div style="font-weight:800;font-size:14px;color:var(--blue)">Klik untuk pilih file</div>
           <div style="font-size:12px;color:var(--muted);margin-top:4px">PDF, DOC, DOCX (max 10MB)</div>
         </div>
-        <input type="file" id="sub-input-file" accept=".pdf,.doc,.docx" style="display:none" onchange="previewSubFile(this,'file">
+        <input type="file" id="sub-input-file" accept=".pdf,.doc,.docx" style="display:none" onchange="previewSubFile(this,'file')">
         <div id="sub-preview-file" style="display:none;margin-top:10px;padding:10px 14px;background:#EEF5FF;border-radius:10px;display:flex;align-items:center;gap:10px">
           <span style="font-size:24px">📄</span>
           <div style="flex:1">
@@ -1723,7 +1561,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
           <div style="font-weight:800;font-size:14px;color:var(--blue)">Klik untuk pilih gambar</div>
           <div style="font-size:12px;color:var(--muted);margin-top:4px">JPG, PNG, WebP, GIF (max 10MB)</div>
         </div>
-        <input type="file" id="sub-input-gambar" accept="image/*" style="display:none" onchange="previewSubFile(this,'gambar">
+        <input type="file" id="sub-input-gambar" accept="image/*" style="display:none" onchange="previewSubFile(this,'gambar')">
         <div id="sub-preview-gambar" style="display:none;margin-top:10px;text-align:center">
           <img id="sub-preview-gambar-img" style="max-width:100%;max-height:220px;border-radius:12px;border:2px solid #eee">
           <button onclick="hapusSubFile('gambar')" style="display:block;margin:8px auto 0;background:#FFEFE8;border:none;color:var(--red);border-radius:8px;padding:6px 16px;cursor:pointer;font-size:12px;font-weight:700">✕ Hapus gambar</button>
@@ -2402,10 +2240,10 @@ document.querySelectorAll('[data-count]').forEach(el => {
   </div>
 </div>
 
-<script src="/js/app-core-full.js?v=13"></script>
+<script src="/js/app-core.js?v=7"></script>
 <script src="/js/modules/auth-profile.js?v=1"></script>
 <script src="/js/modules/dashboard.js?v=1"></script>
-<script src="/js/modules/kelas-chat.js?v=4"></script>
+<script src="/js/modules/kelas-chat.js?v=1"></script>
 <script src="/js/modules/notifikasi.js?v=1"></script>
 <script src="/js/modules/kelas-crud.js?v=1"></script>
 <script src="/js/modules/dashboard-guru.js?v=1"></script>
@@ -2501,18 +2339,6 @@ document.querySelectorAll('[data-count]').forEach(el => {
   </div>
 </div>
 
-<div class="modal-overlay" id="modal-konfirmasi-kuis">
-  <div class="modal" style="max-width:400px;text-align:center">
-    <div style="font-size:56px;margin-bottom:12px">📝</div>
-    <h3 style="margin-bottom:8px" id="konfirmasi-kuis-judul">Kumpulkan Jawaban?</h3>
-    <p id="konfirmasi-kuis-pesan" style="font-size:14px;color:var(--muted);margin-bottom:24px;font-weight:600">Apakah kamu yakin dengan jawaban kamu?</p>
-    <div style="display:flex;gap:10px">
-      <button class="btn-cancel" style="flex:1;padding:13px" onclick="closeModal('modal-konfirmasi-kuis')">Batal</button>
-      <button id="btn-konfirmasi-kuis" style="flex:1;padding:13px;background:var(--blue);color:white;border:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer" onclick="konfirmasiKirimKuis()">✅ Ya, Kumpulkan!</button>
-    </div>
-  </div>
-</div>
-
 <!-- Modal Edit Materi -->
 <div class="modal-overlay" id="modal-edit-materi">
   <div class="modal" style="max-width:460px">
@@ -2582,7 +2408,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
   <nav class="navbar">
     <div style="display:flex;align-items:center;gap:10px">
       <button class="nav-btn back" onclick="kembaliKeDashboardUtama()">← Kembali</button>
-      <div class="logo"><img src="/assets/maskot-icon.png?v=4" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+      <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
     </div>
     <div class="nav-links">
       <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">🌙</button>
@@ -2681,7 +2507,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
   <nav class="navbar">
     <div style="display:flex;align-items:center;gap:10px">
       <button class="nav-btn back" onclick="kembaliKeDashboardUtama()">← Kembali</button>
-      <div class="logo"><img src="/assets/maskot-icon.png?v=4" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+      <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
     </div>
     <div class="nav-links">
       <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">🌙</button>
@@ -2827,7 +2653,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
   <nav class="navbar">
     <div style="display:flex;align-items:center;gap:10px">
       <button class="nav-btn back" onclick="loadGuruDashboard()">← Kembali</button>
-      <div class="logo"><img src="/assets/maskot-icon.png?v=4" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
+      <div class="logo"><img src="/assets/maskot.png?v=2" alt="maskot" class="logo-maskot" style="width:64px;height:64px;object-fit:contain;flex-shrink:0"> KitaBelajar</div>
     </div>
     <div class="nav-links">
       <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">🌙</button>
@@ -2856,17 +2682,14 @@ document.querySelectorAll('[data-count]').forEach(el => {
 <script src="/js/app-extra2.js?v=1"></script>
 
 <script>
-  // Mencegah klik kanan global (mencegah "Save image as")
-  document.addEventListener('contextmenu', (e) => {
-    const tag = e.target.tagName.toLowerCase();
-    if (tag === 'input' || tag === 'textarea') return;
+document.addEventListener('contextmenu',function(e){
+  if(e.target.tagName==='IMG'||e.target.closest('.logo-maskot,.lp-hero-mascot,.maskot-img,[src*=\"/assets/badge/\"]')){
     e.preventDefault();
-  });
-  // Mencegah keyboard shortcut simpan/lihat source
-  document.addEventListener('keydown', (e) => {
-    if (e.ctrlKey && e.key === 's') e.preventDefault();
-    if (e.ctrlKey && e.key === 'u') e.preventDefault();
-  });
+  }
+});
+document.addEventListener('keydown',function(e){
+  if(e.ctrlKey&&(e.key==='s'||e.key==='u')){e.preventDefault();}
+});
 </script>
 
 </body>
