@@ -10,6 +10,9 @@ function _iconHtml(icon, fallback) {
   if (icon.startsWith('/') || icon.startsWith('http://') || icon.startsWith('https://') || icon.startsWith('data:')) {
     return `<img src="${icon}" alt="" style="width:auto;height:100%;max-width:100%;object-fit:contain">`;
   }
+  if (/\.(png|jpg|jpeg|webp|svg)$/i.test(icon)) {
+    return `<img src="/assets/badge/${encodeURI(icon)}" alt="" style="width:auto;height:100%;max-width:100%;object-fit:contain">`;
+  }
   return icon;
 }
 function _iconInline(icon) {
