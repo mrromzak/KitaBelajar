@@ -7,6 +7,7 @@ if (process.env.SENTRY_DSN) {
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV || 'production',
     tracesSampleRate: parseFloat(process.env.SENTRY_SAMPLE_RATE || '0.1'),
+    integrations: [Sentry.expressIntegration()],
   });
 }
 
@@ -701,7 +702,7 @@ function redactSensitive(obj) {
   return out;
 }
 
-app.use(Sentry.Handlers.errorHandler());
+app.use(Sentry.expressErrorHandler());
 
 app.use((err, req, res, next) => {
   console.error('❌', err.message);
