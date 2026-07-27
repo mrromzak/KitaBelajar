@@ -1948,7 +1948,7 @@ body.dark-mode .bell-btn svg{color:var(--muted)!important}
   min-height: 340px; position: relative;
 }
 .lp-hero-mascot {
-  width: 220px; height: 220px; object-fit: contain;
+  width: 320px; height: auto; object-fit: contain;
   animation: lp-mascot-float 3.5s ease-in-out infinite;
 }
 @keyframes lp-mascot-float {
@@ -1958,32 +1958,25 @@ body.dark-mode .bell-btn svg{color:var(--muted)!important}
 .lp-bubble {
   position: absolute;
   display: flex; align-items: center; gap: 6px;
-  background: #fff; border-radius: 999px; padding: 8px 16px 8px 10px;
-  font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+  border-radius: 999px; padding: 10px 18px 10px 12px;
+  font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
   white-space: nowrap;
 }
 .lp-bubble svg { width: 16px; height: 16px; flex-shrink: 0; }
-.lp-bubble::after {
-  content: ""; position: absolute; width: 12px; height: 12px;
-  background: #fff; border-radius: 3px; bottom: -4px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-}
-.lp-bubble-1 { top: 6%; left: -8%; color: #FF6B35; }
-.lp-bubble-1::after { left: 20px; transform: rotate(45deg); }
-.lp-bubble-2 { top: 42%; right: -14%; color: #1d6fe8; }
-.lp-bubble-2::after { left: 20px; transform: rotate(45deg); }
-.lp-bubble-3 { bottom: 4%; left: -4%; color: #0D7C6E; }
-.lp-bubble-3::after { left: 20px; transform: rotate(45deg); }
+.lp-bubble-1 { top: 4%; left: -6%; background: #fff; color: #FF6B35; }
+.lp-bubble-2 { top: 6%; right: -10%; background: #EAF1FF; color: #1d6fe8; }
+.lp-bubble-3 { bottom: 12%; left: -4%; background: #E7F8EE; color: #159957; }
 @media (max-width: 900px) {
-  .lp-bubble { font-size: 11px; padding: 6px 12px 6px 8px; }
-  .lp-bubble-1 { left: 0; top: 0; }
-  .lp-bubble-2 { right: 0; top: 40%; }
-  .lp-bubble-3 { left: 0; bottom: 0; }
-  .lp-hero-mascot { width: 160px; height: 160px; }
+  .lp-bubble { font-size: 12px; padding: 8px 14px 8px 10px; }
+  .lp-bubble-1 { left: 0; top: -4%; }
+  .lp-bubble-2 { right: 0; top: -4%; }
+  .lp-bubble-3 { left: 0; bottom: 4%; }
+  .lp-hero-mascot { width: 260px; height: auto; }
 }
-body.dark-mode .lp-bubble,
-body.dark-mode .lp-bubble::after { background: #22253A; box-shadow: 0 6px 18px rgba(0,0,0,0.3); }
+body.dark-mode .lp-bubble-1 { background: #2A2231; }
+body.dark-mode .lp-bubble-2 { background: #1E2A3D; }
+body.dark-mode .lp-bubble-3 { background: #1B2E24; }
 .lp-preview-tag {
   position: absolute; top: -12px; right: 16px; z-index: 2;
   background: #1A1D2E; color: #fff;
