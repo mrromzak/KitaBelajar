@@ -1961,9 +1961,12 @@ body.dark-mode .bell-btn svg{color:var(--muted)!important}
   white-space: nowrap;
 }
 .lp-bubble svg { width: 16px; height: 16px; flex-shrink: 0; }
-.lp-bubble-1 { top: 4%; left: -6%; background: #fff; color: #FF6B35; }
-.lp-bubble-2 { top: 6%; right: -10%; background: #EAF1FF; color: #1d6fe8; }
-.lp-bubble-3 { bottom: 12%; left: -4%; background: #E7F8EE; color: #159957; }
+.lp-bubble-1 { top: 4%; left: -6%; background: #fff; color: #FF6B35; animation: bubLp1 3s ease-in-out infinite; }
+.lp-bubble-2 { top: 6%; right: -10%; background: #EAF1FF; color: #1d6fe8; animation: bubLp2 3.4s ease-in-out infinite 0.6s; }
+.lp-bubble-3 { bottom: 12%; left: -4%; background: #E7F8EE; color: #159957; animation: bubLp3 2.8s ease-in-out infinite 1.2s; }
+@keyframes bubLp1 { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes bubLp2 { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes bubLp3 { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 @media (max-width: 900px) {
   .lp-bubble { font-size: 12px; padding: 8px 14px 8px 10px; }
   .lp-bubble-1 { left: 0; top: -4%; }
