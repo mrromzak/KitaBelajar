@@ -345,7 +345,7 @@
   /* Maskot kecil sebagai header semua kartu auth (login/daftar/lupa/reset) */
   .login-card::before {
     content: ''; display: block; width: 72px; height: 72px; margin: 0 auto 10px;
-    background: url('/assets/maskot.png?v=2') center/contain no-repeat;
+    background: url('/assets/maskot.png?v=4') center/contain no-repeat;
   }
   .login-card h2 { font-family: 'Fredoka One', cursive; font-size: 26px; margin-bottom: 6px; text-align: center; }
   .login-card .sub { font-size: 13.5px; color: var(--muted); margin-bottom: 26px; text-align: center; line-height: 1.55; }
