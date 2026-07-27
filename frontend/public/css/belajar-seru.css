@@ -1531,7 +1531,10 @@ body.dark-mode .badge-modal-sub {
   color: var(--muted);
 }
 body.dark-mode .logo-maskot, body.dark-mode .logo img {
-  filter: none;
+  background: white;
+  border-radius: 50%;
+  padding: 3px;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
 }
 body.dark-mode .maskot-img {
   background: white;
