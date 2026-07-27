@@ -1542,9 +1542,10 @@ body.dark-mode .maskot-img {
   padding: 12px;
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
 }
-body.dark-mode .lp-hero-mascot,
-body.dark-mode .logo-maskot {
-  filter: none !important;
+body.dark-mode .lp-hero-mascot {
+  background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.5) 55%, transparent 75%);
+  border-radius: 50%;
+  padding: 18px;
 }
 body.dark-mode .login-card::before {
   background-color: white !important;
