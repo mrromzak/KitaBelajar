@@ -215,7 +215,7 @@ async function loadKelasKuis(kelasId) {
             q.sudah_dikerjakan = cek.sudah || false;
             q.skor_terakhir = cek.hasil?.skor || 0;
             q.attempt = cek.attempt || 0;
-            q.max_attempt = cek.max_attempt || 1;
+            q.max_attempt = cek.max_attempt ?? 1;
           }
         } catch(e) { q.sudah_dikerjakan = false; }
       }));
@@ -290,20 +290,22 @@ function renderKuisCard(q, isGuru) {
     }
   } else if (sudahDikerjakan) {
     const attempt = q.attempt || 1;
-    const maxAtt = q.max_attempt || 1;
-    const sisa = maxAtt - attempt;
+    const maxAtt = q.max_attempt ?? 1;
+    const isUnlimited = maxAtt === 0;
+    const sisa = isUnlimited ? 99 : (maxAtt - attempt);
+    const labelAtt = isUnlimited ? `${attempt}x` : `${attempt}/${maxAtt}x`;
     const nilaiColor = q.skor_terakhir >= 80 ? 'var(--green)' : q.skor_terakhir >= 60 ? 'var(--orange)' : 'var(--red)';
-    if (sisa > 0) {
+    if (isUnlimited || sisa > 0) {
       actionHtml = `<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
         <div style="display:flex;align-items:center;gap:6px">
-          <span style="font-size:12px;color:var(--muted);font-weight:700">${attempt}/${maxAtt}x</span>
+          <span style="font-size:12px;color:var(--muted);font-weight:700">${labelAtt}</span>
           <button class="qsc-play-btn" style="background:${isFun ? 'var(--orange)' : 'var(--blue)'};color:white;padding:6px 14px;font-size:12px" onclick="mulaiKuisKelas('${q.id}')">🔄 Coba Lagi</button>
         </div>
         <span style="font-size:14px;font-weight:900;color:${nilaiColor}">${q.skor_terakhir || 0}<span style="font-size:10px;font-weight:700"> / 100</span></span>
       </div>`;
     } else {
       actionHtml = `<div class="qsc-done-badge" style="flex-direction:column;align-items:flex-end;gap:2px">
-        <span>✅ Selesai (${attempt}/${maxAtt}x)</span>
+        <span>✅ Selesai (${labelAtt})</span>
         <span style="font-size:15px;font-weight:900;color:${nilaiColor}">${q.skor_terakhir || 0}<span style="font-size:11px;font-weight:700"> / 100</span></span>
       </div>`;
     }
@@ -311,12 +313,13 @@ function renderKuisCard(q, isGuru) {
     actionHtml = `<div class="qsc-deadline deadline-over">⛔ Tenggat terlewat</div>`;
   } else {
     const totalSoal = q.total_soal || q.jumlah_soal || 0;
-    const maxAtt = q.max_attempt || 1;
+    const maxAtt = q.max_attempt ?? 1;
     if (!isSubmission && totalSoal === 0) {
       actionHtml = `<div style="font-size:12px;color:var(--muted);font-weight:700;background:#F5F5F5;padding:7px 14px;border-radius:10px">📭 Belum ada soal</div>`;
     } else {
+      const attLabel = maxAtt === 0 ? '' : (maxAtt > 1 ? `${maxAtt}x percobaan` : '');
       actionHtml = `<div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:11px;color:var(--muted);font-weight:700">${maxAtt > 1 ? `${maxAtt}x percobaan` : ''}</span>
+        <span style="font-size:11px;color:var(--muted);font-weight:700">${attLabel}</span>
         <button class="qsc-play-btn" style="background:${isFun ? 'var(--orange)' : 'var(--blue)'};color:white" onclick="mulaiKuisKelas('${q.id}')">
           ${isFun ? '⚡ Main!' : '📝 Kerjakan'}
         </button>
@@ -1352,10 +1355,10 @@ async function submitKuisKelas(isManual = false) {
   const soal = kuisKelasData.soal;
 
   if (isManual) {
-    // 1. Cek soal belum dikerjakan
+    // 1. Cek soal belum dikerjakan (abaikan yang di-pass)
     const unanswered = [];
     soal.forEach((q, i) => {
-      if (kuisJawaban[i] === undefined) unanswered.push(i + 1);
+      if (kuisJawaban[i] === undefined && !kuisPassed[i]) unanswered.push(i + 1);
     });
     if (unanswered.length > 0) {
       toast('❌ Ada soal yang belum dikerjakan! Periksa soal nomor: ' + unanswered.join(', '), 'error');
@@ -1383,17 +1386,20 @@ function konfirmasiKirimKuis() {
   }
 }
 
+let _isSubmittingKuis = false;
+
 async function simpanHasilKuisKelas() {
+  if (_isSubmittingKuis) return;
+  _isSubmittingKuis = true;
   clearInterval(kuisFunTimer);
   const durasi_detik = Math.round((Date.now() - (kuisStartTime || Date.now())) / 1000);
 
-  // Kirim jawaban murid ke server — validasi & scoring dilakukan server-side
-  const jawabanKirim = soal.map((q, i) => ({
+  const jawabanKirim = (kuisKelasData.soal || []).map((q, i) => ({
     soal_id: q.id,
     jawaban_user: kuisJawaban[i] !== undefined ? q.opsi[kuisJawaban[i]] : null
   }));
 
-  let skor = 0, benar = 0, totalPoin = 0, total_soal = soal.length;
+  let skor = 0, benar = 0, totalPoin = 0, total_soal = (kuisKelasData.soal || []).length;
   let attempt = 1, max_attempt = 1;
   let hasilDetail = [];
 
@@ -1406,16 +1412,19 @@ async function simpanHasilKuisKelas() {
     if (simpan.success) {
       skor       = simpan.skor       ?? 0;
       benar      = simpan.benar      ?? 0;
-      total_soal = simpan.total_soal ?? soal.length;
+      total_soal = simpan.total_soal ?? (kuisKelasData.soal || []).length;
       totalPoin  = simpan.totalPoin  ?? 0;
       attempt    = simpan.attempt    ?? 1;
-      max_attempt = simpan.max_attempt ?? 1;
+      max_attempt = simpan.max_attempt ?? 0;
       hasilDetail = simpan.detail || [];
     } else {
       console.warn('Gagal simpan hasil:', simpan.pesan);
     }
   } catch(e) {
     console.warn('Gagal simpan hasil (network):', e);
+    _isSubmittingKuis = false;
+    toast('Gagal menyimpan hasil. Coba lagi.', 'error');
+    return;
   }
 
   const emoji = skor >= 80 ? '🎉' : skor >= 60 ? '😊' : skor >= 40 ? '😅' : '💪';
@@ -1433,14 +1442,14 @@ async function simpanHasilKuisKelas() {
     <div style="background:#FFEFE8;border-radius:14px;padding:16px;text-align:center"><div style="font-family:'Fredoka One',cursive;font-size:28px;color:var(--orange)">${totalPoin}</div><div style="font-size:12px;color:var(--muted);font-weight:700">Poin</div></div>
   `;
 
-  // Simpan hasil detail untuk review
   window._kuisHasilDetail = hasilDetail;
 
-  // Render navigation buttons on results page
-  const sisaAttempt = max_attempt > 0 ? max_attempt - attempt : -1;
+  const isUnlimited = max_attempt === 0;
+  const sisaAttempt = isUnlimited ? 99 : (max_attempt - attempt);
+  const labelCoba = isUnlimited ? '🔄 Coba Lagi' : `🔄 Coba Lagi (${sisaAttempt}x sisa)`;
   let buttonsHtml = `<button onclick="kembaliDariHasil()" style="background:var(--blue);color:white;border:none;padding:14px 32px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">🏫 Kembali ke Kelas</button>`;
-  if (sisaAttempt > 0) {
-    buttonsHtml += `<button onclick="mulaiKuisKelas('${kuisKelasData.id}')" style="background:var(--orange);color:white;border:none;padding:14px 32px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">🔄 Coba Lagi (${sisaAttempt}x sisa)</button>`;
+  if (isUnlimited || sisaAttempt > 0) {
+    buttonsHtml += `<button onclick="mulaiKuisKelas('${kuisKelasData.id}')" style="background:var(--orange);color:white;border:none;padding:14px 32px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">${labelCoba}</button>`;
   }
   document.getElementById('hasil-nav-btns').innerHTML = buttonsHtml;
 
@@ -1450,6 +1459,7 @@ async function simpanHasilKuisKelas() {
     document.getElementById('hasil-review').style.display = 'block';
   }
 
+  _isSubmittingKuis = false;
   showPage('page-kuis-hasil');
 }
 
