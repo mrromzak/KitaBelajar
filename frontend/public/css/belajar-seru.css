@@ -1943,6 +1943,35 @@ body.dark-mode .bell-btn svg{color:var(--muted)!important}
 
 /* ---- Dashboard Mockup ---- */
 .lp-hero-visual { position: relative; }
+.lp-hero-mascot-wrap {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 340px; position: relative;
+}
+.lp-hero-mascot {
+  width: 220px; height: 220px; object-fit: contain;
+  animation: lp-mascot-float 3.5s ease-in-out infinite;
+}
+@keyframes lp-mascot-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.lp-bubble {
+  position: absolute;
+  background: #fff; border-radius: 18px; padding: 8px 16px;
+  font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  white-space: nowrap;
+}
+.lp-bubble-1 { top: 10%; left: -4%; color: #FF6B35; }
+.lp-bubble-2 { top: 14%; right: -6%; color: #1d6fe8; }
+.lp-bubble-3 { bottom: 10%; left: 2%; color: #0D7C6E; }
+@media (max-width: 900px) {
+  .lp-bubble { font-size: 11px; padding: 6px 12px; }
+  .lp-bubble-1 { left: 2%; }
+  .lp-bubble-2 { right: 2%; }
+  .lp-hero-mascot { width: 160px; height: 160px; }
+}
+body.dark-mode .lp-bubble { background: #22253A; box-shadow: 0 6px 18px rgba(0,0,0,0.3); }
 .lp-preview-tag {
   position: absolute; top: -12px; right: 16px; z-index: 2;
   background: #1A1D2E; color: #fff;

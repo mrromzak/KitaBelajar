@@ -11,8 +11,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
   onload="window._katexLoaded=true;window._gchatRenderPending&&window._gchatRenderPending()"></script>
-<!-- Error Logger — kirim error JS ke server KitaBelajar sendiri + Sentry -->
-<script src="https://browser.sentry-cdn.com/8.52.1/bundle.min.js" crossorigin="anonymous"></script>
+<!-- Error Logger — kirim error JS ke server KitaBelajar sendiri -->
 <script src="/js/app-config.js?v=1"></script>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&family=Instrument+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/belajar-seru.css?v=33">
@@ -33,8 +32,6 @@
       KitaBelajar
     </div>
     <div class="nav-links">
-      <a href="#" class="lp-nav-link active" data-lp="bimbel" onclick="switchLandingSection('bimbel');return false">Untuk Bimbel</a>
-      <a href="#" class="lp-nav-link" data-lp="murid" onclick="switchLandingSection('murid');return false">Untuk Murid</a>
       <button class="dark-mode-toggle" onclick="toggleGlobalDarkMode()" title="Ubah tema" aria-label="Toggle dark mode" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.2s">&#x1F319;</button>
       <button class="nav-btn murid" onclick="showLogin()">Masuk</button>
     </div>
@@ -45,61 +42,19 @@
     <div class="lp-container">
       <div class="lp-hero-grid">
         <div class="lp-hero-content">
-          <div class="lp-badge">Sedang dikembangkan bersama bimbel mitra</div>
-          <h1 class="lp-title">Bimbel Anda kehilangan murid <em>tanpa tahu alasannya.</em></h1>
-          <p class="lp-desc">Setiap murid yang diam belum tentu baik-baik saja. KitaBelajar mengumpulkan sinyal keterlibatan murid&mdash;login, tren nilai quiz, ketepatan tugas, dan progres XP&mdash;di satu tempat, supaya tentor bisa lihat lebih awal daripada menebak.</p>
+          <div class="lp-badge">Platform belajar yang menyenangkan</div>
+          <h1 class="lp-title">Belajar jadi <em>super seru</em> & menyenangkan!</h1>
+          <p class="lp-desc">Materi lengkap, soal latihan, dan games seru yang bikin kamu semangat belajar setiap hari.</p>
           <div class="lp-hero-actions">
-            <button class="lp-btn lp-btn-primary" onclick="document.getElementById('lp-section-bimbel').scrollIntoView({behavior:'smooth'})">Pelajari Untuk Bimbel <span class="lp-arrow">&rarr;</span></button>
-            <button class="lp-btn lp-btn-outline" onclick="switchLandingSection('murid')">Coba Sebagai Murid</button>
+            <button class="lp-btn lp-btn-primary" onclick="showLogin()">Ayo Mulai Belajar</button>
+            <button class="lp-btn lp-btn-outline" onclick="document.getElementById('lp-section-murid').scrollIntoView({behavior:'smooth'})">Pelajari Selengkapnya <span class="lp-arrow">&rarr;</span></button>
           </div>
         </div>
-        <div class="lp-hero-visual">
-          <div class="lp-preview-tag">Pratinjau tampilan</div>
-          <div class="lp-dash-mockup">
-            <div class="lp-dash-sidebar">
-              <div class="lp-dash-sidebar-header">Kelas Saya</div>
-              <div class="lp-dash-sidebar-item active">XII IPA 1</div>
-              <div class="lp-dash-sidebar-item">XII IPA 2</div>
-              <div class="lp-dash-sidebar-item">XI IPA 1</div>
-              <div class="lp-dash-sidebar-sep"></div>
-              <div class="lp-dash-sidebar-item">Laporan</div>
-            </div>
-            <div class="lp-dash-main">
-              <div class="lp-dash-topbar">
-                <span>Dashboard &mdash; XII IPA 1</span>
-                <span class="lp-dash-date">Senin, 24 Mar 2026</span>
-              </div>
-              <div class="lp-dash-grid">
-                <div class="lp-dash-widget lp-widget-alert">
-                  <div class="lp-widget-header">Sinyal Perlu Dicek</div>
-                  <div class="lp-widget-list">
-                    <div class="lp-widget-item">
-                      <span class="lp-item-name">Ani S.</span>
-                      <span class="lp-item-detail">Tidak login 7 hari</span>
-                    </div>
-                    <div class="lp-widget-item">
-                      <span class="lp-item-name">Budi P.</span>
-                      <span class="lp-item-detail">Nilai quiz turun 40%</span>
-                    </div>
-                    <div class="lp-widget-item">
-                      <span class="lp-item-name">Citra D.</span>
-                      <span class="lp-item-detail">XP stagnan 2 minggu</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="lp-dash-widget lp-widget-trend">
-                  <div class="lp-widget-header">Aktivitas Mingguan</div>
-                  <div class="lp-trend-chart">
-                    <div class="lp-bar" style="height:80%"><span>M1</span></div>
-                    <div class="lp-bar" style="height:65%"><span>M2</span></div>
-                    <div class="lp-bar" style="height:45%"><span>M3</span></div>
-                    <div class="lp-bar" style="height:30%"><span>M4</span></div>
-                  </div>
-                  <div class="lp-trend-label">Penurunan aktivitas kelas 50% dalam 1 bulan</div>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div class="lp-hero-visual lp-hero-mascot-wrap">
+          <img src="/assets/maskot.png?v=3" alt="Maskot KitaBelajar" class="lp-hero-mascot">
+          <div class="lp-bubble lp-bubble-1">Ayo belajar! 📚</div>
+          <div class="lp-bubble lp-bubble-2">Seru banget! ✨</div>
+          <div class="lp-bubble lp-bubble-3">Kamu pasti bisa! 💪</div>
         </div>
       </div>
     </div>
@@ -1317,8 +1272,8 @@ document.querySelectorAll('[data-count]').forEach(el => {
         <button class="tab-btn" id="tab-kuis-btn" onclick="switchKelasTab('kuis')">📋 Tugas & Kuis</button>
         <button class="tab-btn" id="tab-murid-btn" onclick="switchKelasTab('murid')">👥 Murid</button>
         <button class="tab-btn" id="tab-chat-btn" onclick="switchKelasTab('chat')">💬 Chat</button>
-        <button class="tab-btn" id="tab-penilaian-btn" onclick="switchKelasTab('penilaian')" style="display:none">📊 Penilaian</button>
-        <button class="tab-btn" id="tab-analitik-btn" onclick="AnalitikGuru.bukaTab()" style="display:none">🔍 Analitik</button>
+        <button class="tab-btn" id="tab-penilaian-btn" onclick="switchKelasTab('penilaian')">📊 Penilaian</button>
+        <button class="tab-btn" id="tab-analitik-btn" onclick="AnalitikGuru.bukaTab()">🔍 Analitik</button>
       </div>
       <!-- Banner meeting — muncul di tab Materi saat guru share link -->
       <div id="kelas-meeting-banner" style="display:none;margin-bottom:12px;border-radius:16px;overflow:hidden;border:2px solid #1d6fe8;background:linear-gradient(135deg,#EEF5FF,#E0EEFF)">
@@ -2447,7 +2402,20 @@ document.querySelectorAll('[data-count]').forEach(el => {
   </div>
 </div>
 
-<script src="/js/app-core-full.js?v=12"></script>
+<script src="/js/app-core-full.js?v=11"></script>
+<script src="/js/modules/auth-profile.js?v=1"></script>
+<script src="/js/modules/dashboard.js?v=1"></script>
+<script src="/js/modules/kelas-chat.js?v=4"></script>
+<script src="/js/modules/notifikasi.js?v=1"></script>
+<script src="/js/modules/kelas-crud.js?v=1"></script>
+<script src="/js/modules/dashboard-guru.js?v=1"></script>
+<script src="/js/modules/analitik-guru.js?v=4"></script>
+<script src="/js/modules/materi.js?v=1"></script>
+<script src="/js/modules/soal.js?v=1"></script>
+<script src="/js/modules/quiz.js?v=1"></script>
+<script src="/js/modules/kuis.js?v=1"></script>
+
+<!-- ========== ZEP QUIZ SCRIPT ========== -->
 <script src="/js/app-extra1.js?v=1"></script>
 
 <!-- Banner Reconnect setelah Refresh -->
