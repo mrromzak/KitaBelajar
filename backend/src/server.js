@@ -103,6 +103,19 @@ app.use(antiJudolMiddleware);        // Blokir konten judol di body
 // Static files: aset statis dengan cache optimal
 // Cache JS/CSS 1 tahun jika pakai ?v= versioning, gambar/font 7 hari, HTML no-cache
 app.use(/^\/(js|css|assets)/, (req, res, next) => {
+  // Proteksi direct access ke maskot & badge
+  if (req.path.includes('/assets/badge') || req.path.includes('/assets/maskot')) {
+    const referer = req.headers['referer'] || '';
+    const host = req.headers['host'] || '';
+    const isAllowed = referer.includes(host) || 
+                      allowedOrigins.some(origin => referer.includes(origin)) ||
+                      referer.includes('railway.app');
+                      
+    if (!referer || !isAllowed) {
+      return res.status(403).send('Forbidden: Akses langsung ke aset tidak diizinkan.');
+    }
+  }
+
   if (/\.(png|jpg|jpeg|gif|svg|webp|woff2?|ttf)$/i.test(req.path)) {
     res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
   } else if (/\.(js|css)$/i.test(req.path) && req.query.v) {

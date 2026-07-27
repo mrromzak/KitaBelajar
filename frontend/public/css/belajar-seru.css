@@ -2427,7 +2427,16 @@ body.dark-mode .analitik-header-row { border-color: #2A2D3E; color: #7A7D8E; }
 body.dark-mode .analitik-row { border-color: #2A2D3E; }
 body.dark-mode .analitik-nama { color: #fff; }
 body.dark-mode .analitik-catatan { background: rgba(255,107,53,0.1); color: #7A7D8E; }
-/* ── BADGE PREVIEW MODAL ── */
+/* Mencegah copy/drag/save pada gambar penting */
+.logo-maskot,
+.lp-hero-mascot,
+.maskot-img,
+img[src*="/assets/badge/"],
+.badge-modal-icon img {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
 .badge-card{cursor:pointer}
 .badge-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10050;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px)}
 .badge-modal-overlay.open{display:flex}
