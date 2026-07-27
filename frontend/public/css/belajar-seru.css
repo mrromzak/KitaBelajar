@@ -213,7 +213,7 @@
   .nav-user { font-weight: 700; font-size: 14px; color: var(--text); display: flex; align-items: center; gap: 6px; }
 
   /* ===== LOGO MASKOT ===== */
-  .logo-maskot { width: 64px; height: 64px; object-fit: contain; }
+  .logo-maskot { width: auto; height: 42px; object-fit: contain; }
 
   /* ===== LANDING ===== */
   .hero { padding: 40px 40px 40px; position: relative; overflow: hidden; }
@@ -1023,7 +1023,7 @@
   /* Navbar */
   .navbar { padding: 6px 14px; }
   .logo { font-size: 18px; gap: 6px; }
-  .logo-maskot { width: 42px !important; height: 42px !important; }
+  .logo-maskot { width: auto !important; height: 42px !important; }
   .nav-btn { padding: 8px 12px; font-size: 12px; }
 
   /* Hero */
@@ -1059,7 +1059,7 @@
   /* Navbar mobile: hemat ruang maksimal */
   .navbar { flex-wrap: nowrap; overflow: visible; padding: 6px 10px; }
   .logo { flex-shrink: 0; font-size: 14px; }
-  .logo-maskot { width: 36px !important; height: 36px !important; }
+  .logo-maskot { width: auto !important; height: 36px !important; }
   .nav-links { gap: 5px; flex-shrink: 0; }
   #guru-nav-name, #murid-nav-name {
     max-width: 70px; overflow: hidden;
@@ -1092,7 +1092,7 @@
   /* Navbar */
   .navbar { padding: 4px 8px; }
   .logo { font-size: 13px; }
-  .logo-maskot { width: 30px !important; height: 30px !important; }
+  .logo-maskot { width: auto !important; height: 30px !important; }
   #guru-nav-name, #murid-nav-name { max-width: 55px; }
   .nav-links button { padding: 4px 6px !important; font-size: 10px !important; }
 
@@ -1531,10 +1531,7 @@ body.dark-mode .badge-modal-sub {
   color: var(--muted);
 }
 body.dark-mode .logo-maskot, body.dark-mode .logo img {
-  background: white;
-  border-radius: 50%;
-  padding: 3px;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+  filter: none;
 }
 body.dark-mode .maskot-img {
   background: white;
@@ -1543,9 +1540,7 @@ body.dark-mode .maskot-img {
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
 }
 body.dark-mode .lp-hero-mascot {
-  background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.5) 55%, transparent 75%);
-  border-radius: 50%;
-  padding: 18px;
+  filter: drop-shadow(0 0 18px rgba(255,255,255,0.35));
 }
 body.dark-mode .login-card::before {
   background-color: white !important;
