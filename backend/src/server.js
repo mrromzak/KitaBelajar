@@ -721,6 +721,11 @@ httpServer.listen(PORT, () => {
   console.log('🌈 =====================================\n');
 });
 
+// ── Health Check ────────────────────────────────────────────
+app.get('/api/health', (req, res) => {
+  res.json({ success: true, status: 'ok', uptime: process.uptime() });
+});
+
 module.exports = app;
 
 // Tambahkan endpoint ini di src/server.js setelah endpoint proxy/fetch yang sudah ada
