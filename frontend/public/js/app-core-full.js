@@ -2256,7 +2256,7 @@ async function klaimMisi(misiMuridId, btn) {
 // ── BADGES ─────────────────────────────────────────
 function renderBadgeIcon(icon) {
   if (icon && /\.(png|jpg|jpeg|webp)$/i.test(icon)) {
-    return `<img src="/assets/badges/${icon}" alt="" style="width:48px;height:48px;object-fit:contain">`;
+    return `<img src="/assets/badge/${icon}" alt="" style="width:48px;height:48px;object-fit:contain">`;
   }
   return icon || '🏅';
 }
@@ -2283,7 +2283,7 @@ function openBadgeModal(b) {
       overlay.classList.remove('open');
     });
   }
-  const iconSrc = b.icon && /\.(png|jpg|jpeg|webp)$/i.test(b.icon) ? `/assets/badges/${b.icon}` : null;
+  const iconSrc = b.icon && /\.(png|jpg|jpeg|webp)$/i.test(b.icon) ? `/assets/badge/${b.icon}` : null;
   overlay.querySelector('.badge-modal-icon').innerHTML = iconSrc
     ? `<img src="${iconSrc}" alt="" style="width:120px;height:120px;object-fit:contain">`
     : `<span style="font-size:64px">${b.icon || '🏅'}</span>`;
