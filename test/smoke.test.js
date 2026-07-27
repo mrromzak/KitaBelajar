@@ -12,7 +12,7 @@ const assert = require('node:assert');
 const express = require('express');
 
 test('GET /api/health — harus return status ok', async () => {
-  const app = require('../src/server');
+  const app = require('../backend/src/server');
   // Health check is registered on the app, so we can test via supertest-like approach
   // For now, verify the route exists by checking the app's router stack
   let found = false;
@@ -29,11 +29,11 @@ test('Environment variables harus tersedia', () => {
 
 test('Module routes harus bisa di-load tanpa error', () => {
   // Auth & chat routes depend on Supabase — skip in unit test
-  assert.doesNotThrow(() => require('../src/routes/kelas'));
-  assert.doesNotThrow(() => require('../src/routes/quiz'));
-  assert.doesNotThrow(() => require('../src/routes/soal'));
-  assert.doesNotThrow(() => require('../src/routes/materi'));
-  assert.doesNotThrow(() => require('../src/routes/analitik'));
+  assert.doesNotThrow(() => require('../backend/src/routes/kelas'));
+  assert.doesNotThrow(() => require('../backend/src/routes/quiz'));
+  assert.doesNotThrow(() => require('../backend/src/routes/soal'));
+  assert.doesNotThrow(() => require('../backend/src/routes/materi'));
+  assert.doesNotThrow(() => require('../backend/src/routes/analitik'));
 });
 
 test('Konsolidasi JS: bundle app-core-full.js harus valid', () => {
