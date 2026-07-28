@@ -1858,7 +1858,16 @@ function switchLbTab(tab) {
     if (panel) panel.style.display = t === tab ? '' : 'none';
   });
   if (tab === 'misi')   { loadDailyReward(); loadMisi(); }
-  if (tab === 'badges') loadBadges();
+  if (tab === 'badges') { loadBadges(); _badgeAutoRefresh(); }
+}
+
+let _badgeRefreshTimer = null;
+function _badgeAutoRefresh() {
+  if (_badgeRefreshTimer) clearInterval(_badgeRefreshTimer);
+  _badgeRefreshTimer = setInterval(() => {
+    const panel = document.getElementById('lb-panel-badges');
+    if (panel && panel.style.display !== 'none') loadBadges();
+  }, 900000); // 15 menit
 }
 
 function setLbMode(mode) {
