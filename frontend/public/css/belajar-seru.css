@@ -2436,6 +2436,7 @@ img[src*="/assets/badge/"],
 }
 .badge-card{cursor:pointer}
 .badge-icon img[src*="/assets/badge/"]{background:transparent!important}
+.badge-modal-icon img[src*="/assets/badge/"]{background:transparent!important}
 .badge-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10050;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px)}
 .badge-modal-overlay.open{display:flex}
 .badge-modal-card{background:#fff;border-radius:24px;padding:32px 28px 26px;max-width:320px;width:100%;text-align:center;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:badgeModalIn .2s ease}
