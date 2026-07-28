@@ -364,7 +364,16 @@ router.get('/badges/semua', authMiddleware, async (req, res) => {
     ]);
 
     const dimilikiSet = new Set((dimiliki || []).map(d => d.badge_id));
-    const result = (semua || []).map(b => ({ ...b, dimiliki: dimilikiSet.has(b.id) }));
+    const seen = new Map();
+    for (const b of (semua || [])) {
+      const existing = seen.get(b.nama);
+      if (!existing) {
+        seen.set(b.nama, { ...b, dimiliki: dimilikiSet.has(b.id) });
+      } else if (!existing.dimiliki && dimilikiSet.has(b.id)) {
+        seen.set(b.nama, { ...b, dimiliki: true });
+      }
+    }
+    const result = [...seen.values()];
 
     res.json({ success: true, data: result });
   } catch (err) {
