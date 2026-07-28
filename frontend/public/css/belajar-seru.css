@@ -2433,10 +2433,10 @@ img[src*="/assets/badge/"],
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
-  border-radius: 38% 62% 52% 48% / 47% 55% 45% 53%;
+  clip-path: url(#badgeWavy);
 }
 .badge-card{cursor:pointer}
-.badge-icon img[src*="/assets/badge/"]{mix-blend-mode:multiply;background:transparent!important;border-radius:38% 62% 52% 48%/47% 55% 45% 53%}
+.badge-icon img[src*="/assets/badge/"]{mix-blend-mode:multiply;background:transparent!important}
 body.dark-mode .badge-icon img[src*="/assets/badge/"]{mix-blend-mode:screen}
 .badge-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10050;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px)}
 .badge-modal-overlay.open{display:flex}
@@ -2449,7 +2449,7 @@ body.dark-mode .badge-icon img[src*="/assets/badge/"]{mix-blend-mode:screen}
 .badge-modal-status{font-size:13px;font-weight:800;margin-bottom:12px}
 .badge-modal-deskripsi{font-size:13.5px;color:#666;line-height:1.6}
 .badge-modal-card .badge-modal-icon{width:auto;min-width:80px;max-width:220px;height:180px;padding:0 8px;background:transparent}
-.badge-modal-card .badge-modal-icon img{max-height:100%;max-width:100%;width:auto;height:auto;object-fit:contain;display:block;margin:0 auto;background:transparent;border-radius:38% 62% 52% 48%/47% 55% 45% 53%}
+.badge-modal-card .badge-modal-icon img{max-height:100%;max-width:100%;width:auto;height:auto;object-fit:contain;display:block;margin:0 auto;background:transparent}
 body.dark-mode .badge-modal-card{background:#14142C}
 body.dark-mode .badge-modal-nama{color:#E4E4F0}
 body.dark-mode .badge-modal-deskripsi{color:#9494B0}
