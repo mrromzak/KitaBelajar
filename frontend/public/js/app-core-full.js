@@ -2265,7 +2265,7 @@ async function klaimMisi(misiMuridId, btn) {
 // ── BADGES ─────────────────────────────────────────
 function renderBadgeIcon(icon) {
   if (icon && /\.(png|jpg|jpeg|webp)$/i.test(icon)) {
-    return `<img src="/assets/badge/${encodeURI(icon)}" alt="" style="width:48px;height:48px;object-fit:contain">`;
+    return `<img src="/assets/badge/${encodeURI(icon)}" alt="" style="width:48px;height:48px;object-fit:contain" onerror="this.onerror=null;this.parentElement.textContent='🏅'">`;
   }
   return icon || '🏅';
 }
@@ -2294,7 +2294,7 @@ function openBadgeModal(b) {
   }
   const iconSrc = b.icon && /\.(png|jpg|jpeg|webp)$/i.test(b.icon) ? `/assets/badge/${encodeURI(b.icon)}` : null;
   overlay.querySelector('.badge-modal-icon').innerHTML = iconSrc
-    ? `<img src="${iconSrc}" alt="" style="width:120px;height:120px;object-fit:contain">`
+    ? `<img src="${iconSrc}" alt="" style="width:120px;height:120px;object-fit:contain" onerror="this.onerror=null;this.outerHTML='<span style=\\'font-size:64px\\'>🏅</span>'">`
     : `<span style="font-size:64px">${b.icon || '🏅'}</span>`;
   overlay.querySelector('.badge-modal-nama').textContent = b.nama;
   overlay.querySelector('.badge-modal-status').textContent = b.dimiliki ? '✅ Sudah kamu miliki' : '🔒 Belum diperoleh';
