@@ -158,12 +158,21 @@ function submitTambahMapel() {
 }
 
 function hapusMapel(nama, emoji) {
-  if (!confirm(`Hapus mata pelajaran "${emoji} ${nama}"?\n\nMateri dan soal yang sudah dibuat dengan mapel ini tidak akan terhapus.`)) return;
-  let list = getMapelList().filter(m => m.nama !== nama);
-  saveMapelList(list);
-  renderGuruMapelPanel();
-  populateMapelSelects();
-  toast(`"${nama}" dihapus dari daftar mapel.`, 'success');
+  confirmDialog({
+    icon: '🗑️',
+    title: 'Hapus Mata Pelajaran?',
+    body: `Hapus <strong>${emoji} ${nama}</strong>?<br><br>Materi dan soal yang sudah dibuat dengan mapel ini tidak akan terhapus.`,
+    okLabel: 'Ya, Hapus',
+    cancelLabel: 'Batal',
+    danger: true
+  }).then(ok => {
+    if (!ok) return;
+    let list = getMapelList().filter(m => m.nama !== nama);
+    saveMapelList(list);
+    renderGuruMapelPanel();
+    populateMapelSelects();
+    toast(`"${nama}" dihapus dari daftar mapel.`, 'success');
+  });
 }
 
 // ============================================================
@@ -255,11 +264,85 @@ function showLoading(v, msg) {
   if (txtEl) txtEl.textContent = v && msg ? msg : 'Memuat...';
 }
 
+// Hapus error state inline saat user mulai mengetik
+function clearFieldError(input) {
+  if (!input) return;
+  input.style.borderColor = '';
+  const errId = input.id + '-error';
+  const errEl = document.getElementById(errId);
+  if (errEl) errEl.style.display = 'none';
+}
+
+/**
+ * skeletonHtml — buat HTML skeleton placeholder.
+ * @param {'list'|'card'|'text'} tipe
+ * @param {number} count — jumlah item (untuk list)
+ */
+function skeletonHtml(tipe = 'list', count = 3) {
+  if (tipe === 'card') {
+    return Array.from({ length: count }, () =>
+      `<div class="skeleton-card" style="height:120px;margin-bottom:12px"></div>`
+    ).join('');
+  }
+  if (tipe === 'text') {
+    return `<div class="skeleton-line" style="height:14px;width:80%;margin-bottom:8px"></div>
+            <div class="skeleton-line" style="height:14px;width:60%;margin-bottom:8px"></div>
+            <div class="skeleton-line" style="height:14px;width:70%"></div>`;
+  }
+  // default: list
+  return Array.from({ length: count }, (_, i) =>
+    `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+       <div class="skeleton-line" style="width:40px;height:40px;border-radius:50%;flex-shrink:0;margin:0"></div>
+       <div style="flex:1">
+         <div class="skeleton-line" style="height:13px;width:${60 + (i % 3) * 10}%;margin-bottom:6px"></div>
+         <div class="skeleton-line" style="height:11px;width:${40 + (i % 2) * 15}%"></div>
+       </div>
+     </div>`
+  ).join('');
+}
+
 function toast(msg, type = '') {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.className = type ? `show ${type}` : 'show';
   setTimeout(() => el.className = '', 2800);
+}
+
+/**
+ * confirmDialog — pengganti native confirm() yang blocking.
+ * @param {object} opts
+ *   icon      — emoji besar (default '⚠️')
+ *   title     — judul dialog
+ *   body      — pesan utama
+ *   okLabel   — label tombol OK (default 'Ya')
+ *   cancelLabel — label batal (default 'Batal')
+ *   danger    — bool, tombol ok jadi merah
+ * @returns {Promise<boolean>}
+ */
+function confirmDialog({ icon = '⚠️', title = 'Konfirmasi', body = '', okLabel = 'Ya', cancelLabel = 'Batal', danger = false } = {}) {
+  return new Promise(resolve => {
+    const existing = document.getElementById('kb-confirm-modal');
+    if (existing) existing.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'kb-confirm-modal';
+    overlay.className = 'confirm-modal-overlay';
+    overlay.innerHTML = `
+      <div class="confirm-modal-box">
+        <div class="confirm-modal-icon">${icon}</div>
+        <div class="confirm-modal-title">${title}</div>
+        ${body ? `<div class="confirm-modal-body">${body}</div>` : ''}
+        <div class="confirm-modal-btns">
+          ${cancelLabel ? `<button class="confirm-modal-cancel" id="kb-confirm-cancel">${cancelLabel}</button>` : ''}
+          <button class="confirm-modal-ok${danger ? ' danger' : ''}" id="kb-confirm-ok">${okLabel}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const cleanup = (result) => { overlay.remove(); resolve(result); };
+    document.getElementById('kb-confirm-ok').addEventListener('click', () => cleanup(true));
+    const cancelBtn = document.getElementById('kb-confirm-cancel');
+    if (cancelBtn) cancelBtn.addEventListener('click', () => cleanup(false));
+    overlay.addEventListener('click', e => { if (e.target === overlay) cleanup(false); });
+  });
 }
 
 async function api(method, path, body) {
@@ -292,15 +375,15 @@ function openModal(id) {
   if (id === 'modal-buat-kelas') {
     const mapelList = getMapelList();
     if (!mapelList || mapelList.length === 0) {
-      const konfirmasi = confirm(
-        '📖 Kamu belum memiliki mata pelajaran.\n\n' +
-        'Untuk membuat kelas, kamu perlu menambahkan mata pelajaran terlebih dahulu.\n\n' +
-        'Klik "OK" untuk menambah mata pelajaran sekarang.\n' +
-        'Klik "Batal" jika ingin kembali.'
-      );
-      if (konfirmasi) {
-        openTambahMapel();
-      }
+      confirmDialog({
+        icon: '📖',
+        title: 'Belum Ada Mata Pelajaran',
+        body: 'Untuk membuat kelas, kamu perlu menambahkan mata pelajaran terlebih dahulu.',
+        okLabel: 'Tambah Sekarang',
+        cancelLabel: 'Nanti'
+      }).then(ok => {
+        if (ok) openTambahMapel();
+      });
       return;
     }
   }

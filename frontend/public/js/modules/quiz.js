@@ -435,8 +435,13 @@ async function mulaiStage(stageIdx) {
   showLoading(false);
 }
 
-function batalQuizKilat() {
-  if (!confirm('Keluar dari quiz? Progress stage ini tidak tersimpan.')) return;
+async function batalQuizKilat() {
+  const ok = await confirmDialog({
+    icon: '🚪', title: 'Keluar dari Quiz?',
+    body: 'Progress stage ini tidak tersimpan.',
+    okLabel: 'Ya, Keluar', cancelLabel: 'Lanjut Main'
+  });
+  if (!ok) return;
   clearInterval(timer);
   if (qkActiveKategori) bukaStageMap(qkActiveKategori.id);
   else showPage('page-quiz-map');

@@ -47,13 +47,11 @@ const AnalitikGuru = (() => {
 
   async function bukaTab() {
     if (!kelasIdAktif) return;
-    sembunyikanSemuaTab();
-    const btn = document.getElementById('tab-analitik-btn');
-    if (btn) btn.classList.add('active');
+    // Panel visibility & tab button state are managed by switchKelasTab().
+    // bukaTab() only loads + renders the analytics data.
     const wrap = document.getElementById('kelas-analitik-stream');
     if (!wrap) return;
-    wrap.style.display = '';
-    wrap.innerHTML = '<div class="analitik-loading">Memuat data...</div>';
+    wrap.innerHTML = skeletonHtml('list', 4);
 
     try {
       const token = getAuthToken();

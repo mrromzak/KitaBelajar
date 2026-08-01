@@ -37,17 +37,25 @@ function renderKelasCard(k, i, role) {
       ${isGuru ? `
         <div class="kelas-code-wrap">
           <span class="kelas-code-label">Kode:</span>
-          <span class="kelas-code">${k.kode_akses || '–'}</span>
+          <span class="kelas-code kelas-code-hidden" id="kelas-code-card-${k.id}">${k.kode_akses || '–'}</span>
+          <button class="kelas-code-toggle-btn" id="kelas-code-eye-${k.id}"
+            onclick="event.stopPropagation();toggleKelasCodeVisibility('${k.id}')" title="Tampilkan/sembunyikan kode">👁️</button>
           <button class="kelas-copy-btn" onclick="event.stopPropagation();copyToClipboard('${k.kode_akses}')" title="Salin kode">📋</button>
         </div>
       ` : `<div class="kelas-stat">👨‍🏫 ${k.guru_nama || k.guru?.nama || 'Guru'}</div>`}
       <div style="display:flex;align-items:center;gap:8px">
         <div class="kelas-stat">📚 ${k.total_materi || 0} materi</div>
         ${!isGuru ? `<span id="card-chat-badge-${k.id}" style="display:none;background:var(--red);color:white;border-radius:50px;padding:1px 7px;font-size:10px;font-weight:800;line-height:1.5">0</span>` : ''}
-        ${isGuru
-          ? `<button class="btn-icon btn-delete" onclick="event.stopPropagation();konfirmasiHapusKelas('${k.id}','${k.nama.replace(/'/g,"\\'")}')" title="Hapus kelas" style="width:28px;height:28px;font-size:13px">🗑️</button>`
-          : `<button class="btn-icon" onclick="event.stopPropagation();konfirmasiKeluarKelas('${k.id}','${k.nama.replace(/'/g,"\\'")}')" title="Keluar dari kelas" style="width:28px;height:28px;font-size:13px;background:#FFF0F5;color:var(--pink)">🚪</button>`
-        }
+        <div class="kelas-overflow-menu" onclick="event.stopPropagation()">
+          <button class="kelas-overflow-btn" id="kelas-menu-btn-${k.id}"
+            onclick="toggleKelasOverflow('${k.id}')" title="Opsi kelas">⋯</button>
+          <div class="kelas-overflow-dropdown" id="kelas-menu-${k.id}">
+            ${isGuru
+              ? `<button class="kelas-overflow-item danger" onclick="toggleKelasOverflow('${k.id}');konfirmasiHapusKelas('${k.id}','${k.nama.replace(/'/g, "\\'")}')">🗑️ Hapus Kelas</button>`
+              : `<button class="kelas-overflow-item danger" onclick="toggleKelasOverflow('${k.id}');konfirmasiKeluarKelas('${k.id}','${k.nama.replace(/'/g, "\\'")}')">🚪 Keluar Kelas</button>`
+            }
+          </div>
+        </div>
       </div>
     </div>
   </div>`;
@@ -83,6 +91,8 @@ async function openKelas(kelasId, colorIdx) {
     document.getElementById('kelas-add-materi-btn').style.display = isGuru ? 'inline-flex' : 'none';
     document.getElementById('kelas-add-kuis-btn').style.display = isGuru ? 'inline-flex' : 'none';
     document.getElementById('kelas-code-card').style.display = isGuru ? 'block' : 'none';
+    const bannerBtn = document.getElementById('kelas-ubah-banner-btn');
+    if (bannerBtn) bannerBtn.style.display = isGuru ? 'block' : 'none';
     document.getElementById('tab-murid-btn').style.display = '';
     document.getElementById('tab-penilaian-btn').style.display = isGuru ? '' : 'none';
     const btnAnalitik = document.getElementById('tab-analitik-btn');
@@ -474,6 +484,35 @@ function copyKodeKelas() {
   copyToClipboard(kode);
 }
 
+// Toggle overflow menu (titik tiga) pada card kelas
+function toggleKelasOverflow(kelasId) {
+  const menu = document.getElementById('kelas-menu-' + kelasId);
+  if (!menu) return;
+  const isOpen = menu.classList.contains('open');
+  // Tutup semua dropdown lain dulu
+  document.querySelectorAll('.kelas-overflow-dropdown.open').forEach(m => m.classList.remove('open'));
+  if (!isOpen) {
+    menu.classList.add('open');
+    // Tutup saat klik di luar
+    setTimeout(() => {
+      const closeHandler = (e) => {
+        if (!menu.contains(e.target)) { menu.classList.remove('open'); document.removeEventListener('click', closeHandler); }
+      };
+      document.addEventListener('click', closeHandler);
+    }, 10);
+  }
+}
+
+// Toggle show/hide untuk kode kelas di card guru
+function toggleKelasCodeVisibility(kelasId) {
+  const span = document.getElementById('kelas-code-card-' + kelasId);
+  const btn  = document.getElementById('kelas-code-eye-' + kelasId);
+  if (!span) return;
+  const isHidden = span.classList.contains('kelas-code-hidden');
+  span.classList.toggle('kelas-code-hidden', !isHidden);
+  if (btn) btn.textContent = isHidden ? '🙈' : '👁️';
+}
+
 // ============================================================
 //  LIST MURID KELAS + ONLINE/OFFLINE
 // ============================================================
@@ -622,7 +661,13 @@ function formatChatContent(isi, isSelf) {
       const safeUrl = escapeHtml(url), safeName = escapeHtml(name);
       const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(name);
       if (isImage) {
-        return `<div style="margin-top:4px"><a href="${safeUrl}" target="_blank"><img src="${safeUrl}" style="max-width:100%;max-height:200px;border-radius:12px;border:1px solid #eee;display:block"></a><div style="font-size:11px;margin-top:4px;opacity:0.8">${safeName}</div></div>`;
+        const imgId = 'chat-img-' + Math.random().toString(36).slice(2, 8);
+        return `<div style="margin-top:4px"><a href="${safeUrl}" target="_blank">` +
+          `<span class="chat-img-skeleton" id="${imgId}-sk" style="display:inline-block;width:160px"></span>` +
+          `<img src="${safeUrl}" id="${imgId}" style="max-width:100%;max-height:200px;border-radius:12px;border:1px solid #eee;display:none" ` +
+          `onload="this.style.display='block';var sk=document.getElementById('${imgId}-sk');if(sk)sk.remove();" ` +
+          `onerror="this.style.display='block';var sk=document.getElementById('${imgId}-sk');if(sk)sk.remove();">` +
+          `</a><div style="font-size:11px;margin-top:4px;opacity:0.8">${safeName}</div></div>`;
       }
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:${isSelf ? 'rgba(255,255,255,0.18)' : '#F3F4F6'};border-radius:10px;margin-top:4px"><span style="font-size:20px">📁</span><div style="flex:1;min-width:0;text-align:left"><div style="font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${isSelf ? 'white' : 'var(--text)'}">${safeName}</div></div><a href="${safeUrl}" target="_blank" style="background:${isSelf ? 'white' : 'var(--blue)'};color:${isSelf ? 'var(--blue)' : 'white'};border:none;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;text-decoration:none">Unduh</a></div>`;
     }
@@ -1285,4 +1330,114 @@ function bukaNotifPrivateChat() {
     p.pengirim_nama || 'Seseorang',
     p.pengirim_avatar || '🦁'
   );
+}
+
+// ============================================================
+//  UBAH BANNER KELAS (GURU)
+// ============================================================
+const BANNER_PRESETS = [
+  { kelas: 'bg-c1', label: 'Biru', color: '#4D96FF' },
+  { kelas: 'bg-c2', label: 'Hijau', color: '#6BCB77' },
+  { kelas: 'bg-c3', label: 'Ungu', color: '#7B2FF7' },
+  { kelas: 'bg-c4', label: 'Orange', color: '#FF6B35' },
+  { kelas: 'bg-c5', label: 'Merah', color: '#D12B00' },
+  { kelas: 'bg-c6', label: 'Tosca', color: '#00C8B0' },
+  { kelas: 'bg-c7', label: 'Coklat', color: '#A0522D' },
+  { kelas: 'bg-c8', label: 'Abu', color: '#5E6D7A' },
+];
+
+let _bannerSelectedClass = null;
+let _bannerUploadDataUrl = null;
+
+function bukaUbahBanner() {
+  _bannerSelectedClass = null;
+  _bannerUploadDataUrl = null;
+  // Render preset warna
+  const container = document.getElementById('banner-color-presets');
+  if (container) {
+    container.innerHTML = BANNER_PRESETS.map(p => `
+      <div onclick="pilihBannerPreset('${p.kelas}',this)"
+        style="width:52px;height:52px;border-radius:12px;background:${p.color};cursor:pointer;
+          border:3px solid transparent;transition:all 0.15s;flex-shrink:0"
+        title="${p.label}"></div>`).join('');
+  }
+  const preview = document.getElementById('banner-preview');
+  if (preview) preview.style.display = 'none';
+  openModal('modal-ubah-banner');
+}
+
+function pilihBannerPreset(bgClass, el) {
+  _bannerSelectedClass = bgClass;
+  _bannerUploadDataUrl = null;
+  // Highlight pilihan
+  document.querySelectorAll('#banner-color-presets div').forEach(d => d.style.border = '3px solid transparent');
+  el.style.border = '3px solid var(--text)';
+  const preview = document.getElementById('banner-preview');
+  if (preview) preview.style.display = 'none';
+}
+
+function previewBannerUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { toast('Gambar terlalu besar (maks 2MB)', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    _bannerUploadDataUrl = e.target.result;
+    _bannerSelectedClass = null;
+    document.querySelectorAll('#banner-color-presets div').forEach(d => d.style.border = '3px solid transparent');
+    const preview = document.getElementById('banner-preview');
+    const img = document.getElementById('banner-preview-img');
+    if (preview && img) { img.src = _bannerUploadDataUrl; preview.style.display = 'block'; }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function simpanBannerKelas() {
+  if (!currentKelas) return;
+  if (_bannerUploadDataUrl) {
+    // Upload gambar ke server
+    showLoading(true, 'Mengupload banner...');
+    try {
+      const blob = await fetch(_bannerUploadDataUrl).then(r => r.blob());
+      const formData = new FormData();
+      formData.append('banner', blob, 'banner.jpg');
+      formData.append('kelas_id', currentKelas.id);
+      const token = localStorage.getItem('kb_token') || '';
+      const res = await fetch('/api/kelas/' + currentKelas.id + '/banner', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token },
+        body: formData
+      });
+      const json = await res.json();
+      if (json.success && json.banner_url) {
+        const bg = document.getElementById('kelas-banner-bg');
+        if (bg) {
+          bg.style.backgroundImage = `url('${json.banner_url}')`;
+          bg.style.backgroundSize = 'cover';
+          bg.style.backgroundPosition = 'center';
+        }
+        toast('Banner diperbarui! 🎨', 'success');
+      } else {
+        toast(json.pesan || 'Gagal upload banner', 'error');
+      }
+    } catch(e) {
+      toast('Tidak bisa mengupload banner', 'error');
+    }
+    showLoading(false);
+  } else if (_bannerSelectedClass) {
+    // Simpan preferensi warna lokal (tidak perlu server call — color class sudah ada)
+    const bg = document.getElementById('kelas-banner-bg');
+    if (bg) {
+      KELAS_COLORS.forEach(c => bg.classList.remove(c));
+      bg.classList.add(_bannerSelectedClass);
+      bg.style.backgroundImage = '';
+    }
+    // Update currentKelas state agar konsisten jika halaman di-refresh
+    if (currentKelas) currentKelas._bannerClass = _bannerSelectedClass;
+    toast('Warna banner diperbarui! 🎨', 'success');
+  } else {
+    toast('Pilih warna atau upload gambar dulu!', 'error');
+    return;
+  }
+  closeModal('modal-ubah-banner');
 }

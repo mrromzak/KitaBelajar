@@ -89,16 +89,17 @@ function switchKelasTab(tab) {
   document.getElementById('tab-murid-btn').classList.toggle('active', tab === 'murid');
   document.getElementById('tab-chat-btn').classList.toggle('active', tab === 'chat');
   document.getElementById('tab-penilaian-btn')?.classList.toggle('active', tab === 'penilaian');
-  document.getElementById('tab-analitik-btn')?.classList.remove('active');
+  document.getElementById('tab-analitik-btn')?.classList.toggle('active', tab === 'analitik');
   document.getElementById('kelas-stream').style.display = tab === 'materi' ? 'block' : 'none';
   document.getElementById('kelas-kuis-stream').style.display = tab === 'kuis' ? 'block' : 'none';
   document.getElementById('kelas-murid-stream').style.display = tab === 'murid' ? 'block' : 'none';
   document.getElementById('kelas-chat-stream').style.display = tab === 'chat' ? 'block' : 'none';
   document.getElementById('kelas-penilaian-stream').style.display = tab === 'penilaian' ? 'block' : 'none';
   const analitikStream = document.getElementById('kelas-analitik-stream');
-  if (analitikStream) analitikStream.style.display = 'none';
+  if (analitikStream) analitikStream.style.display = tab === 'analitik' ? 'block' : 'none';
   if (tab === 'murid' && currentKelas) loadKelasMurid(currentKelas.id);
   if (tab === 'penilaian' && currentKelas) loadPenilaianKelas(currentKelas.id);
+  if (tab === 'analitik' && typeof AnalitikGuru !== 'undefined') AnalitikGuru.bukaTab();
   if (tab === 'chat') {
     classChatUnreadCount = 0;
     updateClassChatBadge();
@@ -194,7 +195,7 @@ function renderKuisFiltered() {
 async function loadKelasKuis(kelasId) {
   const el = document.getElementById('kelas-kuis-stream');
   const container = document.getElementById('kuis-list-container');
-  if (container) container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat...</div>';
+  if (container) container.innerHTML = skeletonHtml('card', 3);
 
   const isGuru = currentUser?.role === 'guru';
   try {
@@ -754,7 +755,12 @@ function renderSoalChecklistKuis(list) {
 }
 
 async function hapusSoalBank(id, btn) {
-  if (!confirm('Hapus soal ini dari bank soal? Soal yang sudah dipakai di kuis tidak akan terpengaruh.')) return;
+  const ok = await confirmDialog({
+    icon: '🗑️', title: 'Hapus Soal?',
+    body: 'Soal yang sudah dipakai di kuis tidak akan terpengaruh.',
+    okLabel: 'Ya, Hapus', cancelLabel: 'Batal', danger: true
+  });
+  if (!ok) return;
   btn.disabled = true;
   btn.textContent = '⏳';
   try {
@@ -798,7 +804,12 @@ function updateSoalCount() {
 async function hapusSoalTerpilih() {
   const checked = Array.from(document.querySelectorAll('.soal-check:checked'));
   if (checked.length === 0) return;
-  if (!confirm('Hapus ' + checked.length + ' soal terpilih dari bank soal?\n\nSoal yang sudah dipakai di kuis tidak akan terpengaruh.')) return;
+  const ok = await confirmDialog({
+    icon: '🗑️', title: `Hapus ${checked.length} Soal?`,
+    body: 'Soal yang sudah dipakai di kuis tidak akan terpengaruh.',
+    okLabel: 'Ya, Hapus', cancelLabel: 'Batal', danger: true
+  });
+  if (!ok) return;
 
   const ids = checked.map(cb => cb.value);
   let berhasil = 0, gagal = 0;
@@ -925,7 +936,12 @@ async function submitBuatKuis() {
 //  HAPUS KUIS (GURU)
 // ============================================================
 async function hapusKuis(id, judul) {
-  if (!confirm(`Hapus kuis "${judul}"?`)) return;
+  const ok = await confirmDialog({
+    icon: '🗑️', title: 'Hapus Kuis?',
+    body: `Kuis <strong>"${judul}"</strong> akan dihapus permanen.`,
+    okLabel: 'Ya, Hapus', cancelLabel: 'Batal', danger: true
+  });
+  if (!ok) return;
   showLoading(true);
   try {
     const data = await api('DELETE', `/quiz/${id}`);

@@ -97,10 +97,18 @@ function openTambahMateriKelas() {
 //  BUAT KELAS (GURU)
 // ============================================================
 async function submitBuatKelas() {
-  const nama = document.getElementById('bk-nama').value.trim();
+  const namaInput = document.getElementById('bk-nama');
+  const nama = namaInput.value.trim();
   const mapel = document.getElementById('bk-mapel').value;
   const tahun = document.getElementById('bk-tahun').value.trim() || '2024/2025';
-  if (!nama) { toast('Nama kelas harus diisi!', 'error'); return; }
+  if (!nama) {
+    // Inline validation — highlight field + pesan error di bawah input
+    namaInput.style.borderColor = 'var(--red)';
+    const errEl = document.getElementById('bk-nama-error');
+    if (errEl) { errEl.textContent = 'Nama kelas tidak boleh kosong!'; errEl.style.display = 'block'; }
+    namaInput.focus();
+    return;
+  }
   showLoading(true);
   try {
     const data = await api('POST', '/kelas', { nama, mapel, tahun_ajar: tahun });

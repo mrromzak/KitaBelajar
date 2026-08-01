@@ -111,8 +111,13 @@ async function doVerifyOTP() {
       if (data.parent_info && currentUser.role === 'murid') {
         setTimeout(() => {
           const { parentEmail, parentPassword } = data.parent_info;
-          const msg = `👨‍👩‍👧 Akun orangtua sudah dibuat!\nEmail: ${parentEmail}\nPassword: ${parentPassword}\n\nKredensial ini juga tersimpan di notifikasi 🔔 & dikirim ke emailmu. Screenshot ini untuk disimpan!`;
-          alert(msg);
+          confirmDialog({
+            icon: '👨‍👩‍👧',
+            title: 'Akun Orangtua Dibuat!',
+            body: `Email: <strong>${parentEmail}</strong><br>Password: <strong>${parentPassword}</strong><br><br>Kredensial ini tersimpan di notifikasi 🔔 dan dikirim ke emailmu. Screenshot untuk disimpan!`,
+            okLabel: 'Mengerti',
+            cancelLabel: ''
+          });
         }, 1500);
       }
       if (currentUser.role === 'guru') loadGuruDashboard();

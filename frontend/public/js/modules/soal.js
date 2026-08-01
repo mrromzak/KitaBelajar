@@ -190,8 +190,14 @@ async function tutupSoalBuilderDenganKonfirmasi() {
   sbSimpanStateAktif();
   const adaSoalBelumSimpan = sbSoalList.some(s => s.pertanyaan.trim() && !s.dbId);
   if (adaSoalBelumSimpan) {
-    // Gunakan custom confirm karena lebih jelas
-    const pilih = confirm(`Ada ${sbSoalList.filter(s=>s.pertanyaan.trim()&&!s.dbId).length} soal belum disimpan.\n\nOK = Simpan & Keluar\nBatal = Keluar tanpa simpan`);
+    const jumlah = sbSoalList.filter(s => s.pertanyaan.trim() && !s.dbId).length;
+    const pilih = await confirmDialog({
+      icon: '💾',
+      title: 'Ada Soal Belum Disimpan',
+      body: `${jumlah} soal belum disimpan. Mau simpan sebelum keluar?`,
+      okLabel: 'Simpan & Keluar',
+      cancelLabel: 'Keluar Tanpa Simpan'
+    });
     if (pilih) {
       await sbSimpanSemua();
       return;
@@ -429,9 +435,14 @@ function sbCheckMobile() {
 
 window.addEventListener('resize', sbCheckMobile);
 
-function sbHapusSoalAktif() {
+async function sbHapusSoalAktif() {
   if (sbSoalList.length <= 1) { toast('Minimal harus ada 1 soal!', 'error'); return; }
-  if (!confirm(`Hapus soal #${sbAktifIdx + 1}?`)) return;
+  const ok = await confirmDialog({
+    icon: '🗑️', title: `Hapus Soal #${sbAktifIdx + 1}?`,
+    body: 'Soal ini akan dihapus dari sesi ini.',
+    okLabel: 'Ya, Hapus', cancelLabel: 'Batal', danger: true
+  });
+  if (!ok) return;
   sbSoalList.splice(sbAktifIdx, 1);
   sbAktifIdx = Math.min(sbAktifIdx, sbSoalList.length - 1);
   sbMuatSoal(sbAktifIdx);

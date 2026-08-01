@@ -398,7 +398,7 @@ async function loadLeaderboard() {
   const params = new URLSearchParams({ mode: _lbMode });
   if (_lbPeriode === 'minggu') params.set('periode', 'minggu');
 
-  document.getElementById('lb-podium').innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px;width:100%">Memuat...</div>';
+  document.getElementById('lb-podium').innerHTML = `<div style="width:100%;padding:20px 0">${skeletonHtml('list', 3)}</div>`;
   document.getElementById('lb-list').innerHTML   = '';
 
   try {
@@ -562,7 +562,7 @@ async function klaimDailyReward(btn) {
 async function loadMisi() {
   const token = localStorage.getItem('kb_token') || '';
   ['harian','mingguan','achievement'].forEach(t =>
-    document.getElementById(`misi-${t}-list`).innerHTML = '<div style="color:var(--muted);font-size:13px;padding:10px">Memuat...</div>'
+    document.getElementById(`misi-${t}-list`).innerHTML = skeletonHtml('list', 2)
   );
 
   try {

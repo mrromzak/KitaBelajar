@@ -2452,3 +2452,422 @@ body.dark-mode .badge-modal-card{background:#14142C}
 body.dark-mode .badge-modal-nama{color:#E4E4F0}
 body.dark-mode .badge-modal-deskripsi{color:#9494B0}
 body.dark-mode .badge-modal-close{background:#1C1C38;color:#9494B0}
+
+/* ================================================================
+   BACKLOG FIXES
+   ================================================================ */
+
+/* ── T1-1: Settings / Profile page — consistent max-width & input containment ── */
+.settings-page-wrap {
+  max-width: 560px;
+  margin: 32px auto 48px;
+  padding: 0 20px;
+}
+.settings-page-wrap .form-group input,
+.settings-page-wrap .form-group select,
+.settings-page-wrap .form-group textarea {
+  max-width: 100%;
+}
+/* On narrow phones, give a bit more breathing room */
+@media (max-width: 420px) {
+  .settings-page-wrap { padding: 0 14px; }
+  .settings-page-wrap > div { padding: 18px 16px !important; }
+}
+
+/* ── T1-2: Dark mode notifikasi bell dropdown ── */
+/* Correct class names: #bell-dropdown, .bell-notif-item (not .bell-item) */
+body.dark-mode #bell-dropdown {
+  background: var(--elevated);
+  border-color: var(--border);
+  color: var(--text);
+}
+body.dark-mode .bell-dd-header {
+  background: var(--elevated);
+  border-bottom-color: var(--border);
+  color: var(--text);
+}
+body.dark-mode .bell-notif-item {
+  border-bottom-color: var(--border);
+  color: var(--text);
+}
+body.dark-mode .bell-notif-item:hover { background: var(--input); }
+body.dark-mode .bell-notif-item.unread { background: var(--unread); }
+body.dark-mode .bell-notif-judul { color: var(--text); }
+body.dark-mode .bell-notif-isi { color: var(--muted); }
+body.dark-mode .bell-notif-time { color: var(--muted); }
+body.dark-mode .bell-empty { color: var(--muted); }
+/* "Tandai semua dibaca" button inside header */
+body.dark-mode .bell-dd-header button {
+  background: var(--input);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+/* ── T1-3: Kode kelas — hidden by default, toggle show/hide ── */
+.kelas-code-hidden { filter: blur(6px); user-select: none; transition: filter 0.2s; }
+.kelas-code-toggle-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 16px; padding: 2px 4px; line-height: 1;
+  opacity: 0.6; transition: opacity 0.2s;
+}
+.kelas-code-toggle-btn:hover { opacity: 1; }
+
+/* ── T1-4: Chat gambar skeleton loader ── */
+.chat-img-skeleton {
+  display: inline-block;
+  max-width: 100%; height: 120px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.4s infinite;
+}
+body.dark-mode .chat-img-skeleton {
+  background: linear-gradient(90deg, var(--input) 25%, var(--elevated) 50%, var(--input) 75%);
+  background-size: 200% 100%;
+}
+@keyframes skeletonShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── T1-5: Analitik tab — when active via switchKelasTab ── */
+/* (handled in JS — no new CSS needed beyond existing .tab-btn.active) */
+
+/* ── T2-7: Toast z-index fix — must be above modals/overlays ── */
+#toast { z-index: 99999 !important; }
+
+/* ── Confirm modal (replaces native confirm()) ── */
+.confirm-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+  z-index: 99990; display: flex; align-items: center; justify-content: center;
+  padding: 20px; animation: fadeIn 0.2s ease;
+}
+.confirm-modal-box {
+  background: white; border-radius: 24px; padding: 32px 28px;
+  max-width: 360px; width: 100%; text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  animation: badgeModalIn 0.25s ease;
+}
+body.dark-mode .confirm-modal-box { background: var(--card); }
+.confirm-modal-icon { font-size: 48px; margin-bottom: 16px; }
+.confirm-modal-title {
+  font-family: 'Fredoka One', cursive; font-size: 20px;
+  color: var(--text); margin-bottom: 8px;
+}
+.confirm-modal-body {
+  font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 24px;
+}
+.confirm-modal-btns { display: flex; gap: 10px; }
+.confirm-modal-btns button {
+  flex: 1; padding: 12px 16px; border-radius: 12px; border: none;
+  font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px;
+  cursor: pointer; transition: all 0.2s;
+}
+.confirm-modal-cancel {
+  background: #F3F4F6; color: var(--text);
+}
+body.dark-mode .confirm-modal-cancel { background: var(--elevated); color: var(--text); }
+.confirm-modal-cancel:hover { background: #E5E7EB; }
+.confirm-modal-ok {
+  background: var(--orange); color: white;
+}
+.confirm-modal-ok.danger { background: var(--red); }
+.confirm-modal-ok:hover { opacity: 0.9; transform: translateY(-1px); }
+
+/* ── T2-8: Skeleton loader ── */
+.skeleton-line {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.4s infinite;
+  border-radius: 8px; margin-bottom: 8px;
+}
+body.dark-mode .skeleton-line {
+  background: linear-gradient(90deg, var(--input) 25%, var(--elevated) 50%, var(--input) 75%);
+  background-size: 200% 100%;
+}
+.skeleton-card {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.4s infinite;
+  border-radius: 16px;
+}
+body.dark-mode .skeleton-card {
+  background: linear-gradient(90deg, var(--card) 25%, var(--elevated) 50%, var(--card) 75%);
+  background-size: 200% 100%;
+}
+
+/* ── T3-9: XP/Level clickable area ── */
+.xp-clickable {
+  cursor: pointer; transition: opacity 0.15s;
+  text-decoration: none; color: inherit;
+}
+.xp-clickable:hover { opacity: 0.8; }
+
+/* ── T3-10: Overflow menu (titik tiga) for kelas card ── */
+.kelas-overflow-menu {
+  position: relative; display: inline-flex;
+}
+.kelas-overflow-btn {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: none; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: var(--muted); transition: all 0.15s;
+}
+.kelas-overflow-btn:hover { background: rgba(0,0,0,0.08); color: var(--text); }
+body.dark-mode .kelas-overflow-btn:hover { background: rgba(255,255,255,0.1); }
+.kelas-overflow-dropdown {
+  position: absolute; bottom: 100%; right: 0; margin-bottom: 4px;
+  background: white; border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.18);
+  border: 1.5px solid #f0f0f0; min-width: 160px;
+  z-index: 500; overflow: hidden;
+  display: none; flex-direction: column;
+  animation: fadeIn 0.15s ease;
+}
+body.dark-mode .kelas-overflow-dropdown {
+  background: var(--elevated); border-color: var(--border);
+}
+.kelas-overflow-dropdown.open { display: flex; }
+.kelas-overflow-item {
+  padding: 10px 16px; font-size: 13px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; gap: 8px;
+  transition: background 0.15s; color: var(--text);
+  background: none; border: none; width: 100%; text-align: left;
+  font-family: 'Nunito', sans-serif;
+}
+.kelas-overflow-item:hover { background: #F5F5F5; }
+body.dark-mode .kelas-overflow-item:hover { background: var(--input); }
+.kelas-overflow-item.danger { color: var(--red); }
+.kelas-overflow-item.danger:hover { background: #FFEFE8; }
+body.dark-mode .kelas-overflow-item.danger:hover { background: rgba(209,43,0,0.12); }
+
+/* ================================================================
+   T5-15: VISUAL LANGUAGE OVERHAUL
+   Goal: Less generic AI-gradient, more distinctive educational brand.
+   Design tokens: warm orange primary, teal secondary, clean slate text.
+   Philosophy: bold accents on white canvas — restrained, purposeful.
+   ================================================================ */
+
+/* ── New design tokens (extend :root) ── */
+:root {
+  /* Refined brand palette */
+  --brand:        #FF5A1A;   /* deeper, more saturated orange */
+  --brand-light:  #FFF0E8;
+  --brand-dark:   #C73E00;
+  --teal:         #00B4A0;   /* positive/success accent */
+  --teal-light:   #E0F8F5;
+  --slate:        #475569;   /* body text */
+  --slate-light:  #94A3B8;   /* muted/labels */
+  --ink:          #1E293B;   /* headings */
+  --surface:      #FFFFFF;
+  --surface-2:    #F8FAFC;   /* slightly off-white secondary surface */
+  --border-soft:  rgba(0,0,0,0.08);
+
+  /* Refined shadows — flatter, less purple */
+  --shadow-xs: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+
+  /* Radius scale */
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+}
+
+/* ── Welcome banner — more distinctive, less generic gradient ── */
+.welcome-banner {
+  background: linear-gradient(135deg, var(--brand) 0%, #FF8C42 60%, #FFB380 100%);
+  border-radius: var(--r-xl);
+  box-shadow: 0 8px 32px rgba(255,90,26,0.28);
+}
+
+/* ── Navbar — cleaner, add bottom border as brand indicator ── */
+.navbar {
+  border-bottom: 2px solid var(--brand-light);
+  box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+}
+
+/* ── Cards — less shadow depth, visible border for cleaner separation ── */
+.card, .panel, .sidebar-card, .kelas-card {
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-sm);
+}
+.kelas-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: rgba(255,90,26,0.2);
+}
+
+/* ── Game cards — bolder hover, more distinctive ── */
+.game-card {
+  border: 1px solid rgba(255,255,255,0.25);
+}
+
+/* ── Section titles — sharper contrast ── */
+.section-title {
+  color: var(--ink);
+  font-weight: 900;
+  letter-spacing: -0.3px;
+}
+
+/* ── Tabs — cleaner with indicator line (already animated above) ── */
+.tab-btn {
+  border-bottom: 2px solid transparent;
+  transition: color var(--anim-std) ease, border-color var(--anim-std) ease;
+}
+.tab-btn:hover { color: var(--brand); }
+.tab-btn.active { color: var(--brand); border-bottom-color: var(--brand); }
+
+/* ── XP bar — more distinctive colors ── */
+.xp-fill { background: #FFD580; }
+.xp-bar  { background: rgba(255,255,255,0.25); }
+
+/* ── Murid greeting header ── */
+.welcome-banner h2 { letter-spacing: -0.5px; }
+
+/* ── Empty state — less generic ── */
+.empty-state { color: var(--slate-light); }
+.empty-icon  { filter: grayscale(0.3); }
+
+/* ── Leaderboard items — cleaner ── */
+.lb-item {
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-xs);
+}
+
+/* ── Misi cards ── */
+.misi-card {
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-xs);
+}
+
+/* ── Profile/settings cards — consistent spacing ── */
+.settings-page-wrap > div[style*="background:white"],
+.settings-page-wrap > div[style*="background:#fff"],
+.settings-page-wrap > div[style*="background: white"] {
+  border: 1px solid var(--border-soft) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* ── Modal — cleaner, less purple shadow ── */
+.modal {
+  box-shadow: 0 24px 64px rgba(0,0,0,0.18) !important;
+}
+
+/* ── Kelas banner — more typography-forward ── */
+.kelas-banner-title {
+  font-size: clamp(20px, 4vw, 28px);
+  letter-spacing: -0.5px;
+}
+
+/* ── Badge cards — minimal ── */
+.badge-card { border: 1.5px solid var(--border-soft); }
+.badge-card.dimiliki { border-color: rgba(123,47,247,0.3); }
+
+/* ── Dark mode token overrides for new palette ── */
+body.dark-mode {
+  --ink: #E2E8F0;
+  --slate: #94A3B8;
+  --slate-light: #64748B;
+  --border-soft: rgba(255,255,255,0.08);
+  --surface-2: #1C1C38;
+}
+body.dark-mode .welcome-banner {
+  background: linear-gradient(135deg, #8B2500 0%, #C04400 60%, #903000 100%);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+body.dark-mode .navbar {
+  border-bottom-color: var(--border);
+}
+body.dark-mode .card,
+body.dark-mode .panel,
+body.dark-mode .sidebar-card,
+body.dark-mode .kelas-card {
+  border-color: var(--border);
+}
+   Konsisten: durasi 200ms, easing standard cubic-bezier(0.22,1,0.36,1)
+   ================================================================ */
+:root {
+  --anim-fast: 0.15s;
+  --anim-std: 0.2s;
+  --anim-slow: 0.35s;
+  --ease-std: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Hover lift effect — card & button */
+.kelas-card { transition: transform var(--anim-std) var(--ease-std), box-shadow var(--anim-std) ease; }
+.kelas-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.12); }
+.game-card { transition: transform var(--anim-std) var(--ease-std), box-shadow var(--anim-std) ease; }
+.game-card:hover { transform: translateY(-4px) scale(1.01); }
+
+/* Button click feedback */
+.btn-submit:active, .btn-login:active, .nav-btn:active {
+  transform: scale(0.97) !important;
+  transition: transform 0.08s ease !important;
+}
+
+/* Bell icon shake on new notification */
+@keyframes bellShake {
+  0%, 100% { transform: rotate(0); }
+  20%       { transform: rotate(10deg); }
+  40%       { transform: rotate(-10deg); }
+  60%       { transform: rotate(6deg); }
+  80%       { transform: rotate(-4deg); }
+}
+.bell-btn.has-notif { animation: bellShake 0.5s var(--ease-std); }
+
+/* Tab switch — fade content in */
+#kelas-stream, #kelas-kuis-stream, #kelas-murid-stream,
+#kelas-chat-stream, #kelas-penilaian-stream, #kelas-analitik-stream {
+  animation: fadeInUp 0.2s var(--ease-std) both;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Dark mode transition — smooth color change */
+body {
+  transition: background-color var(--anim-slow) ease,
+              color var(--anim-std) ease;
+}
+.navbar, .card, .modal, .panel, .welcome-banner, .sidebar-card {
+  transition: background-color var(--anim-slow) ease,
+              border-color var(--anim-std) ease,
+              box-shadow var(--anim-std) ease;
+}
+
+/* Avatar hover scale */
+#murid-avatar:hover, #murid-nav-avatar:hover { transform: scale(1.05); cursor: pointer; }
+
+/* Tab button active indicator line */
+.tab-btn { position: relative; }
+.tab-btn.active::after {
+  content: ''; position: absolute; bottom: -2px; left: 12px; right: 12px;
+  height: 3px; border-radius: 3px; background: var(--orange);
+  animation: slideIn 0.2s var(--ease-bounce) both;
+}
+@keyframes slideIn {
+  from { transform: scaleX(0); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
+}
+
+/* Toast pop animation */
+#toast.show {
+  animation: toastPop 0.35s var(--ease-bounce) both;
+}
+@keyframes toastPop {
+  from { transform: translateX(-50%) translateY(-140%) scale(0.85); opacity: 0; }
+  to   { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
+}
+
+/* Respect reduce-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
