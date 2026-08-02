@@ -445,8 +445,7 @@ body.dark-mode .kelas-action-bar { background: #0F172A !important; border-bottom
   background: rgba(255,255,255,0.15) !important;
 }
 
-/* ── 25. Responsive — mobile rapor tetap terbaca ──────────────── */
-@media (max-width: 640px) {
+/* ── 25. Responsive — mobile rapor tetap terbaca ──────────────── */@media (max-width: 640px) {
   .guru-stats {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -497,4 +496,22 @@ body.dark-mode .welcome-banner {
 body.dark-mode .rp-nilai-item {
   background: rgba(255,255,255,0.08) !important;
   border-color: rgba(255,255,255,0.15) !important;
+}
+
+/* ── 28. Stat card — hapus border-left slop ───────────────────── */
+.stat-card,
+.stat-card:nth-child(1),
+.stat-card:nth-child(2),
+.stat-card:nth-child(3),
+.stat-card:nth-child(4) {
+  border-left: none !important;
+}
+
+/* ── 29. Latihan banner — netralkan colored glow shadow ──────── */
+.kb-latihan-banner {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important;
+}
+.kb-latihan-banner:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.16) !important;
+  transform: translateY(-3px) !important;
 }
