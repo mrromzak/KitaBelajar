@@ -137,7 +137,7 @@ body.dark-mode .section-title { color: #E2E8F0 !important; border-top-color: #EF
 body.dark-mode .section-title svg { color: #EF4444 !important; }
 
 /* ── 7. Kelas List — baris tabel, bukan card grid ──────────────── */
-.kelas-grid {
+.dashboard .kelas-grid {
   display: flex !important;
   flex-direction: column !important;
   gap: 0 !important;
@@ -147,7 +147,7 @@ body.dark-mode .section-title svg { color: #EF4444 !important; }
   overflow: hidden;
   margin-bottom: 24px !important;
 }
-.kelas-card {
+.dashboard .kelas-card {
   border-radius: 0 !important;
   box-shadow: none !important;
   border: none !important;
@@ -160,23 +160,23 @@ body.dark-mode .section-title svg { color: #EF4444 !important; }
   transition: background 0.12s ease !important;
   transform: none !important;
 }
-.kelas-card:last-child { border-bottom: none !important; }
-.kelas-card:hover {
+.dashboard .kelas-card:last-child { border-bottom: none !important; }
+.dashboard .kelas-card:hover {
   background: var(--rp-red-bg) !important;
   transform: none !important;
   box-shadow: none !important;
 }
 
 /* Header kelas — strip warna kiri sebagai identifier mapel */
-.kelas-card-header {
+.dashboard .kelas-card-header {
   width: 6px !important;
   min-height: unset !important;
   padding: 0 !important;
   flex: unset !important;
   overflow: visible !important;
 }
-.kelas-card-header::after,
-.kelas-card-header::before { display: none !important; }
+.dashboard .kelas-card-header::after,
+.dashboard .kelas-card-header::before { display: none !important; }
 
 /* Konten tengah kelas */
 .kelas-card-body-rp {
@@ -219,7 +219,7 @@ body.dark-mode .section-title svg { color: #EF4444 !important; }
 }
 
 /* Footer kelas — kanan: actions */
-.kelas-card-footer {
+.dashboard .kelas-card-footer {
   padding: 12px 14px !important;
   border-top: none !important;
   flex-direction: column !important;
@@ -243,11 +243,11 @@ body.dark-mode .section-title svg { color: #EF4444 !important; }
 .kelas-stat { color: var(--rp-muted) !important; font-size: 11px !important; }
 
 /* Dark mode kelas list */
-body.dark-mode .kelas-grid { background: #1E293B; border-color: #334155; }
-body.dark-mode .kelas-card { border-bottom-color: #334155 !important; }
-body.dark-mode .kelas-card:hover { background: rgba(239,68,68,0.08) !important; }
+body.dark-mode .dashboard .kelas-grid { background: #1E293B; border-color: #334155; }
+body.dark-mode .dashboard .kelas-card { border-bottom-color: #334155 !important; }
+body.dark-mode .dashboard .kelas-card:hover { background: rgba(239,68,68,0.08) !important; }
 body.dark-mode .kelas-name-rp { color: #E2E8F0; }
-body.dark-mode .kelas-card-footer { border-left-color: #334155; }
+body.dark-mode .dashboard .kelas-card-footer { border-left-color: #334155; }
 body.dark-mode .kelas-code { background: #0F172A !important; border-color: #334155 !important; color: #94A3B8 !important; }
 body.dark-mode .kelas-mapel-tag { background: rgba(239,68,68,0.15) !important; color: #FCA5A5 !important; }
 

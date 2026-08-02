@@ -2380,7 +2380,13 @@ function renderKelasCard(k, i, role) {
 
   // Strip warna kiri — identifier mapel (warna dari kelas-banner-content)
   const STRIP_COLORS = ['#FF6B35','#4A6FA5','#529B76','#9B4DFF','#20C997','#E67E22','#E91E63','#607D8B'];
-  const stripColor = STRIP_COLORS[idx % STRIP_COLORS.length];
+  const stripColor = STRIP_COLORS[idx % STRIP_COLORS.length] || '#B91C1C';
+
+  // Fallbacks agar super resilient terhadap data anomali
+  const namaKelasSafe = escapeHtml(k.nama || 'Kelas Tanpa Nama');
+  const mapelSafe = k.mapel ? escapeHtml(k.mapel) : '';
+  const totalMateriSafe = k.total_materi || 0;
+  const kodeAksesSafe = k.kode_akses || '–';
 
   return `<div class="kelas-card" onclick="openKelas('${k.id}',${idx % KELAS_COLORS.length})">
     <!-- Strip warna kiri sebagai identifier mapel -->
@@ -2389,25 +2395,25 @@ function renderKelasCard(k, i, role) {
     <div class="kelas-card-body-rp">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <span class="kelas-emoji-rp">${emoji}</span>
-        <span class="kelas-name-rp">${escapeHtml(k.nama)}</span>
-        ${k.mapel ? `<span class="kelas-mapel-tag">${escapeHtml(k.mapel)}</span>` : ''}
+        <span class="kelas-name-rp">${namaKelasSafe}</span>
+        ${mapelSafe ? `<span class="kelas-mapel-tag">${mapelSafe}</span>` : ''}
         ${!isGuru ? `<span id="card-chat-badge-${k.id}" style="display:none;background:var(--rp-red,#B91C1C);color:white;border-radius:4px;padding:1px 7px;font-size:10px;font-weight:800;line-height:1.6">0</span>` : ''}
       </div>
       <div class="kelas-meta-rp">
         ${isGuru
           ? `<span>📅 ${escapeHtml(k.tahun_ajar || '–')}</span>`
           : `<span>👨‍🏫 ${escapeHtml(k.guru_nama || k.guru?.nama || 'Guru')}</span>`}
-        <span>📚 ${k.total_materi || 0} materi</span>
+        <span>📚 ${totalMateriSafe} materi</span>
       </div>
     </div>
     <!-- Footer: kode + overflow -->
     <div class="kelas-card-footer">
       ${isGuru ? `
         <div class="kelas-code-wrap" style="justify-content:flex-end">
-          <span class="kelas-code kelas-code-hidden" id="kelas-code-card-${k.id}">${k.kode_akses || '–'}</span>
+          <span class="kelas-code kelas-code-hidden" id="kelas-code-card-${k.id}">${kodeAksesSafe}</span>
           <button class="kelas-code-toggle-btn" id="kelas-code-eye-${k.id}"
             onclick="event.stopPropagation();toggleKelasCodeVisibility('${k.id}')" title="Tampilkan/sembunyikan kode">👁️</button>
-          <button class="kelas-copy-btn" onclick="event.stopPropagation();copyToClipboard('${k.kode_akses}')" title="Salin kode">📋</button>
+          <button class="kelas-copy-btn" onclick="event.stopPropagation();copyToClipboard('${kodeAksesSafe}')" title="Salin kode">📋</button>
         </div>
       ` : ''}
       <div class="kelas-overflow-menu" onclick="event.stopPropagation()">
@@ -2415,8 +2421,8 @@ function renderKelasCard(k, i, role) {
           onclick="toggleKelasOverflow('${k.id}')" title="Opsi kelas">⋯</button>
         <div class="kelas-overflow-dropdown" id="kelas-menu-${k.id}">
           ${isGuru
-            ? `<button class="kelas-overflow-item danger" onclick="toggleKelasOverflow('${k.id}');konfirmasiHapusKelas('${k.id}','${k.nama.replace(/'/g, "\\'")}')">🗑️ Hapus Kelas</button>`
-            : `<button class="kelas-overflow-item danger" onclick="toggleKelasOverflow('${k.id}');konfirmasiKeluarKelas('${k.id}','${k.nama.replace(/'/g, "\\'")}')">🚪 Keluar Kelas</button>`
+            ? `<button class="kelas-overflow-item danger" onclick="toggleKelasOverflow('${k.id}');konfirmasiHapusKelas('${k.id}','${namaKelasSafe.replace(/'/g, "\\'")}')">🗑️ Hapus Kelas</button>`
+            : `<button class="kelas-overflow-item danger" onclick="toggleKelasOverflow('${k.id}');konfirmasiKeluarKelas('${k.id}','${namaKelasSafe.replace(/'/g, "\\'")}')">🚪 Keluar Kelas</button>`
           }
         </div>
       </div>
