@@ -15,7 +15,7 @@
 <script src="/js/app-config.js?v=1"></script>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/belajar-seru.css?v=39">
-<link rel="stylesheet" href="/css/rapor-world.css?v=6">
+<link rel="stylesheet" href="/css/rapor-world.css?v=7">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="https://meet.ffmuc.net/external_api.js"></script>
 </head>
@@ -476,7 +476,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
           <div class="xp-bar"><div class="xp-fill" id="murid-xp-fill" style="width:0%"></div></div>
         </div>
       </div>
-      <div class="avatar-big" id="murid-avatar">🦁</div>
+      <div class="avatar-big" id="murid-avatar" onclick="bukaGantiAvatar('murid')" title="Klik untuk ganti foto profil/avatar" style="cursor:pointer">🦁</div>
     </div>
 
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
@@ -699,7 +699,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
         <h2 id="guru-greeting">Selamat Datang, Bu Guru! 👩‍🏫</h2>
         <p id="guru-info">Kelola kelas dan materi kamu</p>
       </div>
-      <div class="avatar-big" id="guru-banner-avatar">👩‍🏫</div>
+      <div class="avatar-big" id="guru-banner-avatar" onclick="bukaGantiAvatar('guru')" title="Klik untuk ganti foto profil/avatar" style="cursor:pointer">👩‍🏫</div>
     </div>
 
     <div class="guru-stats">

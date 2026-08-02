@@ -755,6 +755,10 @@ body.dark-mode #beranda-btn {
   align-items: center !important;
   justify-content: center !important;
   flex-shrink: 0 !important;
+  transition: transform var(--anim-std,#0.2s) var(--ease-std,cubic-bezier(0.22, 1, 0.36, 1)) !important;
+}
+.avatar-big:hover {
+  transform: scale(1.05) !important;
 }
 .avatar-big img {
   width: 100% !important;
