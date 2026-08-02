@@ -510,62 +510,71 @@ function toggleKelasOverflow(kelasId) {
   const isOpen = menu.classList.contains('open');
 
   // Tutup semua dropdown lain dulu (dan kembalikan ke parent-nya)
-  document.querySelectorAll('.kelas-overflow-dropdown.open').forEach(m => {
-    m.classList.remove('open');
-    m.style.cssText = '';
-    const id = m.id.replace('kelas-menu-', '');
-    const parent = document.getElementById('kelas-menu-btn-' + id)?.parentElement;
-    if (parent && !parent.contains(m)) parent.appendChild(m);
-  });
+  const closeAllDropdowns = () => {
+    document.querySelectorAll('.kelas-overflow-dropdown.open').forEach(m => {
+      m.classList.remove('open');
+      m.style.cssText = '';
+      const id = m.id.replace('kelas-menu-', '');
+      const parent = document.getElementById('kelas-menu-btn-' + id)?.parentElement;
+      if (parent && !parent.contains(m)) parent.appendChild(m);
+    });
+  };
+  closeAllDropdowns();
 
   if (!isOpen) {
-    // 1. Pindahkan ke document.body (portal)
+    // 1. Tampilkan menu secara tersembunyi di body untuk menghitung dimensi asli
+    menu.style.cssText = 'position: absolute !important; display: flex !important; visibility: hidden !important;';
     document.body.appendChild(menu);
 
-    // 2. Hitung posisi absolute tombol
+    const menuHeight = menu.offsetHeight;
+    const menuWidth = menu.offsetWidth;
+
+    // 2. Hitung posisi absolute tombol trigger
     const rect = btn.getBoundingClientRect();
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
     const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-
-    // 3. Hitung penempatan (auto-flip jika tidak cukup ruang di bawah)
-    menu.style.display = 'block'; // Tampilkan dulu untuk hitung tinggi riil
-    const menuHeight = menu.offsetHeight;
-    menu.style.display = '';
 
     const viewportHeight = window.innerHeight;
     const spaceBelow = viewportHeight - rect.bottom;
 
     let top = rect.bottom + scrollTop + 4;
-    // Auto-flip: jika ruang di bawah kurang dari tinggi menu, dan ada ruang di atas
+    // Auto-flip ke atas jika ruang di bawah tidak cukup
     if (spaceBelow < menuHeight && rect.top > menuHeight) {
       top = rect.top + scrollTop - menuHeight - 4;
     }
 
-    const left = rect.right + scrollLeft - menu.offsetWidth;
+    const left = rect.right + scrollLeft - menuWidth;
 
-    // 4. Set styling fixed/absolute portal
+    // 3. Set styling absolute portal secara presisi
     menu.style.cssText = `
       position: absolute !important;
       top: ${top}px !important;
       left: ${left}px !important;
       z-index: 999999 !important;
       display: flex !important;
+      visibility: visible !important;
     `;
 
     menu.classList.add('open');
 
-    // 5. Handler tutup saat klik di luar
+    // 4. Handler tutup saat klik di luar atau saat scroll
     setTimeout(() => {
       const closeHandler = (e) => {
-        if (!menu.contains(e.target) && e.target !== btn) {
-          menu.classList.remove('open');
-          menu.style.cssText = '';
-          const parent = btn.parentElement;
-          if (parent && !parent.contains(menu)) parent.appendChild(menu);
-          document.removeEventListener('click', closeHandler);
-        }
+        if (e && menu.contains(e.target)) return; // Abaikan klik di dalam menu sendiri
+        if (e && e.target === btn) return;       // Abaikan klik pada tombol trigger
+        
+        menu.classList.remove('open');
+        menu.style.cssText = '';
+        const parent = btn.parentElement;
+        if (parent && !parent.contains(menu)) parent.appendChild(menu);
+        
+        document.removeEventListener('click', closeHandler);
+        window.removeEventListener('scroll', closeHandler, { passive: true });
       };
+      
       document.addEventListener('click', closeHandler);
+      // Tutup otomatis saat user melakukan scroll halaman (UX standar)
+      window.addEventListener('scroll', closeHandler, { passive: true });
     }, 10);
   }
 }
