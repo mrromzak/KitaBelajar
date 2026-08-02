@@ -557,24 +557,21 @@ function toggleKelasOverflow(kelasId) {
 
     menu.classList.add('open');
 
-    // 4. Handler tutup saat klik di luar atau saat scroll
+    // 4. Handler tutup saat klik di luar
     setTimeout(() => {
       const closeHandler = (e) => {
         if (e && menu.contains(e.target)) return; // Abaikan klik di dalam menu sendiri
         if (e && e.target === btn) return;       // Abaikan klik pada tombol trigger
-        
+
         menu.classList.remove('open');
         menu.style.cssText = '';
         const parent = btn.parentElement;
         if (parent && !parent.contains(menu)) parent.appendChild(menu);
-        
+
         document.removeEventListener('click', closeHandler);
-        window.removeEventListener('scroll', closeHandler, { passive: true });
       };
-      
+
       document.addEventListener('click', closeHandler);
-      // Tutup otomatis saat user melakukan scroll halaman (UX standar)
-      window.addEventListener('scroll', closeHandler, { passive: true });
     }, 10);
   }
 }
