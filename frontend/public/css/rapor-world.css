@@ -1,0 +1,500 @@
+/*
+ * rapor-world.css — KitaBelajar Visual Language
+ *
+ * THESIS: Dashboard ini adalah rapor digital murid Indonesia — bukan SaaS
+ * generic. Surface ini menolak card-grid-dengan-gradient sebagai struktur
+ * utama dan menggantinya dengan layout yang memiliki otoritas rapor asli.
+ *
+ * OWN-WORLD: Putih bersih sebagai ground (kertas rapor), merah-tua (#B91C1C)
+ * sebagai accent (border rapor, cap guru), slate (#1E293B) untuk angka dan
+ * label, garis tipis #E2E8F0 sebagai divider tabel. Orange (#FF6B35) hanya
+ * untuk XP fill dan CTA utama — bukan background.
+ *
+ * REFUSES: gradient text, colored border-left >1px pada list item,
+ * purple glow shadow, cream ground dengan serif italic (AI default).
+ *
+ * Seed: bc3f8915 · direction 5 · mode operate
+ */
+
+/* ── 1. Tokens ─────────────────────────────────────────────────── */
+:root {
+  --rp-white:    #FFFFFF;
+  --rp-bg:       #F8FAFC;     /* off-white — kertas rapor */
+  --rp-red:      #B91C1C;     /* merah rapor */
+  --rp-red-mid:  #DC2626;     /* hover state */
+  --rp-red-bg:   #FEF2F2;     /* latar merah tipis */
+  --rp-ink:      #1E293B;     /* teks utama */
+  --rp-muted:    #64748B;     /* label, keterangan */
+  --rp-rule:     #E2E8F0;     /* garis tabel */
+  --rp-stamp:    #FF6B35;     /* cap/stempel — XP, CTA */
+  --rp-green:    #15803D;     /* nilai bagus, selesai */
+  --rp-green-bg: #F0FDF4;
+  --rp-shadow:   0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
+  --rp-shadow-md:0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* ── 2. Ground & Body ──────────────────────────────────────────── */
+body {
+  background: var(--rp-bg) !important;
+  color: var(--rp-ink);
+}
+/* Hapus mesh gradient — bukan bagian dari rapor world */
+body::before { display: none !important; }
+
+/* ── 3. Navbar — header rapor dengan garis merah ──────────────── */
+.navbar {
+  background: var(--rp-white) !important;
+  border-bottom: 2px solid var(--rp-red) !important;
+  box-shadow: none !important;
+}
+.logo { color: var(--rp-red) !important; }
+body.dark-mode .navbar { background: #0F172A !important; border-bottom-color: #DC2626 !important; }
+body.dark-mode .logo { color: #EF4444 !important; }
+
+/* ── 4. Welcome Banner — otoritatif, bukan gradient blob ────────── */
+.welcome-banner {
+  background: var(--rp-red) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--rp-shadow-md) !important;
+  position: relative;
+  overflow: hidden;
+}
+/* Pola garis diagonal tipis — seperti kertas bergaris di rapor */
+.welcome-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255,255,255,0.04) 0px,
+    rgba(255,255,255,0.04) 1px,
+    transparent 1px,
+    transparent 14px
+  );
+  pointer-events: none;
+}
+/* Hapus dekorasi bintang lama */
+.welcome-banner::after { display: none !important; }
+
+.welcome-banner h2 {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(20px, 4vw, 26px);
+  letter-spacing: -0.3px;
+}
+
+/* ── 5. XP "Kotak Nilai" — tampil seperti kolom nilai di rapor ── */
+/* Dibuat via JS — .rp-nilai-box */
+.rp-nilai-box {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.rp-nilai-item {
+  background: rgba(255,255,255,0.14);
+  border: 1.5px solid rgba(255,255,255,0.30);
+  border-radius: 8px;
+  padding: 8px 16px;
+  min-width: 80px;
+  text-align: center;
+}
+.rp-nilai-angka {
+  font-family: 'Fredoka One', cursive;
+  font-size: 22px;
+  line-height: 1;
+  color: #fff;
+  display: block;
+}
+.rp-nilai-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.75);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  display: block;
+  margin-top: 3px;
+}
+
+/* XP bar tetap, disederhanakan */
+.xp-bar { background: rgba(255,255,255,0.2) !important; border-radius: 4px !important; height: 6px !important; width: 100% !important; max-width: 200px; }
+.xp-fill { background: rgba(255,255,255,0.85) !important; border-radius: 4px !important; }
+.xp-label { font-size: 11px !important; opacity: 0.8 !important; }
+
+/* ── 6. Section Titles — garis merah di atas, bukan eyebrow ────── */
+.section-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 17px !important;
+  color: var(--rp-ink) !important;
+  padding-top: 14px;
+  margin-top: 6px;
+  border-top: 2px solid var(--rp-red);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title svg { color: var(--rp-red) !important; }
+body.dark-mode .section-title { color: #E2E8F0 !important; border-top-color: #EF4444; }
+body.dark-mode .section-title svg { color: #EF4444 !important; }
+
+/* ── 7. Kelas List — baris tabel, bukan card grid ──────────────── */
+.kelas-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  background: var(--rp-white);
+  border: 1px solid var(--rp-rule);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 24px !important;
+}
+.kelas-card {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-bottom: 1px solid var(--rp-rule) !important;
+  display: grid !important;
+  grid-template-columns: auto 1fr auto !important;
+  align-items: stretch !important;
+  flex-direction: unset !important;
+  overflow: visible !important;
+  transition: background 0.12s ease !important;
+  transform: none !important;
+}
+.kelas-card:last-child { border-bottom: none !important; }
+.kelas-card:hover {
+  background: var(--rp-red-bg) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Header kelas — strip warna kiri sebagai identifier mapel */
+.kelas-card-header {
+  width: 6px !important;
+  min-height: unset !important;
+  padding: 0 !important;
+  flex: unset !important;
+  overflow: visible !important;
+}
+.kelas-card-header::after,
+.kelas-card-header::before { display: none !important; }
+
+/* Konten tengah kelas */
+.kelas-card-body-rp {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.kelas-name-rp {
+  font-family: 'Fredoka One', cursive;
+  font-size: 15px;
+  color: var(--rp-ink);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kelas-meta-rp {
+  font-size: 12px;
+  color: var(--rp-muted);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.kelas-emoji-rp {
+  font-size: 22px;
+  line-height: 1;
+}
+/* Mapel tag di dalam row */
+.kelas-mapel-tag {
+  background: var(--rp-red-bg) !important;
+  color: var(--rp-red) !important;
+  font-size: 10px !important;
+  border-radius: 4px !important;
+  padding: 2px 7px !important;
+  font-weight: 800 !important;
+}
+
+/* Footer kelas — kanan: actions */
+.kelas-card-footer {
+  padding: 12px 14px !important;
+  border-top: none !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  border-left: 1px solid var(--rp-rule);
+  background: transparent;
+}
+
+/* Kode kelas dalam row */
+.kelas-code {
+  background: var(--rp-bg) !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  padding: 2px 8px !important;
+  letter-spacing: 1.5px !important;
+  border: 1px solid var(--rp-rule) !important;
+}
+
+.kelas-stat { color: var(--rp-muted) !important; font-size: 11px !important; }
+
+/* Dark mode kelas list */
+body.dark-mode .kelas-grid { background: #1E293B; border-color: #334155; }
+body.dark-mode .kelas-card { border-bottom-color: #334155 !important; }
+body.dark-mode .kelas-card:hover { background: rgba(239,68,68,0.08) !important; }
+body.dark-mode .kelas-name-rp { color: #E2E8F0; }
+body.dark-mode .kelas-card-footer { border-left-color: #334155; }
+body.dark-mode .kelas-code { background: #0F172A !important; border-color: #334155 !important; color: #94A3B8 !important; }
+body.dark-mode .kelas-mapel-tag { background: rgba(239,68,68,0.15) !important; color: #FCA5A5 !important; }
+
+/* ── 8. Game Cards — pertahankan gradient (gamification) ────────── */
+/* Game cards BOLEH tetap berwarna — ini zona gamifikasi, bukan konten */
+/* Tidak ada override di sini — incumbent sudah OK */
+
+/* ── 9. Stats Card (guru) — tabel, bukan card dengan border-left ─ */
+.guru-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  background: var(--rp-white);
+  border: 1px solid var(--rp-rule);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.stat-card {
+  border-left: none !important;
+  border-right: 1px solid var(--rp-rule);
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 18px 16px !important;
+  text-align: center;
+  background: white !important;
+}
+.stat-card:last-child { border-right: none; }
+.stat-num {
+  font-family: 'Fredoka One', cursive;
+  font-size: 28px;
+  line-height: 1;
+}
+.stat-label { font-size: 11px; color: var(--rp-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+body.dark-mode .guru-stats { background: #1E293B; border-color: #334155; }
+body.dark-mode .stat-card { background: #1E293B !important; border-right-color: #334155; }
+body.dark-mode .stat-label { color: #64748B; }
+
+/* ── 10. Tabs — garis bawah merah, bukan pill ─────────────────── */
+.tabs {
+  border-bottom: 1px solid var(--rp-rule);
+  background: var(--rp-white);
+}
+.tab-btn {
+  border-radius: 0 !important;
+  border-bottom: 2px solid transparent;
+  color: var(--rp-muted);
+  font-weight: 700;
+  padding: 10px 16px !important;
+  background: none !important;
+  transition: color 0.15s, border-color 0.15s !important;
+}
+.tab-btn:hover { color: var(--rp-red) !important; background: var(--rp-red-bg) !important; }
+.tab-btn.active {
+  color: var(--rp-red) !important;
+  border-bottom-color: var(--rp-red) !important;
+  background: none !important;
+}
+/* Hapus ::after dari override sebelumnya yang tambah garis orange */
+.tab-btn.active::after { display: none !important; }
+body.dark-mode .tabs { background: #0F172A; border-bottom-color: #334155; }
+body.dark-mode .tab-btn { color: #64748B; }
+body.dark-mode .tab-btn:hover { color: #FCA5A5 !important; background: rgba(239,68,68,0.08) !important; }
+body.dark-mode .tab-btn.active { color: #FCA5A5 !important; border-bottom-color: #EF4444 !important; }
+
+/* ── 11. Buttons — tegas, tidak ada gradient ───────────────────── */
+.btn-submit,
+.btn-login,
+.kelas-action-bar .add-materi-btn {
+  background: var(--rp-red) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  transition: background 0.15s, transform 0.12s !important;
+}
+.btn-submit:hover,
+.btn-login:hover,
+.kelas-action-bar .add-materi-btn:hover {
+  background: var(--rp-red-mid) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 3px 10px rgba(185,28,28,0.25) !important;
+}
+
+/* Gabung Kelas button (blue) — tetap biru, styling rapor */
+#page-murid .dashboard button[onclick*="modal-join-kelas"],
+#page-guru .dashboard button[onclick*="modal-buat-kelas"] {
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+/* ── 12. Cards (modal, sidebar, materi) — minimal ─────────────── */
+.modal {
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.16) !important;
+  border: 1px solid var(--rp-rule) !important;
+}
+.sidebar-card {
+  border-radius: 10px !important;
+  border: 1px solid var(--rp-rule) !important;
+  box-shadow: var(--rp-shadow) !important;
+}
+.stream-post {
+  border-radius: 10px !important;
+  border: 1px solid var(--rp-rule) !important;
+  box-shadow: none !important;
+}
+.stream-post:hover {
+  box-shadow: var(--rp-shadow) !important;
+  transform: none !important;
+}
+
+/* ── 13. Kelas Action Bar ─────────────────────────────────────── */
+.kelas-action-bar {
+  border-bottom: 1px solid var(--rp-rule) !important;
+  background: var(--rp-white) !important;
+  box-shadow: none !important;
+}
+body.dark-mode .kelas-action-bar { background: #0F172A !important; border-bottom-color: #334155 !important; }
+
+/* ── 14. Toast — lebih tegas ───────────────────────────────────── */
+#toast {
+  border-radius: 6px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18) !important;
+}
+#toast.error   { background: var(--rp-red) !important; }
+#toast.success { background: var(--rp-green) !important; }
+
+/* ── 15. Deadline Alert ────────────────────────────────────────── */
+.deadline-alert-card {
+  border-radius: 8px !important;
+  border-left: none !important;
+  border: 1.5px solid var(--rp-red) !important;
+  background: var(--rp-red-bg) !important;
+}
+
+/* ── 16. Empty State ───────────────────────────────────────────── */
+.empty-state { color: var(--rp-muted) !important; }
+
+/* ── 17. Confirm Modal (dari T2-6) ────────────────────────────── */
+.confirm-modal-box {
+  border-radius: 12px !important;
+  border: 1px solid var(--rp-rule) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.16) !important;
+}
+.confirm-modal-ok.danger { background: var(--rp-red) !important; }
+.confirm-modal-ok { background: var(--rp-red) !important; }
+
+/* ── 18. Kelas Banner Colors — tetap pakai gradient (bg-c*) ────── */
+/* Banner kelas adalah zona identitas per-mapel, gradient diizinkan */
+
+/* ── 19. Settings Page ─────────────────────────────────────────── */
+.settings-page-wrap > div {
+  border-radius: 10px !important;
+  box-shadow: var(--rp-shadow) !important;
+}
+
+/* ── 20. Leaderboard ───────────────────────────────────────────── */
+.lb-item {
+  border-radius: 8px !important;
+  border: 1px solid var(--rp-rule) !important;
+  box-shadow: none !important;
+}
+.lb-item:hover { background: var(--rp-red-bg) !important; }
+
+/* ── 21. Misi Cards ────────────────────────────────────────────── */
+.misi-card {
+  border-radius: 8px !important;
+  border: 1px solid var(--rp-rule) !important;
+  box-shadow: none !important;
+  border-left: none !important;
+}
+.misi-card.selesai { border-color: var(--rp-green) !important; background: var(--rp-green-bg) !important; }
+
+/* ── 22. Badge Cards ───────────────────────────────────────────── */
+.badge-card {
+  border-radius: 10px !important;
+  border: 1.5px solid var(--rp-rule) !important;
+  box-shadow: none !important;
+}
+.badge-card.dimiliki { border-color: var(--rp-red) !important; background: var(--rp-red-bg) !important; }
+
+/* ── 23. Code Display ──────────────────────────────────────────── */
+.code-display {
+  border-radius: 8px !important;
+  border: 1.5px dashed var(--rp-rule) !important;
+  background: var(--rp-bg) !important;
+  font-family: 'Fredoka One', cursive !important;
+  letter-spacing: 6px !important;
+}
+.code-display:hover { background: var(--rp-red-bg) !important; border-color: var(--rp-red) !important; }
+
+/* ── 24. Profile Avatar Circle ─────────────────────────────────── */
+.avatar-big {
+  border: 3px solid rgba(255,255,255,0.5) !important;
+  border-radius: 50% !important;
+  background: rgba(255,255,255,0.15) !important;
+}
+
+/* ── 25. Responsive — mobile rapor tetap terbaca ──────────────── */
+@media (max-width: 640px) {
+  .guru-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .guru-stats .stat-card:nth-child(2),
+  .guru-stats .stat-card:nth-child(4) { border-right: none; }
+  .guru-stats .stat-card:nth-child(1),
+  .guru-stats .stat-card:nth-child(2) { border-bottom: 1px solid var(--rp-rule); }
+
+  .kelas-card {
+    grid-template-columns: auto 1fr auto !important;
+  }
+}
+
+/* ── 26. Skeleton overrides ────────────────────────────────────── */
+.skeleton-line, .skeleton-card, .chat-img-skeleton {
+  background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%) !important;
+  background-size: 200% 100% !important;
+}
+body.dark-mode .skeleton-line,
+body.dark-mode .skeleton-card,
+body.dark-mode .chat-img-skeleton {
+  background: linear-gradient(90deg, #1E293B 25%, #334155 50%, #1E293B 75%) !important;
+  background-size: 200% 100% !important;
+}
+
+/* ── 27. Dark mode global ──────────────────────────────────────── */
+body.dark-mode {
+  background: #0F172A !important;
+  color: #E2E8F0 !important;
+}
+body.dark-mode .modal,
+body.dark-mode .sidebar-card,
+body.dark-mode .stream-post,
+body.dark-mode .settings-page-wrap > div,
+body.dark-mode .mapel-card {
+  background: #1E293B !important;
+  border-color: #334155 !important;
+}
+body.dark-mode .lb-item { background: #1E293B !important; border-color: #334155 !important; }
+body.dark-mode .lb-item:hover { background: rgba(239,68,68,0.08) !important; }
+body.dark-mode .misi-card { background: #1E293B !important; border-color: #334155 !important; }
+body.dark-mode .badge-card { background: #1E293B !important; border-color: #334155 !important; }
+body.dark-mode .badge-card.dimiliki { border-color: #EF4444 !important; background: rgba(239,68,68,0.08) !important; }
+body.dark-mode .code-display { background: #0F172A !important; border-color: #334155 !important; color: #E2E8F0 !important; }
+body.dark-mode .welcome-banner {
+  background: #7F1D1D !important;
+}
+body.dark-mode .rp-nilai-item {
+  background: rgba(255,255,255,0.08) !important;
+  border-color: rgba(255,255,255,0.15) !important;
+}

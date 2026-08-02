@@ -227,10 +227,37 @@ async function loadMuridDashboard() {
   syncAvatarUI(currentUser.avatar || '🦁', 'murid');
 
   const xp = currentUser.xp || 0;
-  const xpNeeded = (currentUser.level || 1) * 1000;
-  document.getElementById('murid-xp-label').textContent = `${xp} / ${xpNeeded} XP menuju Level ${(currentUser.level || 1) + 1}`;
-  document.getElementById('murid-xp-fill').style.width = Math.min(100, (xp / xpNeeded) * 100) + '%';
-  document.getElementById('murid-streak').textContent = `Level ${currentUser.level || 1} · ${xp} XP 🔥`;
+  const level = currentUser.level || 1;
+  const xpNeeded = level * 1000;
+  const xpPct = Math.min(100, (xp / xpNeeded) * 100);
+
+  document.getElementById('murid-xp-label').textContent = `${xp} / ${xpNeeded} XP menuju Level ${level + 1}`;
+  document.getElementById('murid-xp-fill').style.width = xpPct + '%';
+  document.getElementById('murid-streak').textContent = `Level ${level} · ${xp} XP 🔥`;
+
+  // Kotak nilai rapor — inject di bawah XP bar jika belum ada
+  const banner = document.querySelector('.welcome-banner');
+  if (banner && !banner.querySelector('.rp-nilai-box')) {
+    const nilaiBox = document.createElement('div');
+    nilaiBox.className = 'rp-nilai-box';
+    nilaiBox.id = 'rp-nilai-box';
+    nilaiBox.innerHTML = `
+      <div class="rp-nilai-item">
+        <span class="rp-nilai-angka" id="rp-xp-angka">${xp}</span>
+        <span class="rp-nilai-label">XP</span>
+      </div>
+      <div class="rp-nilai-item">
+        <span class="rp-nilai-angka" id="rp-level-angka">${level}</span>
+        <span class="rp-nilai-label">Level</span>
+      </div>`;
+    const xpWrap = banner.querySelector('.xp-bar-wrap');
+    if (xpWrap) xpWrap.insertAdjacentElement('afterend', nilaiBox);
+  } else {
+    const xpEl = document.getElementById('rp-xp-angka');
+    const lvEl = document.getElementById('rp-level-angka');
+    if (xpEl) xpEl.textContent = xp;
+    if (lvEl) lvEl.textContent = level;
+  }
 
   showLoading(true);
   try {
