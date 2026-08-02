@@ -515,3 +515,174 @@ body.dark-mode .rp-nilai-item {
   box-shadow: 0 8px 24px rgba(0,0,0,0.16) !important;
   transform: translateY(-3px) !important;
 }
+
+/* ── 30. Standalone Pages Overrides (Latihan, Materi, Games) ── */
+
+/* Ground & Bg reset */
+#bg-wrap { display: none !important; }
+.blobs { display: none !important; }
+
+/* Navbar */
+.nav-brand {
+  font-family: 'Fredoka One', cursive !important;
+  color: var(--rp-red) !important;
+}
+.navbar {
+  background: var(--rp-white) !important;
+  border-bottom: 2px solid var(--rp-red) !important;
+  box-shadow: none !important;
+}
+.nav-logo-text { color: var(--rp-red) !important; }
+
+/* Remove gradient text */
+.hero-h1 .line2,
+.hero-h1 .g2 {
+  background: none !important;
+  -webkit-text-fill-color: initial !important;
+  color: var(--rp-red) !important;
+}
+
+/* Hero Badge */
+.hero-badge {
+  background: var(--rp-red-bg) !important;
+  color: var(--rp-red) !important;
+  border: 1px solid var(--rp-red) !important;
+}
+
+/* Level Cards & Subject Cards */
+.card-sd, .card-smp, .card-sma, .grade-card, .subj-card, .kelas-card, .voice-card {
+  box-shadow: var(--rp-shadow) !important;
+  border-radius: 12px !important;
+}
+.card-sd, .grade-card:nth-child(1) { background: #0F766E !important; } /* Teal */
+.card-smp, .grade-card:nth-child(2) { background: #1D4ED8 !important; } /* Indigo */
+.card-sma, .grade-card:nth-child(3) { background: #B45309 !important; } /* Amber */
+
+.subj-card {
+  background: var(--rp-white) !important;
+  color: var(--rp-ink) !important;
+  border: 1px solid var(--rp-rule) !important;
+}
+.subj-card .subj-name { color: var(--rp-ink) !important; }
+
+/* Buttons */
+.btn-beranda-nav, .btn-nav, .btn-submit, .btn-action, .start-btn {
+  background: var(--rp-red) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  color: white !important;
+}
+.btn-beranda-nav:hover, .btn-nav:hover, .btn-submit:hover, .btn-action:hover, .start-btn:hover {
+  background: var(--rp-red-mid) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Question & Result Cards */
+.q-card, .result-card {
+  border-radius: 12px !important;
+  border: 1px solid var(--rp-rule) !important;
+  box-shadow: var(--rp-shadow-md) !important;
+}
+.result-card::before { display: none !important; }
+
+/* XP Pill */
+.xp-pill, #nav-xp {
+  background: var(--rp-red-bg) !important;
+  color: var(--rp-red) !important;
+  border: 1.5px solid var(--rp-red) !important;
+  border-radius: 50px !important;
+}
+
+/* Games Page header */
+.header {
+  background: var(--rp-white) !important;
+  border-bottom: 2px solid var(--rp-red) !important;
+  padding: 24px 20px !important;
+  box-shadow: none !important;
+}
+.header .logo {
+  color: var(--rp-red) !important;
+  font-family: 'Fredoka One', cursive !important;
+}
+#beranda-btn {
+  background: var(--rp-red-bg) !important;
+  color: var(--rp-red) !important;
+  border: 1.5px solid var(--rp-red) !important;
+  border-radius: 50px !important;
+}
+
+/* Dark mode standalone overrides */
+body.dark-mode .navbar {
+  background: #0F172A !important;
+  border-bottom-color: #EF4444 !important;
+}
+body.dark-mode .nav-brand,
+body.dark-mode .nav-logo-text {
+  color: #EF4444 !important;
+}
+body.dark-mode .subj-card {
+  background: #1E293B !important;
+  border-color: #334155 !important;
+}
+body.dark-mode .subj-card .subj-name {
+  color: #E2E8F0 !important;
+}
+body.dark-mode .q-card,
+body.dark-mode .result-card {
+  background: #1E293B !important;
+  border-color: #334155 !important;
+}
+body.dark-mode .header {
+  background: #0F172A !important;
+  border-bottom-color: #EF4444 !important;
+}
+body.dark-mode .header .logo {
+  color: #EF4444 !important;
+}
+body.dark-mode #beranda-btn {
+  background: rgba(239,68,68,0.15) !important;
+  color: #FCA5A5 !important;
+  border-color: #EF4444 !important;
+}
+
+/* ── 31. Fixes for Detector Findings (Slop Cleanups) ── */
+
+/* Hapus side-tab tebal di latihan / game */
+.voice-card, .voice-card:hover { border-left: none !important; }
+.panel, .card { border-left: none !important; }
+
+/* Hapus border-top tebal di card bulat level games */
+.level-card, .game-box, [class*="level-card"], [class*="game-box"] {
+  border-top: none !important;
+}
+
+/* Ganti bouncy easing dengan exponential easing */
+@keyframes bounce {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-12px); }
+}
+.tab-btn.active::after {
+  animation: slideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+}
+#toast.show {
+  animation: toastPop 0.35s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+}
+
+/* Hilangkan text gradient di header game */
+.game-title, .logo-title, .header .logo {
+  background: none !important;
+  -webkit-text-fill-color: initial !important;
+  color: var(--rp-red) !important;
+}
+
+/* Sembunyikan glow accent di game page */
+.game-card:hover {
+  box-shadow: var(--rp-shadow-md) !important;
+}
+.game-card.gc1, .game-card.gc2, .game-card.gc3, .game-card.gc4 {
+  box-shadow: var(--rp-shadow) !important;
+}
+.game-card.gc1:hover, .game-card.gc2:hover, .game-card.gc3:hover, .game-card.gc4:hover {
+  box-shadow: var(--rp-shadow-md) !important;
+}
+
