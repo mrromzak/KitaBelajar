@@ -2845,17 +2845,66 @@ function copyKodeKelas() {
 
 // Toggle overflow menu (titik tiga) pada card kelas
 function toggleKelasOverflow(kelasId) {
+  const btn = document.getElementById('kelas-menu-btn-' + kelasId);
   const menu = document.getElementById('kelas-menu-' + kelasId);
-  if (!menu) return;
+  if (!menu || !btn) return;
   const isOpen = menu.classList.contains('open');
-  // Tutup semua dropdown lain dulu
-  document.querySelectorAll('.kelas-overflow-dropdown.open').forEach(m => m.classList.remove('open'));
+
+  // Tutup semua dropdown lain dulu (dan kembalikan ke parent-nya)
+  document.querySelectorAll('.kelas-overflow-dropdown.open').forEach(m => {
+    m.classList.remove('open');
+    m.style.cssText = '';
+    const id = m.id.replace('kelas-menu-', '');
+    const parent = document.getElementById('kelas-menu-btn-' + id)?.parentElement;
+    if (parent && !parent.contains(m)) parent.appendChild(m);
+  });
+
   if (!isOpen) {
+    // 1. Pindahkan ke document.body (portal)
+    document.body.appendChild(menu);
+
+    // 2. Hitung posisi absolute tombol
+    const rect = btn.getBoundingClientRect();
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+
+    // 3. Hitung penempatan (auto-flip jika tidak cukup ruang di bawah)
+    menu.style.display = 'block'; // Tampilkan dulu untuk hitung tinggi riil
+    const menuHeight = menu.offsetHeight;
+    menu.style.display = '';
+
+    const viewportHeight = window.innerHeight;
+    const spaceBelow = viewportHeight - rect.bottom;
+
+    let top = rect.bottom + scrollTop + 4;
+    // Auto-flip: jika ruang di bawah kurang dari tinggi menu, dan ada ruang di atas
+    if (spaceBelow < menuHeight && rect.top > menuHeight) {
+      top = rect.top + scrollTop - menuHeight - 4;
+    }
+
+    const left = rect.right + scrollLeft - menu.offsetWidth;
+
+    // 4. Set styling fixed/absolute portal
+    menu.style.cssText = `
+      position: absolute !important;
+      top: ${top}px !important;
+      left: ${left}px !important;
+      z-index: 999999 !important;
+      display: flex !important;
+    `;
+
     menu.classList.add('open');
-    // Tutup saat klik di luar
+
+    // 5. Handler tutup saat klik di luar
     setTimeout(() => {
       const closeHandler = (e) => {
-        if (!menu.contains(e.target)) { menu.classList.remove('open'); document.removeEventListener('click', closeHandler); }
+        if (!menu.contains(e.target) && e.target !== btn) {
+          menu.classList.remove('open');
+          menu.style.cssText = '';
+          const parent = btn.parentElement;
+          if (parent && !parent.contains(menu)) parent.appendChild(menu);
+          document.removeEventListener('click', closeHandler);
+        }
       };
       document.addEventListener('click', closeHandler);
     }, 10);
