@@ -2415,17 +2415,19 @@ function renderKelasCard(k, i, role) {
             onclick="event.stopPropagation();toggleKelasCodeVisibility('${k.id}')" title="Tampilkan/sembunyikan kode">👁️</button>
           <button class="kelas-copy-btn" onclick="event.stopPropagation();copyToClipboard('${kodeAksesSafe}')" title="Salin kode">📋</button>
         </div>
-      ` : ''}
-      <div class="kelas-overflow-menu" onclick="event.stopPropagation()">
-        <button class="kelas-overflow-btn" id="kelas-menu-btn-${k.id}"
-          onclick="toggleKelasOverflow('${k.id}')" title="Opsi kelas">⋯</button>
-        <div class="kelas-overflow-dropdown" id="kelas-menu-${k.id}">
-          ${isGuru
-            ? `<button class="kelas-overflow-item danger" onclick="toggleKelasOverflow('${k.id}');konfirmasiHapusKelas('${k.id}','${namaKelasSafe.replace(/'/g, "\\'")}')">🗑️ Hapus Kelas</button>`
-            : `<button class="kelas-overflow-item danger" onclick="toggleKelasOverflow('${k.id}');konfirmasiKeluarKelas('${k.id}','${namaKelasSafe.replace(/'/g, "\\'")}')">🚪 Keluar Kelas</button>`
-          }
+        <div class="kelas-overflow-menu" onclick="event.stopPropagation()" style="margin-top:4px">
+          <button class="kelas-overflow-btn" id="kelas-menu-btn-${k.id}"
+            onclick="toggleKelasOverflow('${k.id}')" title="Opsi kelas">⋯</button>
+          <div class="kelas-overflow-dropdown" id="kelas-menu-${k.id}">
+            <button class="kelas-overflow-item danger" onclick="toggleKelasOverflow('${k.id}');konfirmasiHapusKelas('${k.id}','${namaKelasSafe.replace(/'/g, "\\'")}')">🗑️ Hapus Kelas</button>
+          </div>
         </div>
-      </div>
+      ` : `
+        <button class="kelas-overflow-btn" onclick="event.stopPropagation();konfirmasiKeluarKelas('${k.id}','${namaKelasSafe.replace(/'/g, "\\'")}')" 
+          title="Keluar dari kelas" style="color:var(--rp-red,#B91C1C);border:1px solid var(--rp-rule,#E2E8F0);border-radius:6px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--rp-red-bg,#FEF2F2);transition:all 0.2s"
+          onmouseover="this.style.background='var(--rp-red,#B91C1C)';this.style.color='white';"
+          onmouseout="this.style.background='var(--rp-red-bg,#FEF2F2)';this.style.color='var(--rp-red,#B91C1C)';">🚪</button>
+      `}
     </div>
   </div>`;
 }
