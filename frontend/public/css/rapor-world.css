@@ -727,6 +727,11 @@ body.dark-mode #beranda-btn {
   padding: 24px 20px !important;
   background: var(--rp-white) !important;
   color: var(--rp-ink) !important;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 20px !important;
 }
 .welcome-banner h2 {
   color: var(--rp-red) !important;
@@ -737,7 +742,7 @@ body.dark-mode #beranda-btn {
 }
 .welcome-banner::before { display: none !important; }
 
-/* Foto Rapor Lingkaran dengan stempel orange */
+/* Foto Rapor Lingkaran */
 .avatar-big {
   border: 2px solid var(--rp-ink) !important;
   border-radius: 50% !important;
@@ -745,7 +750,7 @@ body.dark-mode #beranda-btn {
   height: 80px !important;
   background: var(--rp-bg) !important;
   position: relative;
-  overflow: visible !important;
+  overflow: hidden !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -758,23 +763,33 @@ body.dark-mode #beranda-btn {
   object-fit: cover !important;
   object-position: center !important;
 }
-/* Watermark cap stempel stempel orange di sudut foto rapor */
-.avatar-big::after {
-  content: 'KITA';
-  position: absolute;
-  bottom: -4px; right: -4px;
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  border: 2px dashed var(--rp-stamp);
-  background: rgba(255,107,53,0.12);
-  color: var(--rp-stamp);
-  font-size: 7px;
-  font-weight: 900;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform: rotate(-15deg);
-  pointer-events: none;
+
+/* Responsif untuk Welcome Banner agar pas di layar kecil */
+@media (max-width: 640px) {
+  .welcome-banner {
+    flex-direction: row !important;
+    padding: 16px 14px !important;
+    gap: 12px !important;
+  }
+  .avatar-big {
+    width: 60px !important;
+    height: 60px !important;
+  }
+  .welcome-banner h2 {
+    font-size: 18px !important;
+  }
+  .welcome-banner p {
+    font-size: 11px !important;
+  }
+  .rp-nilai-angka {
+    font-size: 16px !important;
+  }
+  .rp-nilai-label {
+    font-size: 8px !important;
+  }
+  .rp-nilai-item {
+    padding: 4px 8px !important;
+  }
 }
 
 /* Kotak Nilai Rapor (XP/Level di welcome-banner) */
