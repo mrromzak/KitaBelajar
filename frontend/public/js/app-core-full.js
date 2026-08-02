@@ -2366,7 +2366,6 @@ function kelasHashIdx(id) {
 function renderKelasCard(k, i, role) {
   const idx = kelasHashIdx(k.id);
   const colorClass = KELAS_COLORS[idx % KELAS_COLORS.length];
-  // Cari emoji dari mapel kelas: cek custom mapel user dulu, lalu fuzzy match, lalu fallback
   let emoji = KELAS_EMOJIS[idx % KELAS_EMOJIS.length];
   if (k.mapel) {
     const customMapel = getMapelList().find(m => m.nama.toLowerCase() === k.mapel.toLowerCase());
@@ -2378,27 +2377,48 @@ function renderKelasCard(k, i, role) {
     }
   }
   const isGuru = role === 'guru';
+
+  // Strip warna kiri — identifier mapel (warna dari kelas-banner-content)
+  const STRIP_COLORS = ['#FF6B35','#4A6FA5','#529B76','#9B4DFF','#20C997','#E67E22','#E91E63','#607D8B'];
+  const stripColor = STRIP_COLORS[idx % STRIP_COLORS.length];
+
   return `<div class="kelas-card" onclick="openKelas('${k.id}',${idx % KELAS_COLORS.length})">
-    <div class="kelas-card-header ${colorClass}">
-      <div class="kelas-emoji">${emoji}</div>
-      ${k.mapel ? `<div class="kelas-mapel-tag">${k.mapel}</div><br>` : ''}
-      <div class="kelas-name">${escapeHtml(k.nama)}</div>
-      <div class="kelas-guru-name">${isGuru ? (k.tahun_ajar || '') : ('Guru: ' + (k.guru_nama || k.guru?.nama || '–'))}</div>
+    <!-- Strip warna kiri sebagai identifier mapel -->
+    <div class="kelas-card-header" style="background:${stripColor};width:6px;flex-shrink:0"></div>
+    <!-- Body utama -->
+    <div class="kelas-card-body-rp">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span class="kelas-emoji-rp">${emoji}</span>
+        <span class="kelas-name-rp">${escapeHtml(k.nama)}</span>
+        ${k.mapel ? `<span class="kelas-mapel-tag">${escapeHtml(k.mapel)}</span>` : ''}
+        ${!isGuru ? `<span id="card-chat-badge-${k.id}" style="display:none;background:var(--rp-red,#B91C1C);color:white;border-radius:4px;padding:1px 7px;font-size:10px;font-weight:800;line-height:1.6">0</span>` : ''}
+      </div>
+      <div class="kelas-meta-rp">
+        ${isGuru
+          ? `<span>📅 ${escapeHtml(k.tahun_ajar || '–')}</span>`
+          : `<span>👨‍🏫 ${escapeHtml(k.guru_nama || k.guru?.nama || 'Guru')}</span>`}
+        <span>📚 ${k.total_materi || 0} materi</span>
+      </div>
     </div>
+    <!-- Footer: kode + overflow -->
     <div class="kelas-card-footer">
       ${isGuru ? `
-        <div class="kelas-code-wrap">
-          <span class="kelas-code-label">Kode:</span>
-          <span class="kelas-code">${k.kode_akses || '–'}</span>
+        <div class="kelas-code-wrap" style="justify-content:flex-end">
+          <span class="kelas-code kelas-code-hidden" id="kelas-code-card-${k.id}">${k.kode_akses || '–'}</span>
+          <button class="kelas-code-toggle-btn" id="kelas-code-eye-${k.id}"
+            onclick="event.stopPropagation();toggleKelasCodeVisibility('${k.id}')" title="Tampilkan/sembunyikan kode">👁️</button>
           <button class="kelas-copy-btn" onclick="event.stopPropagation();copyToClipboard('${k.kode_akses}')" title="Salin kode">📋</button>
         </div>
-      ` : `<div class="kelas-stat">👨‍🏫 ${k.guru_nama || k.guru?.nama || 'Guru'}</div>`}
-      <div style="display:flex;align-items:center;gap:8px">
-        <div class="kelas-stat">📚 ${k.total_materi || 0} materi</div>
-        ${isGuru
-          ? `<button class="btn-icon btn-delete" onclick="event.stopPropagation();konfirmasiHapusKelas('${k.id}','${k.nama.replace(/'/g,"\\'")}')" title="Hapus kelas" style="width:28px;height:28px;font-size:13px">🗑️</button>`
-          : `<button class="btn-icon" onclick="event.stopPropagation();konfirmasiKeluarKelas('${k.id}','${k.nama.replace(/'/g,"\\'")}')" title="Keluar dari kelas" style="width:28px;height:28px;font-size:13px;background:#FFF0F5;color:var(--pink)">🚪</button>`
-        }
+      ` : ''}
+      <div class="kelas-overflow-menu" onclick="event.stopPropagation()">
+        <button class="kelas-overflow-btn" id="kelas-menu-btn-${k.id}"
+          onclick="toggleKelasOverflow('${k.id}')" title="Opsi kelas">⋯</button>
+        <div class="kelas-overflow-dropdown" id="kelas-menu-${k.id}">
+          ${isGuru
+            ? `<button class="kelas-overflow-item danger" onclick="toggleKelasOverflow('${k.id}');konfirmasiHapusKelas('${k.id}','${k.nama.replace(/'/g, "\\'")}')">🗑️ Hapus Kelas</button>`
+            : `<button class="kelas-overflow-item danger" onclick="toggleKelasOverflow('${k.id}');konfirmasiKeluarKelas('${k.id}','${k.nama.replace(/'/g, "\\'")}')">🚪 Keluar Kelas</button>`
+          }
+        </div>
       </div>
     </div>
   </div>`;
@@ -2815,6 +2835,35 @@ function updateMateriProgressBar() {
 function copyKodeKelas() {
   const kode = document.getElementById('kelas-code-display').textContent.trim();
   copyToClipboard(kode);
+}
+
+// Toggle overflow menu (titik tiga) pada card kelas
+function toggleKelasOverflow(kelasId) {
+  const menu = document.getElementById('kelas-menu-' + kelasId);
+  if (!menu) return;
+  const isOpen = menu.classList.contains('open');
+  // Tutup semua dropdown lain dulu
+  document.querySelectorAll('.kelas-overflow-dropdown.open').forEach(m => m.classList.remove('open'));
+  if (!isOpen) {
+    menu.classList.add('open');
+    // Tutup saat klik di luar
+    setTimeout(() => {
+      const closeHandler = (e) => {
+        if (!menu.contains(e.target)) { menu.classList.remove('open'); document.removeEventListener('click', closeHandler); }
+      };
+      document.addEventListener('click', closeHandler);
+    }, 10);
+  }
+}
+
+// Toggle show/hide untuk kode kelas di card guru
+function toggleKelasCodeVisibility(kelasId) {
+  const span = document.getElementById('kelas-code-card-' + kelasId);
+  const btn  = document.getElementById('kelas-code-eye-' + kelasId);
+  if (!span) return;
+  const isHidden = span.classList.contains('kelas-code-hidden');
+  span.classList.toggle('kelas-code-hidden', !isHidden);
+  if (btn) btn.textContent = isHidden ? '🙈' : '👁️';
 }
 
 // ============================================================
