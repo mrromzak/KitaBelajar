@@ -1,8 +1,6 @@
 // ============================================================
 //  KELAS CARD RENDERER
 // ============================================================
-const KELAS_COLORS = ['bg-c1','bg-c2','bg-c3','bg-c4','bg-c5','bg-c6','bg-c7','bg-c8'];
-const KELAS_EMOJIS = ['📐','🔬','📖','🗺️','🎨','🏃','🎵','💻'];
 
 function kelasHashIdx(id) {
   let h = 0;
@@ -79,12 +77,11 @@ function renderKelasCard(k, i, role) {
     </div>
   </div>`;
 }
-}
 
 // ============================================================
 //  BUKA DETAIL KELAS
 // ============================================================
-let currentKelas = null;
+currentKelas = null;
 
 async function openKelas(kelasId, colorIdx) {
   showLoading(true);
@@ -591,7 +588,7 @@ function toggleKelasCodeVisibility(kelasId) {
 // ============================================================
 //  LIST MURID KELAS + ONLINE/OFFLINE
 // ============================================================
-let kelasOnlineUsers = []; // diupdate via socket
+kelasOnlineUsers = []; // diupdate via socket
 
 async function loadKelasMurid(kelasId) {
   const el = document.getElementById('kelas-murid-stream');
@@ -672,7 +669,7 @@ function renderMuridList(muridList) {
 // ============================================================
 //  CHAT KELAS
 // ============================================================
-let kelasChatKelasId = null;
+kelasChatKelasId = null;
 
 async function loadKelasChatHistory(kelasId) {
   kelasChatKelasId = kelasId;
@@ -689,7 +686,7 @@ async function loadKelasChatHistory(kelasId) {
   }
 }
 
-let classChatUnreadCount = 0;
+classChatUnreadCount = 0;
 let chatUnreadPerKelas = {};
 
 function updateClassCardChatBadge(kelasId) {
@@ -993,12 +990,12 @@ socket.on('kelas:pesan_dihapus', ({ msgId }) => {
 //  VIDEO CALL — Daily.co (iframe embed, maks 64 peserta)
 // ============================================================
 
-let vcCurrentKelasId = null;
+vcCurrentKelasId = null;
 
 // ── Jitsi Meeting (External API — auto login nama akun) ───────
-let vcJitsiApi    = null;
-let vcCurrentRoomUrl = null;
-let vcJitsiWindow = null; // referensi tab Jitsi yang dibuka
+vcJitsiApi    = null;
+vcCurrentRoomUrl = null;
+vcJitsiWindow = null; // referensi tab Jitsi yang dibuka
 
 function vcGetRoomName(kelasId) {
   return 'kitabelajar-' + kelasId.replace(/-/g, '').slice(0, 16);
@@ -1047,7 +1044,7 @@ function vcStartJitsi(roomName) {
 }
 
 // ── Tampilkan panel info meeting ──────────────────────────────
-let vcMeetingTabUrl = null;
+vcMeetingTabUrl = null;
 
 function vcShowMeetingPanel(roomName) {
   const url = 'https://meet.ffmuc.net/' + roomName;
@@ -1212,9 +1209,9 @@ socket.on('kelas:meeting_ended', ({ kelasId }) => {
 // ============================================================
 //  PRIVATE CHAT
 // ============================================================
-let privateChatTargetId = null;
-let privateChatTargetNama = '';
-let privateChatTargetAvatar = '';
+privateChatTargetId = null;
+privateChatTargetNama = '';
+privateChatTargetAvatar = '';
 
 // Bergabung ke channel private — dipanggil setelah login berhasil
 function joinPrivateChannel() {
@@ -1226,8 +1223,8 @@ socket.on('connect', () => { joinPrivateChannel(); });
 // ============================================================
 //  PUSH NOTIFICATION — Service Worker + Browser Notifications
 // ============================================================
-let _swRegistration = null;
-let _pushEnabled = false;
+_swRegistration = null;
+_pushEnabled = false;
 
 async function initServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
@@ -1331,8 +1328,8 @@ function showBrowserNotif(judul, pesan, tag, force = false) {
 // Init SW saat halaman load
 initServiceWorker();
 
-let _notifPrivateChatData = null;
-let _notifPrivateChatTimer = null;
+_notifPrivateChatData = null;
+_notifPrivateChatTimer = null;
 
 socket.on('private:receive', (pesan) => {
   const modalOpen = document.getElementById('modal-private-chat')?.classList.contains('open');

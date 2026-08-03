@@ -277,7 +277,7 @@ async function loadMuridDashboard() {
   showLoading(false);
 }
 
-let _muridInitCache = null;
+_muridInitCache = null;
 
 // Fallback: dipanggil hanya jika endpoint murid-init gagal
 async function loadDeadlineAlertDashboard() {
@@ -385,9 +385,9 @@ async function bukaKelasUntukKuis(kelasId, quizId) {
 // ═══════════════════════════════════════════════════
 //  LEADERBOARD + MISI + BADGES
 // ═══════════════════════════════════════════════════
-let _lbMode    = 'kelas';   // 'kelas' | 'global'
-let _lbPeriode = 'all';     // 'all'   | 'minggu'
-let _lbTab     = 'lb';      // 'lb'    | 'misi' | 'badges'
+_lbMode    = 'kelas';   // 'kelas' | 'global'
+_lbPeriode = 'all';     // 'all'   | 'minggu'
+_lbTab     = 'lb';      // 'lb'    | 'misi' | 'badges'
 
 function loadLeaderboardPage() {
   showPage('page-leaderboard');
@@ -702,16 +702,6 @@ function showBadgeCelebration(badges) {
 }
 
 // Mapping kondisi_tipe → fungsi navigasi
-const MISI_AKSI = {
-  quiz_count:    { label: 'Mulai Quiz ⚡',      fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
-  akurasi:       { label: 'Mulai Quiz 🎯',      fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
-  xp_gained:     { label: 'Mulai Quiz ⭐',      fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
-  materi_count:  { label: 'Buka Materi 📖',     fn: () => bukaKelasUntukMateri() },
-  streak:        { label: 'Tetap Aktif 🔥',     fn: () => toast('Login setiap hari untuk menjaga streak kamu! 🔥') },
-  level:         { label: 'Naikkan Level 📈',   fn: () => { showPage('page-murid'); setTimeout(startQuiz, 100); } },
-  latihan_count: { label: 'Buka Kita Latihan 🚀', fn: () => { window.location.href = 'kita-latihan.html'; } },
-  belajar_count: { label: 'Buka AyoBelajar 📚',   fn: () => { window.location.href = 'kita-materi.html'; } },
-};
 
 function renderMisiGroup(tipe, list) {
   const el = document.getElementById(`misi-${tipe}-list`);

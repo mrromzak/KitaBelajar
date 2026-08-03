@@ -1,86 +1,12 @@
 // ============================================================
-//  AUTO LOGIN jika token masih ada
+//  Inisialisasi global dilakukan di app-core (load handler).
+//  Modul ini hanya berisi fungsi-fitur kuis/PR/submission.
 // ============================================================
-window.addEventListener('load', () => {
-  initGlobalDarkMode();
-  // Cek reset_token di URL
-  const urlParams = new URLSearchParams(location.search);
-  const resetToken = urlParams.get('reset_token');
-  if (resetToken) {
-    _resetToken = resetToken;
-    history.replaceState(null, '', '/'); // hapus token dari URL
-    showPage('page-reset');
-    return;
-  }
-
-  if (token && currentUser) {
-    joinPrivateChannel();
-    loadBellNotifications();
-    setTimeout(() => subscribePush(), 3000);
-    if (currentUser.role === 'guru') {
-      loadGuruDashboard();
-      remindDataDiriIfNeeded();
-    } else if (currentUser.role === 'orangtua') {
-      loadOrangtuaDashboard();
-    } else if (currentUser.role === 'kepala_sekolah') {
-      window.location.href = '/portal-kepala.html';
-    } else {
-      loadMuridDashboard();
-      remindDataDiriIfNeeded();
-    }
-  } else {
-    // Jika tidak login, cek parameter show=login
-    const showParam = urlParams.get('show');
-    if (showParam === 'login') {
-      history.replaceState(null, '', '/');
-      showPage('page-login');
-    }
-  }
-  populateMapelSelects();
-  populateBuatKelasMapel();
-  initCropDragging();
-
-  // Logo navbar bisa diklik -> kembali ke beranda sesuai peran
-  document.querySelectorAll('.navbar .logo').forEach(logo => {
-    logo.setAttribute('role', 'button');
-    logo.setAttribute('tabindex', '0');
-    logo.setAttribute('title', 'Kembali ke beranda');
-    logo.addEventListener('click', goHome);
-    logo.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goHome(); }
-    });
-  });
-
-  function initChatPasteHandlers() {
-    const kelasInput = document.getElementById('kelas-chat-input');
-    if (kelasInput) {
-      kelasInput.addEventListener('paste', (e) => handleChatPaste(e, 'kelas'));
-    }
-    const pcInput = document.getElementById('pc-input');
-    if (pcInput) {
-      pcInput.addEventListener('paste', (e) => handleChatPaste(e, 'private'));
-    }
-  }
-
-  // Inisialisasi Google login setelah semua fungsi dan DOM siap
-  // Polling karena library Google load async — tunggu max 5 detik
-  let _gTry = 0;
-  const _gPoll = setInterval(() => {
-    _gTry++;
-    if (typeof google !== 'undefined' && google.accounts) {
-      clearInterval(_gPoll);
-      _initGoogle();
-    } else if (_gTry > 50) {
-      clearInterval(_gPoll); // timeout 5 detik
-    }
-  }, 100);
-  initChatPasteHandlers();
-});
 
 // ============================================================
 //  TABS KELAS
 // ============================================================
-let currentKelasTab = 'materi';
+currentKelasTab = 'materi';
 
 function switchKelasTab(tab) {
   currentKelasTab = tab;
@@ -110,10 +36,10 @@ function switchKelasTab(tab) {
 // ============================================================
 //  KUIS KELAS — LOAD
 // ============================================================
-let semua_soal_cache = [];
+semua_soal_cache = [];
 
-let allKuisData = []; // cache untuk filter
-let activeKuisFilter = 'semua';
+allKuisData = []; // cache untuk filter
+activeKuisFilter = 'semua';
 
 function filterKuis(tipe) {
   activeKuisFilter = tipe;
@@ -361,8 +287,8 @@ function renderKuisCard(q, isGuru) {
 // ============================================================
 //  BUAT KUIS
 // ============================================================
-let currentTipeKuis = 'fun';
-let allSoalData = [];
+currentTipeKuis = 'fun';
+allSoalData = [];
 
 function switchTipeKuis(tipe) {
   currentTipeKuis = tipe;
@@ -382,7 +308,7 @@ function switchTipeKuis(tipe) {
   }
 }
 
-let _selectedSubmissionTipe = '';
+_selectedSubmissionTipe = '';
 
 function toggleSubmissionSection(checked) {
   document.getElementById('kuis-submission-detail').style.display = checked ? 'block' : 'none';
@@ -400,8 +326,8 @@ function selectSubmissionTipe(tipe) {
   });
 }
 
-let kuisSoalTabAktif = 'bank';
-let aiSoalUntukKuis = []; // soal yang digenerate AI untuk kuis ini
+kuisSoalTabAktif = 'bank';
+aiSoalUntukKuis = []; // soal yang digenerate AI untuk kuis ini
 
 function switchKuisSoalTab(tab) {
   kuisSoalTabAktif = tab;
@@ -958,9 +884,9 @@ async function hapusKuis(id, judul) {
 // ============================================================
 //  SUBMISSION TUGAS (MURID)
 // ============================================================
-let _subQuizData = null;
-let _subTipeAktif = '';
-let _subFileObj = null;
+_subQuizData = null;
+_subTipeAktif = '';
+_subFileObj = null;
 
 async function bukaFormSubmission(quizId) {
   showLoading(true);
@@ -1087,8 +1013,8 @@ async function submitTugas() {
       fd.append('file', _subFileObj);
       fd.append('tipe', _subTipeAktif);
       if (catatan) fd.append('catatan', catatan);
-      const token = localStorage.getItem('kb_token') || token;
-      const r = await fetch('/api/quiz/' + _subQuizData.id + '/submission', { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: fd });
+      const uploadToken = localStorage.getItem('kb_token') || '';
+      const r = await fetch('/api/quiz/' + _subQuizData.id + '/submission', { method: 'POST', headers: { Authorization: 'Bearer ' + uploadToken }, body: fd });
       res = await r.json();
     }
     if (res.success) {
@@ -1203,11 +1129,11 @@ async function simpanNilaiSubmission(quizId, subId) {
 // ============================================================
 //  KERJAKAN KUIS (MURID)
 // ============================================================
-let kuisKelasData = null;
-let kuisJawaban = {};
-let kuisPassed = {};
-let kuisCurrentQ = 0;
-let kuisFunTimer = null;
+kuisKelasData = null;
+kuisJawaban = {};
+kuisPassed = {};
+kuisCurrentQ = 0;
+kuisFunTimer = null;
 
 async function mulaiKuisKelas(quizId) {
   showLoading(true);
@@ -1402,7 +1328,7 @@ function konfirmasiKirimKuis() {
   }
 }
 
-let _isSubmittingKuis = false;
+_isSubmittingKuis = false;
 
 async function simpanHasilKuisKelas() {
   if (_isSubmittingKuis) return;
@@ -1479,7 +1405,7 @@ async function simpanHasilKuisKelas() {
   showPage('page-kuis-hasil');
 }
 
-let kuisStartTime = null;
+kuisStartTime = null;
 
 function batalKuisKelas() {
   clearInterval(kuisFunTimer);
@@ -1555,7 +1481,7 @@ function editMateriBtn(btn) {
 function deleteMateriBtn(btn) {
   deleteMateri(btn.dataset.id, btn.dataset.judul);
 }
-let editMateriId = null;
+editMateriId = null;
 
 function editMateri(id, judul, mapel, jenis, status) {
   editMateriId = id;
@@ -1594,7 +1520,7 @@ async function submitEditMateri() {
   showLoading(false);
 }
 
-let hapusMateriId = null;
+hapusMateriId = null;
 
 function deleteMateri(id, judul) {
   hapusMateriId = id;
@@ -1622,10 +1548,10 @@ async function konfirmasiHapus() {
   showLoading(false);
 }
 
-let pendingKelasAttachment = null;
-let pendingPrivateAttachment = null;
-let uploadXhrKelas = null;
-let uploadXhrPrivate = null;
+pendingKelasAttachment = null;
+pendingPrivateAttachment = null;
+uploadXhrKelas = null;
+uploadXhrPrivate = null;
 
 function showChatFilePreview(targetChat, url, name) {
   const containerId = targetChat === 'kelas' ? 'kelas-chat-file-preview' : 'pc-chat-file-preview';

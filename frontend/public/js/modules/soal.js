@@ -1,8 +1,8 @@
 // ============================================================
 //  SOAL HELPERS
 // ============================================================
-let currentTipeSoal = 'pilihan_ganda';
-let selectedBS = '';
+currentTipeSoal = 'pilihan_ganda';
+selectedBS = '';
 
 function switchTipeSoal(tipe) {
   currentTipeSoal = tipe;
@@ -70,8 +70,6 @@ function resetSoalForm() {
 // ============================================================
 //  OPSI DINAMIS (tambah/hapus pilihan jawaban)
 // ============================================================
-const OPSI_COLORS = ['var(--blue)','var(--green)','var(--orange)','var(--purple)','#FF6B9D','#00CEC9'];
-const OPSI_HURUF  = ['A','B','C','D','E','F'];
 
 function tambahOpsi() {
   const list = document.getElementById('opsi-list');
@@ -151,11 +149,9 @@ function updateJawabanPG() {
 // ============================================================
 //  SOAL BUILDER (Zep-style)
 // ============================================================
-let sbSoalList = [];       // [{id, tipe, pertanyaan, opsi, jawaban, mapel, poin, tingkat, dbId}]
-let sbAktifIdx = 0;        // index soal yang sedang diedit
-let sbFromKuis  = false;   // dibuka dari modal buat kuis?
-const SB_OPSI_COLORS = ['#4D96FF','#6BCB77','#FF6B35','#C77DFF','#FF6B9D','#00CEC9'];
-const SB_HURUF = ['A','B','C','D','E','F'];
+sbSoalList = [];       // [{id, tipe, pertanyaan, opsi, jawaban, mapel, poin, tingkat, dbId}]
+sbAktifIdx = 0;        // index soal yang sedang diedit
+sbFromKuis  = false;   // dibuka dari modal buat kuis?
 
 function bukaSoalBuilder(fromKuis = false) {
   sbFromKuis = fromKuis;
@@ -559,7 +555,7 @@ function batalBuatSoal() {
 }
 
 // Flag: apakah modal soal dibuka dari dalam modal buat kuis
-let soalDariBuatKuis = false;
+soalDariBuatKuis = false;
 
 function buatSoalDariKuis() {
   soalDariBuatKuis = true;

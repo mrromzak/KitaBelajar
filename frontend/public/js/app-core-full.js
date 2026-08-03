@@ -7548,8 +7548,8 @@ async function submitTugas() {
       fd.append('file', _subFileObj);
       fd.append('tipe', _subTipeAktif);
       if (catatan) fd.append('catatan', catatan);
-      const token = localStorage.getItem('kb_token') || token;
-      const r = await fetch('/api/quiz/' + _subQuizData.id + '/submission', { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: fd });
+      const uploadToken = localStorage.getItem('kb_token') || '';
+      const r = await fetch('/api/quiz/' + _subQuizData.id + '/submission', { method: 'POST', headers: { Authorization: 'Bearer ' + uploadToken }, body: fd });
       res = await r.json();
     }
     if (res.success) {
@@ -7863,17 +7863,21 @@ function konfirmasiKirimKuis() {
   }
 }
 
+let _isSubmittingKuis = false;
+
 async function simpanHasilKuisKelas() {
+  if (_isSubmittingKuis) return;
+  _isSubmittingKuis = true;
   clearInterval(kuisFunTimer);
   const durasi_detik = Math.round((Date.now() - (kuisStartTime || Date.now())) / 1000);
 
   // Kirim jawaban murid ke server — validasi & scoring dilakukan server-side
-  const jawabanKirim = soal.map((q, i) => ({
+  const jawabanKirim = (kuisKelasData.soal || []).map((q, i) => ({
     soal_id: q.id,
     jawaban_user: kuisJawaban[i] !== undefined ? q.opsi[kuisJawaban[i]] : null
   }));
 
-  let skor = 0, benar = 0, totalPoin = 0, total_soal = soal.length;
+  let skor = 0, benar = 0, totalPoin = 0, total_soal = (kuisKelasData.soal || []).length;
   let attempt = 1, max_attempt = 1;
   let hasilDetail = [];
 
@@ -7886,7 +7890,7 @@ async function simpanHasilKuisKelas() {
     if (simpan.success) {
       skor       = simpan.skor       ?? 0;
       benar      = simpan.benar      ?? 0;
-      total_soal = simpan.total_soal ?? soal.length;
+      total_soal = simpan.total_soal ?? (kuisKelasData.soal || []).length;
       totalPoin  = simpan.totalPoin  ?? 0;
       attempt    = simpan.attempt    ?? 1;
       max_attempt = simpan.max_attempt ?? 1;
@@ -7896,6 +7900,9 @@ async function simpanHasilKuisKelas() {
     }
   } catch(e) {
     console.warn('Gagal simpan hasil (network):', e);
+    _isSubmittingKuis = false;
+    toast('Gagal menyimpan hasil. Coba lagi.', 'error');
+    return;
   }
 
   const emoji = skor >= 80 ? '🎉' : skor >= 60 ? '😊' : skor >= 40 ? '😅' : '💪';
@@ -7917,10 +7924,12 @@ async function simpanHasilKuisKelas() {
   window._kuisHasilDetail = hasilDetail;
 
   // Render navigation buttons on results page
-  const sisaAttempt = max_attempt > 0 ? max_attempt - attempt : -1;
+  const isUnlimited = max_attempt === 0;
+  const sisaAttempt = isUnlimited ? 99 : (max_attempt - attempt);
+  const labelCoba = isUnlimited ? '🔄 Coba Lagi' : `🔄 Coba Lagi (${sisaAttempt}x sisa)`;
   let buttonsHtml = `<button onclick="kembaliDariHasil()" style="background:var(--blue);color:white;border:none;padding:14px 32px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">🏫 Kembali ke Kelas</button>`;
-  if (sisaAttempt > 0) {
-    buttonsHtml += `<button onclick="mulaiKuisKelas('${kuisKelasData.id}')" style="background:var(--orange);color:white;border:none;padding:14px 32px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">🔄 Coba Lagi (${sisaAttempt}x sisa)</button>`;
+  if (isUnlimited || sisaAttempt > 0) {
+    buttonsHtml += `<button onclick="mulaiKuisKelas('${kuisKelasData.id}')" style="background:var(--orange);color:white;border:none;padding:14px 32px;border-radius:50px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer">${labelCoba}</button>`;
   }
   document.getElementById('hasil-nav-btns').innerHTML = buttonsHtml;
 
@@ -7930,6 +7939,7 @@ async function simpanHasilKuisKelas() {
     document.getElementById('hasil-review').style.display = 'block';
   }
 
+  _isSubmittingKuis = false;
   showPage('page-kuis-hasil');
 }
 

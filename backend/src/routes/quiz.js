@@ -39,6 +39,22 @@ const uploadSubmission = multer({
 
 const supabase = require('../supabase');
 
+// ── Server-side dedup untuk mencegah double-generate kuis/tugas ──
+// Mencegah race condition (double-click cepat / 2 tab) membuat 2 baris duplikat.
+// Key: guru + kelas + judul + tipe. Entry ditulis SEBELUM insert (status 'creating')
+// supaya request paralel tidak sama-sama insert. Request kedua menunggu promise request
+// pertama dan menerima hasil yang sama (idempoten) tanpa membuat data baru.
+const QUIZ_DEDUP_WINDOW_MS = 5000;
+const recentQuizCreates = new Map(); // key -> { ts, status:'creating'|'done', promise, quiz }
+function quizDedupKey(guru_id, kelas_id, judul, tipe) {
+  return `${guru_id}|${kelas_id || ''}|${(judul || '').trim().toLowerCase()}|${tipe || 'fun'}`;
+}
+function cleanupRecentQuizCreates(now) {
+  for (const [k, v] of recentQuizCreates) {
+    if (now - v.ts > QUIZ_DEDUP_WINDOW_MS) recentQuizCreates.delete(k);
+  }
+}
+
 // Auto-buat bucket "submissions" saat module dimuat (aman jika sudah ada)
 supabase.storage.createBucket('submissions', { public: true })
   .then(({ error }) => {
@@ -156,6 +172,53 @@ router.post('/', authMiddleware, async (req, res) => {
 
     const guru_id = req.user.id || req.user.userId;
 
+    // ── Dedup anti double-generate (race) ──
+    const now = Date.now();
+    cleanupRecentQuizCreates(now);
+    const dedupKey = quizDedupKey(guru_id, kelas_id, judul, tipe);
+    const existing = recentQuizCreates.get(dedupKey);
+    if (existing && now - existing.ts < QUIZ_DEDUP_WINDOW_MS) {
+      if (existing.status === 'done') {
+        // Request duplikat dalam window: kirim hasil yang sama tanpa membuat data baru.
+        return res.status(201).json({ success: true, quiz: existing.quiz, pesan: 'Kuis berhasil dibuat' });
+      }
+      // Masih diproses request pertama: tunggu sampai selesai lalu bagikan hasil yang sama.
+      try {
+        const quiz = await existing.promise;
+        return res.status(201).json({ success: true, quiz, pesan: 'Kuis berhasil dibuat' });
+      } catch (dedupErr) {
+        return res.status(dedupErr.status || 500).json({ success: false, pesan: dedupErr.pesan || 'Gagal membuat kuis.' });
+      }
+    }
+
+    // Registrasi "sedang diproses" SEBELUM insert agar request paralel kedua tidak ikut insert.
+    let resolveCreate, rejectCreate;
+    const createPromise = new Promise((res, rej) => { resolveCreate = res; rejectCreate = rej; });
+    recentQuizCreates.set(dedupKey, { ts: now, status: 'creating', promise: createPromise, quiz: null });
+
+    // Cek di DB apakah kuis serupa baru saja dibuat dalam 5 detik terakhir (anti-duplikasi lintas proses)
+    const fiveSecondsAgo = new Date(Date.now() - 5000).toISOString();
+    let checkQuery = supabase
+      .from('quiz')
+      .select('*')
+      .eq('guru_id', guru_id)
+      .eq('judul', judul)
+      .gt('created_at', fiveSecondsAgo);
+
+    if (kelas_id) {
+      checkQuery = checkQuery.eq('kelas_id', kelas_id);
+    } else {
+      checkQuery = checkQuery.is('kelas_id', null);
+    }
+
+    const { data: duplicateQuiz } = await checkQuery.order('created_at', { ascending: false }).maybeSingle();
+
+    if (duplicateQuiz) {
+      recentQuizCreates.set(dedupKey, { ts: Date.now(), status: 'done', promise: createPromise, quiz: duplicateQuiz });
+      resolveCreate(duplicateQuiz);
+      return res.status(201).json({ success: true, quiz: duplicateQuiz, pesan: 'Kuis berhasil dibuat' });
+    }
+
     // Insert quiz
     const { data: quiz, error } = await supabase
       .from('quiz')
@@ -175,7 +238,13 @@ router.post('/', authMiddleware, async (req, res) => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      recentQuizCreates.delete(dedupKey);
+      rejectCreate({ status: 500, pesan: error.message });
+      throw error;
+    }
+    recentQuizCreates.set(dedupKey, { ts: Date.now(), status: 'done', promise: createPromise, quiz });
+    resolveCreate(quiz);
 
     // Jika ada soal_ids, langsung insert quiz_soal sekalian
     if (soal_ids && soal_ids.length > 0) {
@@ -592,7 +661,9 @@ router.put('/:id/submissions/:sub_id/nilai', authMiddleware, async (req, res) =>
     const { data: quiz } = await supabase.from('quiz').select('guru_id').eq('id', req.params.id).single();
     if (!quiz || quiz.guru_id !== (req.user.id || req.user.userId)) return res.status(403).json({ success: false, pesan: 'Tidak diizinkan.' });
 
-    const { data: sub } = await supabase.from('tugas_submission').update({ nilai: parseInt(nilai), feedback: feedback || null, dinilai_at: new Date().toISOString() }).eq('id', req.params.sub_id).select('murid_id').single();
+    const { data: sub, error: updateErr } = await supabase.from('tugas_submission').update({ nilai: parseInt(nilai), feedback: feedback || null, dinilai_at: new Date().toISOString() }).eq('id', req.params.sub_id).select('murid_id').single();
+    if (updateErr) throw updateErr;
+    if (!sub) return res.status(404).json({ success: false, pesan: 'Submission tidak ditemukan.' });
 
     // Notif ke murid
     if (sub?.murid_id) {

@@ -1709,7 +1709,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
           <div style="font-weight:800;font-size:14px;color:var(--blue)">Klik untuk pilih file</div>
           <div style="font-size:12px;color:var(--muted);margin-top:4px">PDF, DOC, DOCX (max 10MB)</div>
         </div>
-        <input type="file" id="sub-input-file" accept=".pdf,.doc,.docx" style="display:none" onchange="previewSubFile(this,'file">
+        <input type="file" id="sub-input-file" accept=".pdf,.doc,.docx" style="display:none" onchange="previewSubFile(this,'file')">
         <div id="sub-preview-file" style="display:none;margin-top:10px;padding:10px 14px;background:#EEF5FF;border-radius:10px;display:flex;align-items:center;gap:10px">
           <span style="font-size:24px">📄</span>
           <div style="flex:1">
@@ -1730,7 +1730,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
           <div style="font-weight:800;font-size:14px;color:var(--blue)">Klik untuk pilih gambar</div>
           <div style="font-size:12px;color:var(--muted);margin-top:4px">JPG, PNG, WebP, GIF (max 10MB)</div>
         </div>
-        <input type="file" id="sub-input-gambar" accept="image/*" style="display:none" onchange="previewSubFile(this,'gambar">
+        <input type="file" id="sub-input-gambar" accept="image/*" style="display:none" onchange="previewSubFile(this,'gambar')">
         <div id="sub-preview-gambar" style="display:none;margin-top:10px;text-align:center">
           <img id="sub-preview-gambar-img" style="max-width:100%;max-height:220px;border-radius:12px;border:2px solid #eee">
           <button onclick="hapusSubFile('gambar')" style="display:block;margin:8px auto 0;background:#FFEFE8;border:none;color:var(--red);border-radius:8px;padding:6px 16px;cursor:pointer;font-size:12px;font-weight:700">✕ Hapus gambar</button>
@@ -2411,16 +2411,16 @@ document.querySelectorAll('[data-count]').forEach(el => {
 </div>
 
 <script src="/js/app-core-full.js?v=18"></script>
-<script src="/js/modules/auth-profile.js?v=2"></script>
-<script src="/js/modules/dashboard.js?v=2"></script>
-<script src="/js/modules/kelas-chat.js?v=9"></script>
-<script src="/js/modules/notifikasi.js?v=2"></script>
-<script src="/js/modules/kelas-crud.js?v=2"></script>
-<script src="/js/modules/dashboard-guru.js?v=2"></script>
-<script src="/js/modules/materi.js?v=2"></script>
-<script src="/js/modules/soal.js?v=2"></script>
-<script src="/js/modules/quiz.js?v=2"></script>
-<script src="/js/modules/kuis.js?v=2"></script>
+<script src="/js/modules/auth-profile.js?v=10"></script>
+<script src="/js/modules/dashboard.js?v=10"></script>
+<script src="/js/modules/kelas-chat.js?v=10"></script>
+<script src="/js/modules/notifikasi.js?v=10"></script>
+<script src="/js/modules/kelas-crud.js?v=10"></script>
+<script src="/js/modules/dashboard-guru.js?v=10"></script>
+<script src="/js/modules/materi.js?v=10"></script>
+<script src="/js/modules/soal.js?v=10"></script>
+<script src="/js/modules/quiz.js?v=10"></script>
+<script src="/js/modules/kuis.js?v=3"></script>
 
 <!-- ========== ZEP QUIZ SCRIPT ========== -->
 <script src="/js/app-extra1.js?v=1"></script>

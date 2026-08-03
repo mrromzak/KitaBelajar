@@ -1,7 +1,7 @@
 // ============================================================
 //  HAPUS KELAS (GURU)
 // ============================================================
-let hapusKelasId = null;
+hapusKelasId = null;
 
 function konfirmasiHapusKelas(id, nama) {
   hapusKelasId = id;
@@ -34,7 +34,7 @@ async function eksekusiHapusKelas() {
 // ============================================================
 //  KELUAR KELAS (MURID)
 // ============================================================
-let keluarKelasId = null;
+keluarKelasId = null;
 
 function konfirmasiKeluarKelas(id, nama) {
   keluarKelasId = id;

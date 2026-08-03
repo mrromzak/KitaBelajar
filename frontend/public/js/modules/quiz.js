@@ -1,27 +1,26 @@
 // ============================================================
 //  QUIZ GAME
 // ============================================================
-let questions = [];
-let qIdx = 0, score = 0, correctCount = 0, timer, timeLeft = 15, answered = false;
-let quizStartTime = null;
-let currentQuizId = null;
+questions = [];
+qIdx = 0;
+score = 0;
+correctCount = 0;
+timer = undefined;
+timeLeft = 15;
+answered = false;
+quizStartTime = null;
+currentQuizId = null;
 
 // ============================================================
 //  QUIZ KILAT — DUOLINGO STYLE
 // ============================================================
-let qkKategori      = [];   // list kategori (per kelas/mapel)
-let qkActiveKategori = null; // kategori yang sedang dimainkan
-let qkStages        = [];   // stages per kategori
-let qkActiveStage   = 0;    // stage index yang sedang dimainkan
-let qkLives         = 3;    // nyawa tersisa
-let qkStageProgress = {};   // { kategoriId_stageIdx: 'done'|'locked' }
+qkKategori      = [];   // list kategori (per kelas/mapel)
+qkActiveKategori = null; // kategori yang sedang dimainkan
+qkStages        = [];   // stages per kategori
+qkActiveStage   = 0;    // stage index yang sedang dimainkan
+qkLives         = 3;    // nyawa tersisa
+qkStageProgress = {};   // { kategoriId_stageIdx: 'done'|'locked' }
 
-const QK_STAGES_PER_KATEGORI = 5;
-const QK_SOAL_PER_STAGE = 6;
-const QK_STAGE_ICONS = ['🌱','⭐','🔥','💎','👑'];
-const QK_STAGE_NAMES = ['Pemula','Dasar','Menengah','Mahir','Master'];
-const QK_STAGE_XP    = [30, 50, 80, 120, 200];
-const QK_STAGE_COLORS= ['#6BCB77','#4D96FF','#FF6B35','#C77DFF','#FFB99B'];
 
 // ── Load halaman kategori ──────────────────────────────────
 async function startQuiz() {

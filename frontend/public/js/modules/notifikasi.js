@@ -1,7 +1,7 @@
 //  NOTIFICATION BELL
 // ============================================================
-let bellNotifs = [];
-let bellUnreadCount = 0;
+bellNotifs = [];
+bellUnreadCount = 0;
 
 function addBellNotif(notif) {
   if (notif.id && bellNotifs.find(n => n.id === notif.id)) return; // cegah duplikat
@@ -231,7 +231,7 @@ socket.on('notif:baru', (notif) => {
 });
 
 // ─── Deadline reminder: tambah bell notif untuk tugas yang mau deadline ───
-let _deadlineReminderSent = new Set();
+_deadlineReminderSent = new Set();
 
 function cekDeadlineReminder(deadlines) {
   if (!Array.isArray(deadlines)) return;

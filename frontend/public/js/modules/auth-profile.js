@@ -59,7 +59,7 @@ async function doLogin() {
   showLoading(false);
 }
 
-let _pendingRegEmail = null;
+_pendingRegEmail = null;
 
 async function doRegister() {
   const nama = document.getElementById('reg-nama').value.trim();
@@ -288,8 +288,8 @@ function remindDataDiriIfNeeded() {
 // ============================================================
 //  LUPA SANDI & RESET SANDI — 3-step OTP flow
 // ============================================================
-let _forgotEmail = null;
-let _resetToken = null;
+_forgotEmail = null;
+_resetToken = null;
 
 async function doForgotPassword(resend = false) {
   const email = resend ? _forgotEmail : document.getElementById('forgot-email').value.trim();
@@ -380,10 +380,9 @@ async function doResetPassword() {
 // ============================================================
 //  GOOGLE LOGIN — Google Identity Services
 // ============================================================
-const GOOGLE_CLIENT_ID = '1090565500817-q17ik5t91fssrv3ncj215oqh1atfcpmm.apps.googleusercontent.com';
 
-let _pendingGoogleToken = null;
-let _pendingGoogleGuruToken = null; // Token Google yang menunggu verifikasi kode undangan guru
+_pendingGoogleToken = null;
+_pendingGoogleGuruToken = null; // Token Google yang menunggu verifikasi kode undangan guru
 
 async function _handleGoogleCredential(response) {
   showLoading(true);
@@ -524,7 +523,7 @@ async function completeGoogleRegister(role) {
   showLoading(false);
 }
 
-let _googleInited = false;
+_googleInited = false;
 function _initGoogle() {
   if (_googleInited || typeof google === 'undefined' || !google.accounts) return;
   _googleInited = true;
@@ -631,8 +630,6 @@ function bukaProfileGuru() {
   showPage('page-profile-guru');
 }
 
-const AVATAR_MURID = ['🦁','🐯','🐻','🦊','🐺','🐸','🐼','🐨','🦝','🦄','🐲','🦋','🐬','🦅','🐙','🦈','🐘','🦒','🦓','🐧','🦜','🐊'];
-const AVATAR_GURU  = ['👩‍🏫','👨‍🏫','👩‍💼','👨‍💼','🧑‍🏫','👩‍🔬','👨‍🔬','👩‍🎓','👨‍🎓','🧑‍💻','👩‍🎨','👨‍🎨','🧙‍♀️','🧙‍♂️','🦸‍♀️','🦸‍♂️'];
 
 function bukaGantiAvatar(role) {
   const pickerId = role === 'guru' ? 'pg-avatar-picker' : 'pm-avatar-picker';
@@ -714,14 +711,14 @@ async function pilihAvatar(avatar, role) {
 }
 
 // Avatar Cropper Variables
-let cropImage = null;
-let cropZoom = 1;
-let cropX = 0;
-let cropY = 0;
-let isDraggingCrop = false;
-let startDragX = 0;
-let startDragY = 0;
-let cropTargetRole = 'murid';
+cropImage = null;
+cropZoom = 1;
+cropX = 0;
+cropY = 0;
+isDraggingCrop = false;
+startDragX = 0;
+startDragY = 0;
+cropTargetRole = 'murid';
 
 function uploadFotoProfil(role) {
   const input = document.createElement('input');

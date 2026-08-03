@@ -1,17 +1,17 @@
 // ============================================================
 //  MATERI HELPERS
 // ============================================================
-let selectedPdfFile = null;
-let selectedGambarFile = null;
+selectedPdfFile = null;
+selectedGambarFile = null;
 
 // ============================================================
 //  AI MATERI — PDF, Artikel, YouTube
 // ============================================================
 // GROQ_API_KEY_MATERI dihapus — semua AI call dilakukan via backend proxy /api/ai/
-let aiSumberAktif = null;
-let aiPdfFile = null;
-let aiHasilMateri = null;
-let aiHasilSoal = [];
+aiSumberAktif = null;
+aiPdfFile = null;
+aiHasilMateri = null;
+aiHasilSoal = [];
 
 function pilihSumberAI(tipe) {
   aiSumberAktif = tipe;
@@ -381,7 +381,6 @@ function loadScript(src) {
 }
 
 // Patch openTambahMateriKelas untuk populate AI mapel juga
-const _origOpenTambahMateriKelas = window.openTambahMateriKelas;
 
 // Buka modal AI materi langsung
 function openAIMateriModal() {

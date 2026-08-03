@@ -2,7 +2,6 @@
 //  DASHBOARD GURU
 // ============================================================
 // Email akun developer yang boleh lihat error log
-const DEV_EMAILS = ['mrromzak@gmail.com'];
 
 async function loadGuruDashboard() {
   showPage('page-guru');
