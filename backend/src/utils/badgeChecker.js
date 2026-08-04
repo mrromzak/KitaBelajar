@@ -518,19 +518,26 @@ const CHECKERS = {
 async function checkBadges(murid_id, trigger) {
   try {
     const owned = await getOwnedBadgeIds(murid_id);
-    const awarded = [];
+    const promises = [];
     for (const [name, cfg] of Object.entries(CHECKERS)) {
       if (!cfg.trigger.includes(trigger)) continue;
-      const badgeId = await cfg.fn(murid_id, owned);
-      if (badgeId) {
-        const result = await awardBadge(murid_id, badgeId);
-        if (result) {
-          awarded.push(result);
-          owned.add(badgeId);
+      promises.push((async () => {
+        try {
+          const badgeId = await cfg.fn(murid_id, owned);
+          if (badgeId) {
+            const result = await awardBadge(murid_id, badgeId);
+            if (result) {
+              return result;
+            }
+          }
+        } catch (err) {
+          console.error(`[badgeChecker] checker ${name} error:`, err.message);
         }
-      }
+        return null;
+      })());
     }
-    return awarded;
+    const results = await Promise.all(promises);
+    return results.filter(Boolean);
   } catch (err) {
     console.error('[badgeChecker] error:', err.message);
     return [];

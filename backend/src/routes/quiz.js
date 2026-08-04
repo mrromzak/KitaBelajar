@@ -466,14 +466,20 @@ router.post('/hasil', authMiddleware, async (req, res) => {
       }
     }
 
-    // Update XP + stats + cek misi
+    // Update XP + stats + cek misi secara optimal
+    let badgeBaru = [];
     try {
       const xpGain = Math.round(skor / 10);
       await updateUserStats(murid_id, { xpDapat: xpGain, skor, tipe: 'quiz' });
-      await checkMisi(murid_id, { tipe_aktivitas: 'quiz', nilai: skor, xpDapat: xpGain });
-    } catch(xpErr) { console.warn('[XP update]', xpErr.message); }
-
-    const badgeBaru = await checkBadges(murid_id, 'quiz');
+      const results = await Promise.all([
+        checkMisi(murid_id, { tipe_aktivitas: 'quiz', nilai: skor, xpDapat: xpGain }).catch(e => { console.warn('[checkMisi]', e.message); return null; }),
+        checkBadges(murid_id, 'quiz').catch(e => { console.warn('[checkBadges]', e.message); return []; })
+      ]);
+      badgeBaru = results[1] || [];
+    } catch(xpErr) {
+      console.warn('[XP update]', xpErr.message);
+      try { badgeBaru = await checkBadges(murid_id, 'quiz'); } catch(e) {}
+    }
 
     return res.status(201).json({
       success: true,
