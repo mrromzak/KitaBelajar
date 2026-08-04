@@ -1411,8 +1411,9 @@ async function simpanHasilKuisKelas() {
 
   // Tampilkan review otomatis
   if (hasilDetail.length > 0) {
-    renderHasilReview();
-    document.getElementById('hasil-review').style.display = 'block';
+    try { renderHasilReview(); } catch (e) { console.warn('Gagal render review:', e); }
+    const reviewEl = document.getElementById('hasil-review');
+    if (reviewEl) reviewEl.style.display = 'block';
   }
 
   _isSubmittingKuis = false;
@@ -1444,8 +1445,11 @@ function renderHasilReview() {
   const detail = window._kuisHasilDetail || [];
   const list = document.getElementById('hasil-review-list');
   list.innerHTML = detail.map((d, i) => {
-    const opsiHtml = Array.isArray(d.opsi)
-      ? d.opsi.map((o, oi) => {
+    let opsiArr = d.opsi;
+    if (typeof opsiArr === 'string') { try { opsiArr = JSON.parse(opsiArr || '[]'); } catch(e) { opsiArr = []; } }
+    if (!Array.isArray(opsiArr)) opsiArr = [];
+    const opsiHtml = opsiArr.length > 0
+      ? opsiArr.map((o, oi) => {
           const letter = String.fromCharCode(65 + oi);
           const isUserAnswer = d.jawaban_user && d.jawaban_user.trim().toLowerCase() === o.trim().toLowerCase();
           const isCorrectAnswer = d.jawaban_benar && d.jawaban_benar.trim().toLowerCase() === o.trim().toLowerCase();
