@@ -1238,20 +1238,22 @@ function renderPrSoal() {
   // Nav
   const isLast = kuisCurrentQ === soal.length - 1;
   const isPassed = kuisPassed[kuisCurrentQ] === true;
+  const sudahDijawab = Object.keys(kuisJawaban).length;
   document.getElementById('pr-nav-area').innerHTML = `
-    <div class="pr-nav" style="display:flex;gap:8px;justify-content:space-between;width:100%">
+    <div class="pr-nav" style="display:flex;gap:8px;justify-content:space-between;width:100%;flex-wrap:wrap">
       <button class="pr-nav-btn" style="background:#F5F5F5;color:var(--muted)" onclick="goToSoal(${kuisCurrentQ - 1})" ${kuisCurrentQ === 0 ? 'disabled style="opacity:0.4"' : ''}>← Sebelumnya</button>
-      
+
+      ${!isLast && !isFun ? `
+        <button class="pr-nav-btn" style="background:var(--blue);color:white" onclick="goToSoal(${kuisCurrentQ + 1})">Selanjutnya →</button>
+      ` : ''}
+
       ${!isFun ? `
         <button class="pr-nav-btn" style="background:${isPassed ? 'var(--warning)' : '#FEF3C7'};color:${isPassed ? 'white' : '#D97706'};border:1.5px solid #FDE68A" onclick="togglePassSoal()">
           ${isPassed ? '⭐ Batal Pass' : '⚠️ Pass (Lewati)'}
         </button>
       ` : ''}
 
-      ${isLast
-        ? `<button class="pr-submit-btn" onclick="submitKuisKelas(true)">✅ Kumpulkan (${Object.keys(kuisJawaban).length}/${soal.length} dijawab)</button>`
-        : `<button class="pr-nav-btn" style="background:var(--blue);color:white" onclick="goToSoal(${kuisCurrentQ + 1})">Selanjutnya →</button>`
-      }
+      <button class="pr-submit-btn" onclick="submitKuisKelas(true)">✅ Kumpulkan (${sudahDijawab}/${soal.length} dijawab)</button>
     </div>`;
 }
 
