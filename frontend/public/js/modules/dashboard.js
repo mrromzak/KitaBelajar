@@ -814,17 +814,23 @@ async function loadBadges() {
     if (dimiliki.length === 0) {
       elDimiliki.innerHTML = '<div style="color:var(--muted);font-size:13px">Belum punya badge. Selesaikan misi untuk dapat badge!</div>';
     } else {
-      elDimiliki.innerHTML = dimiliki.map(b => `
-        <div class="badge-card dimiliki" title="${b.deskripsi}">
+      elDimiliki.innerHTML = dimiliki.map((b, i) => `
+        <div class="badge-card dimiliki" title="${b.deskripsi}" style="cursor:pointer">
           <div class="badge-icon">${_iconHtml(b.icon)}</div>
           <div class="badge-nama">${b.nama}</div>
         </div>`).join('');
+      elDimiliki.querySelectorAll('.badge-card').forEach((el, i) => {
+        el.addEventListener('click', () => openBadgeModal(dimiliki[i]));
+      });
     }
 
-    elSemua.innerHTML = semua.map(b => `
-      <div class="badge-card ${b.dimiliki ? 'dimiliki' : 'locked'}" title="${b.deskripsi}">
+    elSemua.innerHTML = semua.map((b, i) => `
+      <div class="badge-card ${b.dimiliki ? 'dimiliki' : 'locked'}" title="${b.deskripsi}" style="cursor:pointer">
         <div class="badge-icon">${_iconHtml(b.icon)}</div>
         <div class="badge-nama">${b.nama}</div>
       </div>`).join('');
+    elSemua.querySelectorAll('.badge-card').forEach((el, i) => {
+      el.addEventListener('click', () => openBadgeModal(semua[i]));
+    });
   } catch(e) { toast('Gagal memuat badge.'); }
 }

@@ -96,14 +96,20 @@ async function openKelas(kelasId, colorIdx) {
     const resolvedColorIdx = kelasHashIdx(kelasId) % KELAS_COLORS.length;
     currentKelas = { ...k, id: kelasId, colorIdx: resolvedColorIdx };
 
-    const colorClass = KELAS_COLORS[resolvedColorIdx];
+    const savedBanner = localStorage.getItem('kb_kelas_banner_' + kelasId);
+    const isClass = savedBanner && savedBanner.startsWith('bg-c');
+    const colorClass = isClass ? savedBanner : KELAS_COLORS[resolvedColorIdx];
     const isGuru = currentUser?.role === 'guru';
 
     document.getElementById('kelas-detail-title').textContent = k.nama;
     document.getElementById('kelas-banner-title').textContent = k.nama;
     document.getElementById('kelas-banner-mapel').textContent = k.mapel || 'Kelas';
     document.getElementById('kelas-banner-guru').textContent = isGuru ? `Tahun Ajaran: ${k.tahun_ajar || '–'}` : `Guru: ${k.guru_nama || k.guru?.nama || '–'}`;
-    document.getElementById('kelas-banner-bg').className = `kelas-banner-content ${colorClass}`;
+    const bg = document.getElementById('kelas-banner-bg');
+    if (bg) {
+      bg.className = `kelas-banner-content ${colorClass}`;
+      bg.style.backgroundImage = '';
+    }
     document.getElementById('kelas-code-display').textContent = k.kode_akses || '–';
     document.getElementById('kelas-add-materi-btn').style.display = isGuru ? 'inline-flex' : 'none';
     document.getElementById('kelas-add-kuis-btn').style.display = isGuru ? 'inline-flex' : 'none';
@@ -1419,11 +1425,9 @@ const BANNER_PRESETS = [
 ];
 
 let _bannerSelectedClass = null;
-let _bannerUploadDataUrl = null;
 
 function bukaUbahBanner() {
   _bannerSelectedClass = null;
-  _bannerUploadDataUrl = null;
   // Render preset warna
   const container = document.getElementById('banner-color-presets');
   if (container) {
@@ -1433,82 +1437,31 @@ function bukaUbahBanner() {
           border:3px solid transparent;transition:all 0.15s;flex-shrink:0"
         title="${p.label}"></div>`).join('');
   }
-  const preview = document.getElementById('banner-preview');
-  if (preview) preview.style.display = 'none';
   openModal('modal-ubah-banner');
 }
 
 function pilihBannerPreset(bgClass, el) {
   _bannerSelectedClass = bgClass;
-  _bannerUploadDataUrl = null;
   // Highlight pilihan
   document.querySelectorAll('#banner-color-presets div').forEach(d => d.style.border = '3px solid transparent');
   el.style.border = '3px solid var(--text)';
-  const preview = document.getElementById('banner-preview');
-  if (preview) preview.style.display = 'none';
-}
-
-function previewBannerUpload(input) {
-  const file = input.files[0];
-  if (!file) return;
-  if (file.size > 2 * 1024 * 1024) { toast('Gambar terlalu besar (maks 2MB)', 'error'); return; }
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    _bannerUploadDataUrl = e.target.result;
-    _bannerSelectedClass = null;
-    document.querySelectorAll('#banner-color-presets div').forEach(d => d.style.border = '3px solid transparent');
-    const preview = document.getElementById('banner-preview');
-    const img = document.getElementById('banner-preview-img');
-    if (preview && img) { img.src = _bannerUploadDataUrl; preview.style.display = 'block'; }
-  };
-  reader.readAsDataURL(file);
 }
 
 async function simpanBannerKelas() {
   if (!currentKelas) return;
-  if (_bannerUploadDataUrl) {
-    // Upload gambar ke server
-    showLoading(true, 'Mengupload banner...');
-    try {
-      const blob = await fetch(_bannerUploadDataUrl).then(r => r.blob());
-      const formData = new FormData();
-      formData.append('banner', blob, 'banner.jpg');
-      formData.append('kelas_id', currentKelas.id);
-      const token = localStorage.getItem('kb_token') || '';
-      const res = await fetch('/api/kelas/' + currentKelas.id + '/banner', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + token },
-        body: formData
-      });
-      const json = await res.json();
-      if (json.success && json.banner_url) {
-        const bg = document.getElementById('kelas-banner-bg');
-        if (bg) {
-          bg.style.backgroundImage = `url('${json.banner_url}')`;
-          bg.style.backgroundSize = 'cover';
-          bg.style.backgroundPosition = 'center';
-        }
-        toast('Banner diperbarui! 🎨', 'success');
-      } else {
-        toast(json.pesan || 'Gagal upload banner', 'error');
-      }
-    } catch(e) {
-      toast('Tidak bisa mengupload banner', 'error');
-    }
-    showLoading(false);
-  } else if (_bannerSelectedClass) {
-    // Simpan preferensi warna lokal (tidak perlu server call — color class sudah ada)
+  if (_bannerSelectedClass) {
     const bg = document.getElementById('kelas-banner-bg');
     if (bg) {
       KELAS_COLORS.forEach(c => bg.classList.remove(c));
       bg.classList.add(_bannerSelectedClass);
       bg.style.backgroundImage = '';
     }
-    // Update currentKelas state agar konsisten jika halaman di-refresh
+    // Simpan warna banner ke localStorage agar tetap ada setelah refresh
+    localStorage.setItem('kb_kelas_banner_' + currentKelas.id, _bannerSelectedClass);
     if (currentKelas) currentKelas._bannerClass = _bannerSelectedClass;
     toast('Warna banner diperbarui! 🎨', 'success');
   } else {
-    toast('Pilih warna atau upload gambar dulu!', 'error');
+    toast('Pilih warna dulu!', 'error');
     return;
   }
   closeModal('modal-ubah-banner');

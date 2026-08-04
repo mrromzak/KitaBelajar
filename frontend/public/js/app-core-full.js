@@ -2472,14 +2472,20 @@ async function openKelas(kelasId, colorIdx) {
     const resolvedColorIdx = kelasHashIdx(kelasId) % KELAS_COLORS.length;
     currentKelas = { ...k, id: kelasId, colorIdx: resolvedColorIdx };
 
-    const colorClass = KELAS_COLORS[resolvedColorIdx];
+    const savedBanner = localStorage.getItem('kb_kelas_banner_' + kelasId);
+    const isClass = savedBanner && savedBanner.startsWith('bg-c');
+    const colorClass = isClass ? savedBanner : KELAS_COLORS[resolvedColorIdx];
     const isGuru = currentUser?.role === 'guru';
 
     document.getElementById('kelas-detail-title').textContent = k.nama;
     document.getElementById('kelas-banner-title').textContent = k.nama;
     document.getElementById('kelas-banner-mapel').textContent = k.mapel || 'Kelas';
     document.getElementById('kelas-banner-guru').textContent = isGuru ? `Tahun Ajaran: ${k.tahun_ajar || '–'}` : `Guru: ${k.guru_nama || k.guru?.nama || '–'}`;
-    document.getElementById('kelas-banner-bg').className = `kelas-banner-content ${colorClass}`;
+    const bg = document.getElementById('kelas-banner-bg');
+    if (bg) {
+      bg.className = `kelas-banner-content ${colorClass}`;
+      bg.style.backgroundImage = '';
+    }
     document.getElementById('kelas-code-display').textContent = k.kode_akses || '–';
     document.getElementById('kelas-add-materi-btn').style.display = isGuru ? 'inline-flex' : 'none';
     document.getElementById('kelas-add-kuis-btn').style.display = isGuru ? 'inline-flex' : 'none';

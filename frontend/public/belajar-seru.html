@@ -2183,9 +2183,9 @@ document.querySelectorAll('[data-count]').forEach(el => {
             <div style="display:flex;align-items:center;gap:10px">
               <div style="background:rgba(255,255,255,0.25);border-radius:8px;padding:4px 12px;font-weight:900;font-size:14px;color:white" id="sb-soal-nomor">#1</div>
               <select id="sb-tipe-soal" onchange="sbGantiTipe(this.value)" style="background:rgba(255,255,255,0.2);border:none;color:white;font-family:Nunito,sans-serif;font-weight:700;font-size:13px;outline:none;cursor:pointer;border-radius:8px;padding:4px 8px">
-                <option value="pilihan_ganda">✅ Pilihan Ganda</option>
-                <option value="isian">✍️ Jawaban Singkat</option>
-                <option value="benar_salah">⭕ OX / Benar Salah</option>
+                <option value="pilihan_ganda" style="color: #333; background: white;">✅ Pilihan Ganda</option>
+                <option value="isian" style="color: #333; background: white;">✍️ Jawaban Singkat</option>
+                <option value="benar_salah" style="color: #333; background: white;">⭕ OX / Benar Salah</option>
               </select>
             </div>
             <div style="display:flex;gap:8px">
@@ -2471,21 +2471,11 @@ document.querySelectorAll('[data-count]').forEach(el => {
 <div class="modal-overlay" id="modal-ubah-banner">
   <div class="modal" style="max-width:480px">
     <h3>🎨 Ubah Banner Kelas</h3>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;font-weight:600">Pilih warna atau upload gambar untuk banner kelas ini.</p>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;font-weight:600">Pilih warna untuk banner kelas ini.</p>
     <!-- Preset warna -->
     <div style="font-weight:700;font-size:13px;margin-bottom:10px;color:var(--muted)">PILIH WARNA</div>
     <div id="banner-color-presets" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px">
       <!-- diisi JS -->
-    </div>
-    <!-- Upload gambar -->
-    <div style="font-weight:700;font-size:13px;margin-bottom:10px;color:var(--muted)">ATAU UPLOAD GAMBAR</div>
-    <button onclick="document.getElementById('banner-upload-input').click()"
-      style="width:100%;padding:12px;border:2px dashed #ddd;border-radius:12px;background:#F9F9FA;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;color:var(--muted);margin-bottom:16px">
-      📁 Pilih Gambar (JPG, PNG, max 2MB)
-    </button>
-    <input type="file" id="banner-upload-input" accept="image/*" style="display:none" onchange="previewBannerUpload(this)">
-    <div id="banner-preview" style="display:none;margin-bottom:16px">
-      <img id="banner-preview-img" src="" alt="" style="width:100%;height:120px;object-fit:cover;border-radius:12px;border:2px solid #eee">
     </div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModal('modal-ubah-banner')">Batal</button>
