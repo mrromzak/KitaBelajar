@@ -909,6 +909,8 @@ async function hapusKuis(id, judul) {
 _subQuizData = null;
 _subTipeAktif = '';
 _subFileObj = null;
+_subPreviewUrl = null;
+_isUploadingTugas = false;
 
 async function bukaFormSubmission(quizId) {
   showLoading(true);
@@ -945,6 +947,10 @@ async function bukaFormSubmission(quizId) {
     } else document.getElementById('sub-modal-deadline').innerHTML = '';
 
     // Reset semua form
+    if (_subPreviewUrl) {
+      URL.revokeObjectURL(_subPreviewUrl);
+      _subPreviewUrl = null;
+    }
     ['teks','link','file','gambar'].forEach(t => {
       document.getElementById(`sub-form-${t}`).style.display = 'none';
     });
@@ -986,13 +992,13 @@ function previewSubFile(input, tipe) {
   if (!file) return;
   _subFileObj = file;
   if (tipe === 'gambar') {
-    const reader = new FileReader();
-    reader.onload = e => {
-      document.getElementById('sub-preview-gambar-img').src = e.target.result;
-      document.getElementById('sub-preview-gambar').style.display = 'block';
-      document.getElementById('sub-dropzone-gambar').style.display = 'none';
-    };
-    reader.readAsDataURL(file);
+    if (_subPreviewUrl) {
+      URL.revokeObjectURL(_subPreviewUrl);
+    }
+    _subPreviewUrl = URL.createObjectURL(file);
+    document.getElementById('sub-preview-gambar-img').src = _subPreviewUrl;
+    document.getElementById('sub-preview-gambar').style.display = 'block';
+    document.getElementById('sub-dropzone-gambar').style.display = 'none';
   } else {
     document.getElementById('sub-preview-file-nama').textContent = file.name;
     document.getElementById('sub-preview-file-size').textContent = (file.size / 1024).toFixed(1) + ' KB';
@@ -1003,6 +1009,10 @@ function previewSubFile(input, tipe) {
 
 function hapusSubFile(tipe) {
   _subFileObj = null;
+  if (_subPreviewUrl) {
+    URL.revokeObjectURL(_subPreviewUrl);
+    _subPreviewUrl = null;
+  }
   if (tipe === 'gambar') {
     document.getElementById('sub-preview-gambar').style.display = 'none';
     document.getElementById('sub-dropzone-gambar').style.display = 'block';
@@ -1015,24 +1025,35 @@ function hapusSubFile(tipe) {
 }
 
 async function submitTugas() {
+  if (_isUploadingTugas) return;
   if (!_subQuizData || !_subTipeAktif) { toast('Pilih tipe submission dulu!', 'error'); return; }
   const catatan = document.getElementById('sub-catatan').value.trim();
   const btn = document.getElementById('sub-submit-btn');
+  
+  _isUploadingTugas = true;
   btn.disabled = true; btn.textContent = '⏳ Mengirim...';
   try {
     let res;
     if (_subTipeAktif === 'teks') {
       const konten = document.getElementById('sub-konten-teks').value.trim();
-      if (!konten) { toast('Isi teks tidak boleh kosong!', 'error'); return; }
+      if (!konten) { toast('Isi teks tidak boleh kosong!', 'error'); _isUploadingTugas = false; btn.disabled = false; btn.textContent = '📤 Kumpulkan'; return; }
+      showLoading(true, 'Mengirim jawaban...');
       res = await api('POST', `/quiz/${_subQuizData.id}/submission`, { tipe: 'teks', konten, catatan });
     } else if (_subTipeAktif === 'link') {
       const konten = document.getElementById('sub-konten-link').value.trim();
-      if (!konten || !konten.startsWith('http')) { toast('Masukkan URL yang valid!', 'error'); return; }
+      if (!konten || !konten.startsWith('http')) { toast('Masukkan URL yang valid!', 'error'); _isUploadingTugas = false; btn.disabled = false; btn.textContent = '📤 Kumpulkan'; return; }
+      showLoading(true, 'Mengirim jawaban...');
       res = await api('POST', `/quiz/${_subQuizData.id}/submission`, { tipe: 'link', konten, catatan });
     } else {
-      if (!_subFileObj) { toast('Pilih file terlebih dahulu!', 'error'); return; }
+      if (!_subFileObj) { toast('Pilih file terlebih dahulu!', 'error'); _isUploadingTugas = false; btn.disabled = false; btn.textContent = '📤 Kumpulkan'; return; }
+      
+      showLoading(true, 'Mengompresi & mengirim...');
+      
+      // Kompres jika tipe gambar
+      const uploadFileObj = _subTipeAktif === 'gambar' ? await compressImageIfNeeded(_subFileObj) : _subFileObj;
+      
       const fd = new FormData();
-      fd.append('file', _subFileObj);
+      fd.append('file', uploadFileObj);
       fd.append('tipe', _subTipeAktif);
       if (catatan) fd.append('catatan', catatan);
       const uploadToken = localStorage.getItem('kb_token') || '';
@@ -1042,12 +1063,21 @@ async function submitTugas() {
     if (res.success) {
       toast('✅ Tugas berhasil dikumpulkan!', 'success');
       closeModal('modal-submission');
+      if (_subPreviewUrl) {
+        URL.revokeObjectURL(_subPreviewUrl);
+        _subPreviewUrl = null;
+      }
       loadKelasKuis(currentKelas?.id);
     } else {
       toast(res.pesan || 'Gagal mengumpulkan tugas', 'error');
     }
-  } catch(e) { toast('Gagal terhubung ke server', 'error'); }
-  finally { btn.disabled = false; btn.textContent = '📤 Kumpulkan'; }
+  } catch(e) { 
+    toast('Gagal terhubung ke server', 'error'); 
+  } finally { 
+    showLoading(false);
+    btn.disabled = false; btn.textContent = '📤 Kumpulkan'; 
+    _isUploadingTugas = false;
+  }
 }
 
 // ============================================================
