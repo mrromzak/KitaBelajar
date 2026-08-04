@@ -11,8 +11,8 @@ function kelasHashIdx(id) {
 
 function renderKelasCard(k, i, role) {
   const idx = kelasHashIdx(k.id);
-  const isClass = k.cover_url && k.cover_url.startsWith('bg-c');
-  const colorClass = isClass ? k.cover_url : KELAS_COLORS[idx % KELAS_COLORS.length];
+  const isClass = k.banner_color && k.banner_color.startsWith('bg-c');
+  const colorClass = isClass ? k.banner_color : KELAS_COLORS[idx % KELAS_COLORS.length];
   let emoji = KELAS_EMOJIS[idx % KELAS_EMOJIS.length];
   if (k.mapel) {
     const customMapel = getMapelList().find(m => m.nama.toLowerCase() === k.mapel.toLowerCase());
@@ -203,7 +203,7 @@ async function openKelas(kelasId, colorIdx) {
       if (detail && detail.nama) {
         currentKelas = { ...detail, id: kelasId, colorIdx: resolvedColorIdx };
         // Sync warna banner dari database
-        const dbBanner = detail.cover_url;
+        const dbBanner = detail.banner_color;
         const isDbClass = dbBanner && dbBanner.startsWith('bg-c');
         const finalColorClass = isDbClass ? dbBanner : KELAS_COLORS[resolvedColorIdx];
         const bg = document.getElementById('kelas-banner-bg');
@@ -1487,7 +1487,7 @@ async function simpanBannerKelas() {
           bg.style.backgroundImage = '';
         }
         localStorage.setItem('kb_kelas_banner_' + currentKelas.id, _bannerSelectedClass);
-        currentKelas.cover_url = _bannerSelectedClass;
+        currentKelas.banner_color = _bannerSelectedClass;
         toast('Warna banner diperbarui! 🎨', 'success');
       } else {
         toast(json.pesan || 'Gagal memperbarui banner', 'error');

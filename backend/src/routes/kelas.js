@@ -307,11 +307,11 @@ router.put('/:id/banner', authMiddleware, guruOnly, async (req, res) => {
     if (!kelas) return res.status(403).json({ success: false, pesan: 'Kamu tidak memiliki akses ke kelas ini.' });
 
     const { error } = await supabase.from('kelas')
-      .update({ cover_url: banner })
+      .update({ banner_color: banner })
       .eq('id', id);
     if (error) throw error;
 
-    res.json({ success: true, pesan: 'Warna banner berhasil diperbarui!', cover_url: banner });
+    res.json({ success: true, pesan: 'Warna banner berhasil diperbarui!', banner_color: banner });
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
