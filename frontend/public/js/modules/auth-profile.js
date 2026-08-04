@@ -16,6 +16,8 @@ function showRegister() {
   showPage('page-register');
 }
 
+_pendingManualGuruLogin = null; // { email, password } — menunggu kode guru utk login manual
+
 async function doLogin() {
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
@@ -25,6 +27,18 @@ async function doLogin() {
   showLoading(true);
   try {
     const data = await api('POST', '/auth/login', { email, password });
+    if (data.needs_kode_guru) {
+      // Akun guru terdeteksi — minta kode guru (reuse modal yang sama dgn alur Google)
+      _pendingManualGuruLogin = { email, password };
+      const namaEl = document.getElementById('google-guru-kode-nama');
+      if (namaEl) namaEl.textContent = email;
+      const inputEl = document.getElementById('google-guru-kode-input');
+      if (inputEl) inputEl.value = '';
+      showLoading(false);
+      openModal('modal-google-guru-kode');
+      setTimeout(() => { if (inputEl) inputEl.focus(); }, 300);
+      return;
+    }
     if (data.success) {
       // Login terpadu: peran ditentukan backend, langsung diarahkan ke dashboard yang sesuai.
       token = data.token;
@@ -434,6 +448,10 @@ async function _handleGoogleCredential(response) {
 
 // Dipanggil dari modal-google-guru-kode setelah user memasukkan kode undangan
 async function completeGoogleGuruKode() {
+  // Jika modal ini dibuka dari alur login manual (email+password) → kode utk login manual
+  if (_pendingManualGuruLogin) {
+    return completeManualGuruLoginKode();
+  }
   if (!_pendingGoogleGuruToken) return;
   const inputEl = document.getElementById('google-guru-kode-input');
   const kode = inputEl ? inputEl.value.trim().toUpperCase() : '';
@@ -468,6 +486,53 @@ async function completeGoogleGuruKode() {
     } else {
       _pendingGoogleGuruToken = null;
       toast(data.pesan || 'Verifikasi kode guru gagal.', 'error');
+    }
+  } catch(e) {
+    toast('Tidak bisa terhubung ke server 😢', 'error');
+    openModal('modal-google-guru-kode');
+  }
+  showLoading(false);
+}
+
+// Dipanggil dari modal-google-guru-kode saat alur login MANUAL (email+password)
+// Mengirim kode guru sebagai kode_guru_login ke /auth/login (BUKAN kode_guru).
+async function completeManualGuruLoginKode() {
+  const pending = _pendingManualGuruLogin;
+  if (!pending) return;
+  const inputEl = document.getElementById('google-guru-kode-input');
+  const kode = inputEl ? inputEl.value.trim().toUpperCase() : '';
+  if (!kode) { toast('Masukkan kode undangan dari kepala sekolah.', 'error'); return; }
+
+  closeModal('modal-google-guru-kode');
+  showLoading(true);
+  try {
+    const data = await api('POST', '/auth/login', {
+      email: pending.email,
+      password: pending.password,
+      kode_guru_login: kode
+    });
+    if (data.success && data.token) {
+      _pendingManualGuruLogin = null;
+      token = data.token;
+      currentUser = data.user;
+      localStorage.setItem('kb_token', token);
+      refreshSocketConnection();
+      localStorage.setItem('kb_user', JSON.stringify(currentUser));
+      localStorage.removeItem('kb_mapel_list');
+      joinPrivateChannel();
+      loadBellNotifications();
+      setTimeout(() => subscribePush(), 2000);
+      toast(`Selamat datang, ${currentUser.nama}! 🎉`, 'success');
+      loadGuruDashboard();
+      remindDataDiriIfNeeded();
+      if (!currentUser.profil_lengkap) setTimeout(() => openDataDiriModal(true), 1500);
+    } else if (data.needs_kode_guru) {
+      // Kode salah — buka kembali modal
+      openModal('modal-google-guru-kode');
+      toast(data.pesan || 'Kode undangan tidak valid.', 'error');
+    } else {
+      _pendingManualGuruLogin = null;
+      toast(data.pesan || 'Login gagal. Cek email & password kamu!', 'error');
     }
   } catch(e) {
     toast('Tidak bisa terhubung ke server 😢', 'error');

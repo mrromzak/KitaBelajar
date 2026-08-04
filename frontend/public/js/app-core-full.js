@@ -25,6 +25,30 @@ let currentUser = JSON.parse(localStorage.getItem('kb_user') || 'null');
 let currentRole = 'murid'; // for login page
 let currentRegRole = 'murid';
 
+// ── SKELETON LOADING (shared helper, dipakai dashboard/kuis/leaderboard) ──
+function skeletonHtml(tipe = 'list', count = 3) {
+  if (tipe === 'card') {
+    return Array.from({ length: count }, () =>
+      `<div class="skeleton-card" style="height:120px;margin-bottom:12px"></div>`
+    ).join('');
+  }
+  if (tipe === 'text') {
+    return `<div class="skeleton-line" style="height:14px;width:80%;margin-bottom:8px"></div>
+            <div class="skeleton-line" style="height:14px;width:60%;margin-bottom:8px"></div>
+            <div class="skeleton-line" style="height:14px;width:70%"></div>`;
+  }
+  // default: list
+  return Array.from({ length: count }, (_, i) =>
+    `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+       <div class="skeleton-line" style="width:40px;height:40px;border-radius:50%;flex-shrink:0;margin:0"></div>
+       <div style="flex:1">
+         <div class="skeleton-line" style="height:13px;width:${60 + (i % 3) * 10}%;margin-bottom:6px"></div>
+         <div class="skeleton-line" style="height:11px;width:${40 + (i % 2) * 15}%"></div>
+       </div>
+     </div>`
+  ).join('');
+}
+
 // ── DARK MODE FUNCTIONS ──────────────────────────────────────
 function toggleGlobalDarkMode() {
   const mode = document.body.classList.toggle('dark-mode');

@@ -349,6 +349,11 @@ function updateKuisTotalLabel() {
 }
 
 async function generateSoalUntukKuis() {
+  // Generate soal untuk kuis/PR biasa oleh guru — manggil /api/ai/chat langsung
+  // dengan prompt custom (campuran PG + benar/salah). Ini TERPISAH dari alur
+  // generate soal Zep Quiz (/api/zepquiz/ai-generate) yang khusus multiplayer.
+  // Keduanya sengaja berbeda (prompt, format output, retry) — jangan digabung
+  // tanpa konfirmasi agar tidak merusak kedua fitur.
   const topik   = document.getElementById('kuis-ai-topik').value.trim();
   const jumlah  = parseInt(document.getElementById('kuis-ai-jumlah').value);
   const tingkat = document.getElementById('kuis-ai-tingkat').value;
@@ -850,12 +855,21 @@ async function submitBuatKuis() {
     toast(`🎉 Kuis "${judul}" berhasil dibuat! ${semuaSoalIds.length} soal${aiInfo}`, 'success');
     closeModal('modal-buat-kuis');
     aiSoalUntukKuis = [];
-    switchKelasTab('kuis');
-    await loadKelasKuis(currentKelas.id);
   } catch(e) {
     toast('Tidak bisa terhubung ke server', 'error');
+    showLoading(false);
+    return;
   }
   showLoading(false);
+
+  // Refresh tampilan di try/catch TERPISAH — kuis sudah pasti berhasil dibuat
+  // di titik ini, jadi error render di sini tidak boleh menutupi pesan sukses:
+  try {
+    switchKelasTab('kuis');
+    if (currentKelas?.id) await loadKelasKuis(currentKelas.id);
+  } catch(e) {
+    console.error('[submitBuatKuis] gagal refresh daftar kuis:', e);
+  }
 }
 
 // ============================================================
@@ -1502,15 +1516,15 @@ async function submitEditMateri() {
   if (!judul) { toast('Judul tidak boleh kosong!', 'error'); return; }
 
   showLoading(true);
+  let editBerhasil = false;
   try {
     const body = { judul, mapel, jenis, status };
     if (konten) body.konten = konten;
     const data = await api('PUT', `/materi/${editMateriId}`, body);
     if (data.success) {
+      editBerhasil = true;
       toast('Materi berhasil diperbarui! ✅', 'success');
       closeModal('modal-edit-materi');
-      if (currentKelas) await loadKelasStream(currentKelas.id);
-      else loadGuruDashboard();
     } else {
       toast(data.pesan || 'Gagal update materi', 'error');
     }
@@ -1518,6 +1532,15 @@ async function submitEditMateri() {
     toast('Tidak bisa terhubung ke server', 'error');
   }
   showLoading(false);
+
+  // Refresh tampilan di try/catch TERPISAH — update sudah berhasil, error render
+  // di sini tidak boleh menutupi pesan sukses.
+  if (editBerhasil) {
+    try {
+      if (currentKelas) await loadKelasStream(currentKelas.id);
+      else loadGuruDashboard();
+    } catch(e) { console.error('[submitEditMateri] gagal refresh:', e); }
+  }
 }
 
 hapusMateriId = null;

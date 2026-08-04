@@ -435,6 +435,7 @@ async function submitMateri() {
 
   showLoading(true);
   document.getElementById('btn-simpan-materi').disabled = true;
+  let materiBerhasil = false;
 
   try {
     let konten = '';
@@ -480,16 +481,19 @@ async function submitMateri() {
         toast(`${label.charAt(0).toUpperCase() + label.slice(1)} berhasil diupload! 📚`, 'success');
         resetMateriForm();
         closeModal('modal-materi');
-        if (currentKelas) {
-          await loadKelasStream(currentKelas.id);
-        } else {
-          loadGuruDashboard();
-        }
       } else {
         toast(data.pesan || `Gagal upload ${label}`, 'error');
       }
       showLoading(false);
       document.getElementById('btn-simpan-materi').disabled = false;
+      // Refresh tampilan di try/catch TERPISAH — upload sudah berhasil, error render
+      // di sini tidak boleh menutupi pesan sukses.
+      if (data.success) {
+        try {
+          if (currentKelas) await loadKelasStream(currentKelas.id);
+          else loadGuruDashboard();
+        } catch(e) { console.error('[submitMateri] gagal refresh:', e); }
+      }
       return;
     }
 
@@ -498,12 +502,7 @@ async function submitMateri() {
       toast('Materi berhasil ditambahkan! 📚', 'success');
       resetMateriForm();
       closeModal('modal-materi');
-      // Refresh: kalau di dalam kelas detail, reload stream-nya
-      if (currentKelas) {
-        await loadKelasStream(currentKelas.id);
-      } else {
-        loadGuruDashboard();
-      }
+      materiBerhasil = true;
     } else {
       toast(data.pesan || 'Gagal menyimpan materi', 'error');
     }
@@ -512,6 +511,15 @@ async function submitMateri() {
   }
   showLoading(false);
   document.getElementById('btn-simpan-materi').disabled = false;
+
+  // Refresh tampilan di try/catch TERPISAH — materi sudah berhasil dibuat,
+  // error render di sini tidak boleh menutupi pesan sukses.
+  if (materiBerhasil) {
+    try {
+      if (currentKelas) await loadKelasStream(currentKelas.id);
+      else loadGuruDashboard();
+    } catch(e) { console.error('[submitMateri] gagal refresh:', e); }
+  }
 }
 
 // ── YouTube: klik thumbnail → load iframe langsung ──

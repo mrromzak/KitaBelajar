@@ -86,6 +86,8 @@ const helmetMiddleware = helmet({
                        'https://accounts.google.com'],
       // Izinkan inline event handler (onclick, onchange, dll di HTML)
       scriptSrcAttr:  ["'unsafe-inline'"],
+      // Worker dari blob: (pdf.js Web Worker, dll)
+      workerSrc:      ["'self'", 'blob:'],
       styleSrc:       ["'self'", "'unsafe-inline'",
                        'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com',
                        'https://accounts.google.com', 'https://cdn.jsdelivr.net'],

@@ -607,15 +607,16 @@ async function submitSoal(tambahLagi = false) {
   }
 
   showLoading(true);
+  let soalTersimpan = false;
+  let continueTambah = false;
   try {
     const data = await api('POST', '/soal', {
       pertanyaan, emoji, mapel, jenis,
       opsi: JSON.stringify(opsi), jawaban, poin, tingkat
     });
     if (data.success) {
-      toast('Soal berhasil ditambahkan! ✏️', 'success');
-      loadGuruSoalPreview();
-
+      soalTersimpan = true;
+      continueTambah = tambahLagi;
       if (tambahLagi) {
         // Tetap di modal, reset form, pertahankan mapel
         const mapelLama = mapel;
@@ -631,15 +632,7 @@ async function submitSoal(tambahLagi = false) {
       } else {
         closeModal('modal-soal');
         resetSoalForm();
-        if (soalDariBuatKuis) {
-          soalDariBuatKuis = false;
-          const btnSimpan = document.querySelector('#modal-soal .btn-submit');
-          if (btnSimpan) btnSimpan.textContent = '✅ Simpan Soal';
-          openModal('modal-buat-kuis');
-          await loadBankSoal();
-          switchKuisSoalTab('bank');
-          toast('Soal ditambahkan! Ceklis soalnya di bawah ya 👇', 'success');
-        }
+        toast('Soal berhasil ditambahkan! ✏️', 'success');
       }
     } else {
       toast(data.pesan || 'Gagal menyimpan soal', 'error');
@@ -648,4 +641,25 @@ async function submitSoal(tambahLagi = false) {
     toast('Tidak bisa terhubung ke server', 'error');
   }
   showLoading(false);
+
+  // Refresh tampilan di try/catch TERPISAH — soal sudah berhasil dibuat,
+  // error render di sini tidak boleh menutupi pesan sukses.
+  if (soalTersimpan) {
+    try {
+      loadGuruSoalPreview();
+      if (continueTambah) {
+        // sudah handled di atas
+      } else if (soalDariBuatKuis) {
+        soalDariBuatKuis = false;
+        const btnSimpan = document.querySelector('#modal-soal .btn-submit');
+        if (btnSimpan) btnSimpan.textContent = '✅ Simpan Soal';
+        openModal('modal-buat-kuis');
+        await loadBankSoal();
+        switchKuisSoalTab('bank');
+        toast('Soal ditambahkan! Ceklis soalnya di bawah ya 👇', 'success');
+      }
+    } catch(e) {
+      console.error('[submitSoal] gagal refresh:', e);
+    }
+  }
 }

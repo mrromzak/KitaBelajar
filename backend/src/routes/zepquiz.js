@@ -234,6 +234,11 @@ router.get('/bank-soal', authMiddleware, async (req, res) => {
 // ============================================================
 //  GET /api/zepquiz/ai-generate?mapel=&jenjang=&kelas=&jumlah=
 //  Generate soal pilihan ganda via Groq AI — fresh setiap request
+//  KHUSUS untuk fitur Zep Quiz (multiplayer) — dipanggil frontend app-extra1.js.
+//  Ini terpisah dari generate soal untuk kuis/PR biasa (kuis.js → /api/ai/chat),
+//  yang punya prompt & format output sendiri (campuran PG + benar/salah).
+//  Dua alur ini sengaja dipisah karena kebutuhan berbeda; jangan digabung tanpa
+//  konfirmasi (menghindari merusak kedua fitur sekaligus).
 // ============================================================
 router.get('/ai-generate', authMiddleware, async (req, res) => {
   try {

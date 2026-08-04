@@ -557,8 +557,38 @@ router.post('/login', async (req, res) => {
     if (!bcrypt.compareSync(password, user.password))
       return res.status(401).json({ success: false, pesan: 'Password yang Anda masukkan salah.' });
 
-    // Kode undangan (kode_guru) hanya diperlukan saat REGISTRASI, bukan saat login.
-    // Guru yang sudah terdaftar cukup login dengan email + password.
+    // Guru wajib memasukkan kode guru saat login (konsisten dengan login Google).
+    if (user.role === 'guru') {
+      if (!kode_guru_login || typeof kode_guru_login !== 'string' || !kode_guru_login.trim()) {
+        return res.status(200).json({
+          success: false,
+          needs_kode_guru: true,
+          pesan: 'Akun guru terdeteksi. Masukkan kode guru untuk melanjutkan.'
+        });
+      }
+
+      const inputKode = kode_guru_login.trim().toUpperCase();
+
+      if (user.code_guru) {
+        // Jalur A: cek users.code_guru dulu
+        const storedKode = user.code_guru.trim().toUpperCase();
+        if (storedKode !== inputKode) {
+          // Fallback ke Jalur B (tabel kode_guru, bcrypt)
+          const loginKodeEntry = await findKodeGuruByBcrypt(supabase, kode_guru_login, bcrypt);
+          if (!loginKodeEntry)
+            return res.status(403).json({ success: false, pesan: 'Kode guru tidak sesuai' });
+          if (loginKodeEntry.email_guru && loginKodeEntry.email_guru.toLowerCase().trim() !== normalEmail)
+            return res.status(403).json({ success: false, pesan: 'Kode guru tidak sesuai' });
+        }
+      } else {
+        // Jalur B: tidak ada users.code_guru → cek tabel kode_guru (bcrypt)
+        const loginKodeEntry = await findKodeGuruByBcrypt(supabase, kode_guru_login, bcrypt);
+        if (!loginKodeEntry)
+          return res.status(403).json({ success: false, pesan: 'Kode guru tidak sesuai' });
+        if (loginKodeEntry.email_guru && loginKodeEntry.email_guru.toLowerCase().trim() !== normalEmail)
+          return res.status(403).json({ success: false, pesan: 'Kode guru tidak sesuai' });
+      }
+    }
 
     // Catat waktu login (dipakai sinyal "aktivitas login" di analitik guru).
     // Non-blocking: kalau gagal, login tetap lanjut — ini bukan hal kritis.

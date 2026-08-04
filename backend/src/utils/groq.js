@@ -9,7 +9,7 @@
  * Setup di .env:
  *   GROQ_API_KEY=gsk_xxx...       ← API key utama
  *   GROQ_API_KEY_2=gsk_yyy...     ← API key backup (opsional)
- *   GROQ_MODEL=llama-3.1-8b-instant
+ *   GROQ_MODEL=openai/gpt-oss-120b
  */
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
