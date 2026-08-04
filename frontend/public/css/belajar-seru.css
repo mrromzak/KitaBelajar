@@ -173,7 +173,7 @@
   /* ===== LOADING OVERLAY ===== */
   #loading {
     display: none; position: fixed; inset: 0;
-    background: rgba(255,255,255,0.85); z-index: 500;
+    background: rgba(255,255,255,0.85); z-index: 100000;
     align-items: center; justify-content: center; flex-direction: column; gap: 16px;
   }
   #loading.show { display: flex; }

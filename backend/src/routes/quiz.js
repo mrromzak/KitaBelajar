@@ -354,9 +354,23 @@ router.post('/hasil', authMiddleware, async (req, res) => {
     const murid_id = req.user.id || req.user.userId;
     if (!quiz_id) return res.status(400).json({ success: false, pesan: 'quiz_id wajib' });
 
-    // Ambil max_attempt, guru_id, judul, kelas_id dari quiz
-    const { data: quizData } = await supabase
-      .from('quiz').select('max_attempt, guru_id, judul, kelas_id, deadline').eq('id', quiz_id).single();
+    // Ambil quiz, jumlah percobaan, dan soal secara paralel
+    const [quizRes, existingRes, qsRes] = await Promise.all([
+      supabase
+        .from('quiz').select('max_attempt, guru_id, judul, kelas_id, deadline').eq('id', quiz_id).single(),
+      supabase
+        .from('hasil_quiz').select('id, skor, benar, total_soal', { count: 'exact' })
+        .eq('murid_id', murid_id).eq('quiz_id', quiz_id),
+      supabase
+        .from('quiz_soal')
+        .select('soal(id, jawaban, poin, jenis, pertanyaan, emoji, mapel, opsi)')
+        .eq('quiz_id', quiz_id)
+        .order('urutan')
+    ]);
+    const quizData = quizRes.data;
+    const { data: existing } = existingRes;
+    const { data: qs, error: sErr } = qsRes;
+    if (sErr) throw sErr;
     const maxAttempt = quizData?.max_attempt ?? 0;
 
     // Cek deadline
@@ -365,10 +379,6 @@ router.post('/hasil', authMiddleware, async (req, res) => {
     }
 
     // Cek jumlah percobaan yang sudah dilakukan
-    const { data: existing, count: attemptCount } = await supabase
-      .from('hasil_quiz').select('id, skor, benar, total_soal', { count: 'exact' })
-      .eq('murid_id', murid_id).eq('quiz_id', quiz_id);
-
     if (maxAttempt > 0 && existing && existing.length >= maxAttempt) {
       const last = existing[existing.length - 1];
       return res.json({
@@ -379,14 +389,6 @@ router.post('/hasil', authMiddleware, async (req, res) => {
         detail: []
       });
     }
-
-    // Ambil soal quiz dengan jawaban terenkripsi untuk validasi
-    const { data: qs, error: sErr } = await supabase
-      .from('quiz_soal')
-      .select('soal(id, jawaban, poin, jenis, pertanyaan, emoji, mapel, opsi)')
-      .eq('quiz_id', quiz_id)
-      .order('urutan');
-    if (sErr) throw sErr;
 
     const soalList = (qs || []).map(r => r.soal).filter(Boolean);
     const total_soal = soalList.length;
@@ -445,25 +447,28 @@ router.post('/hasil', authMiddleware, async (req, res) => {
       console.warn('[POST /quiz/hasil] detail_jawaban insert error:', detailErr.message);
     }
 
-    // Notif ke guru jika kuis dikerjakan
+    // Notif ke guru jika kuis dikerjakan — fire-and-forget agar tidak menunda respons
     if (quizData?.guru_id) {
       const studentNama = req.user.nama || 'Seseorang';
-      try { await supabase.from('notifikasi').insert({
-        id: uuidv4(), user_id: quizData.guru_id,
-        judul: '✍️ Kuis Selesai Dikerjakan',
-        pesan: `Murid bernama "${studentNama}" telah menyelesaikan kuis "${quizData.judul}"`,
-        data_extra: JSON.stringify({ kelas_id: quizData.kelas_id })
-      }); } catch (err) { console.warn('[notifikasi kuis] gagal simpan:', err.message); }
-      
       const io = req.app.get('io');
-      if (io) {
-        io.to('user:' + quizData.guru_id).emit('notif:baru', {
-          tipe: 'quiz_selesai',
-          judul: '✍️ Kuis Selesai Dikerjakan',
-          pesan: `Murid bernama "${studentNama}" telah menyelesaikan kuis "${quizData.judul}"`,
-          created_at: new Date().toISOString()
-        });
-      }
+      (async () => {
+        try {
+          await supabase.from('notifikasi').insert({
+            id: uuidv4(), user_id: quizData.guru_id,
+            judul: '✍️ Kuis Selesai Dikerjakan',
+            pesan: `Murid bernama "${studentNama}" telah menyelesaikan kuis "${quizData.judul}"`,
+            data_extra: JSON.stringify({ kelas_id: quizData.kelas_id })
+          });
+        } catch (err) { console.warn('[notifikasi kuis] gagal simpan:', err.message); }
+        if (io) {
+          io.to('user:' + quizData.guru_id).emit('notif:baru', {
+            tipe: 'quiz_selesai',
+            judul: '✍️ Kuis Selesai Dikerjakan',
+            pesan: `Murid bernama "${studentNama}" telah menyelesaikan kuis "${quizData.judul}"`,
+            created_at: new Date().toISOString()
+          });
+        }
+      })().catch(e => console.warn('[notifikasi kuis] error:', e.message));
     }
 
     // Update XP + stats + cek misi secara optimal

@@ -1349,6 +1349,7 @@ async function simpanHasilKuisKelas() {
   if (window._isSubmittingKuis) return;
   window._isSubmittingKuis = true;
 
+  closeModal('modal-konfirmasi-kuis');
   showLoading(true, 'Mengirim jawaban...');
 
   const btnKumpul = document.getElementById('btn-konfirmasi-kuis');
@@ -1394,6 +1395,7 @@ async function simpanHasilKuisKelas() {
       btnKumpul.textContent = '✅ Ya, Kumpulkan!';
     }
     showLoading(false);
+    closeModal('modal-konfirmasi-kuis');
     toast('Gagal menyimpan hasil. Coba lagi.', 'error');
     return;
   }
@@ -1437,6 +1439,7 @@ async function simpanHasilKuisKelas() {
     btnKumpul.textContent = '✅ Ya, Kumpulkan!';
   }
   showLoading(false);
+  closeModal('modal-konfirmasi-kuis');
   showPage('page-kuis-hasil');
 }
 
