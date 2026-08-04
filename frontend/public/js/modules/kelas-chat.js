@@ -318,26 +318,26 @@ async function loadKelasStream(kelasId) {
       let bodyHtml = '';
 
       if (m.jenis === 'video' && m.konten) {
-        const ytMatch = m.konten.match(/(?:youtube\.com\/embed\/|youtube\.com\/watch\?v=|youtu\.be\/)([^?&]+)/);
-        const videoId = ytMatch ? ytMatch[1] : null;
-        const embedUrl = videoId
-          ? `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=1`
-          : m.konten;
-        const watchUrl = videoId
-          ? `https://www.youtube.com/watch?v=${videoId}`
-          : (m.file_url || m.konten);
-        const thumbUrl = videoId
-          ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
-          : '';
+        const isYoutube = /youtube\.com|youtu\.be/i.test(m.konten);
+        const videoId = isYoutube ? (typeof extractYoutubeId === 'function' ? extractYoutubeId(m.konten) : null) : null;
 
-        if (videoId) {
-          // Tampilkan thumbnail dulu — klik baru load iframe (menghindari Error 153 yang tampil jelek)
-          bodyHtml = `<div id="yt-wrap-${m.id}" style="position:relative;padding-bottom:56.25%;height:0;border-radius:12px;overflow:hidden;background:#000;cursor:pointer" onclick="ytPlayClick('${m.id}','${embedUrl}','${watchUrl}')">
-            <img src="${thumbUrl}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;border-radius:12px" onerror="this.style.background='#111'">
-            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:68px;height:48px;background:#FF0000;border-radius:12px;display:flex;align-items:center;justify-content:center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
-            </div>
-          </div>`;
+        if (isYoutube) {
+          if (videoId) {
+            const embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=1`;
+            const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+            const thumbUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+
+            bodyHtml = `<div id="yt-wrap-${m.id}" style="position:relative;padding-bottom:56.25%;height:0;border-radius:12px;overflow:hidden;background:#000;cursor:pointer" onclick="ytPlayClick('${m.id}','${embedUrl}','${watchUrl}')">
+              <img src="${thumbUrl}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;border-radius:12px" onerror="this.style.background='#111'">
+              <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:68px;height:48px;background:#FF0000;border-radius:12px;display:flex;align-items:center;justify-content:center">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+              </div>
+            </div>`;
+          } else {
+            bodyHtml = `<div style="padding:20px;background:#FFF0F5;border-radius:12px;text-align:center;color:#D81B60;font-weight:700;font-size:14px;border:1.5px solid #F8BBD0">
+              ⚠️ Link video YouTube tidak valid
+            </div>`;
+          }
         } else {
           // Non-YouTube: langsung iframe
           bodyHtml = `<div style="position:relative;padding-bottom:56.25%;height:0;border-radius:12px;overflow:hidden">

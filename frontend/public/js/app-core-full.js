@@ -2686,26 +2686,26 @@ async function loadKelasStream(kelasId) {
       let bodyHtml = '';
 
       if (m.jenis === 'video' && m.konten) {
-        const ytMatch = m.konten.match(/(?:youtube\.com\/embed\/|youtube\.com\/watch\?v=|youtu\.be\/)([^?&]+)/);
-        const videoId = ytMatch ? ytMatch[1] : null;
-        const embedUrl = videoId
-          ? `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=1`
-          : m.konten;
-        const watchUrl = videoId
-          ? `https://www.youtube.com/watch?v=${videoId}`
-          : (m.file_url || m.konten);
-        const thumbUrl = videoId
-          ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
-          : '';
+        const isYoutube = /youtube\.com|youtu\.be/i.test(m.konten);
+        const videoId = isYoutube ? extractYoutubeId(m.konten) : null;
 
-        if (videoId) {
-          // Tampilkan thumbnail dulu — klik baru load iframe (menghindari Error 153 yang tampil jelek)
-          bodyHtml = `<div id="yt-wrap-${m.id}" style="position:relative;padding-bottom:56.25%;height:0;border-radius:12px;overflow:hidden;background:#000;cursor:pointer" onclick="ytPlayClick('${m.id}','${embedUrl}','${watchUrl}')">
-            <img src="${thumbUrl}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;border-radius:12px" onerror="this.style.background='#111'">
-            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:68px;height:48px;background:#FF0000;border-radius:12px;display:flex;align-items:center;justify-content:center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
-            </div>
-          </div>`;
+        if (isYoutube) {
+          if (videoId) {
+            const embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=1`;
+            const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+            const thumbUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+
+            bodyHtml = `<div id="yt-wrap-${m.id}" style="position:relative;padding-bottom:56.25%;height:0;border-radius:12px;overflow:hidden;background:#000;cursor:pointer" onclick="ytPlayClick('${m.id}','${embedUrl}','${watchUrl}')">
+              <img src="${thumbUrl}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;border-radius:12px" onerror="this.style.background='#111'">
+              <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:68px;height:48px;background:#FF0000;border-radius:12px;display:flex;align-items:center;justify-content:center">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+              </div>
+            </div>`;
+          } else {
+            bodyHtml = `<div style="padding:20px;background:#FFF0F5;border-radius:12px;text-align:center;color:#D81B60;font-weight:700;font-size:14px;border:1.5px solid #F8BBD0">
+              ⚠️ Link video YouTube tidak valid
+            </div>`;
+          }
         } else {
           // Non-YouTube: langsung iframe
           bodyHtml = `<div style="position:relative;padding-bottom:56.25%;height:0;border-radius:12px;overflow:hidden">
@@ -5177,18 +5177,23 @@ function ytPlayClick(id, embedUrl, watchUrl) {
 }
 
 
-function convertYoutubeUrl(url) {
-  // Convert berbagai format YouTube URL ke embed
-  let videoId = '';
-  const patterns = [
-    /youtube\.com\/watch\?v=([^&]+)/,
-    /youtu\.be\/([^?]+)/,
-    /youtube\.com\/embed\/([^?]+)/
-  ];
-  for (const p of patterns) {
-    const m = url.match(p);
-    if (m) { videoId = m[1]; break; }
+function extractYoutubeId(url) {
+  if (!url) return null;
+  url = url.trim();
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  if (match && match[2].length === 11) {
+    return match[2];
   }
+  return null;
+}
+
+function convertYoutubeUrl(url) {
+  if (!url) return '';
+  const isYoutube = /youtube\.com|youtu\.be/i.test(url);
+  if (!isYoutube) return url;
+
+  const videoId = extractYoutubeId(url);
   if (videoId) return `https://www.youtube.com/embed/${videoId}`;
   return url;
 }
@@ -6760,6 +6765,7 @@ function renderKuisCard(q, isGuru) {
   const sudahDikerjakan = q.sudah_dikerjakan || false;
 
   let deadlineHtml = '';
+  let feedbackHtml = '';
   const deadlineLewat = !isFun && q.deadline && new Date(q.deadline) < new Date();
   if (!isFun && q.deadline && !sudahDikerjakan && !deadlineLewat) {
     const dl = new Date(q.deadline);
@@ -6785,8 +6791,12 @@ function renderKuisCard(q, isGuru) {
       actionHtml = `<div class="qsc-done-badge" style="flex-direction:column;align-items:flex-end;gap:4px;max-width:180px">
         <span>✅ Sudah dikumpulkan</span>
         ${nilai != null ? `<span style="font-size:14px;font-weight:900;color:${nilai>=80?'var(--green)':nilai>=60?'var(--orange)':'var(--red)'}">${nilai}<span style="font-size:11px;font-weight:700"> / 100</span></span>` : '<span style="font-size:11px;color:var(--muted)">Menunggu penilaian...</span>'}
-        ${fb ? `<div style="font-size:11px;font-weight:700;color:#5A6A9A;background:#EEF5FF;border-radius:8px;padding:4px 8px;text-align:right;word-break:break-word;max-width:180px">💬 ${fb}</div>` : ''}
       </div>`;
+      if (fb) {
+        feedbackHtml = `<div class="qsc-feedback-box" style="font-size:12px;font-weight:700;color:#5A6A9A;background:#EEF5FF;border-radius:10px;padding:8px 12px;box-shadow:0 2px 6px rgba(0,0,0,0.04);word-break:break-word;max-width:280px;display:inline-flex;align-items:center;gap:6px">
+          <span>💬 ${fb}</span>
+        </div>`;
+      }
     } else if (deadlineLewat) {
       actionHtml = `<div class="qsc-deadline deadline-over">⛔ Tenggat terlewat</div>`;
     } else {
@@ -6842,13 +6852,16 @@ function renderKuisCard(q, isGuru) {
       </div>
       ${isGuru ? actionHtml : ''}
     </div>
-    <div class="qsc-body">
-      <div class="qsc-stats">
-        ${isSubmission
-          ? `<div class="qsc-stat" style="background:#EEF5FF"><div class="qsc-stat-num" style="font-size:16px">${{'file':'📄','gambar':'🖼️','link':'🔗','teks':'✏️','semua':'📤'}[q.tipe_submission]||'📤'}</div><div class="qsc-stat-label">Submission</div></div>`
-          : `<div class="qsc-stat"><div class="qsc-stat-num">${(q.total_soal || q.jumlah_soal) > 0 ? (q.total_soal || q.jumlah_soal) : '0'}</div><div class="qsc-stat-label">Soal</div></div>`
-        }
-        ${isFun && !isSubmission ? `<div class="qsc-stat"><div class="qsc-stat-num">${q.durasi || 15}s</div><div class="qsc-stat-label">Per soal</div></div>` : ''}
+    <div class="qsc-body" style="flex-wrap:wrap;gap:12px">
+      <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;flex-wrap:wrap">
+        <div class="qsc-stats">
+          ${isSubmission
+            ? `<div class="qsc-stat" style="background:#EEF5FF"><div class="qsc-stat-num" style="font-size:16px">${{'file':'📄','gambar':'🖼️','link':'🔗','teks':'✏️','semua':'📤'}[q.tipe_submission]||'📤'}</div><div class="qsc-stat-label">Submission</div></div>`
+            : `<div class="qsc-stat"><div class="qsc-stat-num">${(q.total_soal || q.jumlah_soal) > 0 ? (q.total_soal || q.jumlah_soal) : '0'}</div><div class="qsc-stat-label">Soal</div></div>`
+          }
+          ${isFun && !isSubmission ? `<div class="qsc-stat"><div class="qsc-stat-num">${q.durasi || 15}s</div><div class="qsc-stat-label">Per soal</div></div>` : ''}
+        </div>
+        ${feedbackHtml}
       </div>
       <div style="display:flex;align-items:center;gap:10px">
         ${deadlineHtml}

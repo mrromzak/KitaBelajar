@@ -535,18 +535,23 @@ function ytPlayClick(id, embedUrl, watchUrl) {
 }
 
 
-function convertYoutubeUrl(url) {
-  // Convert berbagai format YouTube URL ke embed
-  let videoId = '';
-  const patterns = [
-    /youtube\.com\/watch\?v=([^&]+)/,
-    /youtu\.be\/([^?]+)/,
-    /youtube\.com\/embed\/([^?]+)/
-  ];
-  for (const p of patterns) {
-    const m = url.match(p);
-    if (m) { videoId = m[1]; break; }
+function extractYoutubeId(url) {
+  if (!url) return null;
+  url = url.trim();
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  if (match && match[2].length === 11) {
+    return match[2];
   }
+  return null;
+}
+
+function convertYoutubeUrl(url) {
+  if (!url) return '';
+  const isYoutube = /youtube\.com|youtu\.be/i.test(url);
+  if (!isYoutube) return url;
+
+  const videoId = extractYoutubeId(url);
   if (videoId) return `https://www.youtube.com/embed/${videoId}`;
   return url;
 }

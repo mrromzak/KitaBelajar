@@ -183,6 +183,7 @@ function renderKuisCard(q, isGuru) {
   const sudahDikerjakan = q.sudah_dikerjakan || false;
 
   let deadlineHtml = '';
+  let feedbackHtml = '';
   const deadlineLewat = !isFun && q.deadline && new Date(q.deadline) < new Date();
   if (!isFun && q.deadline && !sudahDikerjakan && !deadlineLewat) {
     const dl = new Date(q.deadline);
@@ -208,8 +209,12 @@ function renderKuisCard(q, isGuru) {
       actionHtml = `<div class="qsc-done-badge" style="flex-direction:column;align-items:flex-end;gap:4px;max-width:180px">
         <span>✅ Sudah dikumpulkan</span>
         ${nilai != null ? `<span style="font-size:14px;font-weight:900;color:${nilai>=80?'var(--green)':nilai>=60?'var(--orange)':'var(--red)'}">${nilai}<span style="font-size:11px;font-weight:700"> / 100</span></span>` : '<span style="font-size:11px;color:var(--muted)">Menunggu penilaian...</span>'}
-        ${fb ? `<div style="font-size:11px;font-weight:700;color:#5A6A9A;background:#EEF5FF;border-radius:8px;padding:4px 8px;text-align:right;word-break:break-word;max-width:180px">💬 ${fb}</div>` : ''}
       </div>`;
+      if (fb) {
+        feedbackHtml = `<div class="qsc-feedback-box" style="font-size:12px;font-weight:700;color:#5A6A9A;background:#EEF5FF;border-radius:10px;padding:8px 12px;box-shadow:0 2px 6px rgba(0,0,0,0.04);word-break:break-word;max-width:280px;display:inline-flex;align-items:center;gap:6px">
+          <span>💬 ${fb}</span>
+        </div>`;
+      }
     } else if (deadlineLewat) {
       actionHtml = `<div class="qsc-deadline deadline-over">⛔ Tenggat terlewat</div>`;
     } else {
@@ -268,13 +273,16 @@ function renderKuisCard(q, isGuru) {
       </div>
       ${isGuru ? actionHtml : ''}
     </div>
-    <div class="qsc-body">
-      <div class="qsc-stats">
-        ${isSubmission
-          ? `<div class="qsc-stat" style="background:#EEF5FF"><div class="qsc-stat-num" style="font-size:16px">${{'file':'📄','gambar':'🖼️','link':'🔗','teks':'✏️','semua':'📤'}[q.tipe_submission]||'📤'}</div><div class="qsc-stat-label">Submission</div></div>`
-          : `<div class="qsc-stat"><div class="qsc-stat-num">${(q.total_soal || q.jumlah_soal) > 0 ? (q.total_soal || q.jumlah_soal) : '0'}</div><div class="qsc-stat-label">Soal</div></div>`
-        }
-        ${isFun && !isSubmission ? `<div class="qsc-stat"><div class="qsc-stat-num">${q.durasi || 15}s</div><div class="qsc-stat-label">Per soal</div></div>` : ''}
+    <div class="qsc-body" style="flex-wrap:wrap;gap:12px">
+      <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;flex-wrap:wrap">
+        <div class="qsc-stats">
+          ${isSubmission
+            ? `<div class="qsc-stat" style="background:#EEF5FF"><div class="qsc-stat-num" style="font-size:16px">${{'file':'📄','gambar':'🖼️','link':'🔗','teks':'✏️','semua':'📤'}[q.tipe_submission]||'📤'}</div><div class="qsc-stat-label">Submission</div></div>`
+            : `<div class="qsc-stat"><div class="qsc-stat-num">${(q.total_soal || q.jumlah_soal) > 0 ? (q.total_soal || q.jumlah_soal) : '0'}</div><div class="qsc-stat-label">Soal</div></div>`
+          }
+          ${isFun && !isSubmission ? `<div class="qsc-stat"><div class="qsc-stat-num">${q.durasi || 15}s</div><div class="qsc-stat-label">Per soal</div></div>` : ''}
+        </div>
+        ${feedbackHtml}
       </div>
       <div style="display:flex;align-items:center;gap:10px">
         ${deadlineHtml}
