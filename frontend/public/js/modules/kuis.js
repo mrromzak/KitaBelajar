@@ -1313,20 +1313,18 @@ async function submitKuisKelas(isManual = false) {
   const soal = kuisKelasData.soal;
 
   if (isManual) {
-    // 1. Cek soal belum dikerjakan (abaikan yang di-pass)
+    // 1. Hitung soal yang belum dikerjakan (kalau ada) — tapi tidak memblokir
     const unanswered = [];
     soal.forEach((q, i) => {
       if (kuisJawaban[i] === undefined && !kuisPassed[i]) unanswered.push(i + 1);
     });
-    if (unanswered.length > 0) {
-      toast('❌ Ada soal yang belum dikerjakan! Periksa soal nomor: ' + unanswered.join(', '), 'error');
-      return;
-    }
 
     // 2. Konfirmasi yakin — pakai modal kustom
     window._konfirmasiKuisCallback = () => simpanHasilKuisKelas();
     document.getElementById('konfirmasi-kuis-judul').textContent = 'Kumpulkan Jawaban?';
-    document.getElementById('konfirmasi-kuis-pesan').textContent = 'Kamu yakin sudah selesai mengerjakan semua soal?';
+    document.getElementById('konfirmasi-kuis-pesan').textContent = unanswered.length > 0
+      ? `Kamu masih punya ${unanswered.length} soal belum dijawab (nomor ${unanswered.join(', ')}). Soal itu akan dianggap salah. Tetap kumpulkan?`
+      : 'Kamu yakin sudah selesai mengerjakan semua soal?';
     document.getElementById('btn-konfirmasi-kuis').textContent = '✅ Ya, Kumpulkan!';
     openModal('modal-konfirmasi-kuis');
     return;
