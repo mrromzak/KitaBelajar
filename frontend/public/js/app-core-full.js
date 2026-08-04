@@ -7856,6 +7856,7 @@ async function submitKuisKelas(isManual = false) {
   const soal = kuisKelasData.soal;
 
   if (isManual) {
+    if (window._isSubmittingKuis) return;
     // 1. Cek soal belum dikerjakan
     const unanswered = [];
     soal.forEach((q, i) => {
@@ -7892,6 +7893,8 @@ window._isSubmittingKuis = false;
 async function simpanHasilKuisKelas() {
   if (window._isSubmittingKuis) return;
   window._isSubmittingKuis = true;
+
+  showLoading(true, 'Mengirim jawaban...');
 
   const btnKumpul = document.getElementById('btn-konfirmasi-kuis');
   if (btnKumpul) {
@@ -7936,6 +7939,7 @@ async function simpanHasilKuisKelas() {
       btnKumpul.disabled = false;
       btnKumpul.textContent = '✅ Ya, Kumpulkan!';
     }
+    showLoading(false);
     toast('Gagal menyimpan hasil. Coba lagi.', 'error');
     return;
   }
@@ -7979,6 +7983,7 @@ async function simpanHasilKuisKelas() {
     btnKumpul.disabled = false;
     btnKumpul.textContent = '✅ Ya, Kumpulkan!';
   }
+  showLoading(false);
   showPage('page-kuis-hasil');
 }
 
