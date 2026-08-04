@@ -288,4 +288,34 @@ router.delete('/:id/leave', authMiddleware, muridOnly, async (req, res) => {
   }
 });
 
+// PUT /api/kelas/:id/banner — Guru update warna banner kelas
+router.put('/:id/banner', authMiddleware, guruOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    let { banner } = req.body;
+    if (!banner) return res.status(400).json({ success: false, pesan: 'Warna banner wajib dipilih.' });
+
+    // Validasi warna banner (harus berformat bg-c*)
+    banner = cleanText(banner, 50);
+    if (!banner.startsWith('bg-c')) {
+      return res.status(400).json({ success: false, pesan: 'Format warna banner tidak valid.' });
+    }
+
+    // Cek kepemilikan kelas
+    const { data: kelas } = await supabase.from('kelas')
+      .select('id').eq('id', id).eq('guru_id', req.user.id).maybeSingle();
+    if (!kelas) return res.status(403).json({ success: false, pesan: 'Kamu tidak memiliki akses ke kelas ini.' });
+
+    const { error } = await supabase.from('kelas')
+      .update({ cover_url: banner })
+      .eq('id', id);
+    if (error) throw error;
+
+    res.json({ success: true, pesan: 'Warna banner berhasil diperbarui!', cover_url: banner });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ success: false, pesan: 'Terjadi kesalahan. Silakan coba lagi.' });
+  }
+});
+
 module.exports = router;

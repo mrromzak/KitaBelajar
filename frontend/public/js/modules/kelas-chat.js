@@ -11,7 +11,8 @@ function kelasHashIdx(id) {
 
 function renderKelasCard(k, i, role) {
   const idx = kelasHashIdx(k.id);
-  const colorClass = KELAS_COLORS[idx % KELAS_COLORS.length];
+  const isClass = k.cover_url && k.cover_url.startsWith('bg-c');
+  const colorClass = isClass ? k.cover_url : KELAS_COLORS[idx % KELAS_COLORS.length];
   let emoji = KELAS_EMOJIS[idx % KELAS_EMOJIS.length];
   if (k.mapel) {
     const customMapel = getMapelList().find(m => m.nama.toLowerCase() === k.mapel.toLowerCase());
@@ -201,6 +202,16 @@ async function openKelas(kelasId, colorIdx) {
       const detail = data.kelas || data.data || data;
       if (detail && detail.nama) {
         currentKelas = { ...detail, id: kelasId, colorIdx: resolvedColorIdx };
+        // Sync warna banner dari database
+        const dbBanner = detail.cover_url;
+        const isDbClass = dbBanner && dbBanner.startsWith('bg-c');
+        const finalColorClass = isDbClass ? dbBanner : KELAS_COLORS[resolvedColorIdx];
+        const bg = document.getElementById('kelas-banner-bg');
+        if (bg) {
+          KELAS_COLORS.forEach(c => bg.classList.remove(c));
+          bg.classList.add(finalColorClass);
+          bg.style.backgroundImage = '';
+        }
         // Update sidebar info dengan data lengkap
         document.getElementById('kelas-code-display').textContent = detail.kode_akses || '–';
         document.getElementById('kelas-info-sidebar').innerHTML = `
@@ -1414,14 +1425,20 @@ function bukaNotifPrivateChat() {
 //  UBAH BANNER KELAS (GURU)
 // ============================================================
 const BANNER_PRESETS = [
-  { kelas: 'bg-c1', label: 'Biru', color: '#4D96FF' },
-  { kelas: 'bg-c2', label: 'Hijau', color: '#6BCB77' },
-  { kelas: 'bg-c3', label: 'Ungu', color: '#7B2FF7' },
-  { kelas: 'bg-c4', label: 'Orange', color: '#FF6B35' },
-  { kelas: 'bg-c5', label: 'Merah', color: '#D12B00' },
-  { kelas: 'bg-c6', label: 'Tosca', color: '#00C8B0' },
-  { kelas: 'bg-c7', label: 'Coklat', color: '#A0522D' },
-  { kelas: 'bg-c8', label: 'Abu', color: '#5E6D7A' },
+  { kelas: 'bg-c1', label: 'Jingga Ceria', color: '#FF6B35' },
+  { kelas: 'bg-c2', label: 'Slate Blue', color: '#4A6FA5' },
+  { kelas: 'bg-c3', label: 'Sage Green', color: '#529B76' },
+  { kelas: 'bg-c4', label: 'Dusty Lavender', color: '#8B6F97' },
+  { kelas: 'bg-c5', label: 'Soft Violet', color: '#9C81A8' },
+  { kelas: 'bg-c6', label: 'Soft Steel Blue', color: '#5C83B4' },
+  { kelas: 'bg-c7', label: 'Soft Moss Green', color: '#60A580' },
+  { kelas: 'bg-c8', label: 'Warm Peach', color: '#FF9F43' },
+  { kelas: 'bg-c9', label: 'Soft Pink', color: '#F472B6' },
+  { kelas: 'bg-c10', label: 'Kuning Emas', color: '#EAB308' },
+  { kelas: 'bg-c11', label: 'Navy Blue', color: '#1E3A8A' },
+  { kelas: 'bg-c12', label: 'Magenta', color: '#D946EF' },
+  { kelas: 'bg-c13', label: 'Cyan Muda', color: '#06B6D4' },
+  { kelas: 'bg-c14', label: 'Soft Rose', color: '#F43F5E' }
 ];
 
 let _bannerSelectedClass = null;
@@ -1450,16 +1467,35 @@ function pilihBannerPreset(bgClass, el) {
 async function simpanBannerKelas() {
   if (!currentKelas) return;
   if (_bannerSelectedClass) {
-    const bg = document.getElementById('kelas-banner-bg');
-    if (bg) {
-      KELAS_COLORS.forEach(c => bg.classList.remove(c));
-      bg.classList.add(_bannerSelectedClass);
-      bg.style.backgroundImage = '';
+    showLoading(true, 'Menyimpan warna banner...');
+    try {
+      const token = localStorage.getItem('kb_token') || '';
+      const res = await fetch('/api/kelas/' + currentKelas.id + '/banner', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({ banner: _bannerSelectedClass })
+      });
+      const json = await res.json();
+      if (json.success) {
+        const bg = document.getElementById('kelas-banner-bg');
+        if (bg) {
+          KELAS_COLORS.forEach(c => bg.classList.remove(c));
+          bg.classList.add(_bannerSelectedClass);
+          bg.style.backgroundImage = '';
+        }
+        localStorage.setItem('kb_kelas_banner_' + currentKelas.id, _bannerSelectedClass);
+        currentKelas.cover_url = _bannerSelectedClass;
+        toast('Warna banner diperbarui! 🎨', 'success');
+      } else {
+        toast(json.pesan || 'Gagal memperbarui banner', 'error');
+      }
+    } catch(e) {
+      toast('Tidak bisa terhubung ke server', 'error');
     }
-    // Simpan warna banner ke localStorage agar tetap ada setelah refresh
-    localStorage.setItem('kb_kelas_banner_' + currentKelas.id, _bannerSelectedClass);
-    if (currentKelas) currentKelas._bannerClass = _bannerSelectedClass;
-    toast('Warna banner diperbarui! 🎨', 'success');
+    showLoading(false);
   } else {
     toast('Pilih warna dulu!', 'error');
     return;

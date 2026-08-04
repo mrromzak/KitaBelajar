@@ -2377,7 +2377,7 @@ async function loadBadges() {
 // ============================================================
 //  KELAS CARD RENDERER
 // ============================================================
-const KELAS_COLORS = ['bg-c1','bg-c2','bg-c3','bg-c4','bg-c5','bg-c6','bg-c7','bg-c8'];
+const KELAS_COLORS = ['bg-c1','bg-c2','bg-c3','bg-c4','bg-c5','bg-c6','bg-c7','bg-c8','bg-c9','bg-c10','bg-c11','bg-c12','bg-c13','bg-c14'];
 const KELAS_EMOJIS = ['📐','🔬','📖','🗺️','🎨','🏃','🎵','💻'];
 
 function kelasHashIdx(id) {
@@ -2389,7 +2389,8 @@ function kelasHashIdx(id) {
 
 function renderKelasCard(k, i, role) {
   const idx = kelasHashIdx(k.id);
-  const colorClass = KELAS_COLORS[idx % KELAS_COLORS.length];
+  const isClass = k.cover_url && k.cover_url.startsWith('bg-c');
+  const colorClass = isClass ? k.cover_url : KELAS_COLORS[idx % KELAS_COLORS.length];
   let emoji = KELAS_EMOJIS[idx % KELAS_EMOJIS.length];
   if (k.mapel) {
     const customMapel = getMapelList().find(m => m.nama.toLowerCase() === k.mapel.toLowerCase());
@@ -2569,6 +2570,16 @@ async function openKelas(kelasId, colorIdx) {
       const detail = data.kelas || data.data || data;
       if (detail && detail.nama) {
         currentKelas = { ...detail, id: kelasId, colorIdx: resolvedColorIdx };
+        // Sync warna banner dari database
+        const dbBanner = detail.cover_url;
+        const isDbClass = dbBanner && dbBanner.startsWith('bg-c');
+        const finalColorClass = isDbClass ? dbBanner : KELAS_COLORS[resolvedColorIdx];
+        const bg = document.getElementById('kelas-banner-bg');
+        if (bg) {
+          KELAS_COLORS.forEach(c => bg.classList.remove(c));
+          bg.classList.add(finalColorClass);
+          bg.style.backgroundImage = '';
+        }
         // Update sidebar info dengan data lengkap
         document.getElementById('kelas-code-display').textContent = detail.kode_akses || '–';
         document.getElementById('kelas-info-sidebar').innerHTML = `
