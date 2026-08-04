@@ -1342,11 +1342,18 @@ function konfirmasiKirimKuis() {
   }
 }
 
-_isSubmittingKuis = false;
+window._isSubmittingKuis = false;
 
 async function simpanHasilKuisKelas() {
-  if (_isSubmittingKuis) return;
-  _isSubmittingKuis = true;
+  if (window._isSubmittingKuis) return;
+  window._isSubmittingKuis = true;
+
+  const btnKumpul = document.getElementById('btn-konfirmasi-kuis');
+  if (btnKumpul) {
+    btnKumpul.disabled = true;
+    btnKumpul.textContent = '⏳ Mengirim...';
+  }
+
   clearInterval(kuisFunTimer);
   const durasi_detik = Math.round((Date.now() - (kuisStartTime || Date.now())) / 1000);
 
@@ -1378,7 +1385,11 @@ async function simpanHasilKuisKelas() {
     }
   } catch(e) {
     console.warn('Gagal simpan hasil (network):', e);
-    _isSubmittingKuis = false;
+    window._isSubmittingKuis = false;
+    if (btnKumpul) {
+      btnKumpul.disabled = false;
+      btnKumpul.textContent = '✅ Ya, Kumpulkan!';
+    }
     toast('Gagal menyimpan hasil. Coba lagi.', 'error');
     return;
   }
@@ -1416,7 +1427,11 @@ async function simpanHasilKuisKelas() {
     if (reviewEl) reviewEl.style.display = 'block';
   }
 
-  _isSubmittingKuis = false;
+  window._isSubmittingKuis = false;
+  if (btnKumpul) {
+    btnKumpul.disabled = false;
+    btnKumpul.textContent = '✅ Ya, Kumpulkan!';
+  }
   showPage('page-kuis-hasil');
 }
 
