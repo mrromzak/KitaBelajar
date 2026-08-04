@@ -7691,6 +7691,7 @@ async function simpanNilaiSubmission(quizId, subId) {
 let kuisKelasData = null;
 let kuisJawaban = {};
 let kuisPassed = {};
+let kuisRagu = {};
 let kuisCurrentQ = 0;
 let kuisFunTimer = null;
 
@@ -7728,6 +7729,7 @@ async function mulaiKuisKelas(quizId) {
     };
     kuisJawaban = {};
     kuisPassed = {};
+    kuisRagu = {};
     kuisCurrentQ = 0;
     kuisStartTime = Date.now();
     clearInterval(kuisFunTimer);
@@ -7757,8 +7759,10 @@ function renderPrSoal() {
     const answered = kuisJawaban[i] !== undefined;
     const current = i === kuisCurrentQ;
     const passed = kuisPassed[i] === true;
+    const ragu = kuisRagu[i] === true;
     let dotClass = '';
     if (current) dotClass = 'current';
+    else if (ragu) dotClass = 'ragu';
     else if (passed) dotClass = 'passed';
     else if (answered) dotClass = 'answered';
     return `<div class="q-dot ${dotClass}" onclick="goToSoal(${i})">${i + 1}</div>`;
@@ -7783,8 +7787,9 @@ function renderPrSoal() {
   // Nav
   const isLast = kuisCurrentQ === soal.length - 1;
   const isPassed = kuisPassed[kuisCurrentQ] === true;
+  const isRagu = kuisRagu[kuisCurrentQ] === true;
   document.getElementById('pr-nav-area').innerHTML = `
-    <div class="pr-nav" style="display:flex;gap:8px;justify-content:space-between;width:100%">
+    <div class="pr-nav" style="display:flex;gap:8px;justify-content:space-between;width:100%;flex-wrap:wrap">
       <button class="pr-nav-btn" style="background:#F5F5F5;color:var(--muted)" onclick="goToSoal(${kuisCurrentQ - 1})" ${kuisCurrentQ === 0 ? 'disabled style="opacity:0.4"' : ''}>← Sebelumnya</button>
       
       ${!isFun ? `
@@ -7792,6 +7797,10 @@ function renderPrSoal() {
           ${isPassed ? '⭐ Batal Pass' : '⚠️ Pass (Lewati)'}
         </button>
       ` : ''}
+
+      <button class="pr-nav-btn" style="background:${isRagu ? 'var(--orange)' : '#FFE4D6'};color:${isRagu ? 'white' : '#D35400'};border:1.5px solid #FFC9A3" onclick="toggleRaguSoal()">
+        ${isRagu ? '🤔 Batal Ragu-ragu' : '🤔 Ragu-ragu'}
+      </button>
 
       ${isLast
         ? `<button class="pr-submit-btn" onclick="submitKuisKelas(true)">✅ Kumpulkan (${Object.keys(kuisJawaban).length}/${soal.length} dijawab)</button>`
@@ -7810,6 +7819,12 @@ function togglePassSoal() {
   renderPrSoal();
 }
 
+function toggleRaguSoal() {
+  if (kuisRagu[kuisCurrentQ]) delete kuisRagu[kuisCurrentQ];
+  else kuisRagu[kuisCurrentQ] = true;
+  renderPrSoal();
+}
+
 function pilihJawaban(idx) {
   const isFun = (kuisKelasData?.info?.tipe || 'fun') === 'fun';
   if (isFun && kuisJawaban[kuisCurrentQ] !== undefined) return; // sudah jawab di fun quiz
@@ -7817,11 +7832,15 @@ function pilihJawaban(idx) {
   kuisPassed[kuisCurrentQ] = false; // hapus pass jika dijawab
   renderPrSoal();
   if (isFun) {
-    // Auto next setelah 1.2 detik
+    // Auto next setelah 1.2 detik — jangan auto-submit di soal terakhir
     clearInterval(kuisFunTimer);
     setTimeout(() => {
       if (kuisCurrentQ < kuisKelasData.soal.length - 1) goToSoal(kuisCurrentQ + 1);
-      else submitKuisKelas();
+      else {
+        // Soal terakhir: lanjutkan timer agar timeout tetap bisa submit, dan tampilkan tombol Kumpulkan
+        jalankanFunTimer(kuisKelasData.info?.durasi || 15);
+        renderPrSoal();
+      }
     }, 1200);
   }
 }
@@ -7857,20 +7876,27 @@ async function submitKuisKelas(isManual = false) {
 
   if (isManual) {
     if (window._isSubmittingKuis) return;
-    // 1. Cek soal belum dikerjakan
+    // 1. Hitung soal yang belum dikerjakan (kalau ada) — tapi tidak memblokir
     const unanswered = [];
+    const raguList = [];
     soal.forEach((q, i) => {
-      if (kuisJawaban[i] === undefined) unanswered.push(i + 1);
+      if (kuisRagu[i]) raguList.push(i + 1);
+      if (kuisJawaban[i] === undefined && !kuisPassed[i]) unanswered.push(i + 1);
     });
-    if (unanswered.length > 0) {
-      toast('❌ Ada soal yang belum dikerjakan! Periksa soal nomor: ' + unanswered.join(', '), 'error');
-      return;
-    }
 
     // 2. Konfirmasi yakin — pakai modal kustom
     window._konfirmasiKuisCallback = () => simpanHasilKuisKelas();
     document.getElementById('konfirmasi-kuis-judul').textContent = 'Kumpulkan Jawaban?';
-    document.getElementById('konfirmasi-kuis-pesan').textContent = 'Kamu yakin sudah selesai mengerjakan semua soal?';
+    let pesanKonfirmasi = '';
+    if (unanswered.length > 0) {
+      pesanKonfirmasi += `Kamu masih punya ${unanswered.length} soal belum dijawab (nomor ${unanswered.join(', ')}). Soal itu akan dianggap salah. `;
+    }
+    if (raguList.length > 0) {
+      pesanKonfirmasi += `${raguList.length} soal kamu tandai ragu-ragu (nomor ${raguList.join(', ')}). `;
+    }
+    if (!pesanKonfirmasi) pesanKonfirmasi = 'Kamu yakin sudah selesai mengerjakan semua soal? ';
+    pesanKonfirmasi += 'Tetap kumpulkan?';
+    document.getElementById('konfirmasi-kuis-pesan').textContent = pesanKonfirmasi;
     document.getElementById('btn-konfirmasi-kuis').textContent = '✅ Ya, Kumpulkan!';
     openModal('modal-konfirmasi-kuis');
     return;

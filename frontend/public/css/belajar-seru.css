@@ -853,6 +853,7 @@
   .q-dot { width: 32px; height: 32px; border-radius: 8px; border: 2px solid #E8E8E8; background: white; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
   .q-dot.answered { background: var(--blue); color: white; border-color: var(--blue); }
   .q-dot.passed { background: var(--warning); color: white; border-color: var(--warning); }
+  .q-dot.ragu { background: var(--orange); color: white; border-color: var(--orange); }
   .q-dot.current { border-color: var(--orange); box-shadow: 0 0 0 2px rgba(255,107,53,0.3); }
 
 
@@ -1714,6 +1715,11 @@ body.dark-mode .q-dot.answered {
 body.dark-mode .q-dot.passed {
   background: #F59E0B;
   border-color: #F59E0B;
+  color: white;
+}
+body.dark-mode .q-dot.ragu {
+  background: #FB923C;
+  border-color: #FB923C;
   color: white;
 }
 body.dark-mode .pr-nav-btn {
