@@ -82,6 +82,14 @@ async function runMigrations() {
       console.log(`✔  ${file} selesai`);
     }
 
+    // Reload PostgREST schema cache agar kolom baru langsung terlihat di Supabase
+    try {
+      await client.query("NOTIFY pgrst, 'reload schema'");
+      console.log('🔔 PostgREST schema reload notified');
+    } catch (notifyErr) {
+      console.warn('⚠️ Gagal notify pgrst reload:', notifyErr.message);
+    }
+
     console.log('✅ Semua migrasi up-to-date');
   } catch (err) {
     console.error('❌ Migrasi gagal:', err.message.slice(0, 300));
