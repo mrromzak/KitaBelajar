@@ -1512,46 +1512,120 @@ function tutupCodeGuru() {
   document.getElementById('pg-cg-result').style.display = 'none';
 }
 
+let _pmPendingPw = null;
+let _pgPendingPw = null;
+
 async function gantiPasswordMurid() {
-  const otp = document.getElementById('pm-pw-otp').value.trim();
   const baru = document.getElementById('pm-pw-baru').value;
   const konfirm = document.getElementById('pm-pw-konfirm').value;
-  if (!otp) { toast('Minta kode OTP dan isi kode dari email dulu!', 'error'); return; }
   if (!baru || !konfirm) { toast('Isi password baru dan konfirmasi!', 'error'); return; }
   if (baru.length < 8) { toast('Password baru minimal 8 karakter!', 'error'); return; }
   if (baru !== konfirm) { toast('Konfirmasi password tidak cocok!', 'error'); return; }
   showLoading(true);
   try {
-    const data = await api('PUT', '/auth/profile', { password_baru: baru, otp });
+    const data = await api('POST', '/auth/send-change-password-otp', {});
     if (data.success) {
-      document.getElementById('pm-pw-baru').value = '';
-      document.getElementById('pm-pw-konfirm').value = '';
+      _pmPendingPw = baru;
+      document.getElementById('pm-pw-btn-ganti').style.display = 'none';
+      document.getElementById('pm-pw-otp-step').style.display = 'block';
       document.getElementById('pm-pw-otp').value = '';
-      toast('Password berhasil diganti! 🔒', 'success');
-    } else toast(data.pesan || 'Gagal ganti password', 'error');
+      document.getElementById('pm-pw-otp').focus();
+      toast('Kode OTP dikirim ke email kamu. Masukkan kodenya ya!', 'success');
+    } else {
+      toast(data.pesan || 'Gagal mengirim kode', 'error');
+    }
+  } catch(e) {
+    if (e && e.status === 429) toast('Batas percobaan ganti password hari ini sudah habis. Coba lagi besok.', 'error');
+    else toast('Tidak bisa terhubung ke server', 'error');
+  }
+  showLoading(false);
+}
+
+async function verifikasiGantiPasswordMurid() {
+  const otp = document.getElementById('pm-pw-otp').value.trim();
+  if (!otp || otp.length !== 6) { toast('Masukkan kode OTP 6 digit!', 'error'); return; }
+  if (!_pmPendingPw) { toast('Mulai ulang: klik Ganti Password untuk minta kode baru.', 'error'); return; }
+  showLoading(true);
+  try {
+    const data = await api('PUT', '/auth/profile', { password_baru: _pmPendingPw, otp });
+    if (data.success) {
+      resetGantiPasswordForm('pm');
+      toast('Password berhasil diubah! 🔒', 'success');
+    } else {
+      const pesan = data.pesan || 'Gagal ganti password';
+      const low = pesan.toLowerCase();
+      if (low.includes('kedaluwarsa')) {
+        resetGantiPasswordForm('pm');
+        toast('Kode OTP sudah kedaluwarsa. Silakan coba lagi dari awal.', 'error');
+      } else {
+        toast(pesan, 'error');
+      }
+    }
   } catch(e) { toast('Tidak bisa terhubung ke server', 'error'); }
   showLoading(false);
 }
 
 async function gantiPasswordGuru() {
-  const otp = document.getElementById('pg-pw-otp').value.trim();
   const baru = document.getElementById('pg-pw-baru').value;
   const konfirm = document.getElementById('pg-pw-konfirm').value;
-  if (!otp) { toast('Minta kode OTP dan isi kode dari email dulu!', 'error'); return; }
   if (!baru || !konfirm) { toast('Isi password baru dan konfirmasi!', 'error'); return; }
   if (baru.length < 8) { toast('Password baru minimal 8 karakter!', 'error'); return; }
   if (baru !== konfirm) { toast('Konfirmasi password tidak cocok!', 'error'); return; }
   showLoading(true);
   try {
-    const data = await api('PUT', '/auth/profile', { password_baru: baru, otp });
+    const data = await api('POST', '/auth/send-change-password-otp', {});
     if (data.success) {
-      document.getElementById('pg-pw-baru').value = '';
-      document.getElementById('pg-pw-konfirm').value = '';
+      _pgPendingPw = baru;
+      document.getElementById('pg-pw-btn-ganti').style.display = 'none';
+      document.getElementById('pg-pw-otp-step').style.display = 'block';
       document.getElementById('pg-pw-otp').value = '';
-      toast('Password berhasil diganti! 🔒', 'success');
-    } else toast(data.pesan || 'Gagal ganti password', 'error');
+      document.getElementById('pg-pw-otp').focus();
+      toast('Kode OTP dikirim ke email kamu. Masukkan kodenya ya!', 'success');
+    } else {
+      toast(data.pesan || 'Gagal mengirim kode', 'error');
+    }
+  } catch(e) {
+    if (e && e.status === 429) toast('Batas percobaan ganti password hari ini sudah habis. Coba lagi besok.', 'error');
+    else toast('Tidak bisa terhubung ke server', 'error');
+  }
+  showLoading(false);
+}
+
+async function verifikasiGantiPasswordGuru() {
+  const otp = document.getElementById('pg-pw-otp').value.trim();
+  if (!otp || otp.length !== 6) { toast('Masukkan kode OTP 6 digit!', 'error'); return; }
+  if (!_pgPendingPw) { toast('Mulai ulang: klik Ganti Password untuk minta kode baru.', 'error'); return; }
+  showLoading(true);
+  try {
+    const data = await api('PUT', '/auth/profile', { password_baru: _pgPendingPw, otp });
+    if (data.success) {
+      resetGantiPasswordForm('pg');
+      toast('Password berhasil diubah! 🔒', 'success');
+    } else {
+      const pesan = data.pesan || 'Gagal ganti password';
+      const low = pesan.toLowerCase();
+      if (low.includes('kedaluwarsa')) {
+        resetGantiPasswordForm('pg');
+        toast('Kode OTP sudah kedaluwarsa. Silakan coba lagi dari awal.', 'error');
+      } else {
+        toast(pesan, 'error');
+      }
+    }
   } catch(e) { toast('Tidak bisa terhubung ke server', 'error'); }
   showLoading(false);
+}
+
+function resetGantiPasswordForm(prefix) {
+  if (prefix === 'pm') _pmPendingPw = null; else _pgPendingPw = null;
+  document.getElementById(prefix + '-pw-baru').value = '';
+  document.getElementById(prefix + '-pw-konfirm').value = '';
+  document.getElementById(prefix + '-pw-otp').value = '';
+  document.getElementById(prefix + '-pw-btn-ganti').style.display = 'block';
+  document.getElementById(prefix + '-pw-otp-step').style.display = 'none';
+}
+
+function batalGantiPassword(prefix) {
+  resetGantiPasswordForm(prefix);
 }
 
 function doLogout() {
