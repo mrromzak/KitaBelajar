@@ -97,8 +97,11 @@ function generateRandomPassword(length = 10) {
   return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 }
 
-function sendParentCredentialsEmail({ to, namaMurid, parentEmail, parentPassword }) {
-  const appUrl = process.env.APP_URL || 'https://kitabelajar.up.railway.app';
+function sendParentCredentialsEmail({ to, namaMurid, parentEmail, parentPassword, req }) {
+  // Ambil URL otomatis dari host yang dikunjungi user (bisa via req), fallback ke env/domain lama
+  const appUrl = (req && req.protocol && req.get('host'))
+    ? `${req.protocol}://${req.get('host')}`
+    : (process.env.APP_URL || 'https://kitabelajar.up.railway.app');
   return sendBrevoEmail({
     to,
     subject: 'Akun Orangtua KitaBelajar — Pantau Aktivitas Belajar Anak',
@@ -491,7 +494,7 @@ router.post('/register', async (req, res) => {
         }).then(() => {}).catch(e => console.warn('[parent-notif] gagal:', e.message));
 
         // Kirim kredensial ke email murid (async, tidak block response)
-        sendParentCredentialsEmail({ to: normalEmail, namaMurid: safaNama, parentEmail, parentPassword: parentRawPass })
+        sendParentCredentialsEmail({ to: normalEmail, namaMurid: safaNama, parentEmail, parentPassword: parentRawPass, req })
           .catch(e => console.warn('[parent-email] gagal kirim:', e.message));
 
         parentInfo = { parentEmail, parentPassword: parentRawPass };
@@ -1027,7 +1030,7 @@ router.post('/google', async (req, res) => {
         role: 'orangtua', avatar: '👨‍👩‍👧', xp: 0, level: 1
       });
       await supabase.from('parent_student').insert({ parent_id: parentId, murid_id: id });
-      sendParentCredentialsEmail({ to: normalEmail, namaMurid: safaNama, parentEmail, parentPassword }).catch(() => {});
+      sendParentCredentialsEmail({ to: normalEmail, namaMurid: safaNama, parentEmail, parentPassword, req }).catch(() => {});
       parentInfo = { parentEmail, parentPassword };
 
       const jwtToken = jwt.sign({ id, nama: safaNama, email: normalEmail, role: 'murid' }, JWT_SECRET, { expiresIn: '30d' });
