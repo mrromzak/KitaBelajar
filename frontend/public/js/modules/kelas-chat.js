@@ -212,6 +212,7 @@ async function openKelas(kelasId, colorIdx) {
           bg.classList.add(finalColorClass);
           bg.style.backgroundImage = '';
         }
+        localStorage.setItem('kb_kelas_banner_' + kelasId, finalColorClass);
         // Update sidebar info dengan data lengkap
         document.getElementById('kelas-code-display').textContent = detail.kode_akses || '–';
         document.getElementById('kelas-info-sidebar').innerHTML = `
