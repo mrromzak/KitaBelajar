@@ -40,6 +40,7 @@ semua_soal_cache = [];
 
 allKuisData = []; // cache untuk filter
 activeKuisFilter = 'semua';
+activeKuisSort = localStorage.getItem('kb_kuis_sort') || 'deadline_terdekat';
 
 function filterKuis(tipe) {
   activeKuisFilter = tipe;
@@ -47,6 +48,12 @@ function filterKuis(tipe) {
   ['semua','fun','pr','deadline'].forEach(t => {
     document.getElementById('filter-' + t)?.classList.toggle('active', t === tipe);
   });
+  renderKuisFiltered();
+}
+
+function gantiKuisSort(sortTipe) {
+  activeKuisSort = sortTipe;
+  localStorage.setItem('kb_kuis_sort', sortTipe);
   renderKuisFiltered();
 }
 
@@ -67,18 +74,32 @@ function renderKuisFiltered() {
     });
   }
 
-  // Sort: deadline terdekat di atas, lalu fun quiz
-  filtered.sort((a, b) => {
-    // PR dengan deadline < 24 jam paling atas
-    const dA = a.deadline ? new Date(a.deadline) - now : Infinity;
-    const dB = b.deadline ? new Date(b.deadline) - now : Infinity;
-    if (dA < 86400000 && dB >= 86400000) return -1;
-    if (dB < 86400000 && dA >= 86400000) return 1;
-    if (a.deadline && b.deadline) return dA - dB;
-    if (a.deadline) return -1;
-    if (b.deadline) return 1;
-    return new Date(b.created_at) - new Date(a.created_at);
-  });
+  const selectEl = document.getElementById('kuis-sort-select');
+  if (selectEl) selectEl.value = activeKuisSort;
+
+  if (activeKuisSort === 'deadline_terdekat') {
+    filtered.sort((a, b) => {
+      const dA = a.deadline ? new Date(a.deadline) : null;
+      const dB = b.deadline ? new Date(b.deadline) : null;
+      if (!dA && !dB) return new Date(b.created_at) - new Date(a.created_at);
+      if (!dA) return 1;
+      if (!dB) return -1;
+      return dA - dB;
+    });
+  } else if (activeKuisSort === 'deadline_terjauh') {
+    filtered.sort((a, b) => {
+      const dA = a.deadline ? new Date(a.deadline) : null;
+      const dB = b.deadline ? new Date(b.deadline) : null;
+      if (!dA && !dB) return new Date(b.created_at) - new Date(a.created_at);
+      if (!dA) return 1;
+      if (!dB) return -1;
+      return dB - dA;
+    });
+  } else if (activeKuisSort === 'terbaru') {
+    filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  } else if (activeKuisSort === 'terlama') {
+    filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  }
 
   const container = document.getElementById('kuis-list-container');
   if (!container) return;
