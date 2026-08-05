@@ -915,7 +915,7 @@ body.dark-mode .opt-btn.selected {
 .settings-page-wrap .form-group input,
 .settings-page-wrap .form-group select,
 .settings-page-wrap .form-group textarea,
-.settings-page-wrap button {
+.settings-page-wrap button:not([style*="position:absolute"]):not([style*="position: absolute"]) {
   max-width: 480px !important;
   width: 100% !important;
 }
@@ -932,7 +932,7 @@ body.dark-mode .opt-btn.selected {
   .settings-page-wrap .form-group input,
   .settings-page-wrap .form-group select,
   .settings-page-wrap .form-group textarea,
-  .settings-page-wrap button {
+  .settings-page-wrap button:not([style*="position:absolute"]):not([style*="position: absolute"]) {
     max-width: 100% !important;
   }
 }
