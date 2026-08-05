@@ -399,8 +399,11 @@
         </div>
         <div class="form-group">
           <label for="login-password">Password</label>
-          <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
-            onkeydown="if(event.key==='Enter')doLogin()">
+          <div style="position:relative">
+            <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
+              onkeydown="if(event.key==='Enter')doLogin()" style="padding-right:46px">
+            <button type="button" onclick="togglePwVisibility('login-password', this)" title="Lihat password" aria-label="Lihat password" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:#666"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12 C3.5 6.5 7.5 4 12 4 C16.5 4 20.5 6.5 21.5 12 C20.5 17.5 16.5 20 12 20 C7.5 20 3.5 17.5 2.5 12 Z"/><path d="M5 7.5 L4.6 5.4"/><path d="M8 5.3 L8 3.2"/><path d="M12 4.3 L12 2.2"/><path d="M16 5.3 L16 3.2"/><path d="M19 7.5 L19.4 5.4"/><circle cx="12" cy="11" r="3" fill="currentColor" stroke="none"/><circle cx="11" cy="9.8" r="1.1" fill="#fff" stroke="none"/></svg></button>
+          </div>
         </div>
       </div>
       <button class="btn btn-primary" id="btn-login" onclick="doLogin()" style="width:100%;margin-top:18px;justify-content:center;padding:13px">
@@ -489,7 +492,10 @@
       </div>
       <div class="form-group" id="group-guru-password">
         <label for="guru-password">Password *</label>
-        <input type="password" id="guru-password" placeholder="Minimal 8 karakter">
+        <div style="position:relative">
+          <input type="password" id="guru-password" placeholder="Minimal 8 karakter" style="padding-right:46px">
+          <button type="button" onclick="togglePwVisibility('guru-password', this)" title="Lihat password" aria-label="Lihat password" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:#666"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12 C3.5 6.5 7.5 4 12 4 C16.5 4 20.5 6.5 21.5 12 C20.5 17.5 16.5 20 12 20 C7.5 20 3.5 17.5 2.5 12 Z"/><path d="M5 7.5 L4.6 5.4"/><path d="M8 5.3 L8 3.2"/><path d="M12 4.3 L12 2.2"/><path d="M16 5.3 L16 3.2"/><path d="M19 7.5 L19.4 5.4"/><circle cx="12" cy="11" r="3" fill="currentColor" stroke="none"/><circle cx="11" cy="9.8" r="1.1" fill="#fff" stroke="none"/></svg></button>
+        </div>
       </div>
       <div class="form-group">
         <label for="guru-alamat">Alamat (opsional)</label>
@@ -544,6 +550,22 @@
 <div id="toast"></div>
 
 <script>
+// ============================================================
+//  PASSWORD SHOW/HIDE TOGGLE (custom eye icon)
+// ============================================================
+const PW_EYE_OPEN = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12 C3.5 6.5 7.5 4 12 4 C16.5 4 20.5 6.5 21.5 12 C20.5 17.5 16.5 20 12 20 C7.5 20 3.5 17.5 2.5 12 Z"/><path d="M5 7.5 L4.6 5.4"/><path d="M8 5.3 L8 3.2"/><path d="M12 4.3 L12 2.2"/><path d="M16 5.3 L16 3.2"/><path d="M19 7.5 L19.4 5.4"/><circle cx="12" cy="11" r="3" fill="currentColor" stroke="none"/><circle cx="11" cy="9.8" r="1.1" fill="#fff" stroke="none"/></svg>';
+const PW_EYE_CLOSED = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 11 Q12 16.5 21.5 11"/><path d="M4.4 12 L4.4 14.1"/><path d="M7.3 13.1 L7.3 15.2"/><path d="M12 13.8 L12 15.9"/><path d="M16.7 13.1 L16.7 15.2"/><path d="M19.6 12 L19.6 14.1"/></svg>';
+
+function togglePwVisibility(inputId, btn) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  const isPw = el.type === 'password';
+  el.type = isPw ? 'text' : 'password';
+  btn.innerHTML = isPw ? PW_EYE_CLOSED : PW_EYE_OPEN;
+  btn.title = isPw ? 'Sembunyikan password' : 'Lihat password';
+  btn.setAttribute('aria-label', btn.title);
+}
+
 // ============================================================
 //  STATE
 // ============================================================

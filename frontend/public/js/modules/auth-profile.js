@@ -75,14 +75,40 @@ async function doLogin() {
 
 _pendingRegEmail = null;
 
+function validatePasswordClient(password) {
+  if (!password || password.length < 8) return 'Password minimal 8 karakter ya! 🔒';
+  if (!/[a-z]/.test(password)) return 'Password harus mengandung huruf kecil!';
+  if (!/[A-Z]/.test(password)) return 'Password harus mengandung huruf kapital!';
+  if (!/[0-9]/.test(password)) return 'Password harus mengandung angka!';
+  if (!/[^A-Za-z0-9]/.test(password)) return 'Password harus mengandung simbol (mis. !@#)!';
+  return null;
+}
+
+const PW_EYE_OPEN = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12 C3.5 6.5 7.5 4 12 4 C16.5 4 20.5 6.5 21.5 12 C20.5 17.5 16.5 20 12 20 C7.5 20 3.5 17.5 2.5 12 Z"/><path d="M5 7.5 L4.6 5.4"/><path d="M8 5.3 L8 3.2"/><path d="M12 4.3 L12 2.2"/><path d="M16 5.3 L16 3.2"/><path d="M19 7.5 L19.4 5.4"/><circle cx="12" cy="11" r="3" fill="currentColor" stroke="none"/><circle cx="11" cy="9.8" r="1.1" fill="#fff" stroke="none"/></svg>';
+const PW_EYE_CLOSED = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 11 Q12 16.5 21.5 11"/><path d="M4.4 12 L4.4 14.1"/><path d="M7.3 13.1 L7.3 15.2"/><path d="M12 13.8 L12 15.9"/><path d="M16.7 13.1 L16.7 15.2"/><path d="M19.6 12 L19.6 14.1"/></svg>';
+
+function togglePwVisibility(inputId, btn) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  const isPw = el.type === 'password';
+  el.type = isPw ? 'text' : 'password';
+  btn.innerHTML = isPw ? PW_EYE_CLOSED : PW_EYE_OPEN;
+  btn.title = isPw ? 'Sembunyikan password' : 'Lihat password';
+  btn.setAttribute('aria-label', btn.title);
+}
+
 async function doRegister() {
   const nama = document.getElementById('reg-nama').value.trim();
   const email = document.getElementById('reg-email').value.trim();
   const password = document.getElementById('reg-password').value;
+  const konfirm = document.getElementById('reg-password-confirm').value;
   const kelas = document.getElementById('reg-kelas').value.trim();
   if (!nama || !email || !password) { toast('Lengkapi semua data ya! 😊', 'error'); return; }
   if (!isValidEmail(email)) { toast('Format email tidak valid. Contoh: nama@email.com', 'error'); return; }
-  if (password.length < 8) { toast('Password minimal 8 karakter ya! 🔒', 'error'); return; }
+  if (!konfirm) { toast('Ulangi password pada kolom konfirmasi!', 'error'); return; }
+  if (password !== konfirm) { toast('Password dan konfirmasi tidak cocok!', 'error'); return; }
+  const pwMsg = validatePasswordClient(password);
+  if (pwMsg) { toast(pwMsg, 'error'); return; }
 
   showLoading(true);
   try {
@@ -1103,18 +1129,42 @@ function tutupCodeGuru() {
   document.getElementById('pg-cg-result').style.display = 'none';
 }
 
+async function kirimOtpGantiPassword(prefix) {
+  const btn = document.getElementById(prefix + '-pw-otp-btn');
+  if (btn.dataset.sending === '1') return;
+  btn.dataset.sending = '1';
+  btn.style.opacity = '0.6';
+  showLoading(true);
+  try {
+    const data = await api('POST', '/auth/send-change-password-otp', {});
+    if (data.success) {
+      toast(data.pesan || 'Kode OTP dikirim ke email kamu!', 'success');
+    } else {
+      toast(data.pesan || 'Gagal mengirim kode', 'error');
+    }
+  } catch(e) {
+    if (e && e.status === 429) toast('Batas percobaan ganti password hari ini sudah habis. Coba lagi besok.', 'error');
+    else toast('Tidak bisa terhubung ke server', 'error');
+  }
+  showLoading(false);
+  setTimeout(() => { btn.dataset.sending = '0'; btn.style.opacity = '1'; }, 3000);
+}
+
 async function gantiPasswordMurid() {
+  const otp = document.getElementById('pm-pw-otp').value.trim();
   const baru = document.getElementById('pm-pw-baru').value;
   const konfirm = document.getElementById('pm-pw-konfirm').value;
+  if (!otp) { toast('Minta kode OTP dan isi kode dari email dulu!', 'error'); return; }
   if (!baru || !konfirm) { toast('Isi password baru dan konfirmasi!', 'error'); return; }
   if (baru.length < 8) { toast('Password baru minimal 8 karakter!', 'error'); return; }
   if (baru !== konfirm) { toast('Konfirmasi password tidak cocok!', 'error'); return; }
   showLoading(true);
   try {
-    const data = await api('PUT', '/auth/profile', { password_baru: baru });
+    const data = await api('PUT', '/auth/profile', { password_baru: baru, otp });
     if (data.success) {
       document.getElementById('pm-pw-baru').value = '';
       document.getElementById('pm-pw-konfirm').value = '';
+      document.getElementById('pm-pw-otp').value = '';
       toast('Password berhasil diganti! 🔒', 'success');
     } else toast(data.pesan || 'Gagal ganti password', 'error');
   } catch(e) { toast('Tidak bisa terhubung ke server', 'error'); }
@@ -1122,17 +1172,20 @@ async function gantiPasswordMurid() {
 }
 
 async function gantiPasswordGuru() {
+  const otp = document.getElementById('pg-pw-otp').value.trim();
   const baru = document.getElementById('pg-pw-baru').value;
   const konfirm = document.getElementById('pg-pw-konfirm').value;
+  if (!otp) { toast('Minta kode OTP dan isi kode dari email dulu!', 'error'); return; }
   if (!baru || !konfirm) { toast('Isi password baru dan konfirmasi!', 'error'); return; }
   if (baru.length < 8) { toast('Password baru minimal 8 karakter!', 'error'); return; }
   if (baru !== konfirm) { toast('Konfirmasi password tidak cocok!', 'error'); return; }
   showLoading(true);
   try {
-    const data = await api('PUT', '/auth/profile', { password_baru: baru });
+    const data = await api('PUT', '/auth/profile', { password_baru: baru, otp });
     if (data.success) {
       document.getElementById('pg-pw-baru').value = '';
       document.getElementById('pg-pw-konfirm').value = '';
+      document.getElementById('pg-pw-otp').value = '';
       toast('Password berhasil diganti! 🔒', 'success');
     } else toast(data.pesan || 'Gagal ganti password', 'error');
   } catch(e) { toast('Tidak bisa terhubung ke server', 'error'); }

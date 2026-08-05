@@ -284,7 +284,10 @@ document.querySelectorAll('[data-count]').forEach(el => {
       </div>
       <div class="form-group">
         <label>Password</label>
-        <input type="password" id="login-password" placeholder="••••••••">
+        <div style="position:relative">
+          <input type="password" id="login-password" placeholder="••••••••" style="padding-right:46px">
+          <button type="button" onclick="togglePwVisibility('login-password', this)" title="Lihat password" aria-label="Lihat password" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:var(--muted)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12 C3.5 6.5 7.5 4 12 4 C16.5 4 20.5 6.5 21.5 12 C20.5 17.5 16.5 20 12 20 C7.5 20 3.5 17.5 2.5 12 Z"/><path d="M5 7.5 L4.6 5.4"/><path d="M8 5.3 L8 3.2"/><path d="M12 4.3 L12 2.2"/><path d="M16 5.3 L16 3.2"/><path d="M19 7.5 L19.4 5.4"/><circle cx="12" cy="11" r="3" fill="currentColor" stroke="none"/><circle cx="11" cy="9.8" r="1.1" fill="#fff" stroke="none"/></svg></button>
+        </div>
       </div>
       <button class="btn-login" onclick="doLogin()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>Masuk</button>
       <div style="text-align:right;margin-top:8px">
@@ -349,11 +352,17 @@ document.querySelectorAll('[data-count]').forEach(el => {
         <p class="sub" style="color:#22C55E;font-weight:700">✅ OTP berhasil diverifikasi! Buat sandi baru kamu.</p>
         <div class="form-group">
           <label>Sandi Baru</label>
-          <input type="password" id="forgot-pw-baru" placeholder="Minimal 8 karakter, huruf kapital & angka">
+          <div style="position:relative">
+            <input type="password" id="forgot-pw-baru" placeholder="Minimal 8 karakter, huruf kapital & angka" style="padding-right:46px">
+            <button type="button" onclick="togglePwVisibility('forgot-pw-baru', this)" title="Lihat password" aria-label="Lihat password" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:var(--muted)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12 C3.5 6.5 7.5 4 12 4 C16.5 4 20.5 6.5 21.5 12 C20.5 17.5 16.5 20 12 20 C7.5 20 3.5 17.5 2.5 12 Z"/><path d="M5 7.5 L4.6 5.4"/><path d="M8 5.3 L8 3.2"/><path d="M12 4.3 L12 2.2"/><path d="M16 5.3 L16 3.2"/><path d="M19 7.5 L19.4 5.4"/><circle cx="12" cy="11" r="3" fill="currentColor" stroke="none"/><circle cx="11" cy="9.8" r="1.1" fill="#fff" stroke="none"/></svg></button>
+          </div>
         </div>
         <div class="form-group">
           <label>Konfirmasi Sandi</label>
-          <input type="password" id="forgot-pw-konfirm" placeholder="Ulangi sandi baru" onkeydown="if(event.key==='Enter')doResetPasswordStep3()">
+          <div style="position:relative">
+            <input type="password" id="forgot-pw-konfirm" placeholder="Ulangi sandi baru" onkeydown="if(event.key==='Enter')doResetPasswordStep3()" style="padding-right:46px">
+            <button type="button" onclick="togglePwVisibility('forgot-pw-konfirm', this)" title="Lihat password" aria-label="Lihat password" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:var(--muted)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12 C3.5 6.5 7.5 4 12 4 C16.5 4 20.5 6.5 21.5 12 C20.5 17.5 16.5 20 12 20 C7.5 20 3.5 17.5 2.5 12 Z"/><path d="M5 7.5 L4.6 5.4"/><path d="M8 5.3 L8 3.2"/><path d="M12 4.3 L12 2.2"/><path d="M16 5.3 L16 3.2"/><path d="M19 7.5 L19.4 5.4"/><circle cx="12" cy="11" r="3" fill="currentColor" stroke="none"/><circle cx="11" cy="9.8" r="1.1" fill="#fff" stroke="none"/></svg></button>
+          </div>
         </div>
         <button class="btn-login" onclick="doResetPasswordStep3()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>Simpan Sandi Baru</button>
       </div>
@@ -372,11 +381,17 @@ document.querySelectorAll('[data-count]').forEach(el => {
       <p class="sub">Masukkan sandi baru untuk akun kamu</p>
       <div class="form-group">
         <label>Sandi Baru</label>
-        <input type="password" id="reset-password" placeholder="Minimal 8 karakter, huruf kapital & angka">
+        <div style="position:relative">
+          <input type="password" id="reset-password" placeholder="Minimal 8 karakter, huruf kapital & angka" style="padding-right:46px">
+          <button type="button" onclick="togglePwVisibility('reset-password', this)" title="Lihat password" aria-label="Lihat password" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:var(--muted)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12 C3.5 6.5 7.5 4 12 4 C16.5 4 20.5 6.5 21.5 12 C20.5 17.5 16.5 20 12 20 C7.5 20 3.5 17.5 2.5 12 Z"/><path d="M5 7.5 L4.6 5.4"/><path d="M8 5.3 L8 3.2"/><path d="M12 4.3 L12 2.2"/><path d="M16 5.3 L16 3.2"/><path d="M19 7.5 L19.4 5.4"/><circle cx="12" cy="11" r="3" fill="currentColor" stroke="none"/><circle cx="11" cy="9.8" r="1.1" fill="#fff" stroke="none"/></svg></button>
+        </div>
       </div>
       <div class="form-group">
         <label>Konfirmasi Sandi</label>
-        <input type="password" id="reset-password2" placeholder="Ulangi sandi baru">
+        <div style="position:relative">
+          <input type="password" id="reset-password2" placeholder="Ulangi sandi baru" style="padding-right:46px">
+          <button type="button" onclick="togglePwVisibility('reset-password2', this)" title="Lihat password" aria-label="Lihat password" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:var(--muted)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12 C3.5 6.5 7.5 4 12 4 C16.5 4 20.5 6.5 21.5 12 C20.5 17.5 16.5 20 12 20 C7.5 20 3.5 17.5 2.5 12 Z"/><path d="M5 7.5 L4.6 5.4"/><path d="M8 5.3 L8 3.2"/><path d="M12 4.3 L12 2.2"/><path d="M16 5.3 L16 3.2"/><path d="M19 7.5 L19.4 5.4"/><circle cx="12" cy="11" r="3" fill="currentColor" stroke="none"/><circle cx="11" cy="9.8" r="1.1" fill="#fff" stroke="none"/></svg></button>
+        </div>
       </div>
       <button class="btn-login" onclick="doResetPassword()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>Simpan Sandi Baru</button>
     </div>
@@ -408,7 +423,18 @@ document.querySelectorAll('[data-count]').forEach(el => {
       </div>
       <div class="form-group">
         <label>Password</label>
-        <input type="password" id="reg-password" placeholder="Minimal 8 karakter">
+        <div style="position:relative">
+          <input type="password" id="reg-password" placeholder="Minimal 8 karakter" autocomplete="new-password" style="padding-right:46px">
+          <button type="button" onclick="togglePwVisibility('reg-password', this)" title="Lihat password" aria-label="Lihat password" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:var(--muted)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12 C3.5 6.5 7.5 4 12 4 C16.5 4 20.5 6.5 21.5 12 C20.5 17.5 16.5 20 12 20 C7.5 20 3.5 17.5 2.5 12 Z"/><path d="M5 7.5 L4.6 5.4"/><path d="M8 5.3 L8 3.2"/><path d="M12 4.3 L12 2.2"/><path d="M16 5.3 L16 3.2"/><path d="M19 7.5 L19.4 5.4"/><circle cx="12" cy="11" r="3" fill="currentColor" stroke="none"/><circle cx="11" cy="9.8" r="1.1" fill="#fff" stroke="none"/></svg></button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;font-weight:600">Minimal 8 karakter, gabungan huruf besar, huruf kecil, angka, dan simbol (contoh: !@#).</div>
+      </div>
+      <div class="form-group">
+        <label>Konfirmasi Password</label>
+        <div style="position:relative">
+          <input type="password" id="reg-password-confirm" placeholder="Ulangi password" autocomplete="new-password" style="padding-right:46px">
+          <button type="button" onclick="togglePwVisibility('reg-password-confirm', this)" title="Lihat password" aria-label="Lihat password" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:var(--muted)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12 C3.5 6.5 7.5 4 12 4 C16.5 4 20.5 6.5 21.5 12 C20.5 17.5 16.5 20 12 20 C7.5 20 3.5 17.5 2.5 12 Z"/><path d="M5 7.5 L4.6 5.4"/><path d="M8 5.3 L8 3.2"/><path d="M12 4.3 L12 2.2"/><path d="M16 5.3 L16 3.2"/><path d="M19 7.5 L19.4 5.4"/><circle cx="12" cy="11" r="3" fill="currentColor" stroke="none"/><circle cx="11" cy="9.8" r="1.1" fill="#fff" stroke="none"/></svg></button>
+        </div>
       </div>
       <div class="form-group" id="reg-kelas-group">
         <label>Tingkat Kelas</label>
@@ -2416,8 +2442,8 @@ document.querySelectorAll('[data-count]').forEach(el => {
   </div>
 </div>
 
-<script src="/js/app-core-full.js?v=26"></script>
-<script src="/js/modules/auth-profile.js?v=10"></script>
+<script src="/js/app-core-full.js?v=30"></script>
+<script src="/js/modules/auth-profile.js?v=14"></script>
 <script src="/js/modules/dashboard.js?v=10"></script>
 <script src="/js/modules/kelas-chat.js?v=15"></script>
 <script src="/js/modules/notifikasi.js?v=11"></script>
@@ -2679,12 +2705,25 @@ document.querySelectorAll('[data-count]').forEach(el => {
     <div style="background:white;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:20px">
       <div style="font-weight:800;font-size:16px;margin-bottom:18px;display:flex;align-items:center;gap:8px">🔒 Ganti Password</div>
       <div class="form-group">
+        <label>Kode OTP</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="pm-pw-otp" placeholder="6 digit dari email" maxlength="6" inputmode="numeric">
+          <button onclick="kirimOtpGantiPassword('pm')" style="padding:12px 16px;background:var(--orange);color:white;border:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;white-space:nowrap" id="pm-pw-otp-btn">📧 Kirim Kode</button>
+        </div>
+      </div>
+      <div class="form-group">
         <label>Password Baru</label>
-        <input type="password" id="pm-pw-baru" placeholder="Minimal 8 karakter">
+        <div style="position:relative">
+          <input type="password" id="pm-pw-baru" placeholder="Minimal 8 karakter" style="padding-right:46px">
+          <button type="button" onclick="togglePwVisibility('pm-pw-baru', this)" title="Lihat password" aria-label="Lihat password" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:var(--muted)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12 C3.5 6.5 7.5 4 12 4 C16.5 4 20.5 6.5 21.5 12 C20.5 17.5 16.5 20 12 20 C7.5 20 3.5 17.5 2.5 12 Z"/><path d="M5 7.5 L4.6 5.4"/><path d="M8 5.3 L8 3.2"/><path d="M12 4.3 L12 2.2"/><path d="M16 5.3 L16 3.2"/><path d="M19 7.5 L19.4 5.4"/><circle cx="12" cy="11" r="3" fill="currentColor" stroke="none"/><circle cx="11" cy="9.8" r="1.1" fill="#fff" stroke="none"/></svg></button>
+        </div>
       </div>
       <div class="form-group">
         <label>Konfirmasi Password Baru</label>
-        <input type="password" id="pm-pw-konfirm" placeholder="Ulangi password baru">
+        <div style="position:relative">
+          <input type="password" id="pm-pw-konfirm" placeholder="Ulangi password baru" style="padding-right:46px">
+          <button type="button" onclick="togglePwVisibility('pm-pw-konfirm', this)" title="Lihat password" aria-label="Lihat password" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:var(--muted)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12 C3.5 6.5 7.5 4 12 4 C16.5 4 20.5 6.5 21.5 12 C20.5 17.5 16.5 20 12 20 C7.5 20 3.5 17.5 2.5 12 Z"/><path d="M5 7.5 L4.6 5.4"/><path d="M8 5.3 L8 3.2"/><path d="M12 4.3 L12 2.2"/><path d="M16 5.3 L16 3.2"/><path d="M19 7.5 L19.4 5.4"/><circle cx="12" cy="11" r="3" fill="currentColor" stroke="none"/><circle cx="11" cy="9.8" r="1.1" fill="#fff" stroke="none"/></svg></button>
+        </div>
       </div>
       <button onclick="gantiPasswordMurid()" style="width:100%;padding:13px;background:var(--blue);color:white;border:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">🔒 Ganti Password</button>
     </div>
@@ -2801,12 +2840,25 @@ document.querySelectorAll('[data-count]').forEach(el => {
     <div style="background:white;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:20px">
       <div style="font-weight:800;font-size:16px;margin-bottom:18px">🔒 Ganti Password</div>
       <div class="form-group">
+        <label>Kode OTP</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="pg-pw-otp" placeholder="6 digit dari email" maxlength="6" inputmode="numeric">
+          <button onclick="kirimOtpGantiPassword('pg')" style="padding:12px 16px;background:var(--orange);color:white;border:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:14px;cursor:pointer;white-space:nowrap" id="pg-pw-otp-btn">📧 Kirim Kode</button>
+        </div>
+      </div>
+      <div class="form-group">
         <label>Password Baru</label>
-        <input type="password" id="pg-pw-baru" placeholder="Minimal 8 karakter">
+        <div style="position:relative">
+          <input type="password" id="pg-pw-baru" placeholder="Minimal 8 karakter" style="padding-right:46px">
+          <button type="button" onclick="togglePwVisibility('pg-pw-baru', this)" title="Lihat password" aria-label="Lihat password" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:var(--muted)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12 C3.5 6.5 7.5 4 12 4 C16.5 4 20.5 6.5 21.5 12 C20.5 17.5 16.5 20 12 20 C7.5 20 3.5 17.5 2.5 12 Z"/><path d="M5 7.5 L4.6 5.4"/><path d="M8 5.3 L8 3.2"/><path d="M12 4.3 L12 2.2"/><path d="M16 5.3 L16 3.2"/><path d="M19 7.5 L19.4 5.4"/><circle cx="12" cy="11" r="3" fill="currentColor" stroke="none"/><circle cx="11" cy="9.8" r="1.1" fill="#fff" stroke="none"/></svg></button>
+        </div>
       </div>
       <div class="form-group">
         <label>Konfirmasi Password Baru</label>
-        <input type="password" id="pg-pw-konfirm" placeholder="Ulangi password baru">
+        <div style="position:relative">
+          <input type="password" id="pg-pw-konfirm" placeholder="Ulangi password baru" style="padding-right:46px">
+          <button type="button" onclick="togglePwVisibility('pg-pw-konfirm', this)" title="Lihat password" aria-label="Lihat password" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:var(--muted)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12 C3.5 6.5 7.5 4 12 4 C16.5 4 20.5 6.5 21.5 12 C20.5 17.5 16.5 20 12 20 C7.5 20 3.5 17.5 2.5 12 Z"/><path d="M5 7.5 L4.6 5.4"/><path d="M8 5.3 L8 3.2"/><path d="M12 4.3 L12 2.2"/><path d="M16 5.3 L16 3.2"/><path d="M19 7.5 L19.4 5.4"/><circle cx="12" cy="11" r="3" fill="currentColor" stroke="none"/><circle cx="11" cy="9.8" r="1.1" fill="#fff" stroke="none"/></svg></button>
+        </div>
       </div>
       <button onclick="gantiPasswordGuru()" style="width:100%;padding:13px;background:var(--blue);color:white;border:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;font-size:15px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">🔒 Ganti Password</button>
     </div>

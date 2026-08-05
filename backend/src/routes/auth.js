@@ -87,6 +87,14 @@ const otpStore = new Map(); // email → { otp, data, expiresAt }
 const resetOtpStore = new Map(); // email → { otp, expiresAt }
 // ── OTP store untuk reveal code_guru di profil (verifikasi email) ──
 const codeGuruOtpStore = new Map(); // email → { otp, userId, expiresAt }
+// ── OTP store untuk ganti password di settings (verifikasi email) ──
+const changePwOtpStore = new Map(); // userId → { otp, expiresAt }
+// ── Rate limit ganti password: maksimal 7x/hari per user, reset saat ganti tanggal ──
+const changePwRateStore = new Map(); // userId → { date: 'YYYY-MM-DD', count }
+
+function dayKey(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 function generateOTP() {
   return String(Math.floor(100000 + Math.random() * 900000)); // 6 digit
@@ -229,8 +237,10 @@ function sendOTPEmail({ to, nama, otp }) {
 // Helper validasi password kuat
 function validatePassword(password) {
   if (!password || password.length < 8) return 'Password minimal 8 karakter.';
+  if (!/[a-z]/.test(password)) return 'Password harus mengandung huruf kecil.';
   if (!/[A-Z]/.test(password)) return 'Password harus mengandung huruf kapital.';
   if (!/[0-9]/.test(password)) return 'Password harus mengandung angka.';
+  if (!/[^A-Za-z0-9]/.test(password)) return 'Password harus mengandung simbol (mis. !@#).';
   return null;
 }
 
@@ -649,6 +659,42 @@ router.get('/profile', authMiddleware, async (req, res) => {
 });
 
 // =============================================
+//  POST /api/auth/send-change-password-otp
+//  Kirim OTP ke email user sebelum ganti password (rate limit 7x/hari).
+//  Wajib login (authMiddleware).
+// =============================================
+router.post('/send-change-password-otp', authMiddleware, async (req, res) => {
+  try {
+    const today = dayKey();
+    const prev = changePwRateStore.get(req.user.id);
+    if (prev && prev.date === today && prev.count >= 7) {
+      return res.status(429).json({ success: false, pesan: 'Kamu sudah mencapai batas 7x percobaan ganti password hari ini. Silakan coba lagi besok.' });
+    }
+
+    const { data: user } = await supabase.from('users').select('id, nama, email').eq('id', req.user.id).single();
+    if (!user) return res.status(404).json({ success: false, pesan: 'User tidak ditemukan.' });
+
+    const otp = generateOTP();
+    changePwOtpStore.set(req.user.id, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
+
+    try {
+      await sendOTPEmail({ to: user.email, nama: user.nama, otp });
+    } catch (mailErr) {
+      changePwOtpStore.delete(req.user.id);
+      console.error('[send-change-password-otp] email gagal:', mailErr.message);
+      return res.status(500).json({ success: false, pesan: 'Gagal mengirim email OTP. Coba beberapa saat lagi.' });
+    }
+
+    changePwRateStore.set(req.user.id, prev && prev.date === today ? { date: today, count: prev.count + 1 } : { date: today, count: 1 });
+
+    res.json({ success: true, pesan: 'Kode OTP dikirim ke email kamu. Berlaku 10 menit.' });
+  } catch (err) {
+    console.error('[send-change-password-otp]', err.message);
+    res.status(500).json({ success: false, pesan: 'Gagal mengirim OTP. Silakan coba lagi.' });
+  }
+});
+
+// =============================================
 //  PUT /api/auth/profile
 // =============================================
 router.put('/profile', authMiddleware, async (req, res) => {
@@ -682,6 +728,18 @@ router.put('/profile', authMiddleware, async (req, res) => {
     if (password_baru) {
       const pwError = validatePassword(password_baru);
       if (pwError) return res.status(400).json({ success: false, pesan: pwError });
+
+      // Ganti password wajib verifikasi OTP dari email
+      const otpEntry = changePwOtpStore.get(req.user.id);
+      if (!otpEntry) return res.status(400).json({ success: false, pesan: 'Minta kode OTP dulu sebelum ganti password.' });
+      if (Date.now() > otpEntry.expiresAt) {
+        changePwOtpStore.delete(req.user.id);
+        return res.status(400).json({ success: false, pesan: 'Kode OTP sudah kedaluwarsa. Minta ulang.' });
+      }
+      if (String(req.body.otp || '').trim() !== otpEntry.otp)
+        return res.status(400).json({ success: false, pesan: 'Kode OTP salah.' });
+
+      changePwOtpStore.delete(req.user.id);
       updates.password = bcrypt.hashSync(password_baru, 10);
     }
 
