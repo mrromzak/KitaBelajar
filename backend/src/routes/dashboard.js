@@ -465,7 +465,7 @@ router.get('/murid-init', authMiddleware, async (req, res) => {
     // Ambil semua kelas murid
     const { data: kelasMuridRows } = await supabase
       .from('kelas_murid')
-      .select('kelas:kelas_id(id, nama, tahun_ajar, mapel, kode_akses, guru_id, guru:guru_id(nama, avatar))')
+      .select('kelas:kelas_id(id, nama, tahun_ajar, mapel, kode_akses, guru_id, banner_color, guru:guru_id(nama, avatar))')
       .eq('murid_id', muridId);
     const kelasList = (kelasMuridRows || []).map(r => r.kelas).filter(Boolean);
     const kelasIds = kelasList.map(k => k.id);

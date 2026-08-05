@@ -326,7 +326,7 @@ function appendPrivateMessage(p, isSelf) {
          onmouseleave="${isSelf && msgId && isRecent ? `this.querySelector('.pc-msg-actions')&&(this.querySelector('.pc-msg-actions').style.display='none')` : ''}">
       <div style="font-size:18px;flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:50%">${chatAvatarHtml(ava)}</div>
       <div style="max-width:78%">
-        <div class="pc-msg-bubble" style="padding:10px 14px;border-radius:${isSelf ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isSelf ? 'var(--blue)' : 'white'};color:${isSelf ? 'white' : 'var(--text)'};font-size:14px;font-weight:600;border:${isSelf ? 'none' : '1.5px solid #E8E8E8'};word-break:break-word">${formatChatContent(p.isi, isSelf)}${editedLabel}</div>
+        <div class="pc-msg-bubble ${isSelf ? 'self' : 'received'}" style="padding:10px 14px;border-radius:${isSelf ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isSelf ? 'var(--blue)' : 'white'};color:${isSelf ? 'white' : 'var(--text)'};font-size:14px;font-weight:600;border:${isSelf ? 'none' : '1.5px solid #E8E8E8'};word-break:break-word">${formatChatContent(p.isi, isSelf)}${editedLabel}</div>
         ${selfActions}
       </div>
     </div>
