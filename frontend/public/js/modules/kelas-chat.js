@@ -26,8 +26,23 @@ function renderKelasCard(k, i, role) {
   const isGuru = role === 'guru';
 
   // Strip warna kiri — identifier mapel (warna dari kelas-banner-content)
-  const STRIP_COLORS = ['#FF6B35','#4A6FA5','#529B76','#9B4DFF','#20C997','#E67E22','#E91E63','#607D8B'];
-  const stripColor = STRIP_COLORS[idx % STRIP_COLORS.length] || '#B91C1C';
+  const MAP_STRIP_COLORS = {
+    'bg-c1': '#FF6B35',
+    'bg-c2': '#4A6FA5',
+    'bg-c3': '#529B76',
+    'bg-c4': '#8B6F97',
+    'bg-c5': '#9C81A8',
+    'bg-c6': '#5C83B4',
+    'bg-c7': '#60A580',
+    'bg-c8': '#FF9F43',
+    'bg-c9': '#F472B6',
+    'bg-c10': '#EAB308',
+    'bg-c11': '#1E3A8A',
+    'bg-c12': '#D946EF',
+    'bg-c13': '#06B6D4',
+    'bg-c14': '#F43F5E'
+  };
+  const stripColor = MAP_STRIP_COLORS[colorClass] || '#B91C1C';
 
   // Fallbacks agar super resilient terhadap data anomali
   const namaKelasSafe = escapeHtml(k.nama || 'Kelas Tanpa Nama');
