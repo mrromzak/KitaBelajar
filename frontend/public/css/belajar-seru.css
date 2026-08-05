@@ -2476,9 +2476,12 @@ body.dark-mode .badge-modal-close{background:#1C1C38;color:#9494B0}
 
 /* ── T1-1: Settings / Profile page — consistent max-width & input containment ── */
 .settings-page-wrap {
-  max-width: 560px;
+  max-width: 640px;
   margin: 32px auto 48px;
   padding: 0 20px;
+}
+.settings-page-wrap > div {
+  padding: 32px 40px !important;
 }
 .settings-page-wrap .form-group input,
 .settings-page-wrap .form-group select,
