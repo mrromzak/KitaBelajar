@@ -904,10 +904,11 @@ body.dark-mode .opt-btn.selected {
 }
 
 /* ── Settings / Profile page spacing & alignment ── */
+/* Disamakan persis dengan .dashboard (max-width 960px, centered) */
 .settings-page-wrap {
-  max-width: 640px !important;
-  margin: 32px auto 48px !important;
-  padding: 0 20px !important;
+  max-width: 960px !important;
+  margin: 0 auto !important;
+  padding: 28px 24px !important;
 }
 .settings-page-wrap > div {
   padding: 32px 40px !important;
@@ -916,15 +917,15 @@ body.dark-mode .opt-btn.selected {
 .settings-page-wrap .form-group select,
 .settings-page-wrap .form-group textarea,
 .settings-page-wrap button:not([style*="position:absolute"]):not([style*="position: absolute"]) {
-  max-width: 480px !important;
+  max-width: 100% !important;
   width: 100% !important;
 }
 
 /* Responsive adjustments for smaller screens */
 @media (max-width: 480px) {
   .settings-page-wrap {
-    padding: 0 12px !important;
-    margin: 16px auto 32px !important;
+    padding: 16px 14px !important;
+    margin: 0 auto !important;
   }
   .settings-page-wrap > div {
     padding: 24px 20px !important;
