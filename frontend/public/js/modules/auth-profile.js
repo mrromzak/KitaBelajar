@@ -84,6 +84,49 @@ function validatePasswordClient(password) {
   return null;
 }
 
+function updatePwStrength(inputId, hintId, checkId) {
+  const el = document.getElementById(inputId);
+  const hint = document.getElementById(hintId);
+  const checkBox = document.getElementById(checkId);
+  if (!el || !hint || !checkBox) return;
+  const pw = el.value;
+
+  if (!pw) {
+    checkBox.style.display = 'none';
+    hint.style.display = 'block';
+    return;
+  }
+
+  hint.style.display = 'none';
+  checkBox.style.display = 'block';
+
+  const checks = {
+    len: pw.length >= 8,
+    upper: /[A-Z]/.test(pw),
+    lower: /[a-z]/.test(pw),
+    num: /[0-9]/.test(pw),
+    sym: /[^A-Za-z0-9]/.test(pw)
+  };
+  const score = Object.values(checks).filter(Boolean).length;
+
+  checkBox.querySelectorAll('[data-pwcheck]').forEach(span => {
+    const key = span.dataset.pwcheck;
+    const ok = checks[key];
+    span.textContent = (ok ? '✓ ' : '○ ') + span.textContent.replace(/^[✓○]\s*/, '');
+    span.style.color = ok ? '#22c55e' : 'var(--muted)';
+  });
+
+  let pct, color, label;
+  if (score <= 1) { pct = 20; color = '#ef4444'; label = 'Kekuatan: Lemah'; }
+  else if (score <= 3) { pct = 55; color = '#f59e0b'; label = 'Kekuatan: Sedang'; }
+  else { pct = 100; color = '#22c55e'; label = 'Kekuatan: Kuat'; }
+
+  const bar = document.getElementById(inputId === 'reg-password' ? 'reg-pw-bar' : inputId === 'pm-pw-baru' ? 'pm-pw-bar' : 'pg-pw-bar');
+  const labelEl = document.getElementById(inputId === 'reg-password' ? 'reg-pw-label' : inputId === 'pm-pw-baru' ? 'pm-pw-label' : 'pg-pw-label');
+  if (bar) { bar.style.width = pct + '%'; bar.style.background = color; }
+  if (labelEl) { labelEl.textContent = label; labelEl.style.color = color; }
+}
+
 const PW_EYE_OPEN = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12 C3.5 6.5 7.5 4 12 4 C16.5 4 20.5 6.5 21.5 12 C20.5 17.5 16.5 20 12 20 C7.5 20 3.5 17.5 2.5 12 Z"/><path d="M5 7.5 L4.6 5.4"/><path d="M8 5.3 L8 3.2"/><path d="M12 4.3 L12 2.2"/><path d="M16 5.3 L16 3.2"/><path d="M19 7.5 L19.4 5.4"/><circle cx="12" cy="11" r="3" fill="currentColor" stroke="none"/><circle cx="11" cy="9.8" r="1.1" fill="#fff" stroke="none"/></svg>';
 const PW_EYE_CLOSED = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 11 Q12 16.5 21.5 11"/><path d="M4.4 12 L4.4 14.1"/><path d="M7.3 13.1 L7.3 15.2"/><path d="M12 13.8 L12 15.9"/><path d="M16.7 13.1 L16.7 15.2"/><path d="M19.6 12 L19.6 14.1"/></svg>';
 
@@ -1264,6 +1307,10 @@ function resetGantiPasswordForm(prefix) {
   document.getElementById(prefix + '-pw-otp').value = '';
   document.getElementById(prefix + '-pw-btn-ganti').style.display = 'block';
   document.getElementById(prefix + '-pw-otp-step').style.display = 'none';
+  const hint = document.getElementById(prefix + '-pw-hint');
+  const check = document.getElementById(prefix + '-pw-check');
+  if (hint) hint.style.display = 'block';
+  if (check) check.style.display = 'none';
 }
 
 function batalGantiPassword(prefix) {

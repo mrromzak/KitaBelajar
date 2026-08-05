@@ -3,9 +3,33 @@
 // ============================================================
 hapusKelasId = null;
 
+function resetKonfirmasiHapusKelas() {
+  const input = document.getElementById('hapus-kelas-konfirmasi');
+  const btn = document.getElementById('btn-hapus-kelas-ok');
+  if (input) { input.value = ''; input.style.borderColor = '#E8E8E8'; }
+  if (btn) { btn.disabled = true; btn.style.cursor = 'not-allowed'; btn.style.opacity = '0.5'; }
+}
+
+function cekKonfirmasiHapusKelas() {
+  const input = document.getElementById('hapus-kelas-konfirmasi');
+  const btn = document.getElementById('btn-hapus-kelas-ok');
+  if (!input || !btn) return;
+  const cocok = input.value.trim().toUpperCase() === 'HAPUS';
+  input.style.borderColor = cocok ? '#22c55e' : '#E8E8E8';
+  btn.disabled = !cocok;
+  btn.style.cursor = cocok ? 'pointer' : 'not-allowed';
+  btn.style.opacity = cocok ? '1' : '0.5';
+}
+
+function batalHapusKelas() {
+  resetKonfirmasiHapusKelas();
+  closeModal('modal-hapus-kelas');
+}
+
 function konfirmasiHapusKelas(id, nama) {
   hapusKelasId = id;
   document.getElementById('hapus-kelas-pesan').textContent = `Kelas "${nama}" akan dihapus permanen.`;
+  resetKonfirmasiHapusKelas();
   openModal('modal-hapus-kelas');
 }
 
@@ -36,9 +60,33 @@ async function eksekusiHapusKelas() {
 // ============================================================
 keluarKelasId = null;
 
+function resetKonfirmasiKeluarKelas() {
+  const input = document.getElementById('keluar-kelas-konfirmasi');
+  const btn = document.getElementById('btn-keluar-kelas-ok');
+  if (input) { input.value = ''; input.style.borderColor = '#E8E8E8'; }
+  if (btn) { btn.disabled = true; btn.style.cursor = 'not-allowed'; btn.style.opacity = '0.5'; }
+}
+
+function cekKonfirmasiKeluarKelas() {
+  const input = document.getElementById('keluar-kelas-konfirmasi');
+  const btn = document.getElementById('btn-keluar-kelas-ok');
+  if (!input || !btn) return;
+  const cocok = input.value.trim().toUpperCase() === 'KELUAR';
+  input.style.borderColor = cocok ? '#22c55e' : '#E8E8E8';
+  btn.disabled = !cocok;
+  btn.style.cursor = cocok ? 'pointer' : 'not-allowed';
+  btn.style.opacity = cocok ? '1' : '0.5';
+}
+
+function batalKeluarKelas() {
+  resetKonfirmasiKeluarKelas();
+  closeModal('modal-keluar-kelas');
+}
+
 function konfirmasiKeluarKelas(id, nama) {
   keluarKelasId = id;
   document.getElementById('keluar-kelas-pesan').textContent = `Kamu akan keluar dari kelas "${nama}". Kamu bisa bergabung lagi nanti dengan kode yang sama.`;
+  resetKonfirmasiKeluarKelas();
   openModal('modal-keluar-kelas');
 }
 
