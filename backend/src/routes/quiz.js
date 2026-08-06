@@ -409,6 +409,108 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 });
 
 // ============================================================
+//  PUT /api/quiz/:id/reopen  — aktifkan kembali tugas/kuis yang
+//  sudah lewat tenggat (deadline). Hanya guru/tentor pemilik (atau
+//  kepala_sekolah). Menetapkan deadline baru + status 'aktif',
+//  mencatat histori di quiz_reopen_log, dan mengirim notifikasi
+//  ke murid kelas. Submission lama TIDAK disentuh/ditimpa.
+//  Body: { deadline: ISO string (wajib, di masa depan) }
+// ============================================================
+router.put('/:id/reopen', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { deadline } = req.body || {};
+    const userId   = req.user.id || req.user.userId;
+    const isGuru   = req.user.role === 'guru';
+    const isKepala = req.user.role === 'kepala_sekolah';
+
+    if (!isGuru && !isKepala) {
+      return res.status(403).json({ success: false, pesan: 'Akses ditolak. Hanya guru/tentor yang bisa mengaktifkan kembali tugas.' });
+    }
+
+    if (!deadline || isNaN(new Date(deadline).getTime())) {
+      return res.status(400).json({ success: false, pesan: 'Tenggat waktu baru wajib diisi dengan format tanggal valid.' });
+    }
+    const deadlineBaru = new Date(deadline);
+    if (deadlineBaru.getTime() <= Date.now()) {
+      return res.status(400).json({ success: false, pesan: 'Tenggat waktu baru harus di masa depan.' });
+    }
+
+    const { data: quiz, error: qErr } = await supabase
+      .from('quiz').select('id, judul, guru_id, kelas_id, deadline, status').eq('id', id).single();
+    if (qErr || !quiz) {
+      return res.status(404).json({ success: false, pesan: 'Tugas/Kuis tidak ditemukan.' });
+    }
+    if (isGuru && quiz.guru_id !== userId) {
+      return res.status(403).json({ success: false, pesan: 'Bukan hak kamu.' });
+    }
+
+    const deadlineLama = quiz.deadline || null;
+
+    // Update hanya deadline + status — kolom lain & submission lama tak tersentuh.
+    const { data: updated, error: uErr } = await supabase
+      .from('quiz')
+      .update({ deadline: deadlineBaru.toISOString(), status: 'aktif' })
+      .eq('id', id);
+    if (uErr) throw uErr;
+
+    // Audit trail sederhana.
+    const { v4: uuidv4 } = require('uuid');
+    await supabase.from('quiz_reopen_log').insert({
+      id: uuidv4(),
+      quiz_id: id,
+      guru_id: userId,
+      deadline_lama: deadlineLama,
+      deadline_baru: deadlineBaru.toISOString()
+    });
+
+    // Notifikasi ke murid terdaftar di kelas (reuse mekanisme existing).
+    if (quiz.kelas_id) {
+      const { data: muridList } = await supabase
+        .from('kelas_murid').select('murid_id').eq('kelas_id', quiz.kelas_id);
+      if (muridList?.length) {
+        const pad = n => String(n).padStart(2, '0');
+        const namaBulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+        const dl = deadlineBaru;
+        const labelTgl = `${pad(dl.getDate())} ${namaBulan[dl.getMonth()]} ${dl.getFullYear()} ${pad(dl.getHours())}:${pad(dl.getMinutes())}`;
+        const judulNotif = '🔔 Tugas Dibuka Kembali';
+        const pesanNotif = `Tugas/PR "${quiz.judul}" dibuka kembali oleh guru. Tenggat baru: ${labelTgl}.`;
+
+        const notifs = muridList.map(m => ({
+          id: uuidv4(), user_id: m.murid_id,
+          judul: judulNotif,
+          pesan: pesanNotif,
+          tipe: 'tugas',
+          data_extra: JSON.stringify({ kelas_id: quiz.kelas_id, quiz_id: id, action: 'reopen' })
+        }));
+        await supabase.from('notifikasi').insert(notifs);
+
+        const io = req.app.get('io');
+        if (io) {
+          muridList.forEach(m => {
+            io.to('user:' + m.murid_id).emit('notif:baru', {
+              tipe: 'tugas',
+              judul: judulNotif,
+              pesan: pesanNotif,
+              created_at: new Date().toISOString()
+            });
+          });
+        }
+      }
+    }
+
+    return res.json({
+      success: true,
+      pesan: `Tugas/PR "${quiz.judul}" diaktifkan kembali.`,
+      quiz: { ...(updated?.[0] || quiz), deadline: deadlineBaru.toISOString(), status: 'aktif' }
+    });
+  } catch(e) {
+    console.error('[PUT /quiz/:id/reopen]', e.message);
+    return res.status(500).json({ success: false, pesan: 'Gagal mengaktifkan kembali tugas.' });
+  }
+});
+
+// ============================================================
 //  POST /api/quiz/hasil  — simpan + validasi hasil pengerjaan murid
 //  Body: { quiz_id, jawaban: [{soal_id, jawaban_user}], durasi_detik }
 //  Scoring dilakukan server-side agar jawaban tidak perlu dikirim ke client

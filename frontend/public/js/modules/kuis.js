@@ -206,6 +206,7 @@ function renderKuisCard(q, isGuru) {
   let deadlineHtml = '';
   let feedbackHtml = '';
   const deadlineLewat = !isFun && q.deadline && new Date(q.deadline) < new Date();
+  const deadlineLewatUmum = q.deadline && new Date(q.deadline) < new Date();
   if (!isFun && q.deadline && !sudahDikerjakan && !deadlineLewat) {
     const dl = new Date(q.deadline);
     const now = new Date();
@@ -219,8 +220,12 @@ function renderKuisCard(q, isGuru) {
   const isSubmission = !!q.tipe_submission;
 
   if (isGuru) {
+    const reopenBtn = deadlineLewatUmum
+      ? `<button onclick="bukaUlangKuis('${q.id}')" title="Aktifkan kembali tugas yang tenggatnya lewat" style="background:#FFF0EC;color:var(--red);border:1.5px solid #FFC9C0;border-radius:10px;padding:7px 14px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap;transition:all 0.2s" onmouseover="this.style.background='var(--red)';this.style.color='white'" onmouseout="this.style.background='#FFF0EC';this.style.color='var(--red)'">⏰ Aktifkan Kembali</button>`
+      : '';
     actionHtml = `<div style="display:flex;gap:6px;align-items:center">
       <button onclick="previewKuisSoal('${q.id}')" title="Preview soal seperti yang dilihat murid" style="background:#FFF3E6;color:var(--orange);border:1.5px solid #FFD9B3;border-radius:10px;padding:7px 14px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap;transition:all 0.2s" onmouseover="this.style.background='var(--orange)';this.style.color='white'" onmouseout="this.style.background='#FFF3E6';this.style.color='var(--orange)'">👁️ Preview</button>
+      ${reopenBtn}
       ${isSubmission ? `<button onclick="lihatSubmissionGuru('${q.id}','${(q.judul||'').replace(/'/g,"\\'")}','${q.kelas_id||''}')" style="background:#EEF5FF;color:var(--blue);border:none;border-radius:10px;padding:7px 14px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap">📋 Lihat Submission</button>` : ''}
       <button class="btn-icon btn-delete" onclick="hapusKuis('${q.id}','${(q.judul||'').replace(/'/g,"\\'")}') " title="Hapus">🗑️</button>
     </div>`;
@@ -439,6 +444,66 @@ function renderPreviewKuisSoal() {
       bodyHtml +
     '</div>';
   }).join('');
+}
+
+// ============================================================
+//  AKTIFKAN KEMBALI TUGAS (REOPEN) — GURU
+//  Untuk tugas/kuis yang tenggatnya sudah lewat. Guru memilih
+//  tenggat baru, status kembali aktif, siswa bisa submit lagi.
+//  Submission lama tidak diubah. Ada audit trail di backend.
+// ============================================================
+_reopenKuisState = null; // { id, judul, deadlineLama }
+
+function _toDatetimeLocal(d) {
+  const dt = new Date(d);
+  const pad = n => String(n).padStart(2, '0');
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+}
+
+function bukaUlangKuis(quizId) {
+  const q = (allKuisData || []).find(x => x.id === quizId);
+  if (!q) return;
+  _reopenKuisState = { id: quizId, judul: q.judul || '', deadlineLama: q.deadline || null };
+
+  const info = document.getElementById('reopen-kuis-info');
+  if (info) {
+    const lama = q.deadline
+      ? new Date(q.deadline).toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' }) + ' ' + new Date(q.deadline).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })
+      : 'tidak ditentukan';
+    info.innerHTML = `📝 Tugas <strong>${escapeHtml(q.judul || '')}</strong> — tenggat sebelumnya: <strong>${lama}</strong>. Tenggat sudah lewat, siswa tidak bisa mengumpulkan lagi.`;
+  }
+
+  const input = document.getElementById('reopen-kuis-deadline');
+  if (input) {
+    input.value = q.deadline ? _toDatetimeLocal(q.deadline) : '';
+    input.min = _toDatetimeLocal(new Date());
+  }
+  openModal('modal-reopen-kuis');
+}
+
+async function submitReopenKuis() {
+  const st = _reopenKuisState;
+  if (!st) return;
+  const raw = document.getElementById('reopen-kuis-deadline').value;
+  if (!raw) { toast('Pilih tenggat waktu baru dulu!', 'error'); return; }
+  const deadline = new Date(raw);
+  if (deadline.getTime() <= Date.now()) { toast('Tenggat baru harus di masa depan!', 'error'); return; }
+
+  showLoading(true);
+  try {
+    const data = await api('PUT', `/quiz/${st.id}/reopen`, { deadline: deadline.toISOString() });
+    if (data.success) {
+      toast(data.pesan || 'Tugas diaktifkan kembali!', 'success');
+      closeModal('modal-reopen-kuis');
+      _reopenKuisState = null;
+      loadKelasKuis(currentKelas.id);
+    } else {
+      toast(data.pesan || 'Gagal mengaktifkan kembali tugas', 'error');
+    }
+  } catch(e) {
+    toast('Tidak bisa terhubung ke server', 'error');
+  }
+  showLoading(false);
 }
 
 // ============================================================
