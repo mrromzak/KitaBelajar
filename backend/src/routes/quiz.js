@@ -160,6 +160,71 @@ router.get('/:id', authMiddleware, async (req, res) => {
 });
 
 // ============================================================
+//  GET /api/quiz/:id/preview — PREVIEW READ-ONLY (mode guru)
+//  Guru/Tentor pemilik tugas (atau kepala sekolah) melihat soal
+//  PERSIS seperti yang dilihat murid — urutan soal, tipe, opsi,
+//  poin. Preview TIDAK menyimpan apa pun dan TIDAK mengubah status.
+//  Endpoint terpisah dari GET /:id agar tidak merusak alur murid.
+// ============================================================
+router.get('/:id/preview', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId   = req.user.id || req.user.userId;
+    const isGuru   = req.user.role === 'guru';
+    const isKepala = req.user.role === 'kepala_sekolah';
+
+    // Role-based access: hanya guru/tentor atau kepala sekolah.
+    if (!isGuru && !isKepala) {
+      return res.status(403).json({ success: false, pesan: 'Akses ditolak. Preview hanya untuk guru/tentor.' });
+    }
+
+    const { data: quiz, error: qErr } = await supabase
+      .from('quiz').select('*').eq('id', id).single();
+    if (qErr || !quiz) {
+      return res.status(404).json({ success: false, pesan: 'Tugas/Kuis tidak ditemukan.' });
+    }
+
+    // Ownership check: guru hanya boleh preview tugas miliknya sendiri.
+    if (isGuru && quiz.guru_id !== userId) {
+      return res.status(403).json({ success: false, pesan: 'Bukan hak kamu.' });
+    }
+
+    const { data: qs, error: sErr } = await supabase
+      .from('quiz_soal')
+      .select('urutan, soal(id, pertanyaan, emoji, mapel, jenis, opsi, jawaban, poin)')
+      .eq('quiz_id', id)
+      .order('urutan');
+    if (sErr) throw sErr;
+
+    const soal = (qs || []).map(r => {
+      const s = { ...r.soal };
+      // Parse opsi: bisa JSONB array atau string JSON (data lama).
+      s.opsi = typeof s.opsi === 'string' ? JSON.parse(s.opsi || '[]') : (s.opsi || []);
+      // Preview untuk guru → jawaban ditampilkan & ditandai jelas sebagai mode guru.
+      s.jawaban = decrypt(s.jawaban);
+      s.urutan = r.urutan;
+      return s;
+    });
+
+    const totalPoin = soal.reduce((acc, s) => acc + (s.poin || 0), 0);
+
+    return res.json({
+      success: true,
+      mode: 'preview',
+      quiz: {
+        ...quiz,
+        total_soal: soal.length,
+        total_poin: totalPoin,
+        soal
+      }
+    });
+  } catch(e) {
+    console.error('[GET /quiz/:id/preview]', e.message);
+    return res.status(500).json({ success: false, pesan: 'Gagal memuat preview.' });
+  }
+});
+
+// ============================================================
 //  POST /api/quiz  — buat kuis baru
 // ============================================================
 router.post('/', authMiddleware, async (req, res) => {

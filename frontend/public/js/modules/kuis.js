@@ -220,6 +220,7 @@ function renderKuisCard(q, isGuru) {
 
   if (isGuru) {
     actionHtml = `<div style="display:flex;gap:6px;align-items:center">
+      <button onclick="previewKuisSoal('${q.id}')" title="Preview soal seperti yang dilihat murid" style="background:#FFF3E6;color:var(--orange);border:1.5px solid #FFD9B3;border-radius:10px;padding:7px 14px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap;transition:all 0.2s" onmouseover="this.style.background='var(--orange)';this.style.color='white'" onmouseout="this.style.background='#FFF3E6';this.style.color='var(--orange)'">👁️ Preview</button>
       ${isSubmission ? `<button onclick="lihatSubmissionGuru('${q.id}','${(q.judul||'').replace(/'/g,"\\'")}','${q.kelas_id||''}')" style="background:#EEF5FF;color:var(--blue);border:none;border-radius:10px;padding:7px 14px;font-family:Nunito,sans-serif;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap">📋 Lihat Submission</button>` : ''}
       <button class="btn-icon btn-delete" onclick="hapusKuis('${q.id}','${(q.judul||'').replace(/'/g,"\\'")}') " title="Hapus">🗑️</button>
     </div>`;
@@ -311,6 +312,133 @@ function renderKuisCard(q, isGuru) {
       </div>
     </div>
   </div>`;
+}
+
+// ============================================================
+//  PREVIEW KUIS (GURU) — READ-ONLY
+//  Menampilkan soal persis seperti yang dilihat murid, tanpa
+//  menyimpan apa pun ke database. Mode guru → jawaban benar
+//  bisa ditampilkan (toggle) dan ditandai jelas.
+// ============================================================
+_previewKuisState = null; // { quiz, showJawaban }
+
+const _PREVIEW_TIPE_SOAL = {
+  pilihan_ganda: '🔵 Pilihan Ganda',
+  isian:         '✍️ Esai / Isian',
+  benar_salah:   '⭕ Benar / Salah'
+};
+
+function _previewTipeLabel(jenis) {
+  return _PREVIEW_TIPE_SOAL[jenis] || ('❓ ' + (jenis || 'soal'));
+}
+
+async function previewKuisSoal(quizId) {
+  showLoading(true);
+  try {
+    const data = await api('GET', `/quiz/${quizId}/preview`);
+    if (!data.success || !data.quiz) {
+      toast(data.pesan || 'Gagal memuat preview', 'error');
+      showLoading(false);
+      return;
+    }
+    const quiz = data.quiz;
+    _previewKuisState = {
+      quiz,
+      showJawaban: document.getElementById('preview-tampilkan-jawaban')?.checked !== false
+    };
+
+    document.getElementById('preview-kuis-judul').textContent = '👁️ ' + (quiz.judul || 'Preview Tugas/Kuis');
+
+    const isFun = (quiz.tipe || 'fun') === 'fun';
+    const subTipeLabel = { file: '📄 File/PDF', gambar: '🖼️ Foto/Gambar', link: '🔗 Link', teks: '✏️ Teks', semua: '📤 Semua Jenis' };
+    const tipeLabel = quiz.tipe_submission
+      ? '📤 Tugas (' + (subTipeLabel[quiz.tipe_submission] || quiz.tipe_submission) + ')'
+      : (isFun ? '⚡ Fun Quiz' : '📝 Tugas / PR');
+    const statusLabel = quiz.status === 'aktif' ? '📢 Terbit' : '📝 Draft';
+    const deadlineChip = quiz.deadline
+      ? '⏰ ' + new Date(quiz.deadline).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) + ' ' + new Date(quiz.deadline).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})
+      : '';
+    const chips = [
+      '📚 ' + (quiz.mapel || 'Umum'),
+      tipeLabel,
+      '📋 ' + (quiz.total_soal || 0) + ' soal',
+      '🏅 ' + (quiz.total_poin || 0) + ' poin',
+      statusLabel,
+      !quiz.tipe_submission && quiz.durasi ? '⏱️ ' + quiz.durasi + 's/soal' : '',
+      deadlineChip
+    ].filter(Boolean);
+
+    document.getElementById('preview-kuis-meta').innerHTML = chips
+      .map(c => '<span style="background:#F5F5F5;border-radius:50px;padding:5px 12px;font-size:12px;font-weight:800;color:var(--text)">' + c + '</span>')
+      .join('');
+
+    renderPreviewKuisSoal();
+    openModal('modal-preview-kuis');
+  } catch(e) {
+    console.error('[previewKuisSoal]', e);
+    toast('Tidak bisa terhubung ke server', 'error');
+  }
+  showLoading(false);
+}
+
+function togglePreviewJawaban(show) {
+  if (!_previewKuisState) return;
+  _previewKuisState.showJawaban = show;
+  renderPreviewKuisSoal();
+}
+
+function renderPreviewKuisSoal() {
+  const wrap = document.getElementById('preview-kuis-soal-list');
+  if (!wrap) return;
+  const state = _previewKuisState;
+  if (!state || !state.quiz) return;
+
+  const showJawaban = state.showJawaban;
+  const soal = state.quiz.soal || [];
+
+  if (soal.length === 0) {
+    wrap.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)"><div style="font-size:44px;margin-bottom:10px">📭</div><p style="font-weight:700">Tugas/Kuis ini belum punya soal.</p></div>';
+    return;
+  }
+
+  wrap.innerHTML = soal.map((s, i) => {
+    const urutan = s.urutan || (i + 1);
+    const opsiArr = Array.isArray(s.opsi) ? s.opsi : [];
+    const jawaban = (s.jawaban || '').trim();
+    const tipeBadge = '<span style="background:#EEF5FF;color:var(--blue);font-size:11px;font-weight:800;padding:3px 10px;border-radius:50px">' + _previewTipeLabel(s.jenis) + '</span>';
+    const poinBadge = '<span style="background:#FFF3E6;color:var(--orange);font-size:11px;font-weight:800;padding:3px 10px;border-radius:50px">🏅 ' + (s.poin || 100) + ' poin</span>';
+
+    let bodyHtml;
+    if (s.jenis === 'isian' || s.jenis === 'essay') {
+      bodyHtml = showJawaban && jawaban
+        ? '<div style="padding:12px 14px;border-radius:12px;border:2px dashed #6BCB77;background:#F0FFF4;font-size:13px;font-weight:700;color:#27AE60;margin-top:10px">✅ Kunci jawaban: ' + escapeHtml(jawaban) + '</div>'
+        : '<div style="padding:12px 14px;border-radius:12px;border:2px dashed #E8E8E8;background:#FAFAFA;font-size:13px;color:var(--muted);font-weight:700;margin-top:10px">✍️ Murid menulis jawaban bebas (esai)</div>';
+    } else {
+      const kunciAda = jawaban && opsiArr.some(o => o.trim().toLowerCase() === jawaban.toLowerCase());
+      bodyHtml = '<div class="pr-options">' + opsiArr.map((o, oi) => {
+        const isCorrect = showJawaban && jawaban && o.trim().toLowerCase() === jawaban.toLowerCase();
+        const cls = isCorrect ? ' correct' : '';
+        const badge = isCorrect ? '<span style="margin-left:auto;font-size:11px;font-weight:800;color:#27AE60;background:#E8F8EE;border-radius:50px;padding:3px 10px;flex-shrink:0">✓ Kunci jawaban</span>' : '';
+        return '<div class="pr-opt' + cls + '" style="display:flex;align-items:center;gap:10px;cursor:default;pointer-events:none">' +
+          '<strong>' + String.fromCharCode(65 + oi) + '.</strong>' +
+          '<span style="flex:1;word-break:break-word">' + escapeHtml(o) + '</span>' +
+          badge +
+        '</div>';
+      }).join('') + '</div>';
+      if (showJawaban && jawaban && !kunciAda) {
+        bodyHtml += '<div style="margin-top:8px;background:#FFF3E6;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;color:#B95A0A">⚠️ Kunci jawaban tidak cocok dengan opsi di atas: <strong>' + escapeHtml(jawaban) + '</strong></div>';
+      }
+    }
+
+    return '<div class="pr-question-card">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px">' +
+        '<div style="font-size:12px;color:var(--muted);font-weight:800">Soal ' + urutan + (s.mapel ? ' · ' + escapeHtml(s.mapel) : '') + '</div>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap">' + tipeBadge + poinBadge + '</div>' +
+      '</div>' +
+      '<div style="font-size:16px;font-weight:800;line-height:1.6;margin-bottom:12px">' + (s.emoji || '') + ' ' + escapeHtml(s.pertanyaan) + '</div>' +
+      bodyHtml +
+    '</div>';
+  }).join('');
 }
 
 // ============================================================

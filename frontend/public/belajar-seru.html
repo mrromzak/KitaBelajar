@@ -1613,6 +1613,33 @@ document.querySelectorAll('[data-count]').forEach(el => {
   </div>
 </div>
 
+<!-- Modal Preview Kuis (Guru) — READ-ONLY, tidak menyimpan apa pun -->
+<div class="modal-overlay" id="modal-preview-kuis">
+  <div class="modal" style="max-width:640px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px">
+      <h3 style="margin:0;flex:1;min-width:0" id="preview-kuis-judul">👁️ Preview Tugas/Kuis</h3>
+      <button onclick="closeModal('modal-preview-kuis')" title="Tutup" style="background:#F5F5F5;border:none;border-radius:50%;width:34px;height:34px;font-size:15px;font-weight:800;cursor:pointer;color:var(--muted);flex-shrink:0">✕</button>
+    </div>
+
+    <div id="preview-mode-banner" style="background:linear-gradient(135deg,#FFF3E6,#FFEFE8);border:1.5px dashed var(--orange);border-radius:12px;padding:10px 14px;font-size:12px;font-weight:700;color:#B95A0A;margin-bottom:12px">
+      👩‍🏫 Mode Preview Guru — tampilan persis seperti yang dilihat murid. Tidak ada data yang tersimpan dan status tugas tidak berubah.
+    </div>
+
+    <div id="preview-kuis-meta" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
+
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--muted);margin-bottom:12px;cursor:pointer;user-select:none">
+      <input type="checkbox" id="preview-tampilkan-jawaban" checked onchange="togglePreviewJawaban(this.checked)" style="width:17px;height:17px;cursor:pointer;accent-color:var(--green)">
+      ✅ Tampilkan jawaban benar <span style="font-size:11px;color:#B95A0A;font-weight:700">(khusus guru)</span>
+    </label>
+
+    <div id="preview-kuis-soal-list" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding-right:4px"></div>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:16px;padding-top:14px;border-top:1px solid #F0EEFF">
+      <button class="btn-submit" style="padding:11px 28px" onclick="closeModal('modal-preview-kuis')">👍 Mengerti</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal OTP Verifikasi Registrasi -->
 <div class="modal-overlay" id="modal-otp-register">
   <div class="modal" style="max-width:380px;text-align:center">
@@ -2465,7 +2492,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
 <script src="/js/modules/materi.js?v=11"></script>
 <script src="/js/modules/soal.js?v=10"></script>
 <script src="/js/modules/quiz.js?v=10"></script>
-<script src="/js/modules/kuis.js?v=9"></script>
+<script src="/js/modules/kuis.js?v=10"></script>
 
 <!-- ========== ZEP QUIZ SCRIPT ========== -->
 <script src="/js/app-extra1.js?v=1"></script>
