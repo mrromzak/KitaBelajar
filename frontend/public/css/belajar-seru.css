@@ -2614,6 +2614,28 @@ body.dark-mode .skeleton-card {
   background-size: 200% 100%;
 }
 
+/* ── Skeleton varian: chat bubble ── */
+.skeleton-bubble {
+  height: 38px; border-radius: 16px; margin-bottom: 10px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.4s infinite;
+}
+.skeleton-bubble.left { border-bottom-left-radius: 5px; }
+.skeleton-bubble.right { border-bottom-right-radius: 5px; margin-left: auto; }
+body.dark-mode .skeleton-bubble {
+  background: linear-gradient(90deg, var(--input) 25%, var(--elevated) 50%, var(--input) 75%);
+  background-size: 200% 100%;
+}
+
+/* ── Skeleton varian: lingkaran di atas permukaan berwarna (daily reward) ── */
+.skeleton-circle {
+  width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,0.18) 25%, rgba(255,255,255,0.34) 50%, rgba(255,255,255,0.18) 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.4s infinite;
+}
+
 /* ── T3-9: XP/Level clickable area ── */
 .xp-clickable {
   cursor: pointer; transition: opacity 0.15s;

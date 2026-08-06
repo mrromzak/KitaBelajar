@@ -14,7 +14,7 @@
 <!-- Error Logger — kirim error JS ke server KitaBelajar sendiri -->
 <script src="/js/app-config.js?v=1"></script>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/belajar-seru.css?v=48">
+<link rel="stylesheet" href="/css/belajar-seru.css?v=49">
 <link rel="stylesheet" href="/css/rapor-world.css?v=10">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="https://meet.ffmuc.net/external_api.js"></script>
@@ -619,7 +619,9 @@ document.querySelectorAll('[data-count]').forEach(el => {
           <span style="font-size:11px;font-weight:700;color:var(--muted);margin-left:8px">Klaim setiap hari!</span>
         </div>
         <div id="daily-reward-card" style="background:linear-gradient(135deg,#6A4CF0 0%,#B23FC9 100%);border-radius:18px;padding:18px 16px;color:#fff;min-height:80px">
-          <div style="text-align:center;opacity:0.7;font-size:13px">Memuat...</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <div class="skeleton-circle"></div><div class="skeleton-circle"></div><div class="skeleton-circle"></div><div class="skeleton-circle"></div><div class="skeleton-circle"></div><div class="skeleton-circle"></div><div class="skeleton-circle"></div>
+          </div>
         </div>
       </div>
 
@@ -636,7 +638,14 @@ document.querySelectorAll('[data-count]').forEach(el => {
           <span style="font-size:11px;font-weight:700;color:var(--muted);margin-left:8px" id="misi-reset-label">Reset tiap hari</span>
         </div>
         <div id="misi-harian-list" style="display:flex;flex-direction:column;gap:10px">
-          <div style="text-align:center;padding:20px;color:var(--muted)">Memuat misi...</div>
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+            <div class="skeleton-line" style="width:40px;height:40px;border-radius:50%;flex-shrink:0;margin:0"></div>
+            <div style="flex:1"><div class="skeleton-line" style="height:13px;width:70%;margin-bottom:6px"></div><div class="skeleton-line" style="height:11px;width:45%"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+            <div class="skeleton-line" style="width:40px;height:40px;border-radius:50%;flex-shrink:0;margin:0"></div>
+            <div style="flex:1"><div class="skeleton-line" style="height:13px;width:60%;margin-bottom:6px"></div><div class="skeleton-line" style="height:11px;width:40%"></div></div>
+          </div>
         </div>
       </div>
       <div class="misi-sec" data-cat="mingguan" style="margin-bottom:20px">
@@ -654,7 +663,14 @@ document.querySelectorAll('[data-count]').forEach(el => {
       <div id="badges-dimiliki" style="margin-bottom:24px">
         <div style="font-size:15px;font-weight:800;margin-bottom:12px">✨ Badge Kamu</div>
         <div id="badges-dimiliki-list" style="display:flex;flex-wrap:wrap;gap:10px">
-          <div style="color:var(--muted);font-size:13px">Memuat...</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <div class="skeleton-card" style="width:56px;height:56px;border-radius:50%"></div>
+            <div class="skeleton-card" style="width:56px;height:56px;border-radius:50%"></div>
+            <div class="skeleton-card" style="width:56px;height:56px;border-radius:50%"></div>
+            <div class="skeleton-card" style="width:56px;height:56px;border-radius:50%"></div>
+            <div class="skeleton-card" style="width:56px;height:56px;border-radius:50%"></div>
+            <div class="skeleton-card" style="width:56px;height:56px;border-radius:50%"></div>
+          </div>
         </div>
       </div>
       <div>
@@ -687,7 +703,18 @@ document.querySelectorAll('[data-count]').forEach(el => {
       <div style="font-size:48px">📊</div>
     </div>
     <div id="ot-anak-list" style="margin-bottom:24px">
-      <div style="text-align:center;padding:24px;color:var(--muted)">Memuat data...</div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+        <div class="skeleton-line" style="width:40px;height:40px;border-radius:50%;flex-shrink:0;margin:0"></div>
+        <div style="flex:1"><div class="skeleton-line" style="height:13px;width:70%;margin-bottom:6px"></div><div class="skeleton-line" style="height:11px;width:45%"></div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+        <div class="skeleton-line" style="width:40px;height:40px;border-radius:50%;flex-shrink:0;margin:0"></div>
+        <div style="flex:1"><div class="skeleton-line" style="height:13px;width:60%;margin-bottom:6px"></div><div class="skeleton-line" style="height:11px;width:40%"></div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+        <div class="skeleton-line" style="width:40px;height:40px;border-radius:50%;flex-shrink:0;margin:0"></div>
+        <div style="flex:1"><div class="skeleton-line" style="height:13px;width:65%;margin-bottom:6px"></div><div class="skeleton-line" style="height:11px;width:42%"></div></div>
+      </div>
     </div>
     <div style="background:white;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);border:2px solid #E8E8E8">
       <div style="font-weight:800;font-size:16px;margin-bottom:8px">⚙️ Pengaturan Akun</div>
@@ -709,7 +736,18 @@ document.querySelectorAll('[data-count]').forEach(el => {
   </nav>
   <div class="dashboard">
     <div id="ot-detail-content">
-      <div style="text-align:center;padding:40px;color:var(--muted)">Memuat...</div>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+        <div class="skeleton-line" style="width:44px;height:44px;border-radius:50%;flex-shrink:0;margin:0"></div>
+        <div style="flex:1"><div class="skeleton-line" style="height:14px;width:60%;margin-bottom:8px"></div><div class="skeleton-line" style="height:12px;width:40%"></div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+        <div class="skeleton-line" style="width:44px;height:44px;border-radius:50%;flex-shrink:0;margin:0"></div>
+        <div style="flex:1"><div class="skeleton-line" style="height:14px;width:55%;margin-bottom:8px"></div><div class="skeleton-line" style="height:12px;width:35%"></div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+        <div class="skeleton-line" style="width:44px;height:44px;border-radius:50%;flex-shrink:0;margin:0"></div>
+        <div style="flex:1"><div class="skeleton-line" style="height:14px;width:65%;margin-bottom:8px"></div><div class="skeleton-line" style="height:12px;width:38%"></div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -772,7 +810,18 @@ document.querySelectorAll('[data-count]').forEach(el => {
       </div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:14px;font-weight:600">Soal yang kamu buat bisa dipakai di semua kuis:</div>
       <div id="guru-soal-preview">
-        <div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">Memuat bank soal...</div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+          <div class="skeleton-line" style="width:38px;height:38px;border-radius:10px;flex-shrink:0;margin:0"></div>
+          <div style="flex:1"><div class="skeleton-line" style="height:13px;width:70%;margin-bottom:6px"></div><div class="skeleton-line" style="height:11px;width:45%"></div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+          <div class="skeleton-line" style="width:38px;height:38px;border-radius:10px;flex-shrink:0;margin:0"></div>
+          <div style="flex:1"><div class="skeleton-line" style="height:13px;width:60%;margin-bottom:6px"></div><div class="skeleton-line" style="height:11px;width:40%"></div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+          <div class="skeleton-line" style="width:38px;height:38px;border-radius:10px;flex-shrink:0;margin:0"></div>
+          <div style="flex:1"><div class="skeleton-line" style="height:13px;width:65%;margin-bottom:6px"></div><div class="skeleton-line" style="height:11px;width:42%"></div></div>
+        </div>
       </div>
     </div>
 
@@ -927,7 +976,9 @@ document.querySelectorAll('[data-count]').forEach(el => {
       <div id="online-mapel-wrap" style="display:none">
         <div style="font-size:12px;opacity:.5;margin-bottom:10px">Pilih mata pelajaran:</div>
         <div id="online-mapel-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-          <div style="grid-column:1/-1;text-align:center;opacity:.5;font-size:13px;padding:12px">Memuat...</div>
+          <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <div class="skeleton-card" style="height:64px"></div><div class="skeleton-card" style="height:64px"></div><div class="skeleton-card" style="height:64px"></div>
+          </div>
         </div>
       </div>
       <!-- Info random -->
@@ -975,7 +1026,9 @@ document.querySelectorAll('[data-count]').forEach(el => {
       <div style="font-weight:800;font-size:14px;margin-bottom:6px;color:white">📖 Pilih Mata Pelajaran</div>
       <div style="font-size:12px;opacity:.5;margin-bottom:12px">Soal diambil dari bank soal</div>
       <div id="ai-mapel-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-        <div style="grid-column:1/-1;text-align:center;opacity:.5;font-size:13px;padding:12px">Memuat...</div>
+        <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+          <div class="skeleton-card" style="height:64px"></div><div class="skeleton-card" style="height:64px"></div><div class="skeleton-card" style="height:64px"></div>
+        </div>
       </div>
     </div>
     <!-- Tingkat KikiBot -->
@@ -1036,7 +1089,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
     <div class="zep-progress"><div class="zep-progress-fill" id="zep-soal-progress" style="width:0%"></div></div>
     <div class="zep-soal-card">
       <div class="zep-soal-emoji" id="zep-soal-emoji">❓</div>
-      <div class="zep-soal-text" id="zep-soal-text">Memuat soal...</div>
+      <div class="zep-soal-text" id="zep-soal-text"><div class="skeleton-line" style="height:16px;width:55%;margin:2px 0"></div></div>
     </div>
     <div id="zep-opsi-container"></div>
     <div id="zep-hasil-feedback" style="display:none"></div>
@@ -1182,9 +1235,19 @@ document.querySelectorAll('[data-count]').forEach(el => {
 
   <!-- Kategori dari kelas murid -->
   <div style="max-width:600px;margin:0 auto;padding:24px 20px" id="qk-kategori-wrap">
-    <div style="text-align:center;padding:40px;color:var(--muted)">
-      <div style="font-size:48px;margin-bottom:12px">📚</div>
-      <p style="font-weight:700">Memuat kategori dari kelasmu...</p>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.08)">
+        <div class="skeleton-line" style="width:42px;height:42px;border-radius:50%;flex-shrink:0;margin:0"></div>
+        <div style="flex:1"><div class="skeleton-line" style="height:13px;width:70%;margin-bottom:6px"></div><div class="skeleton-line" style="height:11px;width:45%"></div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.08)">
+        <div class="skeleton-line" style="width:42px;height:42px;border-radius:50%;flex-shrink:0;margin:0"></div>
+        <div style="flex:1"><div class="skeleton-line" style="height:13px;width:60%;margin-bottom:6px"></div><div class="skeleton-line" style="height:11px;width:40%"></div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.08)">
+        <div class="skeleton-line" style="width:42px;height:42px;border-radius:50%;flex-shrink:0;margin:0"></div>
+        <div style="flex:1"><div class="skeleton-line" style="height:13px;width:65%;margin-bottom:6px"></div><div class="skeleton-line" style="height:11px;width:42%"></div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1242,7 +1305,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
     <div style="text-align:center;margin-bottom:20px">
       <div id="qk-mapel-badge" style="display:inline-block;background:#FFEFE8;color:var(--orange);font-size:11px;font-weight:800;padding:4px 14px;border-radius:50px;margin-bottom:12px">📚 Mapel</div>
       <div id="q-emoji" style="font-size:52px;margin-bottom:12px">❓</div>
-      <div id="q-text" style="font-family:'Fredoka One',cursive;font-size:20px;line-height:1.4;color:var(--text)">Memuat soal...</div>
+      <div id="q-text" style="font-family:'Fredoka One',cursive;font-size:20px;line-height:1.4;color:var(--text)"><div class="skeleton-line" style="height:18px;width:60%;margin:2px 0"></div></div>
     </div>
 
     <!-- Opsi jawaban dengan style cards -->
@@ -1542,7 +1605,18 @@ document.querySelectorAll('[data-count]').forEach(el => {
         </div>
       </div>
       <div id="kuis-soal-list" style="max-height:240px;overflow-y:auto;border:2px solid #eee;border-radius:12px;padding:8px">
-        <div style="text-align:center;padding:20px;color:var(--muted)">Memuat soal...</div>
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+          <div class="skeleton-line" style="width:38px;height:38px;border-radius:10px;flex-shrink:0;margin:0"></div>
+          <div style="flex:1"><div class="skeleton-line" style="height:13px;width:70%;margin-bottom:6px"></div><div class="skeleton-line" style="height:11px;width:45%"></div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+          <div class="skeleton-line" style="width:38px;height:38px;border-radius:10px;flex-shrink:0;margin:0"></div>
+          <div style="flex:1"><div class="skeleton-line" style="height:13px;width:60%;margin-bottom:6px"></div><div class="skeleton-line" style="height:11px;width:40%"></div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+          <div class="skeleton-line" style="width:38px;height:38px;border-radius:10px;flex-shrink:0;margin:0"></div>
+          <div style="flex:1"><div class="skeleton-line" style="height:13px;width:65%;margin-bottom:6px"></div><div class="skeleton-line" style="height:11px;width:42%"></div></div>
+        </div>
       </div>
       <div style="font-size:12px;color:var(--muted);margin-top:6px"><span id="kuis-soal-count">0</span> soal dipilih dari bank soal</div>
     </div>
@@ -2499,17 +2573,17 @@ document.querySelectorAll('[data-count]').forEach(el => {
   </div>
 </div>
 
-<script src="/js/app-core-full.js?v=34"></script>
+<script src="/js/app-core-full.js?v=35"></script>
 <script src="/js/modules/auth-profile.js?v=17"></script>
-<script src="/js/modules/dashboard.js?v=10"></script>
-<script src="/js/modules/kelas-chat.js?v=15"></script>
-<script src="/js/modules/notifikasi.js?v=11"></script>
+<script src="/js/modules/dashboard.js?v=11"></script>
+<script src="/js/modules/kelas-chat.js?v=16"></script>
+<script src="/js/modules/notifikasi.js?v=12"></script>
 <script src="/js/modules/kelas-crud.js?v=12"></script>
-<script src="/js/modules/dashboard-guru.js?v=10"></script>
+<script src="/js/modules/dashboard-guru.js?v=11"></script>
 <script src="/js/modules/materi.js?v=11"></script>
 <script src="/js/modules/soal.js?v=10"></script>
-<script src="/js/modules/quiz.js?v=10"></script>
-<script src="/js/modules/kuis.js?v=11"></script>
+<script src="/js/modules/quiz.js?v=11"></script>
+<script src="/js/modules/kuis.js?v=12"></script></script>
 
 <!-- ========== ZEP QUIZ SCRIPT ========== -->
 <script src="/js/app-extra1.js?v=1"></script>
@@ -3039,14 +3113,27 @@ document.querySelectorAll('[data-count]').forEach(el => {
       <button onclick="loadErrorLog('frontend')" id="elog-tab-frontend" style="padding:8px 18px;border-radius:50px;border:2px solid #eee;background:white;color:var(--text);font-family:Nunito,sans-serif;font-weight:700;font-size:13px;cursor:pointer">Frontend</button>
       <button onclick="loadErrorLog('backend')" id="elog-tab-backend" style="padding:8px 18px;border-radius:50px;border:2px solid #eee;background:white;color:var(--text);font-family:Nunito,sans-serif;font-weight:700;font-size:13px;cursor:pointer">Backend</button>
     </div>
-    <div id="error-log-list"><div style="text-align:center;padding:40px;color:var(--muted)">Memuat...</div></div>
+    <div id="error-log-list">
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+        <div class="skeleton-line" style="width:38px;height:38px;border-radius:10px;flex-shrink:0;margin:0"></div>
+        <div style="flex:1"><div class="skeleton-line" style="height:13px;width:75%;margin-bottom:6px"></div><div class="skeleton-line" style="height:11px;width:50%"></div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+        <div class="skeleton-line" style="width:38px;height:38px;border-radius:10px;flex-shrink:0;margin:0"></div>
+        <div style="flex:1"><div class="skeleton-line" style="height:13px;width:65%;margin-bottom:6px"></div><div class="skeleton-line" style="height:11px;width:45%"></div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+        <div class="skeleton-line" style="width:38px;height:38px;border-radius:10px;flex-shrink:0;margin:0"></div>
+        <div style="flex:1"><div class="skeleton-line" style="height:13px;width:70%;margin-bottom:6px"></div><div class="skeleton-line" style="height:11px;width:48%"></div></div>
+      </div>
+    </div>
   </div>
 </div>
 
 
 
 <input type="file" id="chat-file-upload-input" style="display:none" onchange="prosesUploadFileChat(this)">
-<script src="/js/app-extra2.js?v=1"></script>
+<script src="/js/app-extra2.js?v=2"></script>
 
 <script>
   // Mencegah klik kanan global (mencegah "Save image as")

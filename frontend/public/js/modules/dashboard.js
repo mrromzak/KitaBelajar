@@ -36,7 +36,7 @@ async function loadOrangtuaDashboard() {
   if (navName) navName.textContent = currentUser.nama;
   const el = document.getElementById('ot-anak-list');
   if (!el) return;
-  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat data anak...</div>';
+  el.innerHTML = skeletonHtml('list', 3);
   try {
     const data = await api('GET', '/orangtua/anak');
     const anakList = data.data || [];
@@ -69,7 +69,7 @@ async function loadAktivitasAnak(muridId, namaMurid) {
   showPage('page-orangtua-detail');
   const el = document.getElementById('ot-detail-content');
   if (!el) return;
-  el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Memuat aktivitas...</div>';
+  el.innerHTML = skeletonHtml('list', 3);
   try {
     const data = await api('GET', `/orangtua/aktivitas/${muridId}`);
     if (!data.success) throw new Error(data.pesan);
@@ -310,7 +310,7 @@ async function loadDeadlineAlertDashboard() {
 // Fallback: dipanggil hanya jika endpoint murid-init gagal
 async function loadMuridKelas() {
   const grid = document.getElementById('murid-kelas-grid');
-  grid.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat kelas...</div>';
+  grid.innerHTML = skeletonHtml('list', 5);
   try {
     const data = await api('GET', '/kelas');
     const list = data.kelas || data.data || data.list || [];

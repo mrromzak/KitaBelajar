@@ -20,7 +20,7 @@ async function loadErrorLog(filter) {
   });
 
   const el = document.getElementById('error-log-list');
-  el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Memuat...</div>';
+  el.innerHTML = skeletonHtml('list', 5);
   try {
     const data = await api('GET', '/error-logs');
     if (!data.success) { el.innerHTML = '<div style="padding:24px;color:var(--muted)">Gagal memuat log.</div>'; return; }
@@ -124,7 +124,7 @@ async function guruChatPilihFile(input) {
   if (file.size > 15 * 1024 * 1024) { toast('File terlalu besar! Maks 15MB', 'error'); return; }
 
   const previewEl = document.getElementById('gchat-file-preview');
-  previewEl.innerHTML = '<span style="font-size:12px;color:#9CA3AF">Memuat file...</span>';
+  previewEl.innerHTML = '<div class="skeleton-line" style="height:12px;width:120px"></div>';
   previewEl.style.display = 'flex';
 
   try {

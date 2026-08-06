@@ -150,7 +150,7 @@ function renderQuizPenilaianCard(q) {
 async function loadPenilaianKelas(kelasId) {
   const el = document.getElementById('kelas-penilaian-stream');
   if (!el) return;
-  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:14px">Memuat data penilaian...</div>';
+  el.innerHTML = skeletonHtml('table', 6);
   try {
     const data = await api('GET', `/dashboard/penilaian?kelas_id=${kelasId}`);
     if (!data.success || !data.data || data.data.length === 0) {

@@ -855,7 +855,7 @@ function filterSoalKuis() {
 
 async function loadBankSoal() {
   const listEl = document.getElementById('kuis-soal-list');
-  listEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)">Memuat soal...</div>';
+  listEl.innerHTML = skeletonHtml('list', 4);
   try {
     const data = await api('GET', '/soal');
     allSoalData = data.soal || data.data || [];
@@ -1300,7 +1300,7 @@ async function submitTugas() {
 async function lihatSubmissionGuru(quizId, judul, kelasId) {
   document.getElementById('sub-lihat-judul').textContent = '📋 ' + judul;
   const listEl = document.getElementById('sub-lihat-list');
-  listEl.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat...</div>';
+  listEl.innerHTML = skeletonHtml('list', 5);
   openModal('modal-lihat-submission');
   try {
     // Ambil submissions & daftar murid di kelas secara paralel

@@ -295,7 +295,7 @@ function chatDenganGuru() {
 
 async function loadKelasStream(kelasId) {
   const stream = document.getElementById('kelas-stream');
-  stream.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat materi...</div>';
+  stream.innerHTML = skeletonHtml('card', 3);
   try {
     const data = await api('GET', `/materi?kelas_id=${kelasId}`);
     const list = data.materi || data.data || [];
@@ -625,7 +625,7 @@ kelasOnlineUsers = []; // diupdate via socket
 
 async function loadKelasMurid(kelasId) {
   const el = document.getElementById('kelas-murid-stream');
-  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat daftar murid...</div>';
+  el.innerHTML = skeletonHtml('list', 6);
   try {
     const [kelasData, inboxData] = await Promise.all([
       api('GET', `/kelas/${kelasId}`),
@@ -707,7 +707,7 @@ kelasChatKelasId = null;
 async function loadKelasChatHistory(kelasId) {
   kelasChatKelasId = kelasId;
   const box = document.getElementById('kelas-chat-messages');
-  box.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">Memuat pesan...</div>';
+  box.innerHTML = skeletonHtml('bubble', 6);
   try {
     const data = await api('GET', `/kelas/${kelasId}/chat`);
     const pesanList = data.data || [];

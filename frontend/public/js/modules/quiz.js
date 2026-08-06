@@ -34,7 +34,7 @@ async function loadQuizKilatMap() {
   document.getElementById('qk-xp-total').textContent = currentUser?.xp || 0;
 
   const wrap = document.getElementById('qk-kategori-wrap');
-  wrap.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)"><div style="font-size:40px">⏳</div><p style="font-weight:700;margin-top:8px">Memuat kategori...</p></div>';
+  wrap.innerHTML = skeletonHtml('list', 6);
 
   try {
     // Ambil semua kelas murid

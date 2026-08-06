@@ -26,11 +26,47 @@ let currentRole = 'murid'; // for login page
 let currentRegRole = 'murid';
 
 // ── SKELETON LOADING (shared helper, dipakai dashboard/kuis/leaderboard) ──
+//  Varian: card (list card), list (avatar + baris), text (baris teks),
+//          bubble (chat), table (baris tabel/penilaian), grid (kotak kecil).
 function skeletonHtml(tipe = 'list', count = 3) {
   if (tipe === 'card') {
     return Array.from({ length: count }, () =>
-      `<div class="skeleton-card" style="height:120px;margin-bottom:12px"></div>`
+      `<div class="skeleton-card" style="padding:16px;margin-bottom:14px">
+         <div style="display:flex;gap:12px;align-items:center">
+           <div class="skeleton-line" style="width:44px;height:44px;border-radius:12px;flex-shrink:0;margin:0"></div>
+           <div style="flex:1">
+             <div class="skeleton-line" style="height:15px;width:72%;margin-bottom:8px"></div>
+             <div class="skeleton-line" style="height:12px;width:45%"></div>
+           </div>
+         </div>
+         <div class="skeleton-line" style="height:12px;width:88%;margin:14px 0 0"></div>
+       </div>`
     ).join('');
+  }
+  if (tipe === 'bubble') {
+    return Array.from({ length: count }, (_, i) =>
+      `<div class="skeleton-bubble ${i % 2 === 0 ? 'left' : 'right'}" style="width:${55 + (i % 3) * 12}%"></div>`
+    ).join('');
+  }
+  if (tipe === 'table') {
+    return Array.from({ length: count }, () =>
+      `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+         <div class="skeleton-line" style="width:36px;height:36px;border-radius:50%;flex-shrink:0;margin:0"></div>
+         <div style="flex:1.4">
+           <div class="skeleton-line" style="height:13px;width:75%;margin-bottom:6px"></div>
+           <div class="skeleton-line" style="height:11px;width:45%"></div>
+         </div>
+         <div style="flex:0.6"><div class="skeleton-line" style="height:12px;width:70%"></div></div>
+         <div style="flex:0.6"><div class="skeleton-line" style="height:12px;width:60%"></div></div>
+       </div>`
+    ).join('');
+  }
+  if (tipe === 'grid') {
+    return `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">` +
+      Array.from({ length: 6 }, () =>
+        `<div class="skeleton-card" style="height:64px"></div>`
+      ).join('') +
+      `</div>`;
   }
   if (tipe === 'text') {
     return `<div class="skeleton-line" style="height:14px;width:80%;margin-bottom:8px"></div>
@@ -1761,7 +1797,7 @@ async function loadOrangtuaDashboard() {
   if (navName) navName.textContent = currentUser.nama;
   const el = document.getElementById('ot-anak-list');
   if (!el) return;
-  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat data anak...</div>';
+  el.innerHTML = skeletonHtml('list', 3);
   try {
     const data = await api('GET', '/orangtua/anak');
     const anakList = data.data || [];
@@ -1794,7 +1830,7 @@ async function loadAktivitasAnak(muridId, namaMurid) {
   showPage('page-orangtua-detail');
   const el = document.getElementById('ot-detail-content');
   if (!el) return;
-  el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Memuat aktivitas...</div>';
+  el.innerHTML = skeletonHtml('list', 3);
   try {
     const data = await api('GET', `/orangtua/aktivitas/${muridId}`);
     if (!data.success) throw new Error(data.pesan);
@@ -2008,7 +2044,7 @@ async function loadDeadlineAlertDashboard() {
 // Fallback: dipanggil hanya jika endpoint murid-init gagal
 async function loadMuridKelas() {
   const grid = document.getElementById('murid-kelas-grid');
-  grid.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat kelas...</div>';
+  grid.innerHTML = skeletonHtml('list', 5);
   try {
     const data = await api('GET', '/kelas');
     const list = data.kelas || data.data || data.list || [];
@@ -2128,7 +2164,7 @@ async function loadLeaderboard() {
   const params = new URLSearchParams({ mode: _lbMode });
   if (_lbPeriode === 'minggu') params.set('periode', 'minggu');
 
-  document.getElementById('lb-podium').innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px;width:100%">Memuat...</div>';
+  document.getElementById('lb-podium').innerHTML = `<div style="width:100%;padding:20px 0">${skeletonHtml('list', 3)}</div>`;
   document.getElementById('lb-list').innerHTML   = '';
 
   try {
@@ -2292,7 +2328,7 @@ async function klaimDailyReward(btn) {
 async function loadMisi() {
   const token = localStorage.getItem('kb_token') || '';
   ['harian','mingguan','achievement'].forEach(t =>
-    document.getElementById(`misi-${t}-list`).innerHTML = '<div style="color:var(--muted);font-size:13px;padding:10px">Memuat...</div>'
+    document.getElementById(`misi-${t}-list`).innerHTML = skeletonHtml('list', 2)
   );
 
   try {
@@ -2878,7 +2914,7 @@ function chatDenganGuru() {
 
 async function loadKelasStream(kelasId) {
   const stream = document.getElementById('kelas-stream');
-  stream.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat materi...</div>';
+  stream.innerHTML = skeletonHtml('card', 3);
   try {
     const data = await api('GET', `/materi?kelas_id=${kelasId}`);
     const list = data.materi || data.data || [];
@@ -3208,7 +3244,7 @@ let kelasOnlineUsers = []; // diupdate via socket
 
 async function loadKelasMurid(kelasId) {
   const el = document.getElementById('kelas-murid-stream');
-  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat daftar murid...</div>';
+  el.innerHTML = skeletonHtml('list', 6);
   try {
     const [kelasData, inboxData] = await Promise.all([
       api('GET', `/kelas/${kelasId}`),
@@ -3290,7 +3326,7 @@ let kelasChatKelasId = null;
 async function loadKelasChatHistory(kelasId) {
   kelasChatKelasId = kelasId;
   const box = document.getElementById('kelas-chat-messages');
-  box.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">Memuat pesan...</div>';
+  box.innerHTML = skeletonHtml('bubble', 6);
   try {
     const data = await api('GET', `/kelas/${kelasId}/chat`);
     const pesanList = data.data || [];
@@ -4265,7 +4301,7 @@ async function bukaPrivateChat(userId, nama, avatar) {
   document.getElementById('pc-nama').textContent = nama;
   document.getElementById('pc-status').textContent = 'Chat Privat';
   document.getElementById('pc-messages').innerHTML =
-    '<div style="text-align:center;color:var(--muted);font-size:13px;padding:24px">Memuat pesan...</div>';
+    skeletonHtml('bubble', 5);
 
   openModal('modal-private-chat');
 
@@ -4754,7 +4790,7 @@ function renderQuizPenilaianCard(q) {
 async function loadPenilaianKelas(kelasId) {
   const el = document.getElementById('kelas-penilaian-stream');
   if (!el) return;
-  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:14px">Memuat data penilaian...</div>';
+  el.innerHTML = skeletonHtml('table', 6);
   try {
     const data = await api('GET', `/dashboard/penilaian?kelas_id=${kelasId}`);
     if (!data.success || !data.data || data.data.length === 0) {
@@ -6194,7 +6230,7 @@ async function loadQuizKilatMap() {
   document.getElementById('qk-xp-total').textContent = currentUser?.xp || 0;
 
   const wrap = document.getElementById('qk-kategori-wrap');
-  wrap.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)"><div style="font-size:40px">⏳</div><p style="font-weight:700;margin-top:8px">Memuat kategori...</p></div>';
+  wrap.innerHTML = skeletonHtml('list', 6);
 
   try {
     // Ambil semua kelas murid
@@ -7020,7 +7056,7 @@ function renderKuisFiltered() {
 async function loadKelasKuis(kelasId) {
   const el = document.getElementById('kelas-kuis-stream');
   const container = document.getElementById('kuis-list-container');
-  if (container) container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat...</div>';
+  if (container) container.innerHTML = skeletonHtml('card', 3);
 
   const isGuru = currentUser?.role === 'guru';
   try {
@@ -7532,7 +7568,7 @@ function filterSoalKuis() {
 
 async function loadBankSoal() {
   const listEl = document.getElementById('kuis-soal-list');
-  listEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)">Memuat soal...</div>';
+  listEl.innerHTML = skeletonHtml('list', 4);
   try {
     const data = await api('GET', '/soal');
     allSoalData = data.soal || data.data || [];
@@ -8014,7 +8050,7 @@ async function submitTugas() {
 async function lihatSubmissionGuru(quizId, judul, kelasId) {
   document.getElementById('sub-lihat-judul').textContent = '📋 ' + judul;
   const listEl = document.getElementById('sub-lihat-list');
-  listEl.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Memuat...</div>';
+  listEl.innerHTML = skeletonHtml('list', 5);
   openModal('modal-lihat-submission');
   try {
     // Ambil submissions & daftar murid di kelas secara paralel
@@ -8751,7 +8787,7 @@ const AnalitikGuru = (() => {
     const wrap = document.getElementById('kelas-analitik-stream');
     if (!wrap) return;
     wrap.style.display = '';
-    wrap.innerHTML = '<div class="analitik-loading">Memuat data...</div>';
+    wrap.innerHTML = skeletonHtml('table', 5);
     try {
       const token = localStorage.getItem('kb_token') || null;
       const res = await fetch(`/api/analitik/kelas/${kelasIdAktif}`, {

@@ -287,7 +287,7 @@ async function bukaPrivateChat(userId, nama, avatar) {
   document.getElementById('pc-nama').textContent = nama;
   document.getElementById('pc-status').textContent = 'Chat Privat';
   document.getElementById('pc-messages').innerHTML =
-    '<div style="text-align:center;color:var(--muted);font-size:13px;padding:24px">Memuat pesan...</div>';
+    skeletonHtml('bubble', 5);
 
   openModal('modal-private-chat');
 
