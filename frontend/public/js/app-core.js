@@ -75,11 +75,25 @@ function saveMapelList(list) {
   localStorage.setItem(key, JSON.stringify(list));
 }
 
-function populateMapelSelects() {
+function getMapelOptions() {
   const list = getMapelList();
+  if (list.length) return list;
+  const kelas = window._kelasList || [];
+  const seen = new Map();
+  kelas.forEach(k => {
+    const nama = (k && k.mapel ? String(k.mapel).trim() : '');
+    if (nama && !seen.has(nama.toLowerCase())) {
+      seen.set(nama.toLowerCase(), { nama, emoji: '\uD83D\uDCDA' });
+    }
+  });
+  return [...seen.values()];
+}
+
+function populateMapelSelects() {
+  const list = getMapelOptions();
   const opts = list.length
     ? list.map(m => `<option value="${m.nama}">${m.emoji} ${m.nama}</option>`).join('')
-    : '<option value="">-- Belum ada mapel --</option>';
+    : '<option value="">-- Belum ada mapel, tambah dulu di panel Mata Pelajaran --</option>';
   ['m-mapel', 'edit-m-mapel', 's-mapel'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = opts;

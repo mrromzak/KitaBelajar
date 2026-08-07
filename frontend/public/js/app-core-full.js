@@ -144,11 +144,27 @@ function saveMapelList(list) {
   localStorage.setItem(key, JSON.stringify(list));
 }
 
-function populateMapelSelects() {
+function getMapelOptions() {
   const list = getMapelList();
+  if (list.length) return list;
+  // Fallback: jika daftar mapel localStorage kosong (device baru / cache terhapus),
+  // ambil mapel dari kelas-kelas yang ada di server.
+  const kelas = window._kelasList || [];
+  const seen = new Map();
+  kelas.forEach(k => {
+    const nama = (k && k.mapel ? String(k.mapel).trim() : '');
+    if (nama && !seen.has(nama.toLowerCase())) {
+      seen.set(nama.toLowerCase(), { nama, emoji: '\uD83D\uDCDA' });
+    }
+  });
+  return [...seen.values()];
+}
+
+function populateMapelSelects() {
+  const list = getMapelOptions();
   const opts = list.length
     ? list.map(m => `<option value="${m.nama}">${m.emoji} ${m.nama}</option>`).join('')
-    : '<option value="">-- Belum ada mapel --</option>';
+    : '<option value="">-- Belum ada mapel, tambah dulu di panel Mata Pelajaran --</option>';
   ['m-mapel', 'edit-m-mapel', 's-mapel'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = opts;
@@ -4578,11 +4594,17 @@ async function eksekusiKeluarKelas() {
 function openTambahMateriKelas() {
   if (!currentKelas) return;
   document.getElementById('m-kelas-id').value = currentKelas.id;
-  // Set mapel sesuai kelas
+  populateMapelSelects();
+  // Set mapel sesuai kelas — pastikan opsi mapel kelas ini selalu ada
   const mapelSel = document.getElementById('m-mapel');
   if (currentKelas.mapel) {
+    let found = false;
     for (let opt of mapelSel.options) {
-      if (opt.value === currentKelas.mapel) { opt.selected = true; break; }
+      if (opt.value === currentKelas.mapel) { opt.selected = true; found = true; break; }
+    }
+    if (!found) {
+      mapelSel.insertAdjacentHTML('beforeend', `<option value="${currentKelas.mapel}">\uD83D\uDCDA ${currentKelas.mapel}</option>`);
+      mapelSel.value = currentKelas.mapel;
     }
   }
   resetMateriForm();
@@ -4971,12 +4993,12 @@ function editSoalDashboard(s) {
 }
 
 function populateBuatKelasMapel() {
-  const list = getMapelList();
+  const list = getMapelOptions();
   const el = document.getElementById('bk-mapel');
   if (!el) return;
   el.innerHTML = list.length
     ? list.map(m => `<option value="${m.nama}">${m.emoji} ${m.nama}</option>`).join('')
-    : '<option value="">– Belum ada mapel –</option>';
+    : '<option value="">– Belum ada mapel, tambah dulu –</option>';
 }
 
 // ============================================================

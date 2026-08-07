@@ -129,11 +129,17 @@ async function eksekusiKeluarKelas() {
 function openTambahMateriKelas() {
   if (!currentKelas) return;
   document.getElementById('m-kelas-id').value = currentKelas.id;
-  // Set mapel sesuai kelas
+  populateMapelSelects();
+  // Set mapel sesuai kelas — pastikan opsi mapel kelas ini selalu ada
   const mapelSel = document.getElementById('m-mapel');
   if (currentKelas.mapel) {
+    let found = false;
     for (let opt of mapelSel.options) {
-      if (opt.value === currentKelas.mapel) { opt.selected = true; break; }
+      if (opt.value === currentKelas.mapel) { opt.selected = true; found = true; break; }
+    }
+    if (!found) {
+      mapelSel.insertAdjacentHTML('beforeend', `<option value="${currentKelas.mapel}">\uD83D\uDCDA ${currentKelas.mapel}</option>`);
+      mapelSel.value = currentKelas.mapel;
     }
   }
   resetMateriForm();
