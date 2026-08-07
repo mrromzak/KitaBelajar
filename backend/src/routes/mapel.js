@@ -12,7 +12,14 @@ router.get('/', authMiddleware, async (req, res) => {
       .select('*')
       .eq('guru_id', req.user.id)
       .order('created_at', { ascending: true });
-    if (error) throw error;
+    if (error) {
+      // Tabel belum ada / cache PostgREST belum reload — anggap kosong supaya UI
+      // tetap jalan (fallback dari kelas di frontend). Bukan error fatal.
+      if (error.code === '42P01' || /does not exist/i.test(error.message || '')) {
+        return res.json({ success: true, data: [] });
+      }
+      throw error;
+    }
     res.json({ success: true, data: data || [] });
   } catch (err) {
     console.error(err.message);
