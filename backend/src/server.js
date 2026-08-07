@@ -214,6 +214,14 @@ app.post('/api/push/subscribe', async (req, res) => {
   } catch(e) { res.json({ success: false }); }
 });
 
+// ── Push Notification: VAPID public key untuk frontend (sebelum subscribe) ──
+app.get('/api/push/vapid-key', (req, res) => {
+  if (!process.env.VAPID_PUBLIC_KEY) {
+    return res.status(404).json({ success: false, key: null, pesan: 'VAPID_PUBLIC_KEY belum diset di server.' });
+  }
+  res.json({ success: true, key: process.env.VAPID_PUBLIC_KEY });
+});
+
 // ── Push Notification: hapus subscription ────────────────────
 app.post('/api/push/unsubscribe', async (req, res) => {
   try {
