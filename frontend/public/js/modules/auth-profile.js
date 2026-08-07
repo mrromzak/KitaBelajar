@@ -48,6 +48,8 @@ async function doLogin() {
       localStorage.setItem('kb_user', JSON.stringify(currentUser));
       // Bersihkan key mapel lama yang shared (migrasi ke per-user)
       localStorage.removeItem('kb_mapel_list');
+      resetMapelCache();
+      loadMapelFromServer();
       joinPrivateChannel();
       loadBellNotifications();
       // Aktifkan push notification (minta izin jika belum)
@@ -1319,6 +1321,7 @@ function batalGantiPassword(prefix) {
 
 function doLogout() {
   token = null; currentUser = null;
+  resetMapelCache();
   localStorage.removeItem('kb_token');
   localStorage.removeItem('kb_user');
   if (socket) socket.disconnect();

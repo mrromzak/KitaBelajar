@@ -49,6 +49,7 @@ async function loadGuruDashboard() {
   }
   showLoading(false);
 
+  await loadMapelFromServer();
   populateMapelSelects();
   renderGuruMapelPanel();
   populateBuatKelasMapel();

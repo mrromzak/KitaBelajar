@@ -129,19 +129,78 @@ function getMapelStorageKey() {
 const MAPEL_ACCENT_COLORS = ['#FF6B35','#4A6FA5','#529B76','#8B6F97','#FF8C5A','#678CBF','#70B793','#A98CB5','#FFB97A','#7CA3D4','#7FC49E','#BCA1C8'];
 const QUICK_EMOJIS = ['\uD83C\uDFC3','\uD83C\uDFB5','\uD83D\uDDA5\uFE0F','\uD83E\uDDEA','\uD83C\uDF0D','\uD83C\uDFAD','\uD83D\uDCD0','\uD83D\uDD2C','\uD83D\uDD2D','\uD83C\uDFDB\uFE0F','\uD83E\uDDEE','\uD83C\uDFAF','\u26BD','\uD83C\uDFBB','\u271D\uFE0F','\u262A\uFE0F','\uD83C\uDF3A','\uD83C\uDFCB\uFE0F','\uD83D\uDCBB','\uD83E\uDDE0','\uD83D\uDCF8','\uD83D\uDDFF'];
 
+let MAPEL_CACHE = null;
+let _mapelSyncPromise = null;
+
 function getMapelList() {
+  if (MAPEL_CACHE !== null) return MAPEL_CACHE;
   const key = getMapelStorageKey();
   const stored = localStorage.getItem(key);
   if (stored) {
-    try { return JSON.parse(stored); } catch(e) {}
+    try {
+      const parsed = JSON.parse(stored);
+      MAPEL_CACHE = Array.isArray(parsed) ? parsed : [];
+      return MAPEL_CACHE;
+    } catch(e) {}
   }
-  return [];
+  MAPEL_CACHE = [];
+  return MAPEL_CACHE;
 }
 
 function saveMapelList(list) {
+  MAPEL_CACHE = list;
   const key = getMapelStorageKey();
   localStorage.removeItem('kb_mapel_list'); // hapus key lama yang shared
   localStorage.setItem(key, JSON.stringify(list));
+}
+
+function resetMapelCache() {
+  MAPEL_CACHE = null;
+  _mapelSyncPromise = null;
+}
+
+function refreshMapelUI() {
+  populateMapelSelects();
+  renderGuruMapelPanel();
+  renderMuridMapelGrid();
+  populateBuatKelasMapel();
+}
+
+// Sinkronkan daftar mapel dengan server (lintas device).
+// Migrasi sekali-pakai: kalau localStorage masih punya data tapi server masih kosong,
+// data lama di-upload ke database dulu supaya tidak hilang.
+function loadMapelFromServer() {
+  if (!currentUser) return Promise.resolve();
+  if (_mapelSyncPromise) return _mapelSyncPromise;
+  _mapelSyncPromise = (async () => {
+    try {
+      let server = [];
+      const res = await api('GET', '/mapel');
+      if (!res || !res.success) return;
+      server = Array.isArray(res.data) ? res.data : [];
+
+      const local = getMapelList();
+      if (currentUser.role === 'guru' && server.length === 0 && local.length > 0) {
+        for (const m of local) {
+          await api('POST', '/mapel', { nama: m.nama, emoji: m.emoji }).catch(() => {});
+        }
+        const again = await api('GET', '/mapel').catch(() => null);
+        if (again && again.success) server = Array.isArray(again.data) ? again.data : [];
+      }
+
+      const rows = server.map(r => ({ id: r.id, nama: r.nama, emoji: r.emoji || '📌' }));
+      // Jangan timpa cache localStorage kalau server kosong & ada data lokal yang
+      // gagal di-seed (offline) — biarkan data lokal tetap dipakai.
+      if (server.length > 0 || local.length === 0) {
+        MAPEL_CACHE = rows;
+        saveMapelList(rows);
+      }
+      refreshMapelUI();
+    } catch(e) {
+      // Offline / gagal — biarkan cache localStorage tetap dipakai.
+    }
+  })();
+  return _mapelSyncPromise;
 }
 
 function getMapelOptions() {
@@ -223,7 +282,7 @@ function pickMapelEmoji(e) {
   document.getElementById('emoji-preview').textContent = e;
 }
 
-function submitTambahMapel() {
+async function submitTambahMapel() {
   const nama  = document.getElementById('mapel-nama').value.trim();
   const emoji = document.getElementById('mapel-emoji').value.trim() || '📌';
   if (!nama) { toast('Nama mata pelajaran harus diisi! 😊', 'error'); return; }
@@ -234,7 +293,22 @@ function submitTambahMapel() {
     toast('Mata pelajaran itu sudah ada! 🤔', 'error'); return;
   }
 
-  list.push({ nama, emoji });
+  let newItem = { nama, emoji };
+  try {
+    const res = await api('POST', '/mapel', { nama, emoji });
+    if (res && res.success && res.data) {
+      newItem = { id: res.data.id, nama: res.data.nama, emoji: res.data.emoji || emoji };
+    } else if (res && res.pesan) {
+      toast(res.pesan, 'error');
+      return;
+    } else {
+      throw new Error('Gagal menyimpan mapel ke server.');
+    }
+  } catch(e) {
+    toast('Disimpan di perangkat ini. Akan tersinkron saat online.', 'warning');
+  }
+
+  list.push(newItem);
   saveMapelList(list);
   renderGuruMapelPanel();
   populateMapelSelects();
@@ -242,13 +316,23 @@ function submitTambahMapel() {
   toast(`"${nama}" berhasil ditambahkan! 🎉`, 'success');
 }
 
-function hapusMapel(nama, emoji) {
+async function hapusMapel(nama, emoji) {
   if (!confirm(`Hapus mata pelajaran "${emoji} ${nama}"?\n\nMateri dan soal yang sudah dibuat dengan mapel ini tidak akan terhapus.`)) return;
+  const item = getMapelList().find(m => m.nama === nama);
   let list = getMapelList().filter(m => m.nama !== nama);
   saveMapelList(list);
   renderGuruMapelPanel();
   populateMapelSelects();
-  toast(`"${nama}" dihapus dari daftar mapel.`, 'success');
+  if (item && item.id) {
+    const res = await api('DELETE', '/mapel/' + item.id).catch(() => null);
+    if (!res || !res.success) {
+      toast('Hapus tersimpan di perangkat, tetapi belum tersinkron ke server.', 'warning');
+    } else {
+      toast(`"${nama}" dihapus dari daftar mapel.`, 'success');
+    }
+  } else {
+    toast(`"${nama}" dihapus dari daftar mapel.`, 'success');
+  }
 }
 
 // ============================================================
@@ -548,6 +632,8 @@ async function doLogin() {
       localStorage.setItem('kb_user', JSON.stringify(currentUser));
       // Bersihkan key mapel lama yang shared (migrasi ke per-user)
       localStorage.removeItem('kb_mapel_list');
+      resetMapelCache();
+      loadMapelFromServer();
       joinPrivateChannel();
       loadBellNotifications();
       // Aktifkan push notification (minta izin jika belum)
@@ -1791,6 +1877,7 @@ function batalGantiPassword(prefix) {
 
 function doLogout() {
   token = null; currentUser = null;
+  resetMapelCache();
   localStorage.removeItem('kb_token');
   localStorage.removeItem('kb_user');
   if (socket) socket.disconnect();
@@ -4711,6 +4798,7 @@ async function loadGuruDashboard() {
   }
   showLoading(false);
 
+  await loadMapelFromServer();
   populateMapelSelects();
   renderGuruMapelPanel();
   populateBuatKelasMapel();
@@ -6882,6 +6970,7 @@ window.addEventListener('load', () => {
   if (token && currentUser) {
     joinPrivateChannel();
     loadBellNotifications();
+    loadMapelFromServer();
     setTimeout(() => subscribePush(), 3000);
     if (currentUser.role === 'guru') {
       loadGuruDashboard();

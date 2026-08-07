@@ -157,6 +157,7 @@ app.use('/api/auth/forgot-password', loginLimiter);
 app.use('/api/auth',      require('./routes/auth'));
 app.use('/api/kode-guru', require('./routes/kode-guru'));
 app.use('/api/kelas',     require('./routes/kelas'));
+app.use('/api/mapel',     require('./routes/mapel'));
 app.use('/api/materi',    require('./routes/materi'));
 app.use('/api/soal',      require('./routes/soal'));
 app.use('/api/dashboard', require('./routes/dashboard'));
